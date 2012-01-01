@@ -1,0 +1,12 @@
+services:
+  BLZService:
+    ports:
+      BLZServiceSOAP11port_http:
+        type: "soap11"
+        location: "http://www.thomas-bayer.com:80/axis2/services/BLZService"
+      BLZServiceSOAP12port_http:
+        type: "soap12"
+        location: "http://www.thomas-bayer.com:80/axis2/services/BLZService"
+      BLZServiceHttpport:
+        type: "http"
+        location: "http://www.thomas-bayer.com:80/axis2/services/BLZService"
