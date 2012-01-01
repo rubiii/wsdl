@@ -35,7 +35,8 @@ module WSDL
 
           transport_operation = xpath(operation).query(:name, "operation")
           if transport_operation && namespace(transport_operation).soap?
-            operation_details["soap_action"] = transport_operation["soapAction"]
+            # TODO: investigate why nokogiri on jruby returns nil instead of an empty string
+            operation_details["soap_action"] = transport_operation["soapAction"] || ""
             operation_details["style"] = transport_operation["style"]
 
             soap_body_details = Proc.new do |nodes|
