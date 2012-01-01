@@ -12,8 +12,8 @@ module WSDL
       node.xpath(joined_xpath, WSDL.namespaces).each { |el| yield el }
     end
 
-    def children(&query)
-      node.children.find(&query)
+    def query(selector, value)
+      node.children.find { |node| node.send(selector) == value }
     end
 
     def wsdl(*elements)

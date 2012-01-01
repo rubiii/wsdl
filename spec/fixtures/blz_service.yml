@@ -4,9 +4,36 @@ services:
       BLZServiceSOAP11port_http:
         type: "soap11"
         location: "http://www.thomas-bayer.com:80/axis2/services/BLZService"
+        binding:
+          style: "document"
+          transport: "http://schemas.xmlsoap.org/soap/http"
+          operations:
+            getBank:
+              soap_action: ""
+              style: "document"
+              input:
+                use: "literal"
+              output:
+                use: "literal"
+              fault: []
       BLZServiceSOAP12port_http:
         type: "soap12"
         location: "http://www.thomas-bayer.com:80/axis2/services/BLZService"
+        binding:
+          style: "document"
+          transport: "http://schemas.xmlsoap.org/soap/http"
+          operations:
+            getBank:
+              soap_action: ""
+              style: "document"
+              input:
+                use: "literal"
+              output:
+                use: "literal"
+              fault: []
       BLZServiceHttpport:
         type: "http"
         location: "http://www.thomas-bayer.com:80/axis2/services/BLZService"
+        binding:
+          operations:
+            getBank: {}
