@@ -1,5 +1,6 @@
-require "wsdl/version"
-require "wsdl/parser"
+%w(version parser).each do |lib|
+  require File.expand_path("../wsdl/#{lib}", __FILE__)
+end
 
 module WSDL
 

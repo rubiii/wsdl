@@ -1,6 +1,6 @@
-require "wsdl/qname"
-require "wsdl/xpath"
-require "wsdl/namespace"
+%w(qname xpath namespace).each do |lib|
+  require File.expand_path("../#{lib}", __FILE__)
+end
 
 module WSDL
   class Parser
