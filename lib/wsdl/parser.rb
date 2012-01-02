@@ -22,7 +22,7 @@ module WSDL
 
     def parse_bindings
       xpath.wsdl(:definitions, :binding).inject({}) do |bindings, binding|
-        details = { "operations" => {} }
+        details = {}
 
         transport_binding = xpath(binding).query(:name, "binding")
         if namespace(transport_binding).soap?
@@ -30,29 +30,7 @@ module WSDL
           details["transport"] = transport_binding["transport"]
         end
 
-        xpath(binding).wsdl(:operation).each do |operation|
-          operation_details = {}
-
-          transport_operation = xpath(operation).query(:name, "operation")
-          if transport_operation && namespace(transport_operation).soap?
-            # TODO: investigate why nokogiri on jruby returns nil instead of an empty string
-            operation_details["soap_action"] = transport_operation["soapAction"] || ""
-            operation_details["style"] = transport_operation["style"]
-
-            soap_body_details = Proc.new do |nodes|
-              nodes.map do |node|
-                body = xpath(node).query(:name, "body")
-                { "use" => body["use"] }
-              end
-            end
-
-            operation_details["input"]  = soap_body_details.call(xpath(operation).wsdl(:input)).first
-            operation_details["output"] = soap_body_details.call(xpath(operation).wsdl(:output)).first
-            operation_details["fault"]  = soap_body_details.call(xpath(operation).wsdl(:fault))
-          end
-
-          details["operations"][operation["name"]] = operation_details
-        end
+        details["operations"] = find_operations(binding)
 
         bindings[binding["name"]] = details
         bindings
@@ -63,6 +41,34 @@ module WSDL
       xpath.wsdl(:definitions, :service).inject({}) do |services, service|
         services[service["name"]] = { "ports" => find_ports(service) }
         services
+      end
+    end
+
+    def find_operations(binding)
+      xpath(binding).wsdl(:operation).inject({}) do |operations, operation|
+        details = {}
+
+        transport_operation = xpath(operation).query(:name, "operation")
+        if transport_operation && namespace(transport_operation).soap?
+          # NOTE: Nokogiri Java returns nil instead of an empty String for empty attributes.
+          #       https://github.com/tenderlove/nokogiri/issues/589
+          details["soap_action"] = transport_operation["soapAction"] || ""
+          details["style"] = transport_operation["style"]
+
+          details["input"]  = find_operation_body(xpath(operation).wsdl(:input)).first
+          details["output"] = find_operation_body(xpath(operation).wsdl(:output)).first
+          details["fault"]  = find_operation_body(xpath(operation).wsdl(:fault))
+        end
+
+        operations[operation["name"]] = details
+        operations
+      end
+    end
+
+    def find_operation_body(nodes)
+      nodes.map do |node|
+        body = xpath(node).query(:name, "body")
+        { "use" => body["use"] }
       end
     end
 
