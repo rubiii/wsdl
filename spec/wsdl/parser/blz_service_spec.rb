@@ -9,7 +9,8 @@ describe WSDL::Parser do
 
     describe "#parse" do
       it "returns the expected result" do
-        subject.parse.should == fixture("blz_service.yml").to_hash
+        definition = subject.parse
+        definition.should have(2).messages
       end
     end
 

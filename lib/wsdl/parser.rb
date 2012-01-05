@@ -1,4 +1,4 @@
-%w(qname xpath namespace).each do |lib|
+%w(node definition message part).each do |lib|
   require File.expand_path("../#{lib}", __FILE__)
 end
 
@@ -12,90 +12,61 @@ module WSDL
     attr_reader :document
 
     def parse
-      @bindings = parse_bindings
-      @services = parse_services
-
-      { "services" => @services }
+      parse_definition(document.root)
     end
 
   private
 
-    def parse_bindings
-      xpath.wsdl(:definitions, :binding).inject({}) do |bindings, binding|
-        details = {}
+    def parse_definition(definition_node)
+      definition = Definition.new
 
-        transport_binding = xpath(binding).query(:name, "binding")
-        if namespace(transport_binding).soap?
-          details["style"] = transport_binding["style"]
-          details["transport"] = transport_binding["transport"]
+      definition.name = definition_node["name"]
+      definition.target_namespace = definition_node["targetNamespace"]
+      definition.namespaces = definition_node.namespaces
+
+      definition_node.children.select(&:element?).each do |child|
+        node = Node.new(child.namespace.href, child.name)
+
+        # TODO: check that the namespace matches the wsdl namespace
+        case node.type
+          when "message" then definition.messages << parse_message(child, definition)
+          else                puts "not implemented. parse_definition for: #{child.name}"
         end
-
-        details["operations"] = find_operations(binding)
-
-        bindings[binding["name"]] = details
-        bindings
       end
+
+      definition
     end
 
-    def parse_services
-      xpath.wsdl(:definitions, :service).inject({}) do |services, service|
-        services[service["name"]] = { "ports" => find_ports(service) }
-        services
-      end
-    end
+    def parse_message(message_node, definition)
+      message = Message.new
+      message.name = message_node["name"]
 
-    def find_operations(binding)
-      xpath(binding).wsdl(:operation).inject({}) do |operations, operation|
-        details = {}
+      message_node.children.select(&:element?).each do |child|
+        node = Node.new(child.namespace.href, child.name)
 
-        transport_operation = xpath(operation).query(:name, "operation")
-        if transport_operation && namespace(transport_operation).soap?
-          # NOTE: Nokogiri Java returns nil instead of an empty String for empty attributes.
-          #       https://github.com/tenderlove/nokogiri/issues/589
-          details["soap_action"] = transport_operation["soapAction"] || ""
-          details["style"] = transport_operation["style"]
-
-          details["input"]  = find_operation_body(xpath(operation).wsdl(:input)).first
-          details["output"] = find_operation_body(xpath(operation).wsdl(:output)).first
-          details["fault"]  = find_operation_body(xpath(operation).wsdl(:fault))
+        # may include one of [documentation, part]
+        case node.type
+          when "part" then message.parts << parse_part(child, definition)
+          else             puts "not implemented. parse_message for: #{child.name}"
         end
-
-        operations[operation["name"]] = details
-        operations
       end
+
+      message
     end
 
-    def find_operation_body(nodes)
-      nodes.map do |node|
-        body = xpath(node).query(:name, "body")
-        { "use" => body["use"] }
-      end
-    end
+    def parse_part(part_node, definition)
+      part = Part.new
 
-    def find_ports(service)
-      xpath(service).wsdl(:port).inject({}) do |ports, port|
-        address_node = port.children.find(&:element?)
-        binding_name = qname(port["binding"]).local
+      part.name = part_node["name"]
+      part.element_name = part_node["element"]
+      part.type_name = part_node["type"]
 
-        ports[port["name"]] = {
-          "type"     => namespace(address_node).type,
-          "location" => address_node["location"],
-          "binding"  => @bindings[binding_name]
-        }
-        ports
-      end
-    end
+      # TODO: skip DOCUMENTATION nodes for now
+      #part_node.children.select(&:element?).each do |child|
+        # may include a documentation node
+      #end
 
-    def qname(node)
-      QName.new(node)
-    end
-
-    def namespace(qname)
-      Namespace.new(qname)
-    end
-
-    def xpath(node = nil)
-      XPath.new node || document
+      part
     end
 
   end
