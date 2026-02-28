@@ -38,7 +38,7 @@ class WSDL
     #   # For a repeating element "items"
     #   # => { items: [{ name: "string" }] }
     #
-    # rubocop:disable Metrics/AbcSize -- straightforward recursive builder, splitting would hurt readability
+    # rubocop:disable Metrics/AbcSize, Metrics/PerceivedComplexity, Metrics/CyclomaticComplexity -- straightforward recursive builder, splitting would hurt readability
     def self.build(parts)
       memo = {}
 
@@ -55,6 +55,9 @@ class WSDL
 
           value.merge! collect_attributes(element) unless element.attributes.empty?
 
+          # Indicate that arbitrary content is allowed via xs:any
+          value.merge! any_content_placeholder if element.any_content?
+
           value = [value] unless element.singular?
           memo[name] = value
 
@@ -63,7 +66,21 @@ class WSDL
 
       memo
     end
-    # rubocop:enable Metrics/AbcSize
+    # rubocop:enable Metrics/AbcSize, Metrics/PerceivedComplexity, Metrics/CyclomaticComplexity
+
+    # Returns a placeholder hash indicating xs:any wildcard content.
+    #
+    # This placeholder shows users that the element accepts arbitrary
+    # XML content beyond the explicitly defined schema elements.
+    #
+    # @return [Hash] a placeholder indicating any content is allowed
+    #
+    # @example
+    #   # => { :"(any)" => "arbitrary XML content allowed" }
+    #
+    def self.any_content_placeholder
+      { '(any)': 'arbitrary XML content allowed' }
+    end
 
     # Collects attributes from an element and formats them for the example hash.
     #

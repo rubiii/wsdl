@@ -9,6 +9,9 @@ class WSDL
   # according to the WSDL-defined message parts. It handles both simple
   # and complex types, as well as singular and array values.
   #
+  # Elements with xs:any wildcards allow arbitrary content to be included
+  # beyond the explicitly defined schema elements.
+  #
   # @api private
   #
   class Message
@@ -131,6 +134,9 @@ class WSDL
 
     # Builds a complex type XML tag with its children.
     #
+    # For elements with xs:any wildcards, any keys in the value hash that
+    # don't correspond to defined children are serialized as arbitrary XML.
+    #
     # @param element [XML::Element] the element definition
     # @param tag [Array] the tag name components
     # @param value [Hash] the value hash
@@ -140,14 +146,74 @@ class WSDL
       attributes, value = extract_attributes(value)
       children = element.children
 
-      if children.any?
-        xml.tag!(*tag, attributes) do |xml|
-          build_elements(children, value, xml)
+      if children.any? || element.any_content?
+        xml.tag!(*tag, attributes) do |nested_xml|
+          build_elements(children, value, nested_xml)
+
+          # Handle xs:any wildcard content - serialize remaining keys
+          build_any_content(children, value, nested_xml) if element.any_content?
         end
       elsif value && value[tag[1]]
         xml.tag!(*tag, value[tag[1]], attributes)
       else
         xml.tag!(*tag, attributes)
+      end
+    end
+
+    # Builds arbitrary XML content for xs:any wildcards.
+    #
+    # Serializes any keys in the value hash that don't correspond to
+    # explicitly defined child elements. This allows users to pass
+    # arbitrary nested data for elements that use xs:any.
+    #
+    # @param children [Array<XML::Element>] the defined child elements
+    # @param value [Hash] the value hash (may contain extra keys)
+    # @param xml [Builder::XmlMarkup] the XML builder
+    # @return [void]
+    def build_any_content(children, value, xml)
+      return unless value.is_a?(Hash)
+
+      # Get names of defined children to exclude them
+      defined_names = children.map { |c| [c.name, c.name.to_sym] }.flatten.to_set
+
+      value.each do |key, val|
+        next if defined_names.include?(key) || defined_names.include?(key.to_s)
+        next if key.to_s.start_with?(ATTRIBUTE_PREFIX)
+
+        build_arbitrary_element(key, val, xml)
+      end
+    end
+
+    # Builds an arbitrary XML element for xs:any content.
+    #
+    # Recursively serializes nested hashes as XML elements, arrays as
+    # repeated elements, and other values as text content.
+    #
+    # @param name [String, Symbol] the element name
+    # @param value [Object] the value to serialize
+    # @param xml [Builder::XmlMarkup] the XML builder
+    # @return [void]
+    def build_arbitrary_element(name, value, xml)
+      tag_name = name.to_sym
+
+      case value
+      when Hash
+        attributes, content = extract_attributes(value.dup)
+        if content.empty?
+          xml.tag!(tag_name, attributes)
+        else
+          xml.tag!(tag_name, attributes) do |nested_xml|
+            content.each do |k, v|
+              build_arbitrary_element(k, v, nested_xml)
+            end
+          end
+        end
+      when Array
+        value.each { |item| build_arbitrary_element(name, item, xml) }
+      when nil
+        xml.tag!(tag_name)
+      else
+        xml.tag!(tag_name, value)
       end
     end
 

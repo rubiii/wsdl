@@ -113,4 +113,103 @@ describe 'Integration with Amazon' do
 ]
     ])
   end
+
+  describe 'xsd:any support' do
+    let(:namespace) { 'http://fps.amazonaws.com/doc/2008-09-17/' }
+
+    it 'marks the Error/Detail element as allowing arbitrary content' do
+      # The Error element has a Detail child with xs:any
+      # <xs:element name="Detail" minOccurs="0">
+      #   <xs:complexType>
+      #     <xs:sequence>
+      #       <xs:any namespace="##any" processContents="lax" minOccurs="0" maxOccurs="unbounded"/>
+      #     </xs:sequence>
+      #   </xs:complexType>
+      # </xs:element>
+
+      schemas = client.wsdl.schemas
+      builder = WSDL::XML::ElementBuilder.new(schemas)
+
+      part = { element: 'tns:Error', namespaces: { 'xmlns:tns' => namespace } }
+      elements = builder.build([part])
+
+      error_element = elements.first
+      expect(error_element.name).to eq('Error')
+
+      detail_element = error_element.children.detect { |c| c.name == 'Detail' }
+      expect(detail_element).not_to be_nil
+      expect(detail_element.any_content?).to be true
+    end
+
+    it 'includes any_content flag in body_parts for elements with xs:any' do
+      schemas = client.wsdl.schemas
+      builder = WSDL::XML::ElementBuilder.new(schemas)
+
+      part = { element: 'tns:Error', namespaces: { 'xmlns:tns' => namespace } }
+      elements = builder.build([part])
+
+      body_parts = elements.first.to_a
+
+      # Find the Detail entry
+      detail_entry = body_parts.detect { |path, _data| path == %w[Error Detail] }
+      expect(detail_entry).not_to be_nil
+
+      _path, data = detail_entry
+      expect(data[:any_content]).to be true
+    end
+
+    it 'generates an example message with placeholder for arbitrary content' do
+      schemas = client.wsdl.schemas
+      builder = WSDL::XML::ElementBuilder.new(schemas)
+
+      part = { element: 'tns:Error', namespaces: { 'xmlns:tns' => namespace } }
+      elements = builder.build([part])
+
+      example = WSDL::ExampleMessage.build(elements)
+
+      # The Detail element should have the any content placeholder
+      detail = example.dig(:Error, :Detail)
+      expect(detail).to include('(any)': 'arbitrary XML content allowed')
+    end
+
+    it 'serializes arbitrary content in elements with xs:any' do
+      schemas = client.wsdl.schemas
+      builder = WSDL::XML::ElementBuilder.new(schemas)
+
+      part = { element: 'tns:Error', namespaces: { 'xmlns:tns' => namespace } }
+      elements = builder.build([part])
+
+      # Create a mock envelope for the Message builder
+      envelope = instance_double(WSDL::Envelope)
+      allow(envelope).to receive(:register_namespace).and_return('ns1')
+
+      message = WSDL::Message.new(envelope, elements)
+
+      # Build with both defined and arbitrary content in Detail
+      result = message.build({
+        Error: {
+          Type: 'Sender',
+          Code: 'InvalidParameterValue',
+          Message: 'Value for parameter is invalid.',
+          Detail: {
+            # Arbitrary content via xs:any
+            Parameter: 'Amount',
+            ExpectedType: 'Decimal',
+            ReceivedValue: 'not-a-number'
+          }
+        }
+      })
+
+      # Verify defined elements are serialized
+      expect(result).to include('<ns1:Type>Sender</ns1:Type>')
+      expect(result).to include('<ns1:Code>InvalidParameterValue</ns1:Code>')
+      expect(result).to include('<ns1:Message>Value for parameter is invalid.</ns1:Message>')
+
+      # Verify arbitrary content is serialized
+      expect(result).to include('<ns1:Detail>')
+      expect(result).to include('<Parameter>Amount</Parameter>')
+      expect(result).to include('<ExpectedType>Decimal</ExpectedType>')
+      expect(result).to include('<ReceivedValue>not-a-number</ReceivedValue>')
+    end
+  end
 end

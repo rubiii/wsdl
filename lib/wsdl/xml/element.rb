@@ -22,10 +22,11 @@ class WSDL
     class Element
       # Creates a new Element with default values.
       def initialize
-        @children   = []
-        @attributes = {}
-        @recursive  = false
-        @singular   = true
+        @children    = []
+        @attributes  = {}
+        @recursive   = false
+        @singular    = true
+        @any_content = false
       end
 
       # @!attribute [rw] parent
@@ -107,6 +108,14 @@ class WSDL
       #   @return [Array<Element>] the child elements
       attr_accessor :children
 
+      # @!attribute [rw] any_content
+      #   Whether this element allows arbitrary content via xs:any wildcard.
+      #   When true, the element can contain any well-formed XML elements
+      #   beyond those explicitly defined in the schema.
+      #   @return [Boolean] true if arbitrary content is allowed
+      attr_accessor :any_content
+      alias any_content? any_content
+
       # @!attribute [rw] attributes
       #   The XML attributes defined on this element.
       #   @return [Array<Attribute>] the attribute definitions
@@ -129,7 +138,7 @@ class WSDL
       #   #      [["user", "name"], { namespace: nil, form: "unqualified", singular: true, type: "xsd:string" }]
       #   #    ]
       #
-      # rubocop:disable Metrics/AbcSize -- straightforward tree traversal, splitting would hurt readability
+      # rubocop:disable Metrics/AbcSize, Metrics/PerceivedComplexity, Metrics/CyclomaticComplexity -- straightforward tree traversal, splitting would hurt readability
       def to_a(memo = [], stack = [])
         new_stack = stack + [name]
         data = { namespace: namespace, form: form, singular: singular? }
@@ -149,6 +158,7 @@ class WSDL
           memo << [new_stack, data]
 
         elsif complex_type?
+          data[:any_content] = true if any_content?
           memo << [new_stack, data]
 
           children.each do |child|
@@ -159,7 +169,7 @@ class WSDL
 
         memo
       end
-      # rubocop:enable Metrics/AbcSize
+      # rubocop:enable Metrics/AbcSize, Metrics/PerceivedComplexity, Metrics/CyclomaticComplexity
     end
   end
 end

@@ -14,8 +14,7 @@ class WSDL
     # loops during element building.
     #
     # @api private
-    #
-    # rubocop:disable Metrics/ClassLength -- cohesive builder class, splitting would create artificial boundaries
+    # # -- cohesive builder class, splitting would create artificial boundaries
     class ElementBuilder
       # Creates a new ElementBuilder instance.
       #
@@ -92,20 +91,23 @@ class WSDL
 
       # Applies type information to an element.
       #
-      # Handles three cases:
+      # Handles four cases:
       # - ComplexType: Sets up child elements and attributes
       # - SimpleType: Sets the base type from the restriction
       # - String: Sets the base type directly (built-in type)
+      # - nil: Element may have any content (e.g., inline xs:any)
       #
       # @param element [Element] the element to configure
-      # @param type [XS::ComplexType, XS::SimpleType, String] the type information
+      # @param type [XS::ComplexType, XS::SimpleType, String, nil] the type information
       # @return [void]
       def handle_type(element, type)
         case type
 
         when XS::ComplexType
           element.complex_type_id = type.id
-          element.children = child_elements(element, type)
+          children_and_wildcards = child_elements(element, type)
+          element.children = children_and_wildcards[:elements]
+          element.any_content = children_and_wildcards[:has_any]
           element.attributes = element_attributes(type)
 
         when XS::SimpleType
@@ -168,13 +170,23 @@ class WSDL
       #
       # Processes each child element in the type, resolving references and
       # types. Detects recursive type definitions to prevent infinite loops.
+      # Also detects xs:any wildcards to mark elements that allow arbitrary content.
       #
       # @param parent [Element] the parent element
       # @param type [XS::ComplexType] the complex type to extract children from
-      # @return [Array<Element>] the built child elements
+      # @return [Hash] a hash with :elements (Array<Element>) and :has_any (Boolean)
       # rubocop:disable Metrics/AbcSize -- cohesive element-building logic, splitting would hurt readability
       def child_elements(parent, type)
-        type.elements.map do |child_element|
+        has_any = false
+        elements = []
+
+        type.elements.each do |child_element|
+          # Check if this is an xs:any wildcard
+          if child_element.is_a?(XS::Any)
+            has_any = true
+            next
+          end
+
           el = Element.new
           el.parent = parent
 
@@ -195,12 +207,14 @@ class WSDL
           if recursive_child_definition? parent, child_element
             el.recursive_type = child_element.type
           else
-            type = find_type_for_element(child_element)
-            handle_type(el, type)
+            child_type = find_type_for_element(child_element)
+            handle_type(el, child_type)
           end
 
-          el
+          elements << el
         end
+
+        { elements: elements, has_any: has_any }
       end
       # rubocop:enable Metrics/AbcSize
 
@@ -334,7 +348,6 @@ class WSDL
 
         [local, namespace]
       end
-      # rubocop:enable Metrics/ClassLength
     end
   end
 end

@@ -139,9 +139,9 @@ class WSDL
 
       # envelope namespace
       namespaces['xmlns:env'] = case @operation.soap_version
-                                when '1.1' then 'http://schemas.xmlsoap.org/soap/envelope/'
-                                when '1.2' then 'http://www.w3.org/2003/05/soap-envelope'
-                                end
+      when '1.1' then 'http://schemas.xmlsoap.org/soap/envelope/'
+      when '1.2' then 'http://www.w3.org/2003/05/soap-envelope'
+      end
 
       namespaces
     end

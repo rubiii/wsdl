@@ -31,11 +31,14 @@ Metrics/BlockLength:
     - 'spec/**/*'
     - '*.gemspec'
 
+Metrics/ClassLength:
+  Max: 200
+
 Metrics/MethodLength:
-  Max: 22
+  Max: 29
 
 Metrics/AbcSize:
-  Max: 20
+  Max: 19
 
 Layout/CaseIndentation:
   IndentOneStep: false
@@ -57,10 +60,6 @@ Layout/MultilineArrayBraceLayout:
   EnforcedStyle: new_line
 
 # RSpec cops configuration
-
-RSpec/DescribeClass:
-  Exclude:
-    - 'spec/integration/**/*'
 
 RSpec/ExampleLength:
   Enabled: false
@@ -96,3 +95,12 @@ RSpec/StubbedMock:
 
 RSpec/MessageSpies:
   Enabled: false
+
+RSpec/MultipleMemoizedHelpers:
+  Enabled: false
+
+RSpec/MultipleDescribes:
+  Enabled: false
+
+RSpec/DescribeClass:
+   Enabled: false
