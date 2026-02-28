@@ -6,6 +6,7 @@
 - [Inspecting Services](inspecting-services.md)
 - [Building Requests](building-requests.md)
 - [Handling Responses](handling-responses.md)
+- [Resolving Imports](resolving-imports.md)
 - [Configuration](configuration.md)
 
 ## Overview

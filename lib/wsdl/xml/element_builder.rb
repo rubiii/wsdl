@@ -324,12 +324,13 @@ class WSDL
 
       # Expands a qualified name to local name and namespace URI.
       #
-      # @param qname [String] the qualified name (prefix:localName)
+      # @param qname [String] the qualified name (prefix:localName or just localName)
       # @param namespaces [Hash] namespace declarations (xmlns:prefix => URI)
       # @return [Array<String, String>] a tuple of [localName, namespaceURI]
       def expand_qname(qname, namespaces)
         local, nsid = split_qname(qname)
-        namespace = namespaces["xmlns:#{nsid}"]
+        # When there's no prefix (nsid is nil), use the default namespace (xmlns)
+        namespace = nsid ? namespaces["xmlns:#{nsid}"] : namespaces['xmlns']
 
         [local, namespace]
       end

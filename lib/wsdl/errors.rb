@@ -32,4 +32,21 @@ class WSDL
   #
   class UnsupportedStyleError < Error
   end
+
+  # Raised when a relative schema import/include cannot be resolved.
+  #
+  # This typically occurs when loading a WSDL from inline XML that contains
+  # relative schemaLocation references. Relative paths require a base location
+  # (file path or URL) to resolve against.
+  #
+  # @example
+  #   begin
+  #     # This will fail if the inline XML has relative imports
+  #     wsdl = WSDL.new('<definitions>...</definitions>')
+  #   rescue WSDL::UnresolvableImportError => e
+  #     puts "Cannot resolve import: #{e.message}"
+  #   end
+  #
+  class UnresolvableImportError < Error
+  end
 end

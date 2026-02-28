@@ -270,7 +270,8 @@ class WSDL
       def collect_child_elements(memo = [])
         if @node['base']
           local, nsid = @node['base'].split(':').reverse
-          namespace = @node.namespaces["xmlns:#{nsid}"]
+          # When there's no prefix (nsid is nil), use the schema's target namespace
+          namespace = nsid ? @node.namespaces["xmlns:#{nsid}"] : @schema[:target_namespace]
 
           if (complex_type = @schemas.complex_type(namespace, local))
             memo += complex_type.elements
@@ -399,7 +400,8 @@ class WSDL
       def collect_attributes(memo = [])
         if @node['ref']
           local, nsid = @node['ref'].split(':').reverse
-          namespace = @node.namespaces["xmlns:#{nsid}"]
+          # When there's no prefix (nsid is nil), use the schema's target namespace
+          namespace = nsid ? @node.namespaces["xmlns:#{nsid}"] : @schema[:target_namespace]
 
           attribute_group = @schemas.attribute_group(namespace, local)
           memo + attribute_group.attributes

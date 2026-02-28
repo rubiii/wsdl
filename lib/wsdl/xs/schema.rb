@@ -8,8 +8,8 @@ class WSDL
     #
     # This class parses an XML Schema and provides access to its components
     # including elements, complex types, simple types, attributes, and
-    # attribute groups. It also tracks schema imports for resolving
-    # cross-schema references.
+    # attribute groups. It also tracks schema imports and includes for
+    # resolving cross-schema references.
     #
     # @api private
     #
@@ -18,9 +18,11 @@ class WSDL
       #
       # @param schema [Nokogiri::XML::Node] the xs:schema element
       # @param schemas [SchemaCollection] the parent schema collection for resolving references
-      def initialize(schema, schemas)
+      # @param source_location [String, nil] the location this schema was loaded from
+      def initialize(schema, schemas, source_location = nil)
         @schema = schema
         @schemas = schemas
+        @source_location = source_location
 
         @target_namespace     = @schema['targetNamespace']
         @element_form_default = @schema['elementFormDefault'] || 'unqualified'
@@ -31,6 +33,7 @@ class WSDL
         @complex_types    = {}
         @simple_types     = {}
         @imports          = {}
+        @includes         = []
 
         parse
       end
@@ -45,10 +48,22 @@ class WSDL
       #   @return [String] 'qualified' or 'unqualified' (default)
       attr_accessor :element_form_default
 
+      # @!attribute [rw] source_location
+      #   The location this schema was loaded from.
+      #   Used for resolving relative imports/includes.
+      #   @return [String, nil] the source file path or URL
+      attr_accessor :source_location
+
       # @!attribute [rw] imports
       #   Schema import declarations (namespace => schemaLocation).
       #   @return [Hash<String, String>] namespace to schema location mappings
       attr_accessor :imports
+
+      # @!attribute [rw] includes
+      #   Schema include declarations (array of schemaLocation strings).
+      #   Includes bring in components from the same namespace.
+      #   @return [Array<String>] schema locations to include
+      attr_accessor :includes
 
       # @!attribute [rw] attributes
       #   Global attribute declarations in this schema.
@@ -75,6 +90,27 @@ class WSDL
       #   @return [Hash<String, SimpleType>] type name to simple type mappings
       attr_accessor :simple_types
 
+      # Merges another schema's contents into this schema.
+      #
+      # This is used for xs:include processing, where the included schema's
+      # components should be merged into the including schema as if they
+      # were defined there. Both schemas must have the same target namespace
+      # (or the included schema can have no namespace).
+      #
+      # @param other [Schema] the schema to merge into this one
+      # @return [void]
+      def merge(other)
+        @attributes.merge!(other.attributes)
+        @attribute_groups.merge!(other.attribute_groups)
+        @elements.merge!(other.elements)
+        @complex_types.merge!(other.complex_types)
+        @simple_types.merge!(other.simple_types)
+
+        # Also merge any imports/includes from the included schema
+        @imports.merge!(other.imports)
+        @includes.concat(other.includes)
+      end
+
       private
 
       # Parses the schema node and populates the component collections.
@@ -98,6 +134,7 @@ class WSDL
           when 'complexType'    then store_element(@complex_types, node, schema)
           when 'simpleType'     then store_element(@simple_types, node, schema)
           when 'import'         then store_import(node)
+          when 'include'        then store_include(node)
           end
         end
       end
@@ -119,6 +156,15 @@ class WSDL
       # @return [void]
       def store_import(node)
         @imports[node['namespace']] = node['schemaLocation']
+      end
+
+      # Stores an include declaration.
+      #
+      # @param node [Nokogiri::XML::Node] the xs:include element
+      # @return [void]
+      def store_include(node)
+        schema_location = node['schemaLocation']
+        @includes << schema_location if schema_location
       end
     end
   end

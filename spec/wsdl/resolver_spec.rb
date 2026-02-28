@@ -33,4 +33,65 @@ describe WSDL::Resolver do
     xml = resolver.resolve(string)
     expect(xml).to eq(string)
   end
+
+  describe 'relative path resolution' do
+    it 'resolves relative paths against a file base' do
+      base = '/path/to/wsdl/service.wsdl'
+      relative = '../schemas/types.xsd'
+
+      resolved = resolver.resolve_location(relative, base)
+      expect(resolved).to eq('/path/to/schemas/types.xsd')
+    end
+
+    it 'resolves relative paths against a URL base' do
+      base = 'http://example.com/wsdl/service.wsdl'
+      relative = '../schemas/types.xsd'
+
+      resolved = resolver.resolve_location(relative, base)
+      expect(resolved).to eq('http://example.com/schemas/types.xsd')
+    end
+
+    it 'returns absolute URLs unchanged' do
+      absolute = 'http://example.com/schemas/types.xsd'
+
+      resolved = resolver.resolve_location(absolute, '/some/base.wsdl')
+      expect(resolved).to eq(absolute)
+    end
+
+    it 'returns absolute file paths unchanged' do
+      absolute = '/absolute/path/to/schema.xsd'
+
+      resolved = resolver.resolve_location(absolute, '/some/base.wsdl')
+      expect(resolved).to eq(absolute)
+    end
+
+    it 'returns raw XML unchanged' do
+      xml = '<schema/>'
+
+      resolved = resolver.resolve_location(xml, '/some/base.wsdl')
+      expect(resolved).to eq(xml)
+    end
+
+    it 'identifies relative locations' do
+      expect(resolver.relative_location?('relative/path.xsd')).to be true
+      expect(resolver.relative_location?('../path.xsd')).to be true
+      expect(resolver.relative_location?('http://example.com/path.xsd')).to be false
+      expect(resolver.relative_location?('/absolute/path.xsd')).to be false
+      expect(resolver.relative_location?('<xml/>')).to be false
+    end
+  end
+
+  describe 'error handling for relative paths' do
+    it 'resolves against current directory when base is nil' do
+      # This supports loading initial WSDL from relative paths like "path/to/service.wsdl"
+      resolved = resolver.resolve_location('relative/path.xsd', nil)
+      expect(resolved).to eq(File.expand_path('relative/path.xsd'))
+    end
+
+    it 'raises UnresolvableImportError when base is inline XML' do
+      expect {
+        resolver.resolve_location('relative/path.xsd', '<definitions/>')
+      }.to raise_error(WSDL::UnresolvableImportError, /base is inline XML/)
+    end
+  end
 end

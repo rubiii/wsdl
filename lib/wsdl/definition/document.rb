@@ -68,9 +68,11 @@ class WSDL
       #
       # Schemas are typically found within the wsdl:types element.
       #
+      # @param source_location [String, nil] the location this document was loaded from,
+      #   used for resolving relative imports/includes within the schemas
       # @return [Array<XS::Schema>] the parsed schema objects
-      def schemas
-        schema_nodes.map { |node| XS::Schema.new(node, @schemas) }
+      def schemas(source_location = nil)
+        schema_nodes.map { |node| XS::Schema.new(node, @schemas, source_location) }
       end
 
       # Returns the locations of imported WSDL documents.
