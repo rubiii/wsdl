@@ -40,6 +40,18 @@ describe Sekken::Operation do
     end
   end
 
+  describe '#input_style' do
+    it 'returns the input style for the operation' do
+      expect(operation.input_style).to eq('document/literal')
+    end
+  end
+
+  describe '#output_style' do
+    it 'returns the output style for the operation' do
+      expect(operation.output_style).to eq('document/literal')
+    end
+  end
+
   describe '#encoding' do
     it 'defaults to UTF-8' do
       expect(operation.encoding).to eq('UTF-8')

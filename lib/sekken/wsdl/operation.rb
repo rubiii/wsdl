@@ -39,7 +39,7 @@ class Sekken
       end
 
       def output_style
-        "#{@binding_operation.style}/#{@binding_operation.output[:body][:use]}"
+        "#{@binding_operation.style}/#{@binding_operation.output_body[:use]}"
       end
 
     end

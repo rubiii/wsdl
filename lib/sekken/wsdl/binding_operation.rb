@@ -57,6 +57,42 @@ class Sekken
         @input_body = input_body
       end
 
+      # TODO: maybe use proper classes to clean this up.
+      def output_headers
+        return @output_headers if @output_headers
+        output_headers = []
+
+        if header_nodes = find_output_child_nodes('header')
+          header_nodes.each do |header_node|
+            output_headers << {
+              encoding_style: header_node['encodingStyle'],
+              namespace:      header_node['namespace'],
+              use:            header_node['use'],
+              message:        header_node['message'],
+              part:           header_node['part']
+            }
+          end
+        end
+
+        @output_headers = output_headers
+      end
+
+      # TODO: maybe use proper classes to clean this up.
+      def output_body
+        return @output_body if @output_body
+        output_body = {}
+
+        if body_node = find_output_child_nodes('body').first
+          output_body = {
+            encoding_style: body_node['encodingStyle'],
+            namespace:      body_node['namespace'],
+            use:            body_node['use']
+          }
+        end
+
+        @output_body = output_body
+      end
+
       private
 
       def find_input_child_nodes(child_name)
@@ -64,6 +100,13 @@ class Sekken
         return unless input_node
 
         input_node.element_children.select { |node| node.name == child_name }
+      end
+
+      def find_output_child_nodes(child_name)
+        output_node = @operation_node.element_children.find { |node| node.name == 'output' }
+        return unless output_node
+
+        output_node.element_children.select { |node| node.name == child_name }
       end
 
       def find_soap_operation_node
