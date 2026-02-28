@@ -107,6 +107,101 @@ client = WSDL.new('http://example.com/service?wsdl', http)
 WSDL.http_adapter = nil
 ```
 
+## Caching
+
+By default, the library caches parsed WSDL definitions in memory. This significantly improves performance in multithreaded environments where multiple threads may need to access the same WSDL, avoiding redundant HTTP requests and XML parsing.
+
+### How It Works
+
+When you create a `WSDL` instance, the parsed definition is cached by its location (URL or file path). Subsequent requests for the same WSDL return the cached definition:
+
+``` ruby
+# First call fetches and parses the WSDL
+client1 = WSDL.new('http://example.com/service?wsdl')
+
+# Second call returns the cached definition - no HTTP request
+client2 = WSDL.new('http://example.com/service?wsdl')
+```
+
+For inline XML (raw WSDL strings), the cache key is a SHA256 hash of the content.
+
+### Configuring the Cache
+
+#### Using a Custom Cache with TTL
+
+``` ruby
+# Create a cache with 1-hour TTL
+WSDL.cache = WSDL::Cache.new(ttl: 3600)
+```
+
+#### Clearing the Cache
+
+``` ruby
+WSDL.cache.clear
+```
+
+#### Disabling Caching Globally
+
+``` ruby
+WSDL.cache = nil
+```
+
+#### Disabling Caching Per-Client
+
+``` ruby
+client = WSDL.new('http://example.com/service?wsdl', cache: nil)
+```
+
+#### Using a Separate Cache Instance
+
+``` ruby
+my_cache = WSDL::Cache.new(ttl: 1800)
+client = WSDL.new('http://example.com/service?wsdl', cache: my_cache)
+```
+
+### Custom Cache Implementation
+
+You can provide your own cache implementation (e.g., Redis, Memcached) by implementing the `fetch` method:
+
+``` ruby
+class RedisCache
+  def initialize(redis, ttl: nil)
+    @redis = redis
+    @ttl = ttl
+  end
+
+  def fetch(key)
+    cached = @redis.get(cache_key(key))
+    return Marshal.load(cached) if cached
+
+    value = yield
+    if @ttl
+      @redis.setex(cache_key(key), @ttl, Marshal.dump(value))
+    else
+      @redis.set(cache_key(key), Marshal.dump(value))
+    end
+    value
+  end
+
+  def clear
+    @redis.keys('wsdl:*').each { |k| @redis.del(k) }
+  end
+
+  private
+
+  def cache_key(key)
+    "wsdl:#{Digest::SHA256.hexdigest(key)}"
+  end
+end
+
+# Use the custom cache
+WSDL.cache = RedisCache.new(Redis.new, ttl: 3600)
+```
+
+### Thread Safety
+
+The built-in `WSDL::Cache` is thread-safe. It uses a mutex to ensure that concurrent requests for the same uncached WSDL only trigger a single fetch operation.
+
 ## Operation Defaults
 
 Operation settings can be configured after obtaining an operation object.

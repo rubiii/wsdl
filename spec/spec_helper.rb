@@ -38,4 +38,10 @@ RSpec.configure do |config|
   config.include SpecSupport
   config.mock_with :rspec
   config.order = 'random'
+
+  # Disable caching by default to prevent test pollution.
+  # Tests that specifically test caching should enable it explicitly.
+  config.before do
+    WSDL.cache = nil
+  end
 end

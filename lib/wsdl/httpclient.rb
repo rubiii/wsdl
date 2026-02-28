@@ -41,8 +41,8 @@ class WSDL
     rescue LoadError
       raise LoadError,
             "The httpclient gem is required for the default HTTP adapter.\n" \
-            "Either add `gem 'httpclient'` to your Gemfile, or configure a custom adapter:\n\n" \
-            "  WSDL.http_adapter = MyCustomAdapter\n\n" \
+            "Either add `gem 'httpclient'` to your Gemfile, or configure a custom adapter:\n\n  " \
+            "WSDL.http_adapter = MyCustomAdapter\n\n" \
             'See WSDL::HTTPClient documentation for the adapter interface.'
     end
 

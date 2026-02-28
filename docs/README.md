@@ -36,6 +36,12 @@ op = client.operation('ServiceName', 'PortName', 'OperationName')
 op.example_body                                    # See expected structure
 op.body = { ... }                                  # Set request body
 response = op.call                                 # Make the call
+
+# Caching (enabled by default)
+WSDL.cache.clear                                   # Clear the cache
+WSDL.cache = WSDL::Cache.new(ttl: 3600)            # Use TTL (seconds)
+WSDL.cache = nil                                   # Disable caching globally
+WSDL.new(url, cache: nil)                          # Disable per-client
 ```
 
 ## Support

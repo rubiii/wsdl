@@ -32,6 +32,32 @@ describe WSDL do
     end
   end
 
+  describe '.cache' do
+    it 'returns a default Cache instance when not nil' do
+      described_class.cache = WSDL::Cache.new
+      expect(described_class.cache).to be_an_instance_of(WSDL::Cache)
+    end
+
+    it 'returns the same instance on subsequent calls' do
+      described_class.cache = WSDL::Cache.new
+      first_call = described_class.cache
+      second_call = described_class.cache
+      expect(first_call).to be(second_call)
+    end
+
+    it 'can be changed to use a custom cache' do
+      custom_cache = WSDL::Cache.new(ttl: 3600)
+
+      described_class.cache = custom_cache
+      expect(described_class.cache).to be(custom_cache)
+    end
+
+    it 'returns nil when set to nil' do
+      described_class.cache = nil
+      expect(described_class.cache).to be_nil
+    end
+  end
+
   describe '.new' do
     it 'expects a local or remote WSDL document' do
       expect(WSDL::Definition).to receive(:new).with(wsdl,
@@ -44,6 +70,67 @@ describe WSDL do
       expect(WSDL::Definition).to receive(:new).with(wsdl, http).and_return(:wasabi)
 
       described_class.new(wsdl, http: http)
+    end
+
+    context 'with caching enabled' do
+      before do
+        described_class.cache = WSDL::Cache.new
+      end
+
+      it 'caches parsed definitions by default' do
+        definition_count = 0
+        allow(WSDL::Definition).to receive(:new) do |_, _|
+          definition_count += 1
+          instance_double(WSDL::Definition, services: {}, operations: [])
+        end
+
+        described_class.new(wsdl)
+        described_class.new(wsdl)
+
+        expect(definition_count).to eq(1)
+      end
+
+      it 'allows disabling cache with cache: nil' do
+        definition_count = 0
+        allow(WSDL::Definition).to receive(:new) do |_, _|
+          definition_count += 1
+          instance_double(WSDL::Definition, services: {}, operations: [])
+        end
+
+        described_class.new(wsdl, cache: nil)
+        described_class.new(wsdl, cache: nil)
+
+        expect(definition_count).to eq(2)
+      end
+
+      it 'allows using a custom cache instance' do
+        custom_cache = WSDL::Cache.new
+        definition_count = 0
+        allow(WSDL::Definition).to receive(:new) do |_, _|
+          definition_count += 1
+          instance_double(WSDL::Definition, services: {}, operations: [])
+        end
+
+        described_class.new(wsdl, cache: custom_cache)
+        described_class.new(wsdl, cache: custom_cache)
+
+        expect(definition_count).to eq(1)
+        expect(custom_cache.size).to eq(1)
+      end
+
+      it 'caches inline XML using content hash' do
+        inline_xml = File.read(wsdl)
+        definition_count = 0
+        allow(WSDL::Definition).to receive(:new) do |_, _|
+          definition_count += 1
+          instance_double(WSDL::Definition, services: {}, operations: [])
+        end
+
+        described_class.new(inline_xml)
+        described_class.new(inline_xml)
+
+        expect(definition_count).to eq(1)
+      end
     end
   end
 

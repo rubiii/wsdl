@@ -4,6 +4,7 @@ require 'logging'
 
 require 'wsdl/version'
 require 'wsdl/errors'
+require 'wsdl/cache'
 require 'wsdl/definition'
 require 'wsdl/operation'
 require 'wsdl/httpclient'
@@ -51,6 +52,33 @@ class WSDL
     attr_writer :http_adapter
   end
 
+  # Returns the default cache instance for parsed WSDL definitions.
+  #
+  # By default, a shared {Cache} instance is used to avoid redundant
+  # HTTP requests and parsing when creating multiple WSDL instances
+  # for the same document.
+  #
+  # @return [Cache, nil] the cache instance, or nil if caching is disabled
+  def self.cache
+    return @cache if defined?(@cache)
+
+    @cache = Cache.new
+  end
+
+  # Sets the default cache instance.
+  #
+  # @param cache [Cache, nil] a cache instance, or nil to disable caching
+  # @return [Cache, nil] the cache instance
+  #
+  # @example Using a custom cache with TTL
+  #   WSDL.cache = WSDL::Cache.new(ttl: 3600)
+  #
+  # @example Disabling caching globally
+  #   WSDL.cache = nil
+  class << self
+    attr_writer :cache
+  end
+
   # Creates a new WSDL instance.
   #
   # @param wsdl [String] a URL, file path, or raw XML string of the WSDL document
@@ -59,6 +87,8 @@ class WSDL
   # @param pretty_print [Boolean] whether to format XML output with indentation
   #   and margins. Set to `false` for whitespace-sensitive SOAP servers.
   #   Defaults to `true`.
+  # @param cache [Cache, nil, :default] the cache to use for parsed definitions.
+  #   Defaults to {.cache}. Pass `nil` to disable caching for this instance.
   #
   # @example Basic usage
   #   wsdl = WSDL.new('http://example.com/service?wsdl')
@@ -68,9 +98,16 @@ class WSDL
   #
   # @example Disable pretty printing for whitespace-sensitive servers
   #   wsdl = WSDL.new('http://example.com/service?wsdl', pretty_print: false)
-  def initialize(wsdl, http: nil, pretty_print: true)
+  #
+  # @example Disable caching for this instance
+  #   wsdl = WSDL.new('http://example.com/service?wsdl', cache: nil)
+  #
+  # @example Use a custom cache with TTL
+  #   my_cache = WSDL::Cache.new(ttl: 3600)
+  #   wsdl = WSDL.new('http://example.com/service?wsdl', cache: my_cache)
+  def initialize(wsdl, http: nil, pretty_print: true, cache: :default)
     @http = http || new_http_client
-    @wsdl = Definition.new(wsdl, @http)
+    @wsdl = load_definition(wsdl, cache)
     @pretty_print = pretty_print
   end
 
@@ -127,6 +164,21 @@ class WSDL
   end
 
   private
+
+  # Loads the WSDL definition, using cache if available.
+  #
+  # @param wsdl [String] the WSDL location or content
+  # @param cache [Cache, nil, :default] the cache to use
+  # @return [Definition] the parsed definition
+  def load_definition(wsdl, cache)
+    cache = self.class.cache if cache == :default
+
+    if cache
+      cache.fetch(wsdl) { Definition.new(wsdl, @http) }
+    else
+      Definition.new(wsdl, @http)
+    end
+  end
 
   # Returns a new instance of the HTTP adapter.
   #

@@ -52,14 +52,14 @@ describe WSDL::XS::SchemaCollection do
       it 'raises a helpful error with the namespace' do
         expect { collection.element('http://unknown.com', 'Bar') }.to raise_error(
           RuntimeError,
-          /Unable to find element 'Bar' - no schema found for namespace "http:\/\/unknown.com"/
+          %r{Unable to find element 'Bar' - no schema found for namespace "http://unknown.com"}
         )
       end
 
       it 'lists available namespaces' do
         expect { collection.element('http://unknown.com', 'Bar') }.to raise_error(
           RuntimeError,
-          /Available namespaces: "http:\/\/example.com\/test"/
+          %r{Available namespaces: "http://example.com/test"}
         )
       end
     end
@@ -172,7 +172,7 @@ describe WSDL::XS::SchemaCollection do
     it 'lists all available namespaces in error message' do
       expect { collection.element('http://missing.com', 'Test') }.to raise_error(
         RuntimeError,
-        /Available namespaces:.*"http:\/\/example.com\/test".*"http:\/\/example.com\/other"/
+        %r{Available namespaces:.*"http://example.com/test".*"http://example.com/other"}
       )
     end
   end
