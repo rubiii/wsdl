@@ -32,6 +32,10 @@ class Sekken
       doc.xpath(path, namespaces || xml_namespaces)
     end
 
+    def xml_namespaces
+      @xml_namespaces ||= doc.collect_namespaces
+    end
+
     private
 
     def nori
