@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'nori'
+require_relative 'xml_hash'
 
 class WSDL
   # Represents a SOAP response from an operation call.
@@ -66,7 +66,7 @@ class WSDL
     #
     # @return [Hash] the complete parsed envelope
     def hash
-      @hash ||= nori.parse(raw)
+      @hash ||= XmlHash.parse(doc)
     end
 
     # Returns the response as a Nokogiri XML document.
@@ -105,23 +105,6 @@ class WSDL
     #   #      "xmlns:ns1" => "http://example.com/users" }
     def xml_namespaces
       @xml_namespaces ||= doc.collect_namespaces
-    end
-
-    private
-
-    # Returns a configured Nori parser instance.
-    #
-    # @return [Nori] the parser configured for SOAP responses
-    def nori
-      return @nori if @nori
-
-      nori_options = {
-        strip_namespaces: true,
-        convert_tags_to: ->(tag) { tag.snakecase.to_sym }
-      }
-
-      non_nil_nori_options = nori_options.compact
-      @nori = Nori.new(non_nil_nori_options)
     end
   end
 end

@@ -37,6 +37,13 @@ Metrics/MethodLength:
 Metrics/AbcSize:
   Max: 20
 
+Layout/CaseIndentation:
+  IndentOneStep: false
+  EnforcedStyle: end
+
+Layout/EndAlignment:
+  EnforcedStyleAlignWith: variable
+
 Layout/FirstHashElementIndentation:
   EnforcedStyle: consistent
 
