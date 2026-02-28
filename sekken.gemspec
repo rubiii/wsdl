@@ -12,7 +12,7 @@ Gem::Specification.new do |s|
   s.homepage    = 'http://savonrb.com'
   s.summary     = 'Next-Gen SOAP client'
   s.description = 'Sekken is an experimental SOAP client for the Ruby community.'
-  s.required_ruby_version = '>= 1.9.3'
+  s.required_ruby_version = '>= 3.2'
 
   s.license = 'MIT'
 
