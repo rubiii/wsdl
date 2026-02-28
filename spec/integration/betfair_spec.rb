@@ -2,7 +2,7 @@ require 'spec_helper'
 
 describe 'Integration with Betfair' do
 
-  subject(:client) { Sekken.new fixture('wsdl/betfair') }
+  subject(:client) { WSDL.new fixture('wsdl/betfair') }
 
   let(:service_name) { :BFExchangeService }
   let(:port_name)    { :BFExchangeService }

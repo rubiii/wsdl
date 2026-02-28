@@ -2,7 +2,7 @@ require 'spec_helper'
 
 describe 'Integration with Oracle' do
 
-  subject(:client) { Sekken.new fixture('wsdl/oracle') }
+  subject(:client) { WSDL.new fixture('wsdl/oracle') }
 
   it 'returns a map of services and ports' do
     expect(client.services).to include(

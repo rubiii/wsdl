@@ -2,7 +2,7 @@ require 'spec_helper'
 
 describe 'Integration with Amazon' do
 
-  subject(:client) { Sekken.new fixture('wsdl/amazon') }
+  subject(:client) { WSDL.new fixture('wsdl/amazon') }
 
   it 'returns a map of services and ports' do
     expect(client.services).to eq(

@@ -2,7 +2,7 @@
 
 describe 'Integration with RATP' do
 
-  subject(:client) { Sekken.new fixture('wsdl/ratp') }
+  subject(:client) { WSDL.new fixture('wsdl/ratp') }
 
   let(:service_name) { :Wsiv }
   let(:port_name)    { :WsivSOAP11port_http }

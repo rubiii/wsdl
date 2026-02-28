@@ -2,7 +2,7 @@ require 'spec_helper'
 
 describe 'Integration with a Document/Literal example' do
 
-  subject(:client) { Sekken.new fixture('wsdl/document_literal_wrapped') }
+  subject(:client) { WSDL.new fixture('wsdl/document_literal_wrapped') }
 
   let(:service_name) { :SampleService }
   let(:port_name)    { :Sample }

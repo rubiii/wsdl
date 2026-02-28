@@ -2,7 +2,7 @@ require 'spec_helper'
 
 describe 'Integration with Bronto' do
 
-  subject(:client) { Sekken.new fixture('wsdl/bronto') }
+  subject(:client) { WSDL.new fixture('wsdl/bronto') }
 
   let(:service_name) { :BrontoSoapApiImplService }
   let(:port_name)    { :BrontoSoapApiImplPort }

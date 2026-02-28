@@ -2,7 +2,7 @@ require 'spec_helper'
 
 describe 'Integration with DataExchange' do
 
-  subject(:client) { Sekken.new fixture('wsdl/data_exchange') }
+  subject(:client) { WSDL.new fixture('wsdl/data_exchange') }
 
   it 'returns a map of services and ports' do
     expect(client.services).to eq(
@@ -21,7 +21,7 @@ describe 'Integration with DataExchange' do
     service = port = 'DataExchange'
 
     expect { client.operation(service, port, 'submit') }.
-      to raise_error(Sekken::UnsupportedStyleError, /"submit" is an "rpc\/encoded" style operation/)
+      to raise_error(WSDL::UnsupportedStyleError, /"submit" is an "rpc\/encoded" style operation/)
   end
 
 end

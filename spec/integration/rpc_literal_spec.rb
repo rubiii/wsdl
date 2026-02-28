@@ -2,7 +2,7 @@ require 'spec_helper'
 
 describe 'Integration with an RPC/Literal example' do
 
-  subject(:client) { Sekken.new fixture('wsdl/rpc_literal') }
+  subject(:client) { WSDL.new fixture('wsdl/rpc_literal') }
 
   let(:service_name) { :SampleService }
   let(:port_name)    { :Sample }

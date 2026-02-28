@@ -2,7 +2,7 @@ require 'spec_helper'
 
 describe 'Integration with Yahoo\'s AccountService' do
 
-  subject(:client) { Sekken.new fixture('wsdl/yahoo') }
+  subject(:client) { WSDL.new fixture('wsdl/yahoo') }
 
   let(:service_name) { :AccountServiceService }
   let(:port_name)    { :AccountService }

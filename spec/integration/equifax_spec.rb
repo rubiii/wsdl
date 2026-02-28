@@ -2,7 +2,7 @@ require 'spec_helper'
 
 describe 'Integration with Equifax' do
 
-  subject(:client) { Sekken.new fixture('wsdl/equifax') }
+  subject(:client) { WSDL.new fixture('wsdl/equifax') }
 
   let(:service_name) { :canadav2 }
   let(:port_name)    { :canadaHttpPortV2 }

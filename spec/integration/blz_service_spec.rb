@@ -2,7 +2,7 @@
 
 describe 'Integration with BLZService' do
 
-  subject(:client) { Sekken.new fixture('wsdl/blz_service') }
+  subject(:client) { WSDL.new fixture('wsdl/blz_service') }
 
   let(:service_name) { :BLZService }
   let(:port_name)    { :BLZServiceSOAP11port_http }

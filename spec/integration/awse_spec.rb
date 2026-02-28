@@ -2,7 +2,7 @@ require 'spec_helper'
 
 describe 'Integration with AWSE' do
 
-subject(:client) { Sekken.new fixture('wsdl/awse') }
+subject(:client) { WSDL.new fixture('wsdl/awse') }
 
   it 'returns a map of services and ports' do
     expect(client.services).to eq(

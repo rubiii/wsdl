@@ -2,7 +2,7 @@ require 'spec_helper'
 
 describe 'Integration with Jetairways\'s SessionCreate Service' do
 
-  subject(:client) { Sekken.new fixture('wsdl/jetairways') }
+  subject(:client) { WSDL.new fixture('wsdl/jetairways') }
 
 
 

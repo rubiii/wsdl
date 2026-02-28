@@ -2,7 +2,7 @@ require 'spec_helper'
 
 describe 'Integration with Marketo Marketo Automation Software' do
 
- subject(:client) { Sekken.new fixture('wsdl/marketo') }
+ subject(:client) { WSDL.new fixture('wsdl/marketo') }
 
  let(:service_name) { :MktMktowsApiService }
  let(:port_name)    { :MktowsApiSoapPort }

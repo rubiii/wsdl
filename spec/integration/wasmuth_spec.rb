@@ -2,7 +2,7 @@ require 'spec_helper'
 
 describe 'Integration with Wasmuth' do
 
-  subject(:client) { Sekken.new(wsdl_url, http_mock) }
+  subject(:client) { WSDL.new(wsdl_url, http_mock) }
 
   let(:wsdl_url)  { 'http://www3.mediaservice-wasmuth.de/online-ws-2.0/OnlineSync?wsdl' }
 

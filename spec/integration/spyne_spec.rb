@@ -2,7 +2,7 @@ require 'spec_helper'
 
 describe 'Integration with a Spyne.io service' do
 
-  subject(:client) { Sekken.new fixture('wsdl/spyne') }
+  subject(:client) { WSDL.new fixture('wsdl/spyne') }
 
   let(:service_name) { :HelloWorldService }
   let(:port_name)    { :Application }

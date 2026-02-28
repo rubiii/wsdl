@@ -2,7 +2,7 @@ require 'spec_helper'
 
 describe 'Integration with EmailVerification service' do
 
-  subject(:client) { Sekken.new fixture('wsdl/email_verification') }
+  subject(:client) { WSDL.new fixture('wsdl/email_verification') }
 
   let(:service_name) { :EmailVerNoTestEmail }
   let(:port_name)    { :EmailVerNoTestEmailSoap12 }

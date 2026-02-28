@@ -2,7 +2,7 @@ require 'spec_helper'
 
 describe 'Integration with Atlassian Jira' do
 
-  subject(:client) { Sekken.new fixture('wsdl/jira') }
+  subject(:client) { WSDL.new fixture('wsdl/jira') }
 
   it 'returns a map of services and ports' do
     expect(client.services).to eq(
@@ -21,7 +21,7 @@ describe 'Integration with Atlassian Jira' do
     service, port = 'JiraSoapServiceService', 'jirasoapservice-v2'
 
     expect { client.operation(service, port, 'updateGroup') }.
-      to raise_error(Sekken::UnsupportedStyleError, /"updateGroup" is an "rpc\/encoded" style operation/)
+      to raise_error(WSDL::UnsupportedStyleError, /"updateGroup" is an "rpc\/encoded" style operation/)
   end
 
 end

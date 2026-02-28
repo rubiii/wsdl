@@ -2,7 +2,7 @@ require 'spec_helper'
 
 describe 'Integration with IWS' do
 
-  subject(:client) { Sekken.new fixture('wsdl/iws') }
+  subject(:client) { WSDL.new fixture('wsdl/iws') }
 
   it 'returns a map of services and ports' do
     expect(client.services).to eq(
@@ -21,7 +21,7 @@ describe 'Integration with IWS' do
     service, port = 'IWSIntegERPservice', 'IWSIntegERPPort'
     
     expect { client.operation(service, port, 'Autenticacao') }.
-      to raise_error(Sekken::UnsupportedStyleError, /"Autenticacao" is an "rpc\/encoded" style operation/)
+      to raise_error(WSDL::UnsupportedStyleError, /"Autenticacao" is an "rpc\/encoded" style operation/)
   end
 
 end

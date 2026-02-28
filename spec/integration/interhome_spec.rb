@@ -2,7 +2,7 @@ require 'spec_helper'
 
 describe 'Integration with Interhome' do
 
-  subject(:client) { Sekken.new fixture('wsdl/interhome') }
+  subject(:client) { WSDL.new fixture('wsdl/interhome') }
 
   let(:service_name) { :WebService }
   let(:port_name)    { :WebServiceSoap }

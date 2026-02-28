@@ -11,7 +11,7 @@ unless RUBY_PLATFORM =~ /java/
   end
 end
 
-require 'sekken'
+require 'wsdl'
 
 if logger_to_enable = ENV['DEBUG']
   logger = Logging.logger[logger_to_enable]

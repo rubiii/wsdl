@@ -2,7 +2,7 @@ require 'spec_helper'
 
 describe 'Integration with TeamSoftware' do
 
-  subject(:client) { Sekken.new(wsdl_url, http_mock) }
+  subject(:client) { WSDL.new(wsdl_url, http_mock) }
 
   let(:wsdl_url)  { 'http://bydexchange.nbs-us.com/BYDExchangeServer.svc?wsdl' }
 

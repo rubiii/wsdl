@@ -2,7 +2,7 @@ require 'spec_helper'
 
 describe 'Integration with Geotrust' do
 
-  subject(:client) { Sekken.new fixture('wsdl/geotrust') }
+  subject(:client) { WSDL.new fixture('wsdl/geotrust') }
 
   it 'returns a map of services and ports' do
     expect(client.services).to eq(
