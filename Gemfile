@@ -9,13 +9,19 @@ gemspec
 gem 'simplecov', require: false
 gem 'coveralls', require: false
 
-if RUBY_VERSION > "3"
-  # FIXME: net-smtp, net-pop and net-imap was removed from ruby standard gems. Remove when https://github.com/mikel/mail/pull/1439 is resolved
-  # Also see: https://github.com/rails/rails/pull/42366
+if RUBY_VERSION >= "3"
+  # net-smtp, net-pop and net-imap were removed from ruby standard gems
   gem "net-smtp", require: false
   gem "net-pop", require: false
   gem "net-imap", require: false
   gem "rexml"
+end
+
+if RUBY_VERSION >= "3.4"
+  # syslog was removed from default gems in Ruby 3.4 (used by logging gem)
+  gem "syslog"
+  # benchmark will be removed from default gems in Ruby 3.5
+  gem "benchmark"
 end
 
 # dependencies
