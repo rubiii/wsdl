@@ -46,10 +46,12 @@ class WSDL
     # @param operation [Definition::Operation] the parsed operation definition
     # @param wsdl [Definition] the WSDL definition
     # @param http [Object] the HTTP adapter instance
-    def initialize(operation, wsdl, http)
+    # @param pretty_print [Boolean] whether to format XML output with indentation
+    def initialize(operation, wsdl, http, pretty_print: true)
       @operation = operation
       @wsdl = wsdl
       @http = http
+      @pretty_print = pretty_print
 
       @endpoint = operation.endpoint
       @soap_version = operation.soap_version
@@ -76,6 +78,12 @@ class WSDL
     #   The character encoding for the request.
     #   @return [String] the encoding (defaults to 'UTF-8')
     attr_accessor :encoding
+
+    # @!attribute [rw] pretty_print
+    #   Whether to format XML output with indentation and margins.
+    #   Set to `false` for whitespace-sensitive SOAP servers.
+    #   @return [Boolean] true if XML will be formatted (defaults to true)
+    attr_accessor :pretty_print
 
     # Returns a Hash of HTTP headers to send with the request.
     #
@@ -161,7 +169,7 @@ class WSDL
     #
     # @return [String] the SOAP envelope XML
     def build
-      @build ||= Envelope.new(@operation, header, body).to_s
+      @build ||= Envelope.new(@operation, header, body, pretty_print:).to_s
     end
 
     # @!attribute [rw] xml_envelope

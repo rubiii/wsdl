@@ -21,7 +21,8 @@ class WSDL
     # @param operation [Definition::Operation] the operation definition
     # @param header [Hash, nil] the SOAP header data
     # @param body [Hash, nil] the SOAP body data
-    def initialize(operation, header, body)
+    # @param pretty_print [Boolean] whether to format XML with indentation
+    def initialize(operation, header, body, pretty_print: true)
       @logger = Logging.logger[self]
 
       @operation = operation
@@ -30,7 +31,13 @@ class WSDL
 
       @nsid_counter = -1
       @namespaces = {}
+      @pretty_print = pretty_print
     end
+
+    # Returns whether pretty printing is enabled.
+    #
+    # @return [Boolean] true if XML will be formatted with indentation
+    attr_reader :pretty_print
 
     # Registers a namespace and returns its namespace ID.
     #
@@ -66,7 +73,7 @@ class WSDL
     def build_header
       return '' if @header.empty?
 
-      Message.new(self, @operation.input.header_parts).build(@header)
+      Message.new(self, @operation.input.header_parts, pretty_print:).build(@header)
     end
 
     # Builds the SOAP body XML.
@@ -77,7 +84,7 @@ class WSDL
     def build_body
       return '' if @body.empty?
 
-      body = Message.new(self, @operation.input.body_parts).build(@body)
+      body = Message.new(self, @operation.input.body_parts, pretty_print:).build(@body)
 
       if rpc_call?
         build_rpc_wrapper(body)
@@ -92,7 +99,7 @@ class WSDL
     # @param body [String] the built body XML
     # @return [String] the complete envelope XML
     def build_envelope(header, body)
-      builder = Builder::XmlMarkup.new(indent: 2)
+      builder = @pretty_print ? Builder::XmlMarkup.new(indent: 2) : Builder::XmlMarkup.new
 
       builder.tag! :env, :Envelope, collect_namespaces do |xml|
         xml.tag!(:env, :Header) do |xml|

@@ -3,7 +3,7 @@
 require 'spec_helper'
 
 describe WSDL do
-  subject(:client) { described_class.new(wsdl, http_mock) }
+  subject(:client) { described_class.new(wsdl, http: http_mock) }
 
   let(:wsdl) { fixture('wsdl/amazon') }
 
@@ -43,7 +43,25 @@ describe WSDL do
       http = :my_http_adapter
       expect(WSDL::Definition).to receive(:new).with(wsdl, http).and_return(:wasabi)
 
-      described_class.new(wsdl, http)
+      described_class.new(wsdl, http: http)
+    end
+  end
+
+  describe '#pretty_print' do
+    it 'defaults to true' do
+      expect(client.pretty_print).to be(true)
+    end
+
+    it 'can be set to false' do
+      client = described_class.new(wsdl, http: http_mock, pretty_print: false)
+      expect(client.pretty_print).to be(false)
+    end
+
+    it 'passes pretty_print option to operations' do
+      client = described_class.new(wsdl, http: http_mock, pretty_print: false)
+      operation = client.operation(service_name, port_name, operation_name)
+
+      expect(operation.pretty_print).to be(false)
     end
   end
 

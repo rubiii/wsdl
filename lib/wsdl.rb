@@ -56,15 +56,33 @@ class WSDL
   # @param wsdl [String] a URL, file path, or raw XML string of the WSDL document
   # @param http [Object, nil] an optional HTTP adapter instance
   #   (defaults to a new instance of {.http_adapter})
-  def initialize(wsdl, http = nil)
+  # @param pretty_print [Boolean] whether to format XML output with indentation
+  #   and margins. Set to `false` for whitespace-sensitive SOAP servers.
+  #   Defaults to `true`.
+  #
+  # @example Basic usage
+  #   wsdl = WSDL.new('http://example.com/service?wsdl')
+  #
+  # @example With custom HTTP adapter
+  #   wsdl = WSDL.new('http://example.com/service?wsdl', http: my_adapter)
+  #
+  # @example Disable pretty printing for whitespace-sensitive servers
+  #   wsdl = WSDL.new('http://example.com/service?wsdl', pretty_print: false)
+  def initialize(wsdl, http: nil, pretty_print: true)
     @http = http || new_http_client
     @wsdl = Definition.new(wsdl, @http)
+    @pretty_print = pretty_print
   end
 
   # Returns the Definition instance containing parsed WSDL data.
   #
   # @return [Definition] the WSDL definition
   attr_reader :wsdl
+
+  # Returns whether pretty printing is enabled for XML output.
+  #
+  # @return [Boolean] true if XML will be formatted with indentation
+  attr_reader :pretty_print
 
   # Returns the HTTP adapter's client instance for configuration.
   #
@@ -105,7 +123,7 @@ class WSDL
     operation = @wsdl.operation(service_name.to_s, port_name.to_s, operation_name.to_s)
     verify_operation_style! operation
 
-    Operation.new(operation, @wsdl, @http)
+    Operation.new(operation, @wsdl, @http, pretty_print:)
   end
 
   private

@@ -24,19 +24,26 @@ class WSDL
     #
     # @param envelope [Envelope] the envelope instance for namespace registration
     # @param parts [Array<XML::Element>] the message part elements from the WSDL
-    def initialize(envelope, parts)
+    # @param pretty_print [Boolean] whether to format XML with indentation
+    def initialize(envelope, parts, pretty_print: true)
       @logger = Logging.logger[self]
 
       @envelope = envelope
       @parts = parts
+      @pretty_print = pretty_print
     end
+
+    # @!attribute [r] pretty_print
+    #   Whether to format XML with indentation.
+    #   @return [Boolean]
+    attr_reader :pretty_print
 
     # Builds the XML message content from a Hash.
     #
     # @param message [Hash] the message data to convert to XML
     # @return [String] the XML string representation
     def build(message)
-      builder = Builder::XmlMarkup.new(indent: 2, margin: 2)
+      builder = @pretty_print ? Builder::XmlMarkup.new(indent: 2, margin: 2) : Builder::XmlMarkup.new
 
       build_elements(@parts, message.dup, builder)
       builder.target!

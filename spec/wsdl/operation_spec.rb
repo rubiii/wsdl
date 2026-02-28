@@ -64,6 +64,22 @@ describe WSDL::Operation do
     end
   end
 
+  describe '#pretty_print' do
+    it 'defaults to true' do
+      expect(operation.pretty_print).to be(true)
+    end
+
+    it 'can be overwritten' do
+      operation.pretty_print = false
+      expect(operation.pretty_print).to be(false)
+    end
+
+    it 'can be set via constructor' do
+      operation = described_class.new(wsdl_operation, wsdl, http_mock, pretty_print: false)
+      expect(operation.pretty_print).to be(false)
+    end
+  end
+
   describe '#http_headers' do
     it 'returns a Hash of HTTP headers for a SOAP 1.2 operation' do
       expect(operation.http_headers).to eq(
@@ -128,6 +144,55 @@ describe WSDL::Operation do
 
       expect(operation.build)
         .to be_equivalent_to(expected).respecting_element_order
+    end
+
+    context 'with pretty_print: false' do
+      let(:compact_operation) { described_class.new(wsdl_operation, wsdl, http_mock, pretty_print: false) }
+
+      it 'returns compact XML without indentation' do
+        compact_operation.body = {
+          ConvertTemp: {
+            Temperature: 30,
+            FromUnit: 'degreeCelsius',
+            ToUnit: 'degreeFahrenheit'
+          }
+        }
+
+        xml = compact_operation.build
+
+        # Compact XML should not have leading whitespace on lines
+        expect(xml).not_to match(/^\s+</)
+        # Should be on a single line
+        expect(xml.strip).not_to include("\n")
+      end
+
+      it 'returns semantically equivalent XML' do
+        compact_operation.body = {
+          ConvertTemp: {
+            Temperature: 30,
+            FromUnit: 'degreeCelsius',
+            ToUnit: 'degreeFahrenheit'
+          }
+        }
+
+        expected = Nokogiri.XML(%(
+          <env:Envelope
+              xmlns:lol0="http://www.webserviceX.NET/"
+              xmlns:env="http://www.w3.org/2003/05/soap-envelope">
+            <env:Header/>
+            <env:Body>
+              <lol0:ConvertTemp>
+                <lol0:Temperature>30</lol0:Temperature>
+                <lol0:FromUnit>degreeCelsius</lol0:FromUnit>
+                <lol0:ToUnit>degreeFahrenheit</lol0:ToUnit>
+              </lol0:ConvertTemp>
+            </env:Body>
+          </env:Envelope>
+        ))
+
+        expect(compact_operation.build)
+          .to be_equivalent_to(expected).respecting_element_order
+      end
     end
   end
 

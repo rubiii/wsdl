@@ -146,6 +146,61 @@ operation.http_headers = {
 }
 ```
 
+## XML Formatting
+
+By default, the library generates XML with indentation and line breaks for readability. Some SOAP servers (e.g., Microsoft Dynamics NAV / Navision) are sensitive to whitespace in the XML body and may reject requests that contain formatting.
+
+### Disabling Pretty Printing
+
+To generate compact XML without indentation or line breaks, set `pretty_print: false` when creating the client:
+
+``` ruby
+client = WSDL.new('http://example.com/service?wsdl', pretty_print: false)
+```
+
+All operations created from this client will generate compact XML:
+
+``` ruby
+operation = client.operation('Service', 'Port', 'Operation')
+operation.body = { GetOrder: { orderId: 123 } }
+
+puts operation.build
+# Output is a single line with no indentation
+```
+
+### Per-Operation Override
+
+You can also change the setting on individual operations:
+
+``` ruby
+client = WSDL.new('http://example.com/service?wsdl')
+
+operation = client.operation('Service', 'Port', 'Operation')
+operation.pretty_print = false  # Override for this operation only
+```
+
+### Comparison
+
+With `pretty_print: true` (default):
+
+``` xml
+<env:Envelope xmlns:env="http://schemas.xmlsoap.org/soap/envelope/">
+  <env:Header>
+  </env:Header>
+  <env:Body>
+    <ns:GetOrder xmlns:ns="http://example.com/">
+      <ns:orderId>123</ns:orderId>
+    </ns:GetOrder>
+  </env:Body>
+</env:Envelope>
+```
+
+With `pretty_print: false`:
+
+``` xml
+<env:Envelope xmlns:env="http://schemas.xmlsoap.org/soap/envelope/"><env:Header></env:Header><env:Body><ns:GetOrder xmlns:ns="http://example.com/"><ns:orderId>123</ns:orderId></ns:GetOrder></env:Body></env:Envelope>
+```
+
 ## Logging
 
 The library uses the [logging](https://github.com/TwP/logging) gem. Enable debug logging to troubleshoot issues:

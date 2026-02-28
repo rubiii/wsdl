@@ -104,3 +104,6 @@ RSpec/MultipleDescribes:
 
 RSpec/DescribeClass:
    Enabled: false
+
+RSpec/ContextWording:
+  Enabled: false
