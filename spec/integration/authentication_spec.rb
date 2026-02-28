@@ -1,16 +1,17 @@
+# frozen_string_literal: true
+
 require 'spec_helper'
 
 describe 'Integration with Authentication service' do
-
   subject(:client) { WSDL.new fixture('wsdl/authentication') }
 
   it 'returns a map of services and ports' do
     expect(client.services).to eq(
       'AuthenticationWebServiceImplService' => {
-        :ports => {
+        ports: {
           'AuthenticationWebServiceImplPort' => {
-            :type     => 'http://schemas.xmlsoap.org/wsdl/soap/',
-            :location => 'http://example.com/validation/1.0/AuthenticationService'
+            type: 'http://schemas.xmlsoap.org/wsdl/soap/',
+            location: 'http://example.com/validation/1.0/AuthenticationService'
           }
         }
       }
@@ -29,10 +30,19 @@ describe 'Integration with Authentication service' do
     namespace = 'http://v1_0.ws.auth.order.example.com/'
 
     expect(operation.body_parts).to eq([
-      [['authenticate'],             { namespace: namespace, form: 'qualified', singular: true }],
-      [['authenticate', 'user'],     { namespace: namespace, form: 'unqualified', singular: true, type: 'xs:string' }],
-      [['authenticate', 'password'], { namespace: namespace, form: 'unqualified', singular: true, type: 'xs:string' }]
+      [['authenticate'],
+       { namespace: namespace, form: 'qualified', singular: true }
+],
+      [%w[authenticate user],
+       { namespace: namespace, form: 'unqualified', singular: true,
+         type: 'xs:string'
+ }
+],
+      [%w[authenticate password],
+       { namespace: namespace, form: 'unqualified', singular: true,
+         type: 'xs:string'
+ }
+]
     ])
   end
-
 end

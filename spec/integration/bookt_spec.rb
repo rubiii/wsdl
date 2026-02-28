@@ -1,7 +1,8 @@
+# frozen_string_literal: true
+
 require 'spec_helper'
 
 describe 'Integration with Bookt' do
-
   subject(:client) { WSDL.new(wsdl_url, http_mock) }
 
   let(:wsdl_url)  { 'http://connect.bookt.com/svc/connect.svc?wsdl' }
@@ -23,11 +24,11 @@ describe 'Integration with Bookt' do
 
   it 'returns a map of services and ports' do
     expect(client.services).to eq(
-      'Connect'       => {
-        :ports        => {
-          'IConnect'  => {
-            :type     => 'http://schemas.xmlsoap.org/wsdl/soap/',
-            :location => 'http://connect.bookt.com/svc/connect.svc'
+      'Connect' => {
+        ports: {
+          'IConnect' => {
+            type: 'http://schemas.xmlsoap.org/wsdl/soap/',
+            location: 'http://connect.bookt.com/svc/connect.svc'
           }
         }
       }
@@ -49,11 +50,24 @@ describe 'Integration with Bookt' do
     namespace = 'https://connect.bookt.com/connect'
 
     expect(get_booking.body_parts).to eq([
-      [['GetBooking'],                  { namespace: namespace, form: 'qualified', singular: true }],
-      [['GetBooking', 'apiKey'],        { namespace: namespace, form: 'qualified', singular: true, type: 'xs:string'  }],
-      [['GetBooking', 'bookingID'],     { namespace: namespace, form: 'qualified', singular: true, type: 'xs:string'  }],
-      [['GetBooking', 'useInternalID'], { namespace: namespace, form: 'qualified', singular: true, type: 'xs:boolean' }]
+      [['GetBooking'],
+       { namespace: namespace, form: 'qualified', singular: true }
+],
+      [%w[GetBooking apiKey],
+       { namespace: namespace, form: 'qualified', singular: true,
+         type: 'xs:string'
+ }
+],
+      [%w[GetBooking bookingID],
+       { namespace: namespace, form: 'qualified', singular: true,
+         type: 'xs:string'
+ }
+],
+      [%w[GetBooking useInternalID],
+       { namespace: namespace, form: 'qualified', singular: true,
+         type: 'xs:boolean'
+ }
+]
     ])
   end
-
 end

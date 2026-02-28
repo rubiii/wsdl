@@ -1,6 +1,9 @@
 --markup markdown
---markup-provider redcarpet
+--output-dir doc
+--protected
+--no-private
+--readme README.md
+--title "WSDL Ruby Gem Documentation"
 -
-CHANGELOG.md
-LICENSE
+MIT-LICENSE
 lib/**/*.rb

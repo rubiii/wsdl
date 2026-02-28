@@ -1,7 +1,8 @@
+# frozen_string_literal: true
+
 require 'spec_helper'
 
 describe 'Integration with Interhome' do
-
   subject(:client) { WSDL.new fixture('wsdl/interhome') }
 
   let(:service_name) { :WebService }
@@ -10,14 +11,14 @@ describe 'Integration with Interhome' do
   it 'returns a map of services and ports' do
     expect(client.services).to eq(
       'WebService' => {
-        :ports => {
+        ports: {
           'WebServiceSoap' => {
-            :type     => 'http://schemas.xmlsoap.org/wsdl/soap/',
-            :location => 'https://webservices.interhome.com/quality/partnerV3/WebService.asmx'
+            type: 'http://schemas.xmlsoap.org/wsdl/soap/',
+            location: 'https://webservices.interhome.com/quality/partnerV3/WebService.asmx'
           },
           'WebServiceSoap12' => {
-            :type     => 'http://schemas.xmlsoap.org/wsdl/soap12/',
-            :location => 'https://webservices.interhome.com/quality/partnerV3/WebService.asmx'
+            type: 'http://schemas.xmlsoap.org/wsdl/soap12/',
+            location: 'https://webservices.interhome.com/quality/partnerV3/WebService.asmx'
           }
         }
       }
@@ -33,51 +34,185 @@ describe 'Integration with Interhome' do
     namespace = 'http://www.interhome.com/webservice'
 
     expect(operation.body_parts).to eq([
-      [['ClientBooking'],                                    { namespace: namespace, form: 'qualified', singular: true }],
-      [['ClientBooking', 'inputValue'],                      { namespace: namespace, form: 'qualified', singular: true }],
-      [['ClientBooking', 'inputValue', 'SalesOfficeCode'],   { namespace: namespace, form: 'qualified', singular: true, type: 's:string' }],
-      [['ClientBooking', 'inputValue', 'AccommodationCode'], { namespace: namespace, form: 'qualified', singular: true, type: 's:string' }],
+      [['ClientBooking'],
+       { namespace: namespace, form: 'qualified', singular: true }
+],
+      [%w[ClientBooking inputValue],
+       { namespace: namespace, form: 'qualified', singular: true }
+],
+      [%w[ClientBooking inputValue SalesOfficeCode],
+       { namespace: namespace, form: 'qualified', singular: true,
+         type: 's:string'
+ }
+],
+      [%w[ClientBooking inputValue AccommodationCode],
+       { namespace: namespace, form: 'qualified', singular: true,
+         type: 's:string'
+ }
+],
 
-      [['ClientBooking', 'inputValue', 'AdditionalServices'],
-        {namespace: namespace, form: 'qualified', singular: true }],
-      [['ClientBooking', 'inputValue', 'AdditionalServices', 'AdditionalServiceInputItem'],
-        {namespace: namespace, form: 'qualified', singular: false }],
-      [['ClientBooking', 'inputValue', 'AdditionalServices', 'AdditionalServiceInputItem', 'Code'],
-        {namespace: namespace, form: 'qualified', singular: true, type: 's:string' }],
-      [['ClientBooking', 'inputValue', 'AdditionalServices', 'AdditionalServiceInputItem', 'Count'],
-        {namespace: namespace, form: 'qualified', singular: true, type: 's:int' }],
+      [%w[ClientBooking inputValue AdditionalServices],
+       { namespace: namespace, form: 'qualified', singular: true }
+],
+      [%w[ClientBooking inputValue AdditionalServices AdditionalServiceInputItem],
+       { namespace: namespace, form: 'qualified', singular: false }
+],
+      [%w[ClientBooking inputValue AdditionalServices AdditionalServiceInputItem Code],
+       { namespace: namespace, form: 'qualified', singular: true,
+         type: 's:string'
+ }
+],
+      [%w[ClientBooking inputValue AdditionalServices AdditionalServiceInputItem Count],
+       { namespace: namespace, form: 'qualified', singular: true, type: 's:int' }
+],
 
-      [['ClientBooking', 'inputValue', 'CustomerSalutationType'],          { namespace: namespace, form: 'qualified', singular: true, type: 's:string' }],
-      [['ClientBooking', 'inputValue', 'CustomerName'],                    { namespace: namespace, form: 'qualified', singular: true, type: 's:string' }],
-      [['ClientBooking', 'inputValue', 'CustomerFirstName'],               { namespace: namespace, form: 'qualified', singular: true, type: 's:string' }],
-      [['ClientBooking', 'inputValue', 'CustomerPhone'],                   { namespace: namespace, form: 'qualified', singular: true, type: 's:string' }],
-      [['ClientBooking', 'inputValue', 'CustomerFax'],                     { namespace: namespace, form: 'qualified', singular: true, type: 's:string' }],
-      [['ClientBooking', 'inputValue', 'CustomerEmail'],                   { namespace: namespace, form: 'qualified', singular: true, type: 's:string' }],
-      [['ClientBooking', 'inputValue', 'CustomerAddressStreet'],           { namespace: namespace, form: 'qualified', singular: true, type: 's:string' }],
-      [['ClientBooking', 'inputValue', 'CustomerAddressAdditionalStreet'], { namespace: namespace, form: 'qualified', singular: true, type: 's:string' }],
-      [['ClientBooking', 'inputValue', 'CustomerAddressZIP'],              { namespace: namespace, form: 'qualified', singular: true, type: 's:string' }],
-      [['ClientBooking', 'inputValue', 'CustomerAddressPlace'],            { namespace: namespace, form: 'qualified', singular: true, type: 's:string' }],
-      [['ClientBooking', 'inputValue', 'CustomerAddressState'],            { namespace: namespace, form: 'qualified', singular: true, type: 's:string' }],
-      [['ClientBooking', 'inputValue', 'CustomerAddressCountryCode'],      { namespace: namespace, form: 'qualified', singular: true, type: 's:string' }],
-      [['ClientBooking', 'inputValue', 'Comment'],                         { namespace: namespace, form: 'qualified', singular: true, type: 's:string' }],
-      [['ClientBooking', 'inputValue', 'Adults'],                          { namespace: namespace, form: 'qualified', singular: true, type: 's:int' }],
-      [['ClientBooking', 'inputValue', 'Babies'],                          { namespace: namespace, form: 'qualified', singular: true, type: 's:int' }],
-      [['ClientBooking', 'inputValue', 'Children'],                        { namespace: namespace, form: 'qualified', singular: true, type: 's:int' }],
-      [['ClientBooking', 'inputValue', 'CheckIn'],                         { namespace: namespace, form: 'qualified', singular: true, type: 's:string' }],
-      [['ClientBooking', 'inputValue', 'CheckOut'],                        { namespace: namespace, form: 'qualified', singular: true, type: 's:string' }],
-      [['ClientBooking', 'inputValue', 'LanguageCode'],                    { namespace: namespace, form: 'qualified', singular: true, type: 's:string' }],
-      [['ClientBooking', 'inputValue', 'CurrencyCode'],                    { namespace: namespace, form: 'qualified', singular: true, type: 's:string' }],
-      [['ClientBooking', 'inputValue', 'RetailerCode'],                    { namespace: namespace, form: 'qualified', singular: true, type: 's:string' }],
-      [['ClientBooking', 'inputValue', 'RetailerExtraCode'],               { namespace: namespace, form: 'qualified', singular: true, type: 's:string' }],
-      [['ClientBooking', 'inputValue', 'PaymentType'],                     { namespace: namespace, form: 'qualified', singular: true, type: 's:string' }],
-      [['ClientBooking', 'inputValue', 'CreditCardType'],                  { namespace: namespace, form: 'qualified', singular: true, type: 's:string' }],
-      [['ClientBooking', 'inputValue', 'CreditCardNumber'],                { namespace: namespace, form: 'qualified', singular: true, type: 's:string' }],
-      [['ClientBooking', 'inputValue', 'CreditCardCvc'],                   { namespace: namespace, form: 'qualified', singular: true, type: 's:string' }],
-      [['ClientBooking', 'inputValue', 'CreditCardExpiry'],                { namespace: namespace, form: 'qualified', singular: true, type: 's:string' }],
-      [['ClientBooking', 'inputValue', 'CreditCardHolder'],                { namespace: namespace, form: 'qualified', singular: true, type: 's:string' }],
-      [['ClientBooking', 'inputValue', 'BankAccountNumber'],               { namespace: namespace, form: 'qualified', singular: true, type: 's:string' }],
-      [['ClientBooking', 'inputValue', 'BankCode'],                        { namespace: namespace, form: 'qualified', singular: true, type: 's:string' }],
-      [['ClientBooking', 'inputValue', 'BankAccountHolder'],               { namespace: namespace, form: 'qualified', singular: true, type: 's:string' }]
+      [%w[ClientBooking inputValue CustomerSalutationType],
+       { namespace: namespace, form: 'qualified', singular: true,
+         type: 's:string'
+ }
+],
+      [%w[ClientBooking inputValue CustomerName],
+       { namespace: namespace, form: 'qualified', singular: true,
+         type: 's:string'
+ }
+],
+      [%w[ClientBooking inputValue CustomerFirstName],
+       { namespace: namespace, form: 'qualified', singular: true,
+         type: 's:string'
+ }
+],
+      [%w[ClientBooking inputValue CustomerPhone],
+       { namespace: namespace, form: 'qualified', singular: true,
+         type: 's:string'
+ }
+],
+      [%w[ClientBooking inputValue CustomerFax],
+       { namespace: namespace, form: 'qualified', singular: true,
+         type: 's:string'
+ }
+],
+      [%w[ClientBooking inputValue CustomerEmail],
+       { namespace: namespace, form: 'qualified', singular: true,
+         type: 's:string'
+ }
+],
+      [%w[ClientBooking inputValue CustomerAddressStreet],
+       { namespace: namespace, form: 'qualified', singular: true,
+         type: 's:string'
+ }
+],
+      [%w[ClientBooking inputValue CustomerAddressAdditionalStreet],
+       { namespace: namespace, form: 'qualified', singular: true,
+         type: 's:string'
+ }
+],
+      [%w[ClientBooking inputValue CustomerAddressZIP],
+       { namespace: namespace, form: 'qualified', singular: true,
+         type: 's:string'
+ }
+],
+      [%w[ClientBooking inputValue CustomerAddressPlace],
+       { namespace: namespace, form: 'qualified', singular: true,
+         type: 's:string'
+ }
+],
+      [%w[ClientBooking inputValue CustomerAddressState],
+       { namespace: namespace, form: 'qualified', singular: true,
+         type: 's:string'
+ }
+],
+      [%w[ClientBooking inputValue CustomerAddressCountryCode],
+       { namespace: namespace, form: 'qualified', singular: true,
+         type: 's:string'
+ }
+],
+      [%w[ClientBooking inputValue Comment],
+       { namespace: namespace, form: 'qualified', singular: true,
+         type: 's:string'
+ }
+],
+      [%w[ClientBooking inputValue Adults],
+       { namespace: namespace, form: 'qualified', singular: true, type: 's:int' }
+],
+      [%w[ClientBooking inputValue Babies],
+       { namespace: namespace, form: 'qualified', singular: true, type: 's:int' }
+],
+      [%w[ClientBooking inputValue Children],
+       { namespace: namespace, form: 'qualified', singular: true, type: 's:int' }
+],
+      [%w[ClientBooking inputValue CheckIn],
+       { namespace: namespace, form: 'qualified', singular: true,
+         type: 's:string'
+ }
+],
+      [%w[ClientBooking inputValue CheckOut],
+       { namespace: namespace, form: 'qualified', singular: true,
+         type: 's:string'
+ }
+],
+      [%w[ClientBooking inputValue LanguageCode],
+       { namespace: namespace, form: 'qualified', singular: true,
+         type: 's:string'
+ }
+],
+      [%w[ClientBooking inputValue CurrencyCode],
+       { namespace: namespace, form: 'qualified', singular: true,
+         type: 's:string'
+ }
+],
+      [%w[ClientBooking inputValue RetailerCode],
+       { namespace: namespace, form: 'qualified', singular: true,
+         type: 's:string'
+ }
+],
+      [%w[ClientBooking inputValue RetailerExtraCode],
+       { namespace: namespace, form: 'qualified', singular: true,
+         type: 's:string'
+ }
+],
+      [%w[ClientBooking inputValue PaymentType],
+       { namespace: namespace, form: 'qualified', singular: true,
+         type: 's:string'
+ }
+],
+      [%w[ClientBooking inputValue CreditCardType],
+       { namespace: namespace, form: 'qualified', singular: true,
+         type: 's:string'
+ }
+],
+      [%w[ClientBooking inputValue CreditCardNumber],
+       { namespace: namespace, form: 'qualified', singular: true,
+         type: 's:string'
+ }
+],
+      [%w[ClientBooking inputValue CreditCardCvc],
+       { namespace: namespace, form: 'qualified', singular: true,
+         type: 's:string'
+ }
+],
+      [%w[ClientBooking inputValue CreditCardExpiry],
+       { namespace: namespace, form: 'qualified', singular: true,
+         type: 's:string'
+ }
+],
+      [%w[ClientBooking inputValue CreditCardHolder],
+       { namespace: namespace, form: 'qualified', singular: true,
+         type: 's:string'
+ }
+],
+      [%w[ClientBooking inputValue BankAccountNumber],
+       { namespace: namespace, form: 'qualified', singular: true,
+         type: 's:string'
+ }
+],
+      [%w[ClientBooking inputValue BankCode],
+       { namespace: namespace, form: 'qualified', singular: true,
+         type: 's:string'
+ }
+],
+      [%w[ClientBooking inputValue BankAccountHolder],
+       { namespace: namespace, form: 'qualified', singular: true, type: 's:string' }
+]
     ])
   end
 
@@ -149,8 +284,7 @@ describe 'Integration with Interhome' do
       </env:Envelope>
     ')
 
-    expect(Nokogiri.XML operation.build).
-      to be_equivalent_to(expected).respecting_element_order
+    expect(Nokogiri.XML(operation.build))
+      .to be_equivalent_to(expected).respecting_element_order
   end
-
 end

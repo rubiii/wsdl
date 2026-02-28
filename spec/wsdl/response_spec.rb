@@ -1,6 +1,9 @@
+# frozen_string_literal: true
+
 require 'spec_helper'
 
 describe WSDL::Response do
+  subject(:response) { described_class.new(soap_response) }
 
   let(:soap_response) do
     <<-XML
@@ -16,8 +19,6 @@ describe WSDL::Response do
       </env:Envelope>
     XML
   end
-
-  subject(:response) { WSDL::Response.new(soap_response) }
 
   describe '#raw' do
     it 'returns the raw XML response' do
@@ -77,5 +78,4 @@ describe WSDL::Response do
       expect(result).to be_empty
     end
   end
-
 end

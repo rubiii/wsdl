@@ -1,7 +1,8 @@
+# frozen_string_literal: true
+
 require 'spec_helper'
 
 describe 'Integration with Yahoo\'s AccountService' do
-
   subject(:client) { WSDL.new fixture('wsdl/yahoo') }
 
   let(:service_name) { :AccountServiceService }
@@ -31,9 +32,19 @@ describe 'Integration with Yahoo\'s AccountService' do
     namespace = 'http://apt.yahooapis.com/V10'
 
     expect(operation.body_parts).to eq([
-      [['updateStatusForManagedPublisher'],                  { namespace: namespace, form: 'qualified', singular: true }],
-      [['updateStatusForManagedPublisher', 'accountID'],     { namespace: namespace, form: 'qualified', singular: true, type: 'xsd:string' }],
-      [['updateStatusForManagedPublisher', 'accountStatus'], { namespace: namespace, form: 'qualified', singular: true, type: 'xsd:string' }]
+      [['updateStatusForManagedPublisher'],
+       { namespace: namespace, form: 'qualified', singular: true }
+],
+      [%w[updateStatusForManagedPublisher accountID],
+       { namespace: namespace, form: 'qualified', singular: true,
+         type: 'xsd:string'
+}
+],
+      [%w[updateStatusForManagedPublisher accountStatus],
+       { namespace: namespace, form: 'qualified', singular: true,
+         type: 'xsd:string'
+}
+]
     ])
   end
 
@@ -109,8 +120,7 @@ describe 'Integration with Yahoo\'s AccountService' do
       </env:Envelope>
     ')
 
-    expect(Nokogiri.XML operation.build).
-      to be_equivalent_to(expected).respecting_element_order
+    expect(Nokogiri.XML(operation.build))
+      .to be_equivalent_to(expected).respecting_element_order
   end
-
 end

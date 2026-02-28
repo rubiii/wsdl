@@ -1,7 +1,8 @@
+# frozen_string_literal: true
+
 require 'spec_helper'
 
 describe WSDL::Operation do
-
   # namespace reference:
   #   http://www.ibm.com/developerworks/webservices/library/ws-tip-namespace/index.html
   context 'with a document/literal wrapped document' do
@@ -12,10 +13,22 @@ describe WSDL::Operation do
       expect(op1.input_style).to eq('document/literal')
 
       expect(op1.body_parts).to eq([
-        [ ['op1'],                { namespace: 'http://apiNamespace.com',  form: 'qualified',   singular: true } ],
-        [ ['op1', 'in'],          { namespace: 'http://apiNamespace.com',  form: 'unqualified', singular: true } ],
-        [ ['op1', 'in', 'data1'], { namespace: 'http://dataNamespace.com', form: 'unqualified', singular: true, type: 'int' } ],
-        [ ['op1', 'in', 'data2'], { namespace: 'http://dataNamespace.com', form: 'unqualified', singular: true, type: 'int' } ]
+        [['op1'],
+         { namespace: 'http://apiNamespace.com', form: 'qualified', singular: true }
+],
+        [%w[op1 in],
+         { namespace: 'http://apiNamespace.com', form: 'unqualified', singular: true }
+],
+        [%w[op1 in data1],
+         { namespace: 'http://dataNamespace.com', form: 'unqualified', singular: true,
+           type: 'int'
+}
+],
+        [%w[op1 in data2],
+         { namespace: 'http://dataNamespace.com', form: 'unqualified', singular: true,
+           type: 'int'
+}
+]
       ])
     end
 
@@ -26,10 +39,22 @@ describe WSDL::Operation do
       expect(op2.input_style).to eq('document/literal')
 
       expect(op2.body_parts).to eq([
-        [ ['op2'],                { namespace: 'http://apiNamespace.com',  form: 'qualified',   singular: true } ],
-        [ ['op2', 'in'],          { namespace: 'http://apiNamespace.com',  form: 'unqualified', singular: true } ],
-        [ ['op2', 'in', 'data1'], { namespace: 'http://dataNamespace.com', form: 'unqualified', singular: true, type: 'int' } ],
-        [ ['op2', 'in', 'data2'], { namespace: 'http://dataNamespace.com', form: 'unqualified', singular: true, type: 'int' } ]
+        [['op2'],
+         { namespace: 'http://apiNamespace.com', form: 'qualified', singular: true }
+],
+        [%w[op2 in],
+         { namespace: 'http://apiNamespace.com', form: 'unqualified', singular: true }
+],
+        [%w[op2 in data1],
+         { namespace: 'http://dataNamespace.com', form: 'unqualified', singular: true,
+           type: 'int'
+}
+],
+        [%w[op2 in data2],
+         { namespace: 'http://dataNamespace.com', form: 'unqualified', singular: true,
+           type: 'int'
+}
+]
       ])
     end
 
@@ -40,14 +65,31 @@ describe WSDL::Operation do
       expect(op3.input_style).to eq('document/literal')
 
       expect(op3.body_parts).to eq([
-        [ ['op3'],                       { namespace: 'http://apiNamespace.com',  form: 'qualified',   singular: true } ],
-        [ ['op3', 'DataElem'],           { namespace: 'http://dataNamespace.com', form: 'qualified',   singular: true } ],
-        [ ['op3', 'DataElem', 'data1'],  { namespace: 'http://dataNamespace.com', form: 'unqualified', singular: true, type: 'int' } ],
-        [ ['op3', 'DataElem', 'data2'],  { namespace: 'http://dataNamespace.com', form: 'unqualified', singular: true, type: 'int' } ],
-        [ ['op3', 'in2'],                { namespace: 'http://apiNamespace.com',  form: 'unqualified', singular: true } ],
-        [ ['op3', 'in2', 'RefDataElem'], { namespace: 'http://refNamespace.com',  form: 'qualified',   singular: true, type: 'int' } ],
+        [['op3'],
+         { namespace: 'http://apiNamespace.com', form: 'qualified', singular: true }
+],
+        [%w[op3 DataElem],
+         { namespace: 'http://dataNamespace.com', form: 'qualified',   singular: true }
+],
+        [%w[op3 DataElem data1],
+         { namespace: 'http://dataNamespace.com', form: 'unqualified', singular: true,
+           type: 'int'
+}
+],
+        [%w[op3 DataElem data2],
+         { namespace: 'http://dataNamespace.com', form: 'unqualified', singular: true,
+           type: 'int'
+}
+],
+        [%w[op3 in2],
+         { namespace: 'http://apiNamespace.com',  form: 'unqualified', singular: true }
+],
+        [%w[op3 in2 RefDataElem],
+         { namespace: 'http://refNamespace.com',  form: 'qualified',   singular: true,
+           type: 'int'
+}
+]
       ])
     end
   end
-
 end

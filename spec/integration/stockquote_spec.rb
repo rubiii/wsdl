@@ -1,7 +1,8 @@
+# frozen_string_literal: true
+
 require 'spec_helper'
 
 describe 'Integration with Stockquote service' do
-
   subject(:client) { WSDL.new fixture('wsdl/stockquote') }
 
   let(:service_name) { :StockQuote }
@@ -26,7 +27,7 @@ describe 'Integration with Stockquote service' do
       }
     }
 
-    expected = Nokogiri.XML(%{
+    expected = Nokogiri.XML(%(
       <env:Envelope
           xmlns:lol0="http://www.webserviceX.NET/"
           xmlns:env="http://schemas.xmlsoap.org/soap/envelope/">
@@ -37,10 +38,9 @@ describe 'Integration with Stockquote service' do
           </lol0:GetQuote>
         </env:Body>
       </env:Envelope>
-    })
+    ))
 
-    expect(Nokogiri.XML operation.build).
-      to be_equivalent_to(expected).respecting_element_order
+    expect(Nokogiri.XML(operation.build))
+      .to be_equivalent_to(expected).respecting_element_order
   end
-
 end

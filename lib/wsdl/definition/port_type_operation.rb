@@ -1,7 +1,20 @@
+# frozen_string_literal: true
+
 class WSDL
   class Definition
+    # Represents a WSDL portType operation element.
+    #
+    # A port type operation defines an abstract operation as part of a
+    # port type interface. It specifies the input and output messages
+    # that define the operation's interface contract, independent of
+    # any protocol binding.
+    #
+    # @api private
+    #
     class PortTypeOperation
-
+      # Creates a new PortTypeOperation from a WSDL operation XML node.
+      #
+      # @param operation_node [Nokogiri::XML::Node] the wsdl:operation element within a portType
       def initialize(operation_node)
         @operation_node = operation_node
 
@@ -10,24 +23,47 @@ class WSDL
         @output_node = find_node('output')
       end
 
+      # @return [String] the name of this operation
       attr_reader :name
 
+      # Returns the input message definition for this operation.
+      #
+      # @return [Hash] a hash with `:name` and `:message` keys
+      # @example
+      #   operation.input
+      #   # => { name: "GetUserRequest", message: "tns:GetUserInput" }
       def input
         return @input if defined? @input
+
         @input = parse_node(@input_node)
       end
 
+      # Returns the output message definition for this operation.
+      #
+      # @return [Hash] a hash with `:name` and `:message` keys
+      # @example
+      #   operation.output
+      #   # => { name: "GetUserResponse", message: "tns:GetUserOutput" }
       def output
         return @output if defined? @output
+
         @output = parse_node(@output_node)
       end
 
       private
 
+      # Finds a child node by name within the operation element.
+      #
+      # @param node_name [String] the name of the child element to find
+      # @return [Nokogiri::XML::Node, nil] the matching node, or nil if not found
       def find_node(node_name)
         @operation_node.element_children.find { |node| node.name == node_name }
       end
 
+      # Parses an input or output node into a Hash.
+      #
+      # @param node [Nokogiri::XML::Node] the input or output node
+      # @return [Hash] a hash with `:name` and `:message` keys
       def parse_node(node)
         input = {}
 
@@ -36,7 +72,6 @@ class WSDL
 
         input
       end
-
     end
   end
 end

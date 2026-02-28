@@ -1,7 +1,8 @@
+# frozen_string_literal: true
+
 require 'spec_helper'
 
 describe 'Integration with a Spyne.io service' do
-
   subject(:client) { WSDL.new fixture('wsdl/spyne') }
 
   let(:service_name) { :HelloWorldService }
@@ -27,7 +28,9 @@ describe 'Integration with a Spyne.io service' do
     expect(operation.endpoint).to eq('http://localhost:8000/')
 
     expect(operation.body_parts).to eq([
-      [['say_hello'], { namespace: 'spyne.examples.hello', form: 'qualified', singular: true }]
+      [['say_hello'],
+       { namespace: 'spyne.examples.hello', form: 'qualified', singular: true }
+]
     ])
   end
 
@@ -53,8 +56,7 @@ describe 'Integration with a Spyne.io service' do
       </env:Envelope>
     ')
 
-    expect(Nokogiri.XML operation.build).
-      to be_equivalent_to(expected).respecting_element_order
+    expect(Nokogiri.XML(operation.build))
+      .to be_equivalent_to(expected).respecting_element_order
   end
-
 end

@@ -1,30 +1,29 @@
+# frozen_string_literal: true
+
 require 'spec_helper'
 
 describe 'Integration with Jetairways\'s SessionCreate Service' do
-
   subject(:client) { WSDL.new fixture('wsdl/jetairways') }
-
-
 
   let(:service_name) { :SessionCreate }
   let(:port_name)    { :SessionCreateSoap }
 
   it 'returns a map of services and ports' do
     expect(client.services).to eq(
-     'SessionCreate'=> {
-       :ports=> {
-         'SessionCreateSoap'=> {
-            :type=>'http://schemas.xmlsoap.org/wsdl/soap/',
+      'SessionCreate' => {
+        ports: {
+          'SessionCreateSoap' => {
+            type: 'http://schemas.xmlsoap.org/wsdl/soap/',
             # symbolic endpoint
-            :location=>'http://USE_ADDRESS_RETURNED_BY_LOCATION_SERVICE/jettaobeapi/SessionCreate.asmx'
-         },
-         'SessionCreateSoap12'=>{
-           :type=>'http://schemas.xmlsoap.org/wsdl/soap12/',
+            location: 'http://USE_ADDRESS_RETURNED_BY_LOCATION_SERVICE/jettaobeapi/SessionCreate.asmx'
+          },
+          'SessionCreateSoap12' => {
+            type: 'http://schemas.xmlsoap.org/wsdl/soap12/',
             # symbolic endpoint
-           :location=>'http://USE_ADDRESS_RETURNED_BY_LOCATION_SERVICE/jettaobeapi/SessionCreate.asmx'
-         }
-       }
-     }
+            location: 'http://USE_ADDRESS_RETURNED_BY_LOCATION_SERVICE/jettaobeapi/SessionCreate.asmx'
+          }
+        }
+      }
     )
   end
 
@@ -47,28 +46,32 @@ describe 'Integration with Jetairways\'s SessionCreate Service' do
 
     expect(operation.example_header).to eq(
       MessageHeader:
-        {From: {PartyId: [{}], Role: 'string'},
-         To: {PartyId: [{}], Role: 'string'},
-         CPAId: 'string',
-         ConversationId: 'string',
-         Service: {},
-         Action: 'string',
-         MessageData:
-          {MessageId: 'string',
-           Timestamp: 'string',
-           RefToMessageId: 'string',
-           TimeToLive: 'dateTime'},
-         DuplicateElimination: {},
-         Description: [{}],
-         _id: 's:ID',
-         _version: 's:string'},
-       Security:
-        {UsernameToken:
-          {Username: 'string',
+        { From: { PartyId: [{}], Role: 'string' },
+          To: { PartyId: [{}], Role: 'string' },
+          CPAId: 'string',
+          ConversationId: 'string',
+          Service: {},
+          Action: 'string',
+          MessageData:
+          { MessageId: 'string',
+            Timestamp: 'string',
+            RefToMessageId: 'string',
+            TimeToLive: 'dateTime'
+},
+          DuplicateElimination: {},
+          Description: [{}],
+          _id: 's:ID',
+          _version: 's:string'
+},
+      Security:
+       { UsernameToken:
+         { Username: 'string',
            Password: 'string',
            Organization: 'string',
-           Domain: 'string'},
-         BinarySecurityToken: 'string'}
+           Domain: 'string'
+},
+         BinarySecurityToken: 'string'
+}
     )
   end
 
@@ -76,7 +79,7 @@ describe 'Integration with Jetairways\'s SessionCreate Service' do
     operation = client.operation(service_name, port_name, :Logon)
 
     expect(operation.example_body).to eq(
-                    Logon:{}
+      Logon: {}
     )
   end
 
@@ -84,26 +87,27 @@ describe 'Integration with Jetairways\'s SessionCreate Service' do
     operation = client.operation(service_name, port_name, :Logon)
 
     operation.header =
-    {
-    MessageHeader:
-      {CPAId:"9W",
-       ConversationId:"1",
-       Service:{Service:"Create"},
-       Action:"CreateSession",
-       MessageData:
-        {MessageId:"0",
-         Timestamp:"2014-02-01T12:57:12.000Z"}
-      },
-      Security:
-      { UsernameToken: {
+      {
+        MessageHeader:
+        { CPAId: '9W',
+          ConversationId: '1',
+          Service: { Service: 'Create' },
+          Action: 'CreateSession',
+          MessageData:
+          { MessageId: '0',
+            Timestamp: '2014-02-01T12:57:12.000Z'
+}
+},
+        Security:
+        { UsernameToken: {
           Username: 'example_user',
           Password: 'my_secret',
-          Organization: 'example_organization'}
-
-       }
-    }
+          Organization: 'example_organization'
+        }
+}
+      }
     operation.body =
-    {Logon:{}}
+      { Logon: {} }
 
     expected = Nokogiri.XML('
       <env:Envelope
@@ -135,8 +139,7 @@ describe 'Integration with Jetairways\'s SessionCreate Service' do
         </env:Body>
     ')
 
-    expect(Nokogiri.XML operation.build).
-      to be_equivalent_to(expected).respecting_element_order
+    expect(Nokogiri.XML(operation.build))
+      .to be_equivalent_to(expected).respecting_element_order
   end
-
 end

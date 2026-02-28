@@ -1,38 +1,41 @@
+# frozen_string_literal: true
+
 require 'spec_helper'
 
 describe WSDL::Operation do
-
-  let(:add_logins) {
+  let(:add_logins) do
     client = WSDL.new fixture('wsdl/bronto')
 
     service_name = :BrontoSoapApiImplService
     port_name    = :BrontoSoapApiImplPort
 
     client.operation(service_name, port_name, :addLogins)
-  }
+  end
 
-  let(:get_mu_bets_lite) {
+  let(:get_mu_bets_lite) do
     client = WSDL.new fixture('wsdl/betfair')
 
     service_name = port_name = :BFExchangeService
     client.operation(service_name, port_name, :getMUBetsLite)
-  }
+  end
 
-  let(:vatAccount_update_from_data_array) {
+  let(:vat_account_update_from_data_array) do
     client = WSDL.new fixture('wsdl/arrays_with_attributes')
 
-    service, port = "EconomicWebService", "EconomicWebServiceSoap"
+    service = 'EconomicWebService'
+    port = 'EconomicWebServiceSoap'
 
     client.operation(service, port, 'VatAccount_UpdateFromDataArray')
-  }
+  end
 
-  let(:zanox_export_service){
+  let(:zanox_export_service) do
     client = WSDL.new fixture('wsdl/zanox_export_service')
 
-    service, port = "ExportService", "ExportServiceSoap"
+    service = 'ExportService'
+    port = 'ExportServiceSoap'
 
     client.operation(service, port, 'GetPps')
-  }
+  end
 
   describe '#build' do
     describe 'multiple calls' do
@@ -81,7 +84,7 @@ describe WSDL::Operation do
               username: 'second',
               password: 'ubersecret',
               contactInformation: {
-                email: 'second@example.com',
+                email: 'second@example.com'
               }
             }
           ]
@@ -115,8 +118,8 @@ describe WSDL::Operation do
         </env:Envelope>
       ')
 
-      expect(Nokogiri.XML add_logins.build).
-        to be_equivalent_to(expected).respecting_element_order
+      expect(Nokogiri.XML(add_logins.build))
+        .to be_equivalent_to(expected).respecting_element_order
     end
 
     it 'raises if it did not receive a Hash for a singular complex type' do
@@ -130,8 +133,8 @@ describe WSDL::Operation do
         ]
       }
 
-      expect { add_logins.build }.
-        to raise_error(ArgumentError, "Expected a Hash for the :addLogins complex type")
+      expect { add_logins.build }
+        .to raise_error(ArgumentError, 'Expected a Hash for the :addLogins complex type')
     end
 
     it 'raises if it did not receive an Array for an Array of complex types' do
@@ -146,8 +149,8 @@ describe WSDL::Operation do
         }
       }
 
-      expect { add_logins.build }.
-        to raise_error(ArgumentError, "Expected an Array of Hashes for the :accounts complex type")
+      expect { add_logins.build }
+        .to raise_error(ArgumentError, 'Expected an Array of Hashes for the :accounts complex type')
     end
 
     it 'raises if it received an Array for a singular simple type' do
@@ -155,14 +158,14 @@ describe WSDL::Operation do
         addLogins: {
           accounts: [
             {
-              username: ['multiple', 'tests']
+              username: %w[multiple tests]
             }
           ]
         }
       }
 
-      expect { add_logins.build }.
-        to raise_error(ArgumentError, "Unexpected Array for the :username simple type")
+      expect { add_logins.build }
+        .to raise_error(ArgumentError, 'Unexpected Array for the :username simple type')
     end
 
     it 'expectes Arrays of simple types to be represented as Arrays of values' do
@@ -176,7 +179,7 @@ describe WSDL::Operation do
         }
       }
 
-      expected = Nokogiri.XML(%{
+      expected = Nokogiri.XML(%(
         <env:Envelope
             xmlns:lol0="http://www.betfair.com/publicapi/v5/BFExchangeService/"
             xmlns:lol1="http://www.betfair.com/publicapi/types/exchange/v5/"
@@ -194,10 +197,10 @@ describe WSDL::Operation do
             </lol0:getMUBetsLite>
           </env:Body>
         </env:Envelope>
-      })
+      ))
 
-      expect(Nokogiri.XML get_mu_bets_lite.build).
-        to be_equivalent_to(expected).respecting_element_order
+      expect(Nokogiri.XML(get_mu_bets_lite.build))
+        .to be_equivalent_to(expected).respecting_element_order
     end
 
     it 'raises if it did not receive an Array for an Array of simple types' do
@@ -211,32 +214,34 @@ describe WSDL::Operation do
         }
       }
 
-      expect { get_mu_bets_lite.build }.
-        to raise_error(ArgumentError, "Expected an Array of values for the :betId simple type")
+      expect { get_mu_bets_lite.build }
+        .to raise_error(ArgumentError, 'Expected an Array of values for the :betId simple type')
     end
 
-    it 'expects elements of Hashes containing attributes and key with same to return corresponding xml with attributes and text inside' do
+    it 'expects Hashes with attributes and matching key to return xml with attributes and text' do
       zanox_export_service.header = {
         zanox: {
           ticket: 'EFB745D691DBFF2DFA9F8B10A4D7A7B1AEA850CD'
         }
       }
       zanox_export_service.body = {
-        :GetPps => {
+        GetPps: {
           programid: 5574,
           ppsfilter: {
-              period: {
-                :_from => '2013-10-01T00:00:00+02:00',
-                :_to   => '2013-11-12T00:00:00+02:00'
-              },
-              :reviewstate => {reviewstate: 0, :_negate => 1},
-              :categoryid => {}
+            period: {
+              _from: '2013-10-01T00:00:00+02:00',
+              _to: '2013-11-12T00:00:00+02:00'
+            },
+            reviewstate: { reviewstate: 0, _negate: 1 },
+            categoryid: {}
           }
         }
       }
 
-      expected = Nokogiri.XML(%{
-        <env:Envelope xmlns:lol0="http://services.zanox.com/erp" xmlns:lol1="http://services.zanox.com/erp/Export" xmlns:env="http://schemas.xmlsoap.org/soap/envelope/">
+      expected = Nokogiri.XML(%(
+        <env:Envelope xmlns:lol0="http://services.zanox.com/erp"
+                      xmlns:lol1="http://services.zanox.com/erp/Export"
+                      xmlns:env="http://schemas.xmlsoap.org/soap/envelope/">
           <env:Header>
             <lol0:zanox>
               <lol0:ticket>EFB745D691DBFF2DFA9F8B10A4D7A7B1AEA850CD</lol0:ticket>
@@ -252,41 +257,41 @@ describe WSDL::Operation do
               </lol1:ppsfilter>
             </lol0:GetPps>
           </env:Body>
-        </env:Envelope>})
+        </env:Envelope>))
 
-      expect(Nokogiri.XML zanox_export_service.build).
-          to be_equivalent_to(expected).respecting_element_order
+      expect(Nokogiri.XML(zanox_export_service.build))
+        .to be_equivalent_to(expected).respecting_element_order
     end
 
     it 'expects Array of Hashes with attributes to return Array of complex types with attributes' do
-      vatAccount_update_from_data_array.body = {
-          :VatAccount_UpdateFromDataArray => {
-              :dataArray => {
-                  :VatAccountData => [
-                      {
-                          :Handle => {:VatCode => "VAT123"},
-                          :VatCode => {:_attribute => 'test', :_foo => 11, :VatCode => "VAT123"},
-                          :Name => "ITS",
-                          :Type => "Ltd",
-                          :RateAsPercent => 17.5,
-                          :AccountHandle => {:Number => 123}, :ContraAccountHandle => {:Number => 456},
-                          :_Thaco => "Testing 1234"
-                      },
-                      {
-                          :Handle => {:VatCode => "VAT987"},
-                          :VatCode => "VAT987",
-                          :Name => "Banana",
-                          :Type => "PLC",
-                          :RateAsPercent => 21.12,
-                          :AccountHandle => {:Number => 876}, :ContraAccountHandle => {:Number => 8756},
-                          :_Thaco => "Testing 5678"
-                      }
-                  ]
+      vat_account_update_from_data_array.body = {
+        VatAccount_UpdateFromDataArray: {
+          dataArray: {
+            VatAccountData: [
+              {
+                Handle: { VatCode: 'VAT123' },
+                VatCode: { _attribute: 'test', _foo: 11, VatCode: 'VAT123' },
+                Name: 'ITS',
+                Type: 'Ltd',
+                RateAsPercent: 17.5,
+                AccountHandle: { Number: 123 }, ContraAccountHandle: { Number: 456 },
+                _Thaco: 'Testing 1234'
+              },
+              {
+                Handle: { VatCode: 'VAT987' },
+                VatCode: 'VAT987',
+                Name: 'Banana',
+                Type: 'PLC',
+                RateAsPercent: 21.12,
+                AccountHandle: { Number: 876 }, ContraAccountHandle: { Number: 8756 },
+                _Thaco: 'Testing 5678'
               }
+            ]
           }
+        }
       }
 
-      expected = Nokogiri.XML(%{
+      expected = Nokogiri.XML(%(
         <env:Envelope xmlns:lol0="http://e-conomic.com" xmlns:env="http://schemas.xmlsoap.org/soap/envelope/">
           <env:Header>
           </env:Header>
@@ -326,11 +331,10 @@ describe WSDL::Operation do
               </lol0:dataArray>
             </lol0:VatAccount_UpdateFromDataArray>
           </env:Body>
-        </env:Envelope>})
+        </env:Envelope>))
 
-      expect(Nokogiri.XML vatAccount_update_from_data_array.build).
-          to be_equivalent_to(expected).respecting_element_order
+      expect(Nokogiri.XML(vat_account_update_from_data_array.build))
+        .to be_equivalent_to(expected).respecting_element_order
     end
   end
-
 end

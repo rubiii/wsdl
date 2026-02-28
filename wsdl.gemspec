@@ -1,6 +1,7 @@
-# -*- encoding : utf-8 -*-
-lib = File.expand_path('../lib', __FILE__)
-$:.unshift lib unless $:.include? lib
+# frozen_string_literal: true
+
+lib = File.expand_path('lib', __dir__)
+$LOAD_PATH.unshift lib unless $LOAD_PATH.include? lib
 
 require 'wsdl/version'
 
@@ -17,17 +18,12 @@ Gem::Specification.new do |s|
   s.license = 'MIT'
 
   # TODO: get rid of Nori.
-  s.add_dependency 'nori',     '~> 2.2.0'
+  s.add_dependency 'nori', '~> 2.2.0'
 
-  s.add_dependency 'nokogiri',   '>= 1.4.0'
   s.add_dependency 'builder',    '>= 3.0.0'
   s.add_dependency 'httpclient', '~> 2.3'
   s.add_dependency 'logging',    '~> 1.8'
-
-  s.add_development_dependency 'rake',  '~> 12.3'
-  s.add_development_dependency 'rspec', '~> 3'
-  s.add_development_dependency 'mocha', '~> 0.14'
-  s.add_development_dependency 'equivalent-xml', '~> 0.3'
+  s.add_dependency 'nokogiri',   '>= 1.4.0'
 
   ignores  = File.readlines('.gitignore').grep(/\S+/).map(&:chomp)
   dotfiles = %w[.gitignore .yardopts]
@@ -39,4 +35,5 @@ Gem::Specification.new do |s|
   s.files = (all_files_without_ignores + dotfiles).sort
 
   s.require_path = 'lib'
+  s.metadata['rubygems_mfa_required'] = 'true'
 end

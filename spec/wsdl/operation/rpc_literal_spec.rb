@@ -1,7 +1,8 @@
+# frozen_string_literal: true
+
 require 'spec_helper'
 
 describe WSDL::Operation do
-
   # namespace reference:
   #   http://www.ibm.com/developerworks/webservices/library/ws-tip-namespace/index.html
   context 'with an rpc/literal document' do
@@ -12,9 +13,19 @@ describe WSDL::Operation do
       expect(op1.input_style).to eq('rpc/literal')
 
       expect(op1.body_parts).to eq([
-        [ ['in'],          { namespace: nil,                        form: 'unqualified', singular: true } ],
-        [ ['in', 'data1'], { namespace: 'http://dataNamespace.com', form: 'unqualified', singular: true, type: 'int' } ],
-        [ ['in', 'data2'], { namespace: 'http://dataNamespace.com', form: 'unqualified', singular: true, type: 'int' } ]
+        [['in'],
+         { namespace: nil,                        form: 'unqualified', singular: true }
+],
+        [%w[in data1],
+         { namespace: 'http://dataNamespace.com', form: 'unqualified', singular: true,
+           type: 'int'
+}
+],
+        [%w[in data2],
+         { namespace: 'http://dataNamespace.com', form: 'unqualified', singular: true,
+           type: 'int'
+}
+]
       ])
     end
 
@@ -25,9 +36,19 @@ describe WSDL::Operation do
       expect(op2.input_style).to eq('rpc/literal')
 
       expect(op2.body_parts).to eq([
-        [ ['in'],          { namespace: nil,                        form: 'unqualified', singular: true } ],
-        [ ['in', 'data1'], { namespace: 'http://dataNamespace.com', form: 'unqualified', singular: true, type: 'int' } ],
-        [ ['in', 'data2'], { namespace: 'http://dataNamespace.com', form: 'unqualified', singular: true, type: 'int' } ]
+        [['in'],
+         { namespace: nil,                        form: 'unqualified', singular: true }
+],
+        [%w[in data1],
+         { namespace: 'http://dataNamespace.com', form: 'unqualified', singular: true,
+           type: 'int'
+}
+],
+        [%w[in data2],
+         { namespace: 'http://dataNamespace.com', form: 'unqualified', singular: true,
+           type: 'int'
+}
+]
       ])
     end
 
@@ -38,13 +59,26 @@ describe WSDL::Operation do
       expect(op3.input_style).to eq('rpc/literal')
 
       expect(op3.body_parts).to eq([
-        [ ['DataElem'],           { namespace: 'http://dataNamespace.com', form: 'qualified',   singular: true } ],
-        [ ['DataElem', 'data1'],  { namespace: 'http://dataNamespace.com', form: 'unqualified', singular: true, type: 'int' } ],
-        [ ['DataElem', 'data2'],  { namespace: 'http://dataNamespace.com', form: 'unqualified', singular: true, type: 'int' } ],
-        [ ['in2'],                { namespace: nil,                        form: 'unqualified', singular: true } ],
-        [ ['in2', 'RefDataElem'], { namespace: 'http://refNamespace.com',  form: 'qualified',   singular: true, type: 'int' } ],
+        [['DataElem'],
+         { namespace: 'http://dataNamespace.com', form: 'qualified', singular: true }
+],
+        [%w[DataElem data1],
+         { namespace: 'http://dataNamespace.com', form: 'unqualified', singular: true,
+           type: 'int'
+}
+],
+        [%w[DataElem data2],
+         { namespace: 'http://dataNamespace.com', form: 'unqualified', singular: true,
+           type: 'int'
+}
+],
+        [['in2'], { namespace: nil, form: 'unqualified', singular: true }],
+        [%w[in2 RefDataElem],
+         { namespace: 'http://refNamespace.com',  form: 'qualified',   singular: true,
+           type: 'int'
+}
+]
       ])
     end
   end
-
 end

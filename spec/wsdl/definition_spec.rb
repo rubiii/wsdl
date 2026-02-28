@@ -1,8 +1,9 @@
+# frozen_string_literal: true
+
 require 'spec_helper'
 
 describe WSDL::Definition do
-
-  subject(:wsdl) { WSDL::Definition.new fixture('wsdl/authentication'), http_mock }
+  subject(:wsdl) { described_class.new fixture('wsdl/authentication'), http_mock }
 
   let(:operation_name) { 'authenticate' }
   let(:service_name)   { 'AuthenticationWebServiceImplService' }
@@ -18,10 +19,10 @@ describe WSDL::Definition do
     it 'returns a map of services and ports' do
       expect(wsdl.services).to eq(
         'AuthenticationWebServiceImplService' => {
-          :ports => {
+          ports: {
             'AuthenticationWebServiceImplPort' => {
-              :type     => 'http://schemas.xmlsoap.org/wsdl/soap/',
-              :location => 'http://example.com/validation/1.0/AuthenticationService'
+              type: 'http://schemas.xmlsoap.org/wsdl/soap/',
+              location: 'http://example.com/validation/1.0/AuthenticationService'
             }
           }
         }
@@ -42,5 +43,4 @@ describe WSDL::Definition do
       expect(operation).to be_a(WSDL::Definition::Operation)
     end
   end
-
 end

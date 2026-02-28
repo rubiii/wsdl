@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'wsdl/xs/schema'
 require 'wsdl/definition/message'
 require 'wsdl/definition/port_type'
@@ -6,36 +8,74 @@ require 'wsdl/definition/service'
 
 class WSDL
   class Definition
+    # Represents a single parsed WSDL document.
+    #
+    # This class parses a WSDL XML document and provides access to its
+    # various sections including messages, bindings, port types, and services.
+    # It also extracts XML Schema definitions embedded within the WSDL.
+    #
+    # @api private
+    #
     class Document
-
+      # Creates a new Document by parsing a Nokogiri XML document.
+      #
+      # @param document [Nokogiri::XML::Document] the parsed WSDL XML document
+      # @param schemas [XS::SchemaCollection] the schema collection for resolving types
       def initialize(document, schemas)
         @document = document
         @schemas = schemas
 
-        @messages, @bindings, @port_types, @services = {}, {}, {}, {}
+        @messages = {}
+        @bindings = {}
+        @port_types = {}
+        @services = {}
 
         collect_sections(
-          'message'  => { :collection => @messages,   :container => Message  },
-          'binding'  => { :collection => @bindings,   :container => Binding  },
-          'portType' => { :collection => @port_types, :container => PortType },
-          'service'  => { :collection => @services,   :container => Service  }
+          'message' => { collection: @messages,   container: Message  },
+          'binding' => { collection: @bindings,   container: Binding  },
+          'portType' => { collection: @port_types, container: PortType },
+          'service' => { collection: @services, container: Service }
         )
       end
 
-      attr_reader :messages, :port_types, :bindings, :services
+      # @return [Hash<String, Message>] the messages defined in this document
+      attr_reader :messages
 
+      # @return [Hash<String, PortType>] the port types defined in this document
+      attr_reader :port_types
+
+      # @return [Hash<String, Binding>] the bindings defined in this document
+      attr_reader :bindings
+
+      # @return [Hash<String, Service>] the services defined in this document
+      attr_reader :services
+
+      # Returns the name of the WSDL definitions element.
+      #
+      # @return [String] the service name from the root element's name attribute
       def service_name
         @document.root['name']
       end
 
+      # Returns the target namespace of this WSDL document.
+      #
+      # @return [String] the target namespace URI
       def target_namespace
         @document.root['targetNamespace']
       end
 
+      # Returns the XML Schemas defined within this WSDL document.
+      #
+      # Schemas are typically found within the wsdl:types element.
+      #
+      # @return [Array<XS::Schema>] the parsed schema objects
       def schemas
         schema_nodes.map { |node| XS::Schema.new(node, @schemas) }
       end
 
+      # Returns the locations of imported WSDL documents.
+      #
+      # @return [Array<String>] the import locations
       def imports
         imports = []
 
@@ -49,6 +89,10 @@ class WSDL
 
       private
 
+      # Collects sections from the WSDL document and stores them in their respective collections.
+      #
+      # @param mapping [Hash] a mapping of section names to collection and container info
+      # @return [void]
       def collect_sections(mapping)
         section_types = mapping.keys
 
@@ -66,18 +110,26 @@ class WSDL
         end
       end
 
+      # Returns the schema nodes from this document.
+      #
+      # @return [Array<Nokogiri::XML::Node>] the schema element nodes
       def schema_nodes
         @schema_nodes ||= schema_nodes! || []
       end
 
+      # Finds and returns schema nodes from the document.
+      #
+      # If the root element is a schema, returns it directly.
+      # Otherwise, looks for schemas within the wsdl:types element.
+      #
+      # @return [Array<Nokogiri::XML::Node>, nil] the schema nodes or nil if none found
       def schema_nodes!
         root = @document.root
         return [root] if root.name == 'schema'
 
         types = root.at_xpath('wsdl:types', 'wsdl' => WSDL::NS_WSDL)
-        types.element_children if types
+        types&.element_children
       end
-
     end
   end
 end

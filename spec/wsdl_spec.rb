@@ -1,8 +1,9 @@
+# frozen_string_literal: true
+
 require 'spec_helper'
 
 describe WSDL do
-
-  subject(:client) { WSDL.new(wsdl, http_mock) }
+  subject(:client) { described_class.new(wsdl, http_mock) }
 
   let(:wsdl) { fixture('wsdl/amazon') }
 
@@ -12,37 +13,37 @@ describe WSDL do
 
   describe '.http_adapter' do
     it 'returns the default HTTP client to use' do
-      expect(WSDL.http_adapter).to eq(WSDL::HTTPClient)
+      expect(described_class.http_adapter).to eq(WSDL::HTTPClient)
     end
 
     it 'can be changed to use a custom adapter' do
-      adapter = mock('http-adapter')
+      adapter = double('http-adapter')
 
-      WSDL.http_adapter = adapter
-      expect(WSDL.http_adapter).to eq(adapter)
+      described_class.http_adapter = adapter
+      expect(described_class.http_adapter).to eq(adapter)
 
-      adapter.expects(:new).returns(adapter)
-      adapter.expects(:client).returns('http-client')
+      allow(adapter).to receive_messages(new: adapter, client: 'http-client')
 
-      client = WSDL.new(wsdl)
+      client = described_class.new(wsdl)
       expect(client.http).to eq('http-client')
 
       # reset global state!
-      WSDL.http_adapter = nil
+      described_class.http_adapter = nil
     end
   end
 
   describe '.new' do
     it 'expects a local or remote WSDL document' do
-      WSDL::Definition.expects(:new).with(wsdl, instance_of(WSDL.http_adapter)).returns(:wasabi)
-      WSDL.new(wsdl)
+      expect(WSDL::Definition).to receive(:new).with(wsdl,
+                                                     instance_of(described_class.http_adapter)).and_return(:wasabi)
+      described_class.new(wsdl)
     end
 
     it 'also accepts a custom HTTP adapter to replace the default' do
       http = :my_http_adapter
-      WSDL::Definition.expects(:new).with(wsdl, http).returns(:wasabi)
+      expect(WSDL::Definition).to receive(:new).with(wsdl, http).and_return(:wasabi)
 
-      WSDL.new(wsdl, http)
+      described_class.new(wsdl, http)
     end
   end
 
@@ -54,7 +55,7 @@ describe WSDL do
 
   describe '#http' do
     it 'returns the HTTP adapter\'s client to configure' do
-      client = WSDL.new(wsdl)
+      client = described_class.new(wsdl)
       expect(client.http).to be_an_instance_of(HTTPClient)
     end
   end
@@ -65,7 +66,7 @@ describe WSDL do
         'AmazonFPS' => {
           ports: {
             'AmazonFPSPort' => {
-              type:     'http://schemas.xmlsoap.org/wsdl/soap/',
+              type: 'http://schemas.xmlsoap.org/wsdl/soap/',
               location: 'https://fps.amazonaws.com'
             }
           }
@@ -88,13 +89,13 @@ describe WSDL do
     end
 
     it 'raises if the service could not be found' do
-      expect { client.operations(:UnknownService, :UnknownPort) }.
-        to raise_error(ArgumentError, /Unknown service "UnknownService"/)
+      expect { client.operations(:UnknownService, :UnknownPort) }
+        .to raise_error(ArgumentError, /Unknown service "UnknownService"/)
     end
 
     it 'raises if the port could not be found' do
-      expect { client.operations(service_name, :UnknownPort) }.
-        to raise_error(ArgumentError, /Unknown service "AmazonFPS" or port "UnknownPort"/)
+      expect { client.operations(service_name, :UnknownPort) }
+        .to raise_error(ArgumentError, /Unknown service "AmazonFPS" or port "UnknownPort"/)
     end
   end
 
@@ -110,19 +111,19 @@ describe WSDL do
     end
 
     it 'raises if the service could not be found' do
-      expect { client.operation(:UnknownService, :UnknownPort, :UnknownOperation) }.
-        to raise_error(ArgumentError, /Unknown service "UnknownService"/)
+      expect { client.operation(:UnknownService, :UnknownPort, :UnknownOperation) }
+        .to raise_error(ArgumentError, /Unknown service "UnknownService"/)
     end
 
     it 'raises if the port could not be found' do
-      expect { client.operation(service_name, :UnknownPort, :UnknownOperation) }.
-        to raise_error(ArgumentError, /Unknown service "AmazonFPS" or port "UnknownPort"/)
+      expect { client.operation(service_name, :UnknownPort, :UnknownOperation) }
+        .to raise_error(ArgumentError, /Unknown service "AmazonFPS" or port "UnknownPort"/)
     end
 
     it 'raises if the operation could not be found' do
-      expect { client.operation(service_name, port_name, :UnknownOperation) }.
-        to raise_error(ArgumentError, /Unknown operation "UnknownOperation" for service "AmazonFPS" and port "AmazonFPSPort"/)
+      expect { client.operation(service_name, port_name, :UnknownOperation) }
+        .to raise_error(ArgumentError,
+                        /Unknown operation "UnknownOperation" for service "AmazonFPS" and port "AmazonFPSPort"/)
     end
   end
-
 end

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'bundler'
 Bundler.setup(:default, :development)
 
@@ -13,7 +15,7 @@ end
 
 require 'wsdl'
 
-if logger_to_enable = ENV['DEBUG']
+if (logger_to_enable = ENV.fetch('DEBUG', nil))
   logger = Logging.logger[logger_to_enable]
   logger.add_appenders(Logging.appenders.stdout)
   logger.level = :debug
@@ -28,10 +30,12 @@ require 'equivalent-xml'
 require 'equivalent-xml/rspec_matchers'
 
 support_files = File.expand_path('spec/support/**/*.rb')
-Dir[support_files].each { |file| require file }
+Dir[support_files].each do |file|
+  require file
+end
 
 RSpec.configure do |config|
   config.include SpecSupport
-  config.mock_with :mocha
+  config.mock_with :rspec
   config.order = 'random'
 end

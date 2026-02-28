@@ -1,7 +1,8 @@
+# frozen_string_literal: true
+
 require 'spec_helper'
 
 describe 'Integration with Betfair' do
-
   subject(:client) { WSDL.new fixture('wsdl/betfair') }
 
   let(:service_name) { :BFExchangeService }
@@ -10,10 +11,10 @@ describe 'Integration with Betfair' do
   it 'returns a map of services and ports' do
     expect(client.services).to eq(
       'BFExchangeService' => {
-        :ports => {
+        ports: {
           'BFExchangeService' => {
-            :type     => 'http://schemas.xmlsoap.org/wsdl/soap/',
-            :location => 'https://api.betfair.com/exchange/v5/BFExchangeService'
+            type: 'http://schemas.xmlsoap.org/wsdl/soap/',
+            location: 'https://api.betfair.com/exchange/v5/BFExchangeService'
           }
         }
       }
@@ -32,53 +33,70 @@ describe 'Integration with Betfair' do
 
     expect(operation.body_parts).to eq([
       [['getMUBetsLite'],
-        { namespace: ns, form: 'qualified',   singular: true }],
+       { namespace: ns, form: 'qualified', singular: true }
+],
 
-      [['getMUBetsLite', 'request'],
-        { namespace: ns, form: 'qualified',   singular: true }],
+      [%w[getMUBetsLite request],
+       { namespace: ns, form: 'qualified', singular: true }
+],
 
       # extension elements
 
-      [['getMUBetsLite', 'request', 'header'],
-         { namespace: ns2, form: 'unqualified', singular: true }],
+      [%w[getMUBetsLite request header],
+       { namespace: ns2, form: 'unqualified', singular: true }
+],
 
-      [['getMUBetsLite', 'request', 'header', 'clientStamp'],
-         { namespace: ns2, form: 'unqualified', singular: true, type: 'xsd:long' }],
+      [%w[getMUBetsLite request header clientStamp],
+       { namespace: ns2, form: 'unqualified', singular: true, type: 'xsd:long' }
+],
 
-      [['getMUBetsLite', 'request', 'header', 'sessionToken'],
-         { namespace: ns2, form: 'unqualified', singular: true, type: 'xsd:string' }],
+      [%w[getMUBetsLite request header sessionToken],
+       { namespace: ns2, form: 'unqualified', singular: true, type: 'xsd:string' }
+],
 
       # ---
 
-      [['getMUBetsLite', 'request', 'betStatus'],
-        { namespace: ns2, form: 'unqualified', singular: true,  type: 'xsd:string' }],
+      [%w[getMUBetsLite request betStatus],
+       { namespace: ns2, form: 'unqualified', singular: true, type: 'xsd:string' }
+],
 
-      [['getMUBetsLite', 'request', 'marketId'],
-        { namespace: ns2, form: 'unqualified', singular: true,  type: 'xsd:int' }],
+      [%w[getMUBetsLite request marketId],
+       { namespace: ns2, form: 'unqualified', singular: true, type: 'xsd:int' }
+],
 
-      [['getMUBetsLite', 'request', 'betIds'],
-        { namespace: ns2, form: 'unqualified', singular: true }],
+      [%w[getMUBetsLite request betIds],
+       { namespace: ns2, form: 'unqualified', singular: true }
+],
 
-      [['getMUBetsLite', 'request', 'betIds', 'betId'],
-        { namespace: ns2, form: 'qualified',   singular: false, type: 'xsd:long' }],
+      [%w[getMUBetsLite request betIds betId],
+       { namespace: ns2, form: 'qualified', singular: false, type: 'xsd:long' }
+],
 
-      [['getMUBetsLite', 'request', 'orderBy'],
-        { namespace: ns2, form: 'unqualified', singular: true,  type: 'xsd:string' }],
+      [%w[getMUBetsLite request orderBy],
+       { namespace: ns2, form: 'unqualified', singular: true, type: 'xsd:string' }
+],
 
-      [['getMUBetsLite', 'request', 'sortOrder'],
-        { namespace: ns2, form: 'unqualified', singular: true,  type: 'xsd:string' }],
+      [%w[getMUBetsLite request sortOrder],
+       { namespace: ns2, form: 'unqualified', singular: true, type: 'xsd:string' }
+],
 
-      [['getMUBetsLite', 'request', 'recordCount'],
-        { namespace: ns2, form: 'unqualified', singular: true,  type: 'xsd:int' }],
+      [%w[getMUBetsLite request recordCount],
+       { namespace: ns2, form: 'unqualified', singular: true, type: 'xsd:int' }
+],
 
-      [['getMUBetsLite', 'request', 'startRecord'],
-        { namespace: ns2, form: 'unqualified', singular: true,  type: 'xsd:int' }],
+      [%w[getMUBetsLite request startRecord],
+       { namespace: ns2, form: 'unqualified', singular: true, type: 'xsd:int' }
+],
 
-      [['getMUBetsLite', 'request', 'matchedSince'],
-        { namespace: ns2, form: 'unqualified', singular: true,  type: 'xsd:dateTime' }],
+      [%w[getMUBetsLite request matchedSince],
+       { namespace: ns2, form: 'unqualified', singular: true,
+         type: 'xsd:dateTime'
+ }
+],
 
-      [['getMUBetsLite', 'request', 'excludeLastSecond'],
-        { namespace: ns2, form: 'unqualified', singular: true,  type: 'xsd:boolean' }]
+      [%w[getMUBetsLite request excludeLastSecond],
+       { namespace: ns2, form: 'unqualified', singular: true, type: 'xsd:boolean' }
+]
     ])
   end
 
@@ -140,7 +158,7 @@ describe 'Integration with Betfair' do
       }
     }
 
-    expected = Nokogiri.XML(%{
+    expected = Nokogiri.XML(%(
       <env:Envelope
           xmlns:lol0="http://www.betfair.com/publicapi/v5/BFExchangeService/"
           xmlns:lol1="http://www.betfair.com/publicapi/types/exchange/v5/"
@@ -170,10 +188,9 @@ describe 'Integration with Betfair' do
           </lol0:getMUBetsLite>
         </env:Body>
       </env:Envelope>
-    })
+    ))
 
-    expect(Nokogiri.XML operation.build).
-      to be_equivalent_to(expected).respecting_element_order
+    expect(Nokogiri.XML(operation.build))
+      .to be_equivalent_to(expected).respecting_element_order
   end
-
 end

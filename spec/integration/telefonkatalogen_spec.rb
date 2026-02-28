@@ -1,17 +1,18 @@
+# frozen_string_literal: true
+
 require 'spec_helper'
 
 describe 'Integration with Telefonkatalogen' do
-
   # reference: savon#295
   subject(:client) { WSDL.new fixture('wsdl/telefonkatalogen') }
 
   it 'returns a map of services and ports' do
     expect(client.services).to eq(
       'SendSms' => {
-        :ports => {
+        ports: {
           'SendSmsPort' => {
-            :type     => 'http://schemas.xmlsoap.org/wsdl/soap/',
-            :location => 'http://bedrift.telefonkatalogen.no/tk/websvcsendsms.php'
+            type: 'http://schemas.xmlsoap.org/wsdl/soap/',
+            location: 'http://bedrift.telefonkatalogen.no/tk/websvcsendsms.php'
           }
         }
       }
@@ -27,16 +28,33 @@ describe 'Integration with Telefonkatalogen' do
     # it does not include the rpc wrapper.
 
     expect(operation.body_parts).to eq([
-      [['sender'],      { namespace: nil, form: 'unqualified', singular: true, type: 'xsd:string' }],
-      [['cellular'],    { namespace: nil, form: 'unqualified', singular: true, type: 'xsd:string' }],
-      [['msg'],         { namespace: nil, form: 'unqualified', singular: true, type: 'xsd:string' }],
-      [['smsnumgroup'], { namespace: nil, form: 'unqualified', singular: true, type: 'xsd:string' }],
-      [['emailaddr'],   { namespace: nil, form: 'unqualified', singular: true, type: 'xsd:string' }],
-      [['udh'],         { namespace: nil, form: 'unqualified', singular: true, type: 'xsd:string' }],
-      [['datetime'],    { namespace: nil, form: 'unqualified', singular: true, type: 'xsd:string' }],
-      [['format'],      { namespace: nil, form: 'unqualified', singular: true, type: 'xsd:string' }],
-      [['dlrurl'],      { namespace: nil, form: 'unqualified', singular: true, type: 'xsd:string' }]
+      [['sender'],
+       { namespace: nil, form: 'unqualified', singular: true, type: 'xsd:string' }
+],
+      [['cellular'],
+       { namespace: nil, form: 'unqualified', singular: true, type: 'xsd:string' }
+],
+      [['msg'],
+       { namespace: nil, form: 'unqualified', singular: true, type: 'xsd:string' }
+],
+      [['smsnumgroup'],
+       { namespace: nil, form: 'unqualified', singular: true, type: 'xsd:string' }
+],
+      [['emailaddr'],
+       { namespace: nil, form: 'unqualified', singular: true, type: 'xsd:string' }
+],
+      [['udh'],
+       { namespace: nil, form: 'unqualified', singular: true, type: 'xsd:string' }
+],
+      [['datetime'],
+       { namespace: nil, form: 'unqualified', singular: true, type: 'xsd:string' }
+],
+      [['format'],
+       { namespace: nil, form: 'unqualified', singular: true, type: 'xsd:string' }
+],
+      [['dlrurl'],
+       { namespace: nil, form: 'unqualified', singular: true, type: 'xsd:string' }
+]
     ])
   end
-
 end

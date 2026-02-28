@@ -1,8 +1,9 @@
+# frozen_string_literal: true
+
 require 'spec_helper'
 
 describe 'Integration with AWSE' do
-
-subject(:client) { WSDL.new fixture('wsdl/awse') }
+  subject(:client) { WSDL.new fixture('wsdl/awse') }
 
   it 'returns a map of services and ports' do
     expect(client.services).to eq(
@@ -50,7 +51,8 @@ subject(:client) { WSDL.new fixture('wsdl/awse') }
   end
 
   it 'knows the operations' do
-    service, port = 'AWSECommerceService', 'AWSECommerceServicePort'
+    service = 'AWSECommerceService'
+    port = 'AWSECommerceServicePort'
     operation = client.operation(service, port, 'CartAdd')
 
     expect(operation.soap_action).to eq('http://soap.amazon.com/CartAdd')
@@ -59,37 +61,142 @@ subject(:client) { WSDL.new fixture('wsdl/awse') }
     namespace = 'http://webservices.amazon.com/AWSECommerceService/2011-08-01'
 
     expect(operation.body_parts).to eq([
-      [['CartAdd'],                                               { namespace: namespace, form: 'qualified', singular: true }],
-      [['CartAdd', 'MarketplaceDomain'],                          { namespace: namespace, form: 'qualified', singular: true, type: 'xs:string' }],
-      [['CartAdd', 'AWSAccessKeyId'],                             { namespace: namespace, form: 'qualified', singular: true, type: 'xs:string' }],
-      [['CartAdd', 'AssociateTag'],                               { namespace: namespace, form: 'qualified', singular: true, type: 'xs:string' }],
-      [['CartAdd', 'Validate'],                                   { namespace: namespace, form: 'qualified', singular: true, type: 'xs:string' }],
-      [['CartAdd', 'XMLEscaping'],                                { namespace: namespace, form: 'qualified', singular: true, type: 'xs:string' }],
-      [['CartAdd', 'Shared'],                                     { namespace: namespace, form: 'qualified', singular: true }],
-      [['CartAdd', 'Shared', 'CartId'],                           { namespace: namespace, form: 'qualified', singular: true, type: 'xs:string' }],
-      [['CartAdd', 'Shared', 'HMAC'],                             { namespace: namespace, form: 'qualified', singular: true, type: 'xs:string' }],
-      [['CartAdd', 'Shared', 'MergeCart'],                        { namespace: namespace, form: 'qualified', singular: true, type: 'xs:string' }],
-      [['CartAdd', 'Shared', 'Items'],                            { namespace: namespace, form: 'qualified', singular: true }],
-      [['CartAdd', 'Shared', 'Items', 'Item'],                    { namespace: namespace, form: 'qualified', singular: false }],
-      [['CartAdd', 'Shared', 'Items', 'Item', 'ASIN'],            { namespace: namespace, form: 'qualified', singular: true, type: 'xs:string' }],
-      [['CartAdd', 'Shared', 'Items', 'Item', 'OfferListingId'],  { namespace: namespace, form: 'qualified', singular: true, type: 'xs:string' }],
-      [['CartAdd', 'Shared', 'Items', 'Item', 'Quantity'],        { namespace: namespace, form: 'qualified', singular: true, type: 'xs:positiveInteger' }],
-      [['CartAdd', 'Shared', 'Items', 'Item', 'AssociateTag'],    { namespace: namespace, form: 'qualified', singular: true, type: 'xs:string' }],
-      [['CartAdd', 'Shared', 'Items', 'Item', 'ListItemId'],      { namespace: namespace, form: 'qualified', singular: true, type: 'xs:string' }],
-      [['CartAdd', 'Shared', 'ResponseGroup'],                    { namespace: namespace, form: 'qualified', singular: false, type: 'xs:string' }],
-      [['CartAdd', 'Request'],                                    { namespace: namespace, form: 'qualified', singular: false }],
-      [['CartAdd', 'Request', 'CartId'],                          { namespace: namespace, form: 'qualified', singular: true, type: 'xs:string' }],
-      [['CartAdd', 'Request', 'HMAC'],                            { namespace: namespace, form: 'qualified', singular: true, type: 'xs:string' }],
-      [['CartAdd', 'Request', 'MergeCart'],                       { namespace: namespace, form: 'qualified', singular: true, type: 'xs:string' }],
-      [['CartAdd', 'Request', 'Items'],                           { namespace: namespace, form: 'qualified', singular: true }],
-      [['CartAdd', 'Request', 'Items', 'Item'],                   { namespace: namespace, form: 'qualified', singular: false }],
-      [['CartAdd', 'Request', 'Items', 'Item', 'ASIN'],           { namespace: namespace, form: 'qualified', singular: true, type: 'xs:string' }],
-      [['CartAdd', 'Request', 'Items', 'Item', 'OfferListingId'], { namespace: namespace, form: 'qualified', singular: true, type: 'xs:string' }],
-      [['CartAdd', 'Request', 'Items', 'Item', 'Quantity'],       { namespace: namespace, form: 'qualified', singular: true, type: 'xs:positiveInteger' }],
-      [['CartAdd', 'Request', 'Items', 'Item', 'AssociateTag'],   { namespace: namespace, form: 'qualified', singular: true, type: 'xs:string' }],
-      [['CartAdd', 'Request', 'Items', 'Item', 'ListItemId'],     { namespace: namespace, form: 'qualified', singular: true, type: 'xs:string' }],
-      [['CartAdd', 'Request', 'ResponseGroup'],                   { namespace: namespace, form: 'qualified', singular: false, type: 'xs:string' }]
+      [['CartAdd'],
+       { namespace: namespace, form: 'qualified', singular: true }
+],
+      [%w[CartAdd MarketplaceDomain],
+       { namespace: namespace, form: 'qualified', singular: true,
+         type: 'xs:string'
+ }
+],
+      [%w[CartAdd AWSAccessKeyId],
+       { namespace: namespace, form: 'qualified', singular: true,
+         type: 'xs:string'
+ }
+],
+      [%w[CartAdd AssociateTag],
+       { namespace: namespace, form: 'qualified', singular: true,
+         type: 'xs:string'
+ }
+],
+      [%w[CartAdd Validate],
+       { namespace: namespace, form: 'qualified', singular: true,
+         type: 'xs:string'
+ }
+],
+      [%w[CartAdd XMLEscaping],
+       { namespace: namespace, form: 'qualified', singular: true,
+         type: 'xs:string'
+ }
+],
+      [%w[CartAdd Shared],
+       { namespace: namespace, form: 'qualified', singular: true }
+],
+      [%w[CartAdd Shared CartId],
+       { namespace: namespace, form: 'qualified', singular: true,
+         type: 'xs:string'
+ }
+],
+      [%w[CartAdd Shared HMAC],
+       { namespace: namespace, form: 'qualified', singular: true,
+         type: 'xs:string'
+ }
+],
+      [%w[CartAdd Shared MergeCart],
+       { namespace: namespace, form: 'qualified', singular: true,
+         type: 'xs:string'
+ }
+],
+      [%w[CartAdd Shared Items],
+       { namespace: namespace, form: 'qualified', singular: true }
+],
+      [%w[CartAdd Shared Items Item],
+       { namespace: namespace, form: 'qualified', singular: false }
+],
+      [%w[CartAdd Shared Items Item ASIN],
+       { namespace: namespace, form: 'qualified', singular: true,
+         type: 'xs:string'
+ }
+],
+      [%w[CartAdd Shared Items Item OfferListingId],
+       { namespace: namespace, form: 'qualified', singular: true,
+         type: 'xs:string'
+ }
+],
+      [%w[CartAdd Shared Items Item Quantity],
+       { namespace: namespace, form: 'qualified', singular: true,
+         type: 'xs:positiveInteger'
+ }
+],
+      [%w[CartAdd Shared Items Item AssociateTag],
+       { namespace: namespace, form: 'qualified', singular: true,
+         type: 'xs:string'
+ }
+],
+      [%w[CartAdd Shared Items Item ListItemId],
+       { namespace: namespace, form: 'qualified', singular: true,
+         type: 'xs:string'
+ }
+],
+      [%w[CartAdd Shared ResponseGroup],
+       { namespace: namespace, form: 'qualified', singular: false,
+         type: 'xs:string'
+ }
+],
+      [%w[CartAdd Request],
+       { namespace: namespace, form: 'qualified', singular: false }
+],
+      [%w[CartAdd Request CartId],
+       { namespace: namespace, form: 'qualified', singular: true,
+         type: 'xs:string'
+ }
+],
+      [%w[CartAdd Request HMAC],
+       { namespace: namespace, form: 'qualified', singular: true,
+         type: 'xs:string'
+ }
+],
+      [%w[CartAdd Request MergeCart],
+       { namespace: namespace, form: 'qualified', singular: true,
+         type: 'xs:string'
+ }
+],
+      [%w[CartAdd Request Items],
+       { namespace: namespace, form: 'qualified', singular: true }
+],
+      [%w[CartAdd Request Items Item],
+       { namespace: namespace, form: 'qualified', singular: false }
+],
+      [%w[CartAdd Request Items Item ASIN],
+       { namespace: namespace, form: 'qualified', singular: true,
+         type: 'xs:string'
+ }
+],
+      [%w[CartAdd Request Items Item OfferListingId],
+       { namespace: namespace, form: 'qualified', singular: true,
+         type: 'xs:string'
+ }
+],
+      [%w[CartAdd Request Items Item Quantity],
+       { namespace: namespace, form: 'qualified', singular: true,
+         type: 'xs:positiveInteger'
+ }
+],
+      [%w[CartAdd Request Items Item AssociateTag],
+       { namespace: namespace, form: 'qualified', singular: true,
+         type: 'xs:string'
+ }
+],
+      [%w[CartAdd Request Items Item ListItemId],
+       { namespace: namespace, form: 'qualified', singular: true,
+         type: 'xs:string'
+ }
+],
+      [%w[CartAdd Request ResponseGroup],
+       { namespace: namespace, form: 'qualified', singular: false,
+         type: 'xs:string'
+ }
+]
     ])
   end
-
 end

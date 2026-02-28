@@ -1,8 +1,9 @@
+# frozen_string_literal: true
+
 require 'spec_helper'
 
 describe WSDL::Operation do
-
-  subject(:operation)  { WSDL::Operation.new(wsdl_operation, wsdl, http_mock) }
+  subject(:operation)  { described_class.new(wsdl_operation, wsdl, http_mock) }
 
   let(:wsdl)           { WSDL::Definition.new fixture('wsdl/temperature'), http_mock }
   let(:wsdl_operation) { wsdl.operation('ConvertTemperature', 'ConvertTemperatureSoap12', 'ConvertTemp') }
@@ -72,16 +73,16 @@ describe WSDL::Operation do
 
     it 'returns a Hash of HTTP headers for a SOAP 1.1 operation' do
       wsdl_operation = wsdl.operation('ConvertTemperature', 'ConvertTemperatureSoap', 'ConvertTemp')
-      operation = WSDL::Operation.new(wsdl_operation, wsdl, http_mock)
+      operation = described_class.new(wsdl_operation, wsdl, http_mock)
 
       expect(operation.http_headers).to eq(
-        'SOAPAction'   => '"http://www.webserviceX.NET/ConvertTemp"',
+        'SOAPAction' => '"http://www.webserviceX.NET/ConvertTemp"',
         'Content-Type' => 'text/xml;charset=UTF-8'
       )
     end
 
     it 'can be overwritten' do
-      headers = { 'SecretToken' => 'abc'}
+      headers = { 'SecretToken' => 'abc' }
       operation.http_headers = headers
 
       expect(operation.http_headers).to eq(headers)
@@ -110,7 +111,7 @@ describe WSDL::Operation do
         }
       }
 
-      expected = Nokogiri.XML(%{
+      expected = Nokogiri.XML(%(
         <env:Envelope
             xmlns:lol0="http://www.webserviceX.NET/"
             xmlns:env="http://www.w3.org/2003/05/soap-envelope">
@@ -123,10 +124,10 @@ describe WSDL::Operation do
             </lol0:ConvertTemp>
           </env:Body>
         </env:Envelope>
-      })
+      ))
 
-      expect(operation.build).
-        to be_equivalent_to(expected).respecting_element_order
+      expect(operation.build)
+        .to be_equivalent_to(expected).respecting_element_order
     end
   end
 
@@ -176,5 +177,4 @@ describe WSDL::Operation do
       expect(response).to be_a(WSDL::Response)
     end
   end
-
 end

@@ -1,7 +1,8 @@
+# frozen_string_literal: true
+
 require 'spec_helper'
 
 describe 'Integration with Xignite' do
-
   # reference: http://www.xignite.com/product/global-security-master-data/api/GetSecurities/
   subject(:client) { WSDL.new fixture('wsdl/xignite') }
 
@@ -34,10 +35,22 @@ describe 'Integration with Xignite' do
     namespace = 'http://www.xignite.com/services/'
 
     expect(operation.body_parts).to eq([
-      [['GetSecurities'],                   { namespace: namespace, form: 'qualified', singular: true }],
-      [['GetSecurities', 'Identifiers'],    { namespace: namespace, form: 'qualified', singular: true, type: 's:string' }],
-      [['GetSecurities', 'IdentifierType'], { namespace: namespace, form: 'qualified', singular: true, type: 's:string' }],
-      [['GetSecurities', 'AsOfDate'],       { namespace: namespace, form: 'qualified', singular: true, type: 's:string' }]
+      [['GetSecurities'],
+       { namespace: namespace, form: 'qualified', singular: true }
+],
+      [%w[GetSecurities Identifiers],
+       { namespace: namespace, form: 'qualified', singular: true,
+         type: 's:string'
+}
+],
+      [%w[GetSecurities IdentifierType],
+       { namespace: namespace, form: 'qualified', singular: true,
+         type: 's:string'
+}
+],
+      [%w[GetSecurities AsOfDate],
+       { namespace: namespace, form: 'qualified', singular: true, type: 's:string' }
+]
     ])
   end
 
@@ -105,8 +118,7 @@ describe 'Integration with Xignite' do
       </env:Envelope>
     ')
 
-    expect(Nokogiri.XML operation.build).
-      to be_equivalent_to(expected).respecting_element_order
+    expect(Nokogiri.XML(operation.build))
+      .to be_equivalent_to(expected).respecting_element_order
   end
-
 end

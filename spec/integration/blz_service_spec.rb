@@ -1,7 +1,8 @@
- require 'spec_helper'
+# frozen_string_literal: true
+
+require 'spec_helper'
 
 describe 'Integration with BLZService' do
-
   subject(:client) { WSDL.new fixture('wsdl/blz_service') }
 
   let(:service_name) { :BLZService }
@@ -22,11 +23,11 @@ describe 'Integration with BLZService' do
 
     operation.body = {
       getBank: {
-        blz: 70070010
+        blz: 70_070_010
       }
     }
 
-    expected = Nokogiri.XML(%{
+    expected = Nokogiri.XML(%(
       <env:Envelope
           xmlns:lol0="http://thomas-bayer.com/blz/"
           xmlns:env="http://schemas.xmlsoap.org/soap/envelope/">
@@ -37,10 +38,9 @@ describe 'Integration with BLZService' do
           </lol0:getBank>
         </env:Body>
       </env:Envelope>
-    })
+    ))
 
-    expect(Nokogiri.XML operation.build).
-      to be_equivalent_to(expected).respecting_element_order
+    expect(Nokogiri.XML(operation.build))
+      .to be_equivalent_to(expected).respecting_element_order
   end
-
 end

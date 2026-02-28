@@ -1,7 +1,8 @@
+# frozen_string_literal: true
+
 require 'spec_helper'
 
 describe 'Integration with Rio II' do
-
   before :all do
     wsdl_url  = 'http://193.155.1.72/MyCentral-RioII-Services/SecurityService.svc?wsdl'
     wsdl0_url = 'http://193.155.1.72/MyCentral-RioII-Services/SecurityService.svc?wsdl=wsdl0'
@@ -34,7 +35,8 @@ describe 'Integration with Rio II' do
   end
 
   it 'knows the GetSessionState operation' do
-    service, port = :SecurityService, :BasicHttpBinding_ISecurityService
+    service = :SecurityService
+    port = :BasicHttpBinding_ISecurityService
     operation = @client.operation(service, port, :GetSessionState)
 
     expect(operation.input_style).to eq('document/literal')
@@ -52,5 +54,4 @@ describe 'Integration with Rio II' do
       }
     )
   end
-
 end

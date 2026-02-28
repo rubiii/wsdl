@@ -1,7 +1,8 @@
+# frozen_string_literal: true
+
 require 'spec_helper'
 
 describe 'Integration with an RPC/Literal example' do
-
   subject(:client) { WSDL.new fixture('wsdl/rpc_literal') }
 
   let(:service_name) { :SampleService }
@@ -44,8 +45,8 @@ describe 'Integration with an RPC/Literal example' do
       </env:Envelope>
     ')
 
-    expect(Nokogiri.XML op1.build).
-      to be_equivalent_to(expected).respecting_element_order
+    expect(Nokogiri.XML(op1.build))
+      .to be_equivalent_to(expected).respecting_element_order
   end
 
   it 'works with op3' do
@@ -94,8 +95,7 @@ describe 'Integration with an RPC/Literal example' do
       </env:Envelope>
     ')
 
-    expect(Nokogiri.XML op3.build).
-      to be_equivalent_to(expected).respecting_element_order
+    expect(Nokogiri.XML(op3.build))
+      .to be_equivalent_to(expected).respecting_element_order
   end
-
 end

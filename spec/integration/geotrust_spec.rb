@@ -1,7 +1,8 @@
+# frozen_string_literal: true
+
 require 'spec_helper'
 
 describe 'Integration with Geotrust' do
-
   subject(:client) { WSDL.new fixture('wsdl/geotrust') }
 
   it 'returns a map of services and ports' do
@@ -19,7 +20,7 @@ describe 'Integration with Geotrust' do
 
   it 'knows the operations' do
     operations = client.operations('query', 'querySoap')
-    expect(operations).to match_array(['GetQuickApproverList', 'hello'])
+    expect(operations).to match_array(%w[GetQuickApproverList hello])
   end
 
   it 'creates an operation with the correct endpoint' do
@@ -50,5 +51,4 @@ describe 'Integration with Geotrust' do
       }
     )
   end
-
 end

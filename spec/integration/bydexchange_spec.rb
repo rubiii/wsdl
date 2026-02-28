@@ -1,7 +1,8 @@
+# frozen_string_literal: true
+
 require 'spec_helper'
 
 describe 'Integration with BYDExchange' do
-
   subject(:client) { WSDL.new(wsdl_url, http_mock) }
 
   let(:wsdl_url)  { 'http://bydexchange.nbs-us.com/BYDExchangeServer.svc?wsdl' }
@@ -22,10 +23,10 @@ describe 'Integration with BYDExchange' do
   it 'returns a map of services and ports' do
     expect(client.services).to eq(
       'BYDExchangeServer' => {
-        :ports => {
+        ports: {
           'BasicHttpBinding_IBYDExchangeServer' => {
-            :type     => 'http://schemas.xmlsoap.org/wsdl/soap/',
-            :location => 'http://bydexchange.nbs-us.com/BYDExchangeServer.svc'
+            type: 'http://schemas.xmlsoap.org/wsdl/soap/',
+            location: 'http://bydexchange.nbs-us.com/BYDExchangeServer.svc'
           }
         }
       }
@@ -36,5 +37,4 @@ describe 'Integration with BYDExchange' do
     operations = client.operations('BYDExchangeServer', 'BasicHttpBinding_IBYDExchangeServer')
     expect(operations).to include('GetCustomer')
   end
-
 end

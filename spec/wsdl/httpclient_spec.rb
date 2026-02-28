@@ -1,8 +1,9 @@
+# frozen_string_literal: true
+
 require 'spec_helper'
 
 describe WSDL::HTTPClient do
-
-  subject(:http) { WSDL::HTTPClient.new }
+  subject(:http) { described_class.new }
 
   describe '#client' do
     it 'returns the HTTPClient instance to configure' do
@@ -14,8 +15,8 @@ describe WSDL::HTTPClient do
     it 'executes an HTTP GET request and returns the raw response' do
       url = 'http://example.com'
 
-      response = mock(content: 'raw get!')
-      http.client.expects(:request).with(:get, url, nil, nil, {}).returns(response)
+      response = double(content: 'raw get!')
+      allow(http.client).to receive(:request).with(:get, url, nil, nil, {}).and_return(response)
 
       raw_response = http.get(url)
 
@@ -29,13 +30,12 @@ describe WSDL::HTTPClient do
       body = 'post request!'
       headers = { 'Content-Length' => 5 }
 
-      response = mock(content: 'raw post!')
-      http.client.expects(:request).with(:post, url, nil, body, headers).returns(response)
+      response = double(content: 'raw post!')
+      allow(http.client).to receive(:request).with(:post, url, nil, body, headers).and_return(response)
 
       raw_response = http.post(url, headers, body)
 
       expect(raw_response).to eq('raw post!')
     end
   end
-
 end

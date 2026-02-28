@@ -1,7 +1,8 @@
+# frozen_string_literal: true
+
 require 'spec_helper'
 
 describe 'Integration with Bronto' do
-
   subject(:client) { WSDL.new fixture('wsdl/bronto') }
 
   let(:service_name) { :BrontoSoapApiImplService }
@@ -29,39 +30,165 @@ describe 'Integration with Bronto' do
     namespace = 'http://api.bronto.com/v4'
 
     expect(operation.body_parts).to eq([
-      [['addLogins'],                                                   { namespace: namespace, form: 'qualified',   singular: true }],
-      [['addLogins', 'accounts'],                                       { namespace: namespace, form: 'unqualified', singular: false }],
-      [['addLogins', 'accounts', 'username'],                           { namespace: namespace, form: 'unqualified', singular: true, type: 'xs:string' }],
-      [['addLogins', 'accounts', 'password'],                           { namespace: namespace, form: 'unqualified', singular: true, type: 'xs:string' }],
-      [['addLogins', 'accounts', 'contactInformation'],                 { namespace: namespace, form: 'unqualified', singular: true }],
-      [['addLogins', 'accounts', 'contactInformation', 'organization'], { namespace: namespace, form: 'unqualified', singular: true, type: 'xs:string' }],
-      [['addLogins', 'accounts', 'contactInformation', 'firstName'],    { namespace: namespace, form: 'unqualified', singular: true, type: 'xs:string' }],
-      [['addLogins', 'accounts', 'contactInformation', 'lastName'],     { namespace: namespace, form: 'unqualified', singular: true, type: 'xs:string' }],
-      [['addLogins', 'accounts', 'contactInformation', 'email'],        { namespace: namespace, form: 'unqualified', singular: true, type: 'xs:string' }],
-      [['addLogins', 'accounts', 'contactInformation', 'phone'],        { namespace: namespace, form: 'unqualified', singular: true, type: 'xs:string' }],
-      [['addLogins', 'accounts', 'contactInformation', 'address'],      { namespace: namespace, form: 'unqualified', singular: true, type: 'xs:string' }],
-      [['addLogins', 'accounts', 'contactInformation', 'address2'],     { namespace: namespace, form: 'unqualified', singular: true, type: 'xs:string' }],
-      [['addLogins', 'accounts', 'contactInformation', 'city'],         { namespace: namespace, form: 'unqualified', singular: true, type: 'xs:string' }],
-      [['addLogins', 'accounts', 'contactInformation', 'state'],        { namespace: namespace, form: 'unqualified', singular: true, type: 'xs:string' }],
-      [['addLogins', 'accounts', 'contactInformation', 'zip'],          { namespace: namespace, form: 'unqualified', singular: true, type: 'xs:string' }],
-      [['addLogins', 'accounts', 'contactInformation', 'country'],      { namespace: namespace, form: 'unqualified', singular: true, type: 'xs:string' }],
-      [['addLogins', 'accounts', 'contactInformation', 'notes'],        { namespace: namespace, form: 'unqualified', singular: true, type: 'xs:string' }],
-      [['addLogins', 'accounts', 'permissionAgencyAdmin'],              { namespace: namespace, form: 'unqualified', singular: true, type: 'xs:boolean' }],
-      [['addLogins', 'accounts', 'permissionAdmin'],                    { namespace: namespace, form: 'unqualified', singular: true, type: 'xs:boolean' }],
-      [['addLogins', 'accounts', 'permissionApi'],                      { namespace: namespace, form: 'unqualified', singular: true, type: 'xs:boolean' }],
-      [['addLogins', 'accounts', 'permissionUpgrade'],                  { namespace: namespace, form: 'unqualified', singular: true, type: 'xs:boolean' }],
-      [['addLogins', 'accounts', 'permissionFatigueOverride'],          { namespace: namespace, form: 'unqualified', singular: true, type: 'xs:boolean' }],
-      [['addLogins', 'accounts', 'permissionMessageCompose'],           { namespace: namespace, form: 'unqualified', singular: true, type: 'xs:boolean' }],
-      [['addLogins', 'accounts', 'permissionMessageApprove'],           { namespace: namespace, form: 'unqualified', singular: true, type: 'xs:boolean' }],
-      [['addLogins', 'accounts', 'permissionMessageDelete'],            { namespace: namespace, form: 'unqualified', singular: true, type: 'xs:boolean' }],
-      [['addLogins', 'accounts', 'permissionAutomatorCompose'],         { namespace: namespace, form: 'unqualified', singular: true, type: 'xs:boolean' }],
-      [['addLogins', 'accounts', 'permissionListCreateSend'],           { namespace: namespace, form: 'unqualified', singular: true, type: 'xs:boolean' }],
-      [['addLogins', 'accounts', 'permissionListCreate'],               { namespace: namespace, form: 'unqualified', singular: true, type: 'xs:boolean' }],
-      [['addLogins', 'accounts', 'permissionSegmentCreate'],            { namespace: namespace, form: 'unqualified', singular: true, type: 'xs:boolean' }],
-      [['addLogins', 'accounts', 'permissionFieldCreate'],              { namespace: namespace, form: 'unqualified', singular: true, type: 'xs:boolean' }],
-      [['addLogins', 'accounts', 'permissionFieldReorder'],             { namespace: namespace, form: 'unqualified', singular: true, type: 'xs:boolean' }],
-      [['addLogins', 'accounts', 'permissionSubscriberCreate'],         { namespace: namespace, form: 'unqualified', singular: true, type: 'xs:boolean' }],
-      [['addLogins', 'accounts', 'permissionSubscriberView'],           { namespace: namespace, form: 'unqualified', singular: true, type: 'xs:boolean' }]
+      [['addLogins'],
+       { namespace: namespace, form: 'qualified', singular: true }
+],
+      [%w[addLogins accounts],
+       { namespace: namespace, form: 'unqualified', singular: false }
+],
+      [%w[addLogins accounts username],
+       { namespace: namespace, form: 'unqualified', singular: true,
+         type: 'xs:string'
+ }
+],
+      [%w[addLogins accounts password],
+       { namespace: namespace, form: 'unqualified', singular: true,
+         type: 'xs:string'
+ }
+],
+      [%w[addLogins accounts contactInformation],
+       { namespace: namespace, form: 'unqualified', singular: true }
+],
+      [%w[addLogins accounts contactInformation organization],
+       { namespace: namespace, form: 'unqualified', singular: true,
+         type: 'xs:string'
+ }
+],
+      [%w[addLogins accounts contactInformation firstName],
+       { namespace: namespace, form: 'unqualified', singular: true,
+         type: 'xs:string'
+ }
+],
+      [%w[addLogins accounts contactInformation lastName],
+       { namespace: namespace, form: 'unqualified', singular: true,
+         type: 'xs:string'
+ }
+],
+      [%w[addLogins accounts contactInformation email],
+       { namespace: namespace, form: 'unqualified', singular: true,
+         type: 'xs:string'
+ }
+],
+      [%w[addLogins accounts contactInformation phone],
+       { namespace: namespace, form: 'unqualified', singular: true,
+         type: 'xs:string'
+ }
+],
+      [%w[addLogins accounts contactInformation address],
+       { namespace: namespace, form: 'unqualified', singular: true,
+         type: 'xs:string'
+ }
+],
+      [%w[addLogins accounts contactInformation address2],
+       { namespace: namespace, form: 'unqualified', singular: true,
+         type: 'xs:string'
+ }
+],
+      [%w[addLogins accounts contactInformation city],
+       { namespace: namespace, form: 'unqualified', singular: true,
+         type: 'xs:string'
+ }
+],
+      [%w[addLogins accounts contactInformation state],
+       { namespace: namespace, form: 'unqualified', singular: true,
+         type: 'xs:string'
+ }
+],
+      [%w[addLogins accounts contactInformation zip],
+       { namespace: namespace, form: 'unqualified', singular: true,
+         type: 'xs:string'
+ }
+],
+      [%w[addLogins accounts contactInformation country],
+       { namespace: namespace, form: 'unqualified', singular: true,
+         type: 'xs:string'
+ }
+],
+      [%w[addLogins accounts contactInformation notes],
+       { namespace: namespace, form: 'unqualified', singular: true,
+         type: 'xs:string'
+ }
+],
+      [%w[addLogins accounts permissionAgencyAdmin],
+       { namespace: namespace, form: 'unqualified', singular: true,
+         type: 'xs:boolean'
+ }
+],
+      [%w[addLogins accounts permissionAdmin],
+       { namespace: namespace, form: 'unqualified', singular: true,
+         type: 'xs:boolean'
+ }
+],
+      [%w[addLogins accounts permissionApi],
+       { namespace: namespace, form: 'unqualified', singular: true,
+         type: 'xs:boolean'
+ }
+],
+      [%w[addLogins accounts permissionUpgrade],
+       { namespace: namespace, form: 'unqualified', singular: true,
+         type: 'xs:boolean'
+ }
+],
+      [%w[addLogins accounts permissionFatigueOverride],
+       { namespace: namespace, form: 'unqualified', singular: true,
+         type: 'xs:boolean'
+ }
+],
+      [%w[addLogins accounts permissionMessageCompose],
+       { namespace: namespace, form: 'unqualified', singular: true,
+         type: 'xs:boolean'
+ }
+],
+      [%w[addLogins accounts permissionMessageApprove],
+       { namespace: namespace, form: 'unqualified', singular: true,
+         type: 'xs:boolean'
+ }
+],
+      [%w[addLogins accounts permissionMessageDelete],
+       { namespace: namespace, form: 'unqualified', singular: true,
+         type: 'xs:boolean'
+ }
+],
+      [%w[addLogins accounts permissionAutomatorCompose],
+       { namespace: namespace, form: 'unqualified', singular: true,
+         type: 'xs:boolean'
+ }
+],
+      [%w[addLogins accounts permissionListCreateSend],
+       { namespace: namespace, form: 'unqualified', singular: true,
+         type: 'xs:boolean'
+ }
+],
+      [%w[addLogins accounts permissionListCreate],
+       { namespace: namespace, form: 'unqualified', singular: true,
+         type: 'xs:boolean'
+ }
+],
+      [%w[addLogins accounts permissionSegmentCreate],
+       { namespace: namespace, form: 'unqualified', singular: true,
+         type: 'xs:boolean'
+ }
+],
+      [%w[addLogins accounts permissionFieldCreate],
+       { namespace: namespace, form: 'unqualified', singular: true,
+         type: 'xs:boolean'
+ }
+],
+      [%w[addLogins accounts permissionFieldReorder],
+       { namespace: namespace, form: 'unqualified', singular: true,
+         type: 'xs:boolean'
+ }
+],
+      [%w[addLogins accounts permissionSubscriberCreate],
+       { namespace: namespace, form: 'unqualified', singular: true,
+         type: 'xs:boolean'
+ }
+],
+      [%w[addLogins accounts permissionSubscriberView],
+       { namespace: namespace, form: 'unqualified', singular: true,
+         type: 'xs:boolean'
+ }
+]
     ])
   end
 
@@ -138,9 +265,9 @@ describe 'Integration with Bronto' do
             password: 'secert',
             contactInformation: {
               firstName: 'brew',
-              email: 'brew@example.com',
+              email: 'brew@example.com'
             },
-            permissionApi: true,
+            permissionApi: true
           }
         ]
       }
@@ -171,8 +298,7 @@ describe 'Integration with Bronto' do
       </env:Envelope>
     ')
 
-    expect(Nokogiri.XML operation.build).
-      to be_equivalent_to(expected).respecting_element_order
+    expect(Nokogiri.XML(operation.build))
+      .to be_equivalent_to(expected).respecting_element_order
   end
-
 end

@@ -1,8 +1,9 @@
+# frozen_string_literal: true
+
 module SpecSupport
-
   class HTTPMock
-
-    MockError = Class.new(StandardError)
+    class MockError < StandardError
+    end
 
     def initialize
       @fakes = {}
@@ -16,7 +17,7 @@ module SpecSupport
       @fakes[url] or raise_mock_error! :get, url
     end
 
-    def post(url, headers, body)
+    def post(url, _headers, _body)
       @fakes[url] or raise_mock_error! :post, url
     end
 
@@ -33,11 +34,9 @@ module SpecSupport
     def raise_mock_error!(method, url)
       raise MockError, "Unmocked HTTP #{method.to_s.upcase} request to #{url.inspect}"
     end
-
   end
 
   def http_mock
     @http_mock ||= HTTPMock.new
   end
-
 end

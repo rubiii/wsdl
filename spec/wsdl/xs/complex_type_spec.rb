@@ -1,7 +1,8 @@
+# frozen_string_literal: true
+
 require 'spec_helper'
 
 describe WSDL::XS::ComplexType do
-
   specify 'all/element' do
     complex_type = new_complex_type('
       <xs:complexType name="MpUser" xmlns="http://www.w3.org/2001/XMLSchema">
@@ -14,7 +15,7 @@ describe WSDL::XS::ComplexType do
       </xs:complexType>
     ')
 
-    expect(complex_type).to be_a(WSDL::XS::ComplexType)
+    expect(complex_type).to be_a(described_class)
 
     all = complex_type.children.first
     expect(all).to be_a(WSDL::XS::All)
@@ -22,9 +23,7 @@ describe WSDL::XS::ComplexType do
     elements = all.children
     expect(elements.count).to eq(4)
 
-    elements.each do |element|
-      expect(element).to be_a(WSDL::XS::Element)
-    end
+    expect(elements).to all(be_a(WSDL::XS::Element))
 
     element_names = elements.map(&:name)
     expect(element_names).to eq(%w[speciality firstname lastname login])
@@ -42,8 +41,8 @@ describe WSDL::XS::ComplexType do
     ')
 
     # mock the schemas for #collect_child_elements
-    schemas = mock('schemas')
-    schemas.expects(:complex_type).with('http://example.com/ons', 'baseObject').returns(base_type)
+    schemas = double('schemas')
+    allow(schemas).to receive(:complex_type).with('http://example.com/ons', 'baseObject').and_return(base_type)
 
     complex_type = new_complex_type('
 			<complexType name="Account" xmlns="http://www.w3.org/2001/XMLSchema"
@@ -61,7 +60,7 @@ describe WSDL::XS::ComplexType do
       </complexType>
     ', schemas)
 
-    expect(complex_type).to be_a(WSDL::XS::ComplexType)
+    expect(complex_type).to be_a(described_class)
 
     complex_content = complex_type.children.first
     expect(complex_content).to be_a(WSDL::XS::ComplexContent)
@@ -104,8 +103,8 @@ describe WSDL::XS::ComplexType do
         </sequence>
       </complexType>
     ')
-    schemas = mock('schemas')
-    schemas.expects(:complex_type).with('http://example.com/ons', 'baseObject').returns(base_type)
+    schemas = double('schemas')
+    allow(schemas).to receive(:complex_type).with('http://example.com/ons', 'baseObject').and_return(base_type)
 
     complex_type = new_complex_type('
 			<complexType name="Account" xmlns="http://www.w3.org/2001/XMLSchema"
@@ -173,7 +172,7 @@ describe WSDL::XS::ComplexType do
       </xs:complexType>
     ')
 
-    expect(complex_type).to be_a(WSDL::XS::ComplexType)
+    expect(complex_type).to be_a(described_class)
     expect(complex_type.collect_child_elements).to be_empty
   end
 
@@ -198,7 +197,7 @@ describe WSDL::XS::ComplexType do
       </xsd:complexType>
     ')
 
-    expect(complex_type).to be_a(WSDL::XS::ComplexType)
+    expect(complex_type).to be_a(described_class)
 
     elements = complex_type.collect_child_elements
     expect(elements.count).to eq(3)
@@ -218,16 +217,15 @@ describe WSDL::XS::ComplexType do
       </xs:complexType>
     ')
 
-    expect(complex_type).to be_a(WSDL::XS::ComplexType)
+    expect(complex_type).to be_a(described_class)
     expect(complex_type).to be_empty
   end
 
   def new_complex_type(xml, schemas = nil)
     node = Nokogiri.XML(xml).root
-    schemas ||= mock('schemas')
+    schemas ||= double('schemas')
     schema = {}
 
     WSDL::XS::ComplexType.new(node, schemas, schema)
   end
-
 end

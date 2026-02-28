@@ -1,18 +1,17 @@
+# frozen_string_literal: true
+
 require 'spec_helper'
 
 describe WSDL::Resolver do
+  subject(:resolver) { described_class.new(http_test_client) }
 
-  subject(:resolver) { WSDL::Resolver.new(http_test_client) }
-
-  let(:http_test_client) {
-    Class.new {
-
+  let(:http_test_client) do
+    Class.new do
       def get(url)
         "raw_response for #{url}"
       end
-
-    }.new
-  }
+    end.new
+  end
 
   it 'resolves remote files using a simple HTTP client interface' do
     url = 'http://example.com?wsdl'
@@ -34,5 +33,4 @@ describe WSDL::Resolver do
     xml = resolver.resolve(string)
     expect(xml).to eq(string)
   end
-
 end

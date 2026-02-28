@@ -1,7 +1,8 @@
+# frozen_string_literal: true
+
 require 'spec_helper'
 
 describe 'Integration with Equifax' do
-
   subject(:client) { WSDL.new fixture('wsdl/equifax') }
 
   let(:service_name) { :canadav2 }
@@ -29,61 +30,136 @@ describe 'Integration with Equifax' do
     ns1 = 'http://eid.equifax.com/soap/schema/canada/v2'
 
     expect(operation.body_parts).to eq([
-      [['InitialRequest'],                                                          { namespace: ns1, form: 'qualified', singular: true }],
-      [['InitialRequest', 'Identity'],                                              { namespace: ns1, form: 'qualified', singular: true }],
-      [['InitialRequest', 'Identity', 'Name'],                                      { namespace: ns1, form: 'qualified', singular: true }],
-      [['InitialRequest', 'Identity', 'Name', 'FirstName'],                         { namespace: ns1, form: 'qualified', singular: true, type: 'string' }],
-      [['InitialRequest', 'Identity', 'Name', 'MiddleName'],                        { namespace: ns1, form: 'qualified', singular: true, type: 'string' }],
-      [['InitialRequest', 'Identity', 'Name', 'MiddleInitial'],                     { namespace: ns1, form: 'qualified', singular: true, type: 'string' }],
-      [['InitialRequest', 'Identity', 'Name', 'LastName'],                          { namespace: ns1, form: 'qualified', singular: true, type: 'string' }],
-      [['InitialRequest', 'Identity', 'Name', 'Suffix'],                            { namespace: ns1, form: 'qualified', singular: true, type: 'string' }],
+      [['InitialRequest'],
+       { namespace: ns1, form: 'qualified', singular: true }
+],
+      [%w[InitialRequest Identity],
+       { namespace: ns1, form: 'qualified', singular: true }
+],
+      [%w[InitialRequest Identity Name],
+       { namespace: ns1, form: 'qualified', singular: true }
+],
+      [%w[InitialRequest Identity Name FirstName],
+       { namespace: ns1, form: 'qualified', singular: true, type: 'string' }
+],
+      [%w[InitialRequest Identity Name MiddleName],
+       { namespace: ns1, form: 'qualified', singular: true, type: 'string' }
+],
+      [%w[InitialRequest Identity Name MiddleInitial],
+       { namespace: ns1, form: 'qualified', singular: true, type: 'string' }
+],
+      [%w[InitialRequest Identity Name LastName],
+       { namespace: ns1, form: 'qualified', singular: true, type: 'string' }
+],
+      [%w[InitialRequest Identity Name Suffix],
+       { namespace: ns1, form: 'qualified', singular: true, type: 'string' }
+],
 
-      [['InitialRequest', 'Identity', 'Address'],                                   { namespace: ns1, form: 'qualified', singular: false,
-                                                                                      attributes: {
-                                                                                        'timeAtAddress' => { optional: true },
-                                                                                        'addressType'   => { optional: false }
-                                                                                      }
-                                                                                    }],
+      [%w[InitialRequest Identity Address], { namespace: ns1, form: 'qualified', singular: false,
+                                              attributes: {
+                                                'timeAtAddress' => { optional: true },
+                                                'addressType' => { optional: false }
+                                              }
+}
+],
 
-      [['InitialRequest', 'Identity', 'Address', 'FreeFormAddress'],                { namespace: ns1, form: 'qualified', singular: true }],
-      [['InitialRequest', 'Identity', 'Address', 'FreeFormAddress', 'AddressLine'], { namespace: ns1, form: 'qualified', singular: false,  type: 'string' }],
-      [['InitialRequest', 'Identity', 'Address', 'HybridAddress'],                  { namespace: ns1, form: 'qualified', singular: true }],
-      [['InitialRequest', 'Identity', 'Address', 'HybridAddress', 'AddressLine'],   { namespace: ns1, form: 'qualified', singular: false, type: 'string' }],
-      [['InitialRequest', 'Identity', 'Address', 'HybridAddress', 'City'],          { namespace: ns1, form: 'qualified', singular: true,  type: 'string' }],
-      [['InitialRequest', 'Identity', 'Address', 'HybridAddress', 'Province'],      { namespace: ns1, form: 'qualified', singular: true,  type: 'string' }],
-      [['InitialRequest', 'Identity', 'Address', 'HybridAddress', 'PostalCode'],    { namespace: ns1, form: 'qualified', singular: true,  type: 'string' }],
-      [['InitialRequest', 'Identity', 'SIN'],                                       { namespace: ns1, form: 'qualified', singular: true,  type: 'string' }],
-      [['InitialRequest', 'Identity', 'DateOfBirth'],                               { namespace: ns1, form: 'qualified', singular: true }],
-      [['InitialRequest', 'Identity', 'DateOfBirth', 'Day'],                        { namespace: ns1, form: 'qualified', singular: true,  type: 'positiveInteger' }],
-      [['InitialRequest', 'Identity', 'DateOfBirth', 'Month'],                      { namespace: ns1, form: 'qualified', singular: true,  type: 'positiveInteger' }],
-      [['InitialRequest', 'Identity', 'DateOfBirth', 'Year'],                       { namespace: ns1, form: 'qualified', singular: true,  type: 'positiveInteger' }],
+      [%w[InitialRequest Identity Address FreeFormAddress],
+       { namespace: ns1, form: 'qualified', singular: true }
+],
+      [%w[InitialRequest Identity Address FreeFormAddress AddressLine],
+       { namespace: ns1, form: 'qualified', singular: false, type: 'string' }
+],
+      [%w[InitialRequest Identity Address HybridAddress],
+       { namespace: ns1, form: 'qualified', singular: true }
+],
+      [%w[InitialRequest Identity Address HybridAddress AddressLine],
+       { namespace: ns1, form: 'qualified', singular: false, type: 'string' }
+],
+      [%w[InitialRequest Identity Address HybridAddress City],
+       { namespace: ns1, form: 'qualified', singular: true, type: 'string' }
+],
+      [%w[InitialRequest Identity Address HybridAddress Province],
+       { namespace: ns1, form: 'qualified', singular: true, type: 'string' }
+],
+      [%w[InitialRequest Identity Address HybridAddress PostalCode],
+       { namespace: ns1, form: 'qualified', singular: true, type: 'string' }
+],
+      [%w[InitialRequest Identity SIN],
+       { namespace: ns1, form: 'qualified', singular: true, type: 'string' }
+],
+      [%w[InitialRequest Identity DateOfBirth],
+       { namespace: ns1, form: 'qualified', singular: true }
+],
+      [%w[InitialRequest Identity DateOfBirth Day],
+       { namespace: ns1, form: 'qualified', singular: true,
+         type: 'positiveInteger'
+ }
+],
+      [%w[InitialRequest Identity DateOfBirth Month],
+       { namespace: ns1, form: 'qualified', singular: true,
+         type: 'positiveInteger'
+ }
+],
+      [%w[InitialRequest Identity DateOfBirth Year],
+       { namespace: ns1, form: 'qualified', singular: true,
+         type: 'positiveInteger'
+ }
+],
 
-      [['InitialRequest', 'Identity', 'DriversLicense'],                            { namespace: ns1, form: 'qualified', singular: true,
-                                                                                      attributes: {
-                                                                                        'driversLicenseAddressType'=> { optional: true }
-                                                                                      }
-                                                                                    }],
+      [%w[InitialRequest Identity DriversLicense], { namespace: ns1, form: 'qualified', singular: true,
+                                                     attributes: {
+                                                       'driversLicenseAddressType' => { optional: true }
+                                                     }
+}
+],
 
-      [['InitialRequest', 'Identity', 'DriversLicense', 'Number'],                  { namespace: ns1, form: 'qualified', singular: true, type: 'string' }],
-      [['InitialRequest', 'Identity', 'DriversLicense', 'Province'],                { namespace: ns1, form: 'qualified', singular: true, type: 'string' }],
+      [%w[InitialRequest Identity DriversLicense Number],
+       { namespace: ns1, form: 'qualified', singular: true, type: 'string' }
+],
+      [%w[InitialRequest Identity DriversLicense Province],
+       { namespace: ns1, form: 'qualified', singular: true, type: 'string' }
+],
 
-      [['InitialRequest', 'Identity', 'PhoneNumber'],                               { namespace: ns1, form: 'qualified', singular: false,
-                                                                                      attributes: {
-                                                                                        'phoneType' => { optional: true }
-                                                                                      }
-                                                                                    }],
+      [%w[InitialRequest Identity PhoneNumber], { namespace: ns1, form: 'qualified', singular: false,
+                                                  attributes: {
+                                                    'phoneType' => { optional: true }
+                                                  }
+}
+],
 
-      [['InitialRequest', 'Identity', 'PhoneNumber', 'AreaCode'],                   { namespace: ns1, form: 'qualified', singular: true, type: 'string' }],
-      [['InitialRequest', 'Identity', 'PhoneNumber', 'Exchange'],                   { namespace: ns1, form: 'qualified', singular: true, type: 'string' }],
-      [['InitialRequest', 'Identity', 'PhoneNumber', 'Number'],                     { namespace: ns1, form: 'qualified', singular: true, type: 'string' }],
-      [['InitialRequest', 'Identity', 'PhoneNumber', 'PhoneNumber'],                { namespace: ns1, form: 'qualified', singular: true, type: 'string' }],
-      [['InitialRequest', 'Identity', 'Email'],                                     { namespace: ns1, form: 'qualified', singular: true, type: 'string' }],
-      [['InitialRequest', 'Identity', 'IPAddress'],                                 { namespace: ns1, form: 'qualified', singular: true, type: 'string' }],
-      [['InitialRequest', 'Identity', 'CreditCardNumber'],                          { namespace: ns1, form: 'qualified', singular: true, type: 'string' }],
-      [['InitialRequest', 'Identity', 'CustomerId'],                                { namespace: ns1, form: 'qualified', singular: true, type: 'string' }],
-      [['InitialRequest', 'ProcessingOptions'],                                     { namespace: ns1, form: 'qualified', singular: true }],
-      [['InitialRequest', 'ProcessingOptions', 'Language'],                         { namespace: ns1, form: 'qualified', singular: true, type: 'string' }],
-      [['InitialRequest', 'ProcessingOptions', 'EnvironmentOverride'],              { namespace: ns1, form: 'qualified', singular: true, type: 'string' }]
+      [%w[InitialRequest Identity PhoneNumber AreaCode],
+       { namespace: ns1, form: 'qualified', singular: true, type: 'string' }
+],
+      [%w[InitialRequest Identity PhoneNumber Exchange],
+       { namespace: ns1, form: 'qualified', singular: true, type: 'string' }
+],
+      [%w[InitialRequest Identity PhoneNumber Number],
+       { namespace: ns1, form: 'qualified', singular: true, type: 'string' }
+],
+      [%w[InitialRequest Identity PhoneNumber PhoneNumber],
+       { namespace: ns1, form: 'qualified', singular: true, type: 'string' }
+],
+      [%w[InitialRequest Identity Email],
+       { namespace: ns1, form: 'qualified', singular: true, type: 'string' }
+],
+      [%w[InitialRequest Identity IPAddress],
+       { namespace: ns1, form: 'qualified', singular: true, type: 'string' }
+],
+      [%w[InitialRequest Identity CreditCardNumber],
+       { namespace: ns1, form: 'qualified', singular: true, type: 'string' }
+],
+      [%w[InitialRequest Identity CustomerId],
+       { namespace: ns1, form: 'qualified', singular: true, type: 'string' }
+],
+      [%w[InitialRequest ProcessingOptions],
+       { namespace: ns1, form: 'qualified', singular: true }
+],
+      [%w[InitialRequest ProcessingOptions Language],
+       { namespace: ns1, form: 'qualified', singular: true, type: 'string' }
+],
+      [%w[InitialRequest ProcessingOptions EnvironmentOverride],
+       { namespace: ns1, form: 'qualified', singular: true, type: 'string' }
+]
     ])
   end
 
@@ -209,8 +285,7 @@ describe 'Integration with Equifax' do
       </env:Envelope>
     ')
 
-    expect(Nokogiri.XML operation.build).
-      to be_equivalent_to(expected).respecting_element_order
+    expect(Nokogiri.XML(operation.build))
+      .to be_equivalent_to(expected).respecting_element_order
   end
-
 end

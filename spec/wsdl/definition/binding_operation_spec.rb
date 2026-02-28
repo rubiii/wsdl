@@ -1,7 +1,8 @@
+# frozen_string_literal: true
+
 require 'spec_helper'
 
 describe WSDL::Definition::BindingOperation do
-
   describe '#input_body' do
     it 'returns input body attributes' do
       binding_operation = get_binding_operation('wsdl/blz_service', 'BLZServiceSOAP11Binding', 'getBank')
@@ -48,5 +49,4 @@ describe WSDL::Definition::BindingOperation do
     binding = document.bindings[binding_name]
     binding.operations[operation_name]
   end
-
 end

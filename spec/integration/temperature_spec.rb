@@ -1,7 +1,8 @@
- require 'spec_helper'
+# frozen_string_literal: true
+
+require 'spec_helper'
 
 describe 'Integration with Temperature service' do
-
   subject(:client) { WSDL.new fixture('wsdl/temperature') }
 
   let(:service_name) { :ConvertTemperature }
@@ -49,7 +50,7 @@ describe 'Integration with Temperature service' do
       }
     }
 
-    expected = Nokogiri.XML(%{
+    expected = Nokogiri.XML(%(
       <env:Envelope
           xmlns:lol0="http://www.webserviceX.NET/"
           xmlns:env="http://www.w3.org/2003/05/soap-envelope">
@@ -62,10 +63,9 @@ describe 'Integration with Temperature service' do
           </lol0:ConvertTemp>
         </env:Body>
       </env:Envelope>
-    })
+    ))
 
-    expect(Nokogiri.XML operation.build).
-      to be_equivalent_to(expected).respecting_element_order
+    expect(Nokogiri.XML(operation.build))
+      .to be_equivalent_to(expected).respecting_element_order
   end
-
 end

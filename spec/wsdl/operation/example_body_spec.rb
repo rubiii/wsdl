@@ -1,22 +1,23 @@
+# frozen_string_literal: true
+
 require 'spec_helper'
 
 describe WSDL::Operation do
-
-  let(:add_logins) {
+  let(:add_logins) do
     client = WSDL.new fixture('wsdl/bronto')
 
     service_name = :BrontoSoapApiImplService
     port_name    = :BrontoSoapApiImplPort
 
     client.operation(service_name, port_name, :addLogins)
-  }
+  end
 
-  let(:get_mu_bets_lite) {
+  let(:get_mu_bets_lite) do
     client = WSDL.new fixture('wsdl/betfair')
 
     service_name = port_name = :BFExchangeService
     client.operation(service_name, port_name, :getMUBetsLite)
-  }
+  end
 
   describe '#example_body' do
     it 'returns an Array with a single Hash for Arrays of complex types' do
@@ -91,5 +92,4 @@ describe WSDL::Operation do
       )
     end
   end
-
 end

@@ -1,7 +1,8 @@
+# frozen_string_literal: true
+
 require 'spec_helper'
 
 describe WSDL::XS::Element do
-
   specify 'complexType/sequence/element' do
     element = new_element('
       <xs:element name="TermOfPayment" xmlns="http://www.w3.org/2001/XMLSchema"
@@ -15,7 +16,7 @@ describe WSDL::XS::Element do
       </xs:element>
     ')
 
-    expect(element).to be_a(WSDL::XS::Element)
+    expect(element).to be_a(described_class)
 
     complex_type = element.children.first
     expect(complex_type).to be_a(WSDL::XS::ComplexType)
@@ -26,10 +27,10 @@ describe WSDL::XS::Element do
     elements = sequence.children
     expect(elements.count).to eq(2)
 
-    expect(elements[0]).to be_a(WSDL::XS::Element)
+    expect(elements[0]).to be_a(described_class)
     expect(elements[0].name).to eq('termOfPaymentHandle')
 
-    expect(elements[1]).to be_a(WSDL::XS::Element)
+    expect(elements[1]).to be_a(described_class)
     expect(elements[1].name).to eq('value')
 
     expect(element.collect_child_elements).to eq(elements)
@@ -50,7 +51,7 @@ describe WSDL::XS::Element do
       </xs:element>
     ')
 
-    expect(element).to be_a(WSDL::XS::Element)
+    expect(element).to be_a(described_class)
     expect(element.collect_child_elements.count).to eq(3)
   end
 
@@ -63,7 +64,7 @@ describe WSDL::XS::Element do
       </xsd:element>
     ')
 
-    expect(element).to be_a(WSDL::XS::Element)
+    expect(element).to be_a(described_class)
 
     expect(element.collect_child_elements).to be_empty
     expect(element.type).to be_nil
@@ -73,10 +74,9 @@ describe WSDL::XS::Element do
 
   def new_element(xml)
     node = Nokogiri.XML(xml).root
-    schemas ||= mock('schemas')
+    schemas ||= double('schemas')
     schema = {}
 
     WSDL::XS::Element.new(node, schemas, schema)
   end
-
 end
