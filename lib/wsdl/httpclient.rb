@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require 'httpclient'
-
 class WSDL
   # HTTP adapter using the httpclient gem.
   #
@@ -35,8 +33,17 @@ class WSDL
   #
   class HTTPClient
     # Creates a new HTTPClient adapter instance.
+    #
+    # @raise [LoadError] if the httpclient gem is not installed
     def initialize
+      require 'httpclient'
       @client = ::HTTPClient.new
+    rescue LoadError
+      raise LoadError,
+            "The httpclient gem is required for the default HTTP adapter.\n" \
+            "Either add `gem 'httpclient'` to your Gemfile, or configure a custom adapter:\n\n" \
+            "  WSDL.http_adapter = MyCustomAdapter\n\n" \
+            'See WSDL::HTTPClient documentation for the adapter interface.'
     end
 
     # Returns the underlying HTTPClient instance.

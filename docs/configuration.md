@@ -6,6 +6,14 @@ This guide covers the configuration options available in the WSDL library.
 
 By default, the library uses `HTTPClient` to make HTTP requests. You can access and configure it, or replace it entirely with a custom adapter.
 
+> **Note:** The `httpclient` gem is an optional dependency. If you want to use the default HTTPClient adapter, add it to your Gemfile:
+>
+> ``` ruby
+> gem 'httpclient'
+> ```
+>
+> If you use a custom adapter (like Faraday), you don't need to install httpclient at all.
+
 ### Configuring the Default HTTPClient
 
 Access the underlying HTTPClient instance through the `http` method:
@@ -36,7 +44,9 @@ See the [HTTPClient documentation](https://github.com/nahi/httpclient) for all a
 
 ### Custom HTTP Adapter
 
-You can replace the default HTTP adapter with your own implementation. A custom adapter must implement:
+You can replace the default HTTP adapter with your own implementation. This allows you to use any HTTP library you prefer (Faraday, Net::HTTP, etc.) without requiring the `httpclient` gem.
+
+A custom adapter must implement:
 
 - `initialize` - Constructor
 - `client` - Returns the underlying client instance (for user configuration)

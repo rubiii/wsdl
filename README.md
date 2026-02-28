@@ -12,7 +12,10 @@ or add it to your Gemfile:
 
 ``` ruby
 gem 'wsdl'
+gem 'httpclient'  # optional: required for default HTTP adapter
 ```
+
+> **Note:** The `httpclient` gem is optional. If you prefer a different HTTP library (like Faraday), you can configure a custom adapter instead. See the [configuration docs](docs/configuration.md#http-adapter) for details.
 
 ## Usage
 

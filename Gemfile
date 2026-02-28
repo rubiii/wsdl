@@ -35,6 +35,7 @@ end
 group :development do
   gem 'equivalent-xml', '~> 0.3'
   gem 'fuubar'
+  gem 'httpclient', '~> 2.3'
   gem 'rake', '~> 12.3'
   gem 'redcarpet', require: false
   gem 'rspec', '~> 3'
