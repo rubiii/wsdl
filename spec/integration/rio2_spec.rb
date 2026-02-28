@@ -17,7 +17,7 @@ describe 'Integration with Rio II' do
       http_mock.fake_request(url, "wsdl/rio2/rio2_#{i}.xsd")
     end
 
-    @client = Sekken.new(wsdl_url)
+    @client = Sekken.new(wsdl_url, http_mock)
   end
 
   it 'only downloads WSDL and XML Schema imports once per location' do
