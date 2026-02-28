@@ -19,6 +19,7 @@ class WSDL
 
         @type = node['type']
         @ref  = node['ref']
+        @nillable = node['nillable'] == 'true'
       end
 
       # @return [String, nil] the qualified type name (if using @type attribute)
@@ -26,6 +27,10 @@ class WSDL
 
       # @return [String, nil] the qualified element reference (if using @ref attribute)
       attr_reader :ref
+
+      # @return [Boolean] whether this element allows nil values (xsi:nil="true")
+      attr_reader :nillable
+      alias nillable? nillable
 
       # Returns the inline type definition, if any.
       #

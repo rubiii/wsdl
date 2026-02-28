@@ -16,6 +16,12 @@ class WSDL
     # Namespace ID prefix used for registered namespaces.
     NSID = 'lol'
 
+    # XML Schema Instance namespace URI (used for xsi:nil, xsi:type, etc.)
+    NS_XSI = 'http://www.w3.org/2001/XMLSchema-instance'
+
+    # XML Schema namespace URI
+    NS_XSD = 'http://www.w3.org/2001/XMLSchema'
+
     # Creates a new Envelope instance.
     #
     # @param operation [Definition::Operation] the operation definition
@@ -32,6 +38,7 @@ class WSDL
       @nsid_counter = -1
       @namespaces = {}
       @pretty_print = pretty_print
+      @xsi_required = false
     end
 
     # Returns whether pretty printing is enabled.
@@ -48,6 +55,23 @@ class WSDL
     # @return [String] the namespace ID (e.g., 'lol0', 'lol1')
     def register_namespace(namespace)
       @namespaces[namespace] ||= create_nsid
+    end
+
+    # Marks the XSI namespace as required for this envelope.
+    #
+    # This should be called when serializing nil values with xsi:nil="true"
+    # for nillable elements. The namespace will be added to the envelope element.
+    #
+    # @return [void]
+    def require_xsi_namespace
+      @xsi_required = true
+    end
+
+    # Returns whether the XSI namespace is required.
+    #
+    # @return [Boolean] true if xsi namespace should be included
+    def xsi_required?
+      @xsi_required
     end
 
     # Builds and returns the complete SOAP envelope XML.
@@ -149,6 +173,9 @@ class WSDL
       when '1.1' then 'http://schemas.xmlsoap.org/soap/envelope/'
       when '1.2' then 'http://www.w3.org/2003/05/soap-envelope'
       end
+
+      # XSI namespace (for xsi:nil="true" on nillable elements)
+      namespaces['xmlns:xsi'] = NS_XSI if @xsi_required
 
       namespaces
     end

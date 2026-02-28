@@ -94,11 +94,14 @@ class WSDL
     # @param value [Object] the value to render
     # @raise [ArgumentError] if the value type doesn't match the element cardinality
     # @return [void]
+    # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity -- handles singular/array and nil/hash/value cases
     def build_simple_type_element(element, xml, tag, value)
       if element.singular?
         raise ArgumentError, "Unexpected Array for the #{tag.last.inspect} simple type" if value.is_a? Array
 
-        if value.is_a? Hash
+        if value.nil?
+          build_nil_element(element, xml, tag)
+        elsif value.is_a? Hash
           attributes, value = extract_attributes(value)
           xml.tag!(*tag, value[tag[1]], attributes)
         else
@@ -110,34 +113,49 @@ class WSDL
         end
 
         value.each do |val|
-          xml.tag!(*tag, val)
+          if val.nil?
+            build_nil_element(element, xml, tag)
+          else
+            xml.tag!(*tag, val)
+          end
         end
       end
     end
+    # rubocop:enable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
 
     # Builds a complex type element (element with child elements).
     #
     # @param element [XML::Element] the element definition
     # @param xml [Builder::XmlMarkup] the XML builder
     # @param tag [Array] the tag name components (nsid and name)
-    # @param value [Hash, Array<Hash>] the value to render
+    # @param value [Hash, Array<Hash>, nil] the value to render
     # @raise [ArgumentError] if the value type doesn't match the element cardinality
     # @return [void]
+    # rubocop:disable Metrics/PerceivedComplexity -- handles singular/array and nil/hash cases
     def build_complex_type_element(element, xml, tag, value)
       if element.singular?
-        raise ArgumentError, "Expected a Hash for the #{tag.last.inspect} complex type" unless value.is_a? Hash
-
-        build_complex_tag(element, tag, value, xml)
+        if value.nil?
+          build_nil_element(element, xml, tag)
+        elsif value.is_a? Hash
+          build_complex_tag(element, tag, value, xml)
+        else
+          raise ArgumentError, "Expected a Hash for the #{tag.last.inspect} complex type"
+        end
       else
         unless value.is_a? Array
           raise ArgumentError, "Expected an Array of Hashes for the #{tag.last.inspect} complex type"
         end
 
         value.each do |val|
-          build_complex_tag(element, tag, val, xml)
+          if val.nil?
+            build_nil_element(element, xml, tag)
+          else
+            build_complex_tag(element, tag, val, xml)
+          end
         end
       end
     end
+    # rubocop:enable Metrics/PerceivedComplexity
 
     # Builds a complex type XML tag with its children.
     #
@@ -221,6 +239,24 @@ class WSDL
         xml.tag!(tag_name)
       else
         xml.tag!(tag_name, value)
+      end
+    end
+
+    # Builds an element for a nil value.
+    #
+    # If the element is nillable (per the XSD schema), emits the element
+    # with xsi:nil="true" attribute. Otherwise, emits an empty element.
+    #
+    # @param element [XML::Element] the element definition
+    # @param xml [Builder::XmlMarkup] the XML builder
+    # @param tag [Array] the tag name components (nsid and name)
+    # @return [void]
+    def build_nil_element(element, xml, tag)
+      if element.nillable?
+        @envelope.require_xsi_namespace
+        xml.tag!(*tag, 'xsi:nil' => 'true')
+      else
+        xml.tag!(*tag)
       end
     end
 

@@ -27,6 +27,7 @@ class WSDL
         @recursive   = false
         @singular    = true
         @any_content = false
+        @nillable    = false
       end
 
       # @!attribute [rw] parent
@@ -79,6 +80,13 @@ class WSDL
       #   @return [Boolean] true for singular elements, false for repeating elements
       attr_accessor :singular
       alias singular? singular
+
+      # @!attribute [rw] nillable
+      #   Whether this element can have a nil value (xsi:nil="true").
+      #   This corresponds to the nillable="true" attribute in the XSD schema.
+      #   @return [Boolean] true if the element is nillable
+      attr_accessor :nillable
+      alias nillable? nillable
 
       # Returns whether this element's type is defined recursively.
       #

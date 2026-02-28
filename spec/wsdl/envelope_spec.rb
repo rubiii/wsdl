@@ -122,4 +122,16 @@ describe WSDL::Envelope do
       expect(nsid1).to eq(nsid2)
     end
   end
+
+  describe '#require_xsi_namespace' do
+    subject(:envelope) { described_class.new(wsdl_operation, header, body) }
+
+    it 'marks the xsi namespace as required' do
+      expect(envelope.xsi_required?).to be false
+
+      envelope.require_xsi_namespace
+
+      expect(envelope.xsi_required?).to be true
+    end
+  end
 end

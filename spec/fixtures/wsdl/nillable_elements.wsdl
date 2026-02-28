@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<wsdl:definitions
+    name="NillableTestService"
+    targetNamespace="http://example.com/nillable/"
+    xmlns:tns="http://example.com/nillable/"
+    xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/"
+    xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
+    xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+
+  <wsdl:types>
+    <xsd:schema targetNamespace="http://example.com/nillable/"
+                elementFormDefault="qualified"
+                attributeFormDefault="unqualified">
+
+      <!-- Request element with mixed nillable and non-nillable fields -->
+      <xsd:element name="CreateUser" type="tns:CreateUserType"/>
+
+      <xsd:complexType name="CreateUserType">
+        <xsd:sequence>
+          <!-- Required, not nillable -->
+          <xsd:element name="username" type="xsd:string"/>
+
+          <!-- Optional (minOccurs=0), nillable - can be omitted OR sent with xsi:nil="true" -->
+          <xsd:element name="email" type="xsd:string" minOccurs="0" nillable="true"/>
+
+          <!-- Required, but nillable - must be present, can have xsi:nil="true" -->
+          <xsd:element name="displayName" type="xsd:string" nillable="true"/>
+
+          <!-- Optional, not nillable - can only be omitted, not nil -->
+          <xsd:element name="phoneNumber" type="xsd:string" minOccurs="0"/>
+
+          <!-- Nillable complex type -->
+          <xsd:element name="address" type="tns:AddressType" minOccurs="0" nillable="true"/>
+
+          <!-- Array with nillable elements -->
+          <xsd:element name="tags" type="xsd:string" minOccurs="0" maxOccurs="unbounded" nillable="true"/>
+        </xsd:sequence>
+      </xsd:complexType>
+
+      <xsd:complexType name="AddressType">
+        <xsd:sequence>
+          <xsd:element name="street" type="xsd:string" nillable="true"/>
+          <xsd:element name="city" type="xsd:string"/>
+          <xsd:element name="zipCode" type="xsd:string" nillable="true"/>
+        </xsd:sequence>
+      </xsd:complexType>
+
+      <!-- Response element -->
+      <xsd:element name="CreateUserResponse" type="tns:CreateUserResponseType"/>
+
+      <xsd:complexType name="CreateUserResponseType">
+        <xsd:sequence>
+          <xsd:element name="userId" type="xsd:string"/>
+          <xsd:element name="createdAt" type="xsd:dateTime" nillable="true"/>
+        </xsd:sequence>
+      </xsd:complexType>
+
+    </xsd:schema>
+  </wsdl:types>
+
+  <wsdl:message name="CreateUserRequest">
+    <wsdl:part name="parameters" element="tns:CreateUser"/>
+  </wsdl:message>
+
+  <wsdl:message name="CreateUserResponse">
+    <wsdl:part name="parameters" element="tns:CreateUserResponse"/>
+  </wsdl:message>
+
+  <wsdl:portType name="UserServicePortType">
+    <wsdl:operation name="CreateUser">
+      <wsdl:input message="tns:CreateUserRequest"/>
+      <wsdl:output message="tns:CreateUserResponse"/>
+    </wsdl:operation>
+  </wsdl:portType>
+
+  <wsdl:binding name="UserServiceBinding" type="tns:UserServicePortType">
+    <soap:binding style="document" transport="http://schemas.xmlsoap.org/soap/http"/>
+    <wsdl:operation name="CreateUser">
+      <soap:operation soapAction="http://example.com/nillable/CreateUser"/>
+      <wsdl:input>
+        <soap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+  </wsdl:binding>
+
+  <wsdl:service name="UserService">
+    <wsdl:port name="UserServicePort" binding="tns:UserServiceBinding">
+      <soap:address location="http://example.com/services/UserService"/>
+    </wsdl:port>
+  </wsdl:service>
+
+</wsdl:definitions>

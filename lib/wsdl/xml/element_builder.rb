@@ -72,6 +72,7 @@ class WSDL
       # @param part [Hash] the part definition with :element and :namespaces keys
       # @return [Element] the built element
       # @raise [RuntimeError] if the schema cannot be found
+      # rubocop:disable Metrics/AbcSize -- building element from part requires multiple assignments
       def build_element(part)
         local, namespace = expand_qname(part[:element], part[:namespaces])
         schema = @schemas.find_by_namespace(namespace)
@@ -84,10 +85,12 @@ class WSDL
         element.name = xs_element.name
         element.form = 'qualified'
         element.namespace = namespace
+        element.nillable = xs_element.nillable?
 
         handle_type(element, type)
         element
       end
+      # rubocop:enable Metrics/AbcSize
 
       # Applies type information to an element.
       #
@@ -202,6 +205,7 @@ class WSDL
 
           el.name = child_element.name
           el.namespace = child_element.namespace
+          el.nillable = child_element.nillable?
 
           # prevent recursion
           if recursive_child_definition? parent, child_element
