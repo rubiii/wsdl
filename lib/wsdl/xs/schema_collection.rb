@@ -49,8 +49,12 @@ class WSDL
       # @param namespace [String] the target namespace URI
       # @param name [String] the local name of the attribute
       # @return [Attribute, nil] the attribute, or nil if not found
+      # @raise [SchemaNotFoundError] if no schema matches the namespace
       def attribute(namespace, name)
-        find_by_namespace(namespace).attributes[name]
+        schema = find_by_namespace(namespace)
+        raise_schema_not_found('attribute', namespace, name) unless schema
+
+        schema.attributes[name]
       end
 
       # Finds an attribute group by namespace and name.
@@ -58,8 +62,12 @@ class WSDL
       # @param namespace [String] the target namespace URI
       # @param name [String] the local name of the attribute group
       # @return [AttributeGroup, nil] the attribute group, or nil if not found
+      # @raise [SchemaNotFoundError] if no schema matches the namespace
       def attribute_group(namespace, name)
-        find_by_namespace(namespace).attribute_groups[name]
+        schema = find_by_namespace(namespace)
+        raise_schema_not_found('attributeGroup', namespace, name) unless schema
+
+        schema.attribute_groups[name]
       end
 
       # Finds a global element by namespace and name.
@@ -67,8 +75,12 @@ class WSDL
       # @param namespace [String] the target namespace URI
       # @param name [String] the local name of the element
       # @return [Element, nil] the element, or nil if not found
+      # @raise [SchemaNotFoundError] if no schema matches the namespace
       def element(namespace, name)
-        find_by_namespace(namespace).elements[name]
+        schema = find_by_namespace(namespace)
+        raise_schema_not_found('element', namespace, name) unless schema
+
+        schema.elements[name]
       end
 
       # Finds a complex type by namespace and name.
@@ -76,8 +88,12 @@ class WSDL
       # @param namespace [String] the target namespace URI
       # @param name [String] the local name of the complex type
       # @return [ComplexType, nil] the complex type, or nil if not found
+      # @raise [SchemaNotFoundError] if no schema matches the namespace
       def complex_type(namespace, name)
-        find_by_namespace(namespace).complex_types[name]
+        schema = find_by_namespace(namespace)
+        raise_schema_not_found('complexType', namespace, name) unless schema
+
+        schema.complex_types[name]
       end
 
       # Finds a simple type by namespace and name.
@@ -85,8 +101,12 @@ class WSDL
       # @param namespace [String] the target namespace URI
       # @param name [String] the local name of the simple type
       # @return [SimpleType, nil] the simple type, or nil if not found
+      # @raise [SchemaNotFoundError] if no schema matches the namespace
       def simple_type(namespace, name)
-        find_by_namespace(namespace).simple_types[name]
+        schema = find_by_namespace(namespace)
+        raise_schema_not_found('simpleType', namespace, name) unless schema
+
+        schema.simple_types[name]
       end
 
       # Finds a schema by its target namespace.
@@ -96,6 +116,26 @@ class WSDL
       # @todo Consider storing schemas by namespace for O(1) lookup instead of O(n) search
       def find_by_namespace(namespace)
         find { |schema| schema.target_namespace == namespace }
+      end
+
+      private
+
+      # Raises a helpful error when a schema cannot be found for a namespace.
+      #
+      # @param component_type [String] the type of component being looked up (element, complexType, etc.)
+      # @param namespace [String, nil] the namespace that wasn't found
+      # @param name [String] the local name of the component
+      # @raise [RuntimeError] always raises with a descriptive message
+      def raise_schema_not_found(component_type, namespace, name)
+        if namespace.nil?
+          raise "Unable to find #{component_type} '#{name}' - no schema found for namespace nil. " \
+                'This may indicate an element reference without a namespace prefix in an XSD ' \
+                "that doesn't define a default namespace (xmlns=\"...\")."
+        else
+          available = @schemas.map(&:target_namespace).compact.map(&:inspect).join(', ')
+          raise "Unable to find #{component_type} '#{name}' - no schema found for namespace #{namespace.inspect}. " \
+                "Available namespaces: #{available.empty? ? '(none)' : available}"
+        end
       end
     end
   end
