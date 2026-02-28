@@ -17,5 +17,5 @@ task :graph do
   BASH
 end
 
-task default: :spec
+# Alias for convenience
 task test: :spec
