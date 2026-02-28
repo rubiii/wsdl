@@ -28,10 +28,27 @@ describe 'Integration with Geotrust' do
   end
 
   it 'creates an example body' do
-    pending "this fixture is missing a message element (s1:GetQuickApproverList)"
-
     operation = client.operation('query', 'querySoap', 'GetQuickApproverList')
-    expect(operation.example_body).to be_a(Hash)
+
+    expect(operation.example_body).to eq(
+      GetQuickApproverList: {
+        Request: {
+          QueryRequestHeader: {
+            PartnerCode: 'string',
+            AuthToken: {
+              UserName: 'string',
+              Password: 'string'
+            },
+            ReplayToken: 'string',
+            UseReplayToken: 'boolean'
+          },
+          Domain: 'string',
+          IncludeUserAgreement: {
+            UserAgreementProductCode: 'string'
+          }
+        }
+      }
+    )
   end
 
 end

@@ -110,6 +110,12 @@
       </xs:element>
     </xs:schema>
   </s0:types>
+  <s0:message name="GetQuickApproverList">
+    <s0:part element="s1:GetQuickApproverList" name="parameters"/>
+  </s0:message>
+  <s0:message name="GetQuickApproverListResponse">
+    <s0:part element="s1:GetQuickApproverListResponse" name="GetQuickApproverListResultPart"/>
+  </s0:message>
   <s0:message name="hello">
     <s0:part element="s1:hello" name="parameters"/>
   </s0:message>
