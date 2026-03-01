@@ -3,6 +3,7 @@
 require 'openssl'
 require 'base64'
 require 'wsdl/xml/parser'
+require 'wsdl/security/secure_compare'
 
 module WSDL
   module Security
@@ -144,7 +145,7 @@ module WSDL
         return add_failure("Referenced element not found: #{ref_data[:uri]}") unless element
 
         computed = compute_digest(element, ref_data[:c14n_alg], ref_data[:digest_alg])
-        return true if computed == ref_data[:expected]
+        return true if SecureCompare.equal?(computed, ref_data[:expected])
 
         add_failure("Digest mismatch for #{ref_data[:uri]}")
       end

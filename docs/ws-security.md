@@ -660,6 +660,8 @@ end
 
 17. **XPath injection protection** — The signature verifier validates element IDs against a strict allowlist pattern (XML NCName) before using them in XPath queries. This prevents attackers from injecting malicious XPath expressions through crafted Reference URIs in signed documents.
 
+18. **Timing-safe comparison** — The library uses constant-time string comparison (`OpenSSL.secure_compare`) when verifying cryptographic digests. This prevents timing attacks where an attacker could gradually guess valid digest values by measuring response times. Standard string comparison (`==`) short-circuits on the first differing character, leaking information about how many characters match. The `SecureCompare` module provides this protection transparently during signature verification.
+
 ## Security Limitations
 
 ### Not Supported
