@@ -7,33 +7,47 @@ module WSDL
     # This class handles three types of locations:
     # - HTTP/HTTPS URLs: Fetches the content via HTTP GET
     # - Raw XML strings: Returns the content as-is
-    # - File paths: Reads the content from the local filesystem
+    # - File paths: Reads the content from the local filesystem (with sandbox restrictions)
     #
     # It also supports resolving relative paths against a base location,
     # which is essential for handling WSDL imports and XSD includes that
     # use relative schemaLocation attributes.
     #
+    # == Security
+    #
+    # The resolver implements sandbox restrictions to prevent path traversal attacks.
+    # When a WSDL contains malicious schemaLocation attributes like
+    # `../../../../etc/passwd`, the resolver blocks access to files outside
+    # the allowed directory tree.
+    #
+    # File access is controlled by the `file_access` option:
+    # - `:sandbox` — Allow file access only within specified directories (default)
+    # - `:disabled` — No file access at all (URL-only mode)
+    # - `:unrestricted` — No restrictions (use with caution)
+    #
     # @example Resolving a URL
     #   resolver = Resolver.new(http_adapter)
     #   xml = resolver.resolve('http://example.com/service?wsdl')
     #
-    # @example Resolving a local file
-    #   resolver = Resolver.new(http_adapter)
-    #   xml = resolver.resolve('/path/to/service.wsdl')
+    # @example Resolving a local file with automatic sandboxing
+    #   resolver = Resolver.new(http_adapter, sandbox_paths: ['/app/wsdl'])
+    #   xml = resolver.resolve('/app/wsdl/service.wsdl')
     #
-    # @example Resolving raw XML
-    #   resolver = Resolver.new(http_adapter)
-    #   xml = resolver.resolve('<definitions>...</definitions>')
-    #
-    # @example Resolving a relative path
-    #   resolver = Resolver.new(http_adapter)
-    #   xml = resolver.resolve('../common/types.xsd', base: '/path/to/wsdl/service.wsdl')
+    # @example Disabling file access for URL-loaded WSDLs
+    #   resolver = Resolver.new(http_adapter, file_access: :disabled)
+    #   xml = resolver.resolve('http://example.com/service?wsdl')
     #
     # @api private
     #
     class Resolver
+      # Valid file access modes.
+      VALID_FILE_ACCESS_MODES = %i[sandbox disabled unrestricted].freeze
+
       # Pattern for matching HTTP/HTTPS URLs.
       URL_PATTERN = /^https?:/i
+
+      # Pattern for matching file:// URLs (blocked for security).
+      FILE_URL_PATTERN = /^file:/i
 
       # Pattern for matching raw XML content (starts with '<').
       XML_PATTERN = /^</
@@ -41,9 +55,33 @@ module WSDL
       # Creates a new Resolver instance.
       #
       # @param http [Object] an HTTP adapter instance that responds to `get(url)`
-      def initialize(http)
+      # @param file_access [Symbol] file access mode:
+      #   - `:sandbox` — Allow file access only within `sandbox_paths` (default)
+      #   - `:disabled` — No file access at all
+      #   - `:unrestricted` — No restrictions (not recommended)
+      # @param sandbox_paths [Array<String>, nil] directories where file access is allowed.
+      #   Only used when `file_access` is `:sandbox`. If nil, no files can be read.
+      #
+      def initialize(http, file_access: :sandbox, sandbox_paths: nil)
+        validate_file_access_mode!(file_access)
+        validate_sandbox_paths_config!(file_access, sandbox_paths)
+
         @http = http
+        @file_access = file_access
+        @sandbox_paths = normalize_sandbox_paths(sandbox_paths)
       end
+
+      # Returns the file access mode.
+      #
+      # @return [Symbol] the file access mode (`:sandbox`, `:disabled`, or `:unrestricted`)
+      #
+      attr_reader :file_access
+
+      # Returns the sandbox paths (normalized to absolute paths).
+      #
+      # @return [Array<String>, nil] the allowed directories for file access
+      #
+      attr_reader :sandbox_paths
 
       # Resolves a location to its XML content.
       #
@@ -54,6 +92,8 @@ module WSDL
       # @param base [String, nil] optional base location for resolving relative paths
       # @return [String] the XML content
       # @raise [Errno::ENOENT] if the file path does not exist
+      # @raise [PathRestrictionError] if the file is outside the sandbox
+      #
       def resolve(location, base: nil)
         absolute_location = resolve_location(location, base)
         fetch(absolute_location)
@@ -68,9 +108,13 @@ module WSDL
       # @param location [String] the location to resolve
       # @param base [String, nil] the base location
       # @return [String] the resolved absolute location
+      #
       def resolve_location(location, base = nil)
         # Raw XML is returned as-is
         return location if location =~ XML_PATTERN
+
+        # Block file:// URLs for security (SSRF prevention)
+        validate_not_file_url!(location)
 
         # Already absolute URL
         return location if location =~ URL_PATTERN
@@ -94,6 +138,7 @@ module WSDL
       #
       # @param location [String] the location to check
       # @return [Boolean] true if the location is relative
+      #
       def relative_location?(location)
         return false if location =~ XML_PATTERN
         return false if location =~ URL_PATTERN
@@ -102,7 +147,70 @@ module WSDL
         true
       end
 
+      # Checks if file access is allowed in the current configuration.
+      #
+      # @return [Boolean] true if file access is allowed
+      #
+      def file_access_allowed?
+        @file_access != :disabled
+      end
+
       private
+
+      # Validates that the file_access mode is valid.
+      #
+      # @param mode [Symbol] the file access mode to validate
+      # @raise [ArgumentError] if the mode is invalid
+      #
+      def validate_file_access_mode!(mode)
+        return if VALID_FILE_ACCESS_MODES.include?(mode)
+
+        raise ArgumentError,
+              "Invalid file_access mode: #{mode.inspect}. " \
+              "Valid modes are: #{VALID_FILE_ACCESS_MODES.map(&:inspect).join(', ')}"
+      end
+
+      # Validates that sandbox_paths is configured when file_access is :sandbox.
+      #
+      # @param file_access [Symbol] the file access mode
+      # @param sandbox_paths [Array<String>, nil] the sandbox paths
+      # @raise [ArgumentError] if :sandbox mode is used without sandbox_paths
+      #
+      def validate_sandbox_paths_config!(file_access, sandbox_paths)
+        return unless file_access == :sandbox
+        return if sandbox_paths && !sandbox_paths.empty?
+
+        raise ArgumentError,
+              'file_access: :sandbox requires sandbox_paths to be specified. ' \
+              'Provide an array of allowed directories, e.g., sandbox_paths: ["/app/wsdl"]'
+      end
+
+      # Normalizes sandbox paths to absolute paths.
+      #
+      # @param paths [Array<String>, nil] the paths to normalize
+      # @return [Array<String>, nil] the normalized paths
+      #
+      def normalize_sandbox_paths(paths)
+        return nil if paths.nil?
+
+        paths.map { |p| File.expand_path(p) }
+      end
+
+      # Validates that a location is not a file:// URL.
+      #
+      # file:// URLs are blocked to prevent SSRF attacks that could read
+      # local files through URL-based imports.
+      #
+      # @param location [String] the location to validate
+      # @raise [PathRestrictionError] if the location is a file:// URL
+      #
+      def validate_not_file_url!(location)
+        return unless location =~ FILE_URL_PATTERN
+
+        raise PathRestrictionError,
+              "file:// URLs are not allowed for security reasons: #{location.inspect}. " \
+              'Use a local file path instead if you need to load from the filesystem.'
+      end
 
       # Validates that a valid base exists for resolving a relative location.
       #
@@ -112,6 +220,7 @@ module WSDL
       # @param location [String] the relative location
       # @param base [String] the base location (not nil at this point)
       # @raise [UnresolvableImportError] if the base is invalid for relative resolution
+      #
       def validate_base_for_relative!(location, base)
         return unless base =~ XML_PATTERN
 
@@ -124,12 +233,75 @@ module WSDL
       #
       # @param location [String] the absolute location (URL, file path, or raw XML)
       # @return [String] the content
+      # @raise [PathRestrictionError] if file access is not allowed or path is outside sandbox
+      #
       def fetch(location)
         case location
         when URL_PATTERN then @http.get(location)
         when XML_PATTERN then location
-        else File.read(location)
+        else fetch_file(location)
         end
+      end
+
+      # Fetches content from a file path with security checks.
+      #
+      # @param path [String] the file path to read
+      # @return [String] the file content
+      # @raise [PathRestrictionError] if file access is not allowed or path is outside sandbox
+      #
+      def fetch_file(path)
+        validate_file_access!(path)
+        File.read(path)
+      end
+
+      # Validates that file access is allowed for the given path.
+      #
+      # @param path [String] the file path to validate
+      # @raise [PathRestrictionError] if access is not allowed
+      #
+      def validate_file_access!(path)
+        case @file_access
+        when :disabled
+          raise PathRestrictionError,
+                "File access is disabled (mode: :disabled). Cannot read #{path.inspect}. " \
+                'All schema imports must use URLs, or use file_access: :sandbox with explicit sandbox_paths.'
+        when :sandbox
+          validate_path_in_sandbox!(path)
+        when :unrestricted
+          # No validation needed
+        end
+      end
+
+      # Validates that a path is within the allowed sandbox directories.
+      #
+      # @param path [String] the path to validate
+      # @raise [PathRestrictionError] if the path is outside all sandbox directories
+      #
+      def validate_path_in_sandbox!(path)
+        normalized_path = File.expand_path(path)
+
+        return if @sandbox_paths.any? { |sandbox| path_within_directory?(normalized_path, sandbox) }
+
+        raise PathRestrictionError,
+              "Path #{path.inspect} is outside the allowed directories. " \
+              "Allowed: #{@sandbox_paths.inspect}. " \
+              'This may indicate a path traversal attack in a schemaLocation attribute.'
+      end
+
+      # Checks if a path is within a directory (handles symlinks safely).
+      #
+      # @param path [String] the path to check
+      # @param directory [String] the directory that should contain the path
+      # @return [Boolean] true if path is within directory
+      #
+      def path_within_directory?(path, directory)
+        # Ensure both paths end consistently for prefix comparison
+        normalized_dir = directory.end_with?('/') ? directory : "#{directory}/"
+        normalized_path = path.end_with?('/') ? path : "#{path}/"
+
+        # Check if path starts with directory (is a child)
+        # Also allow exact match (the directory itself)
+        path == directory || normalized_path.start_with?(normalized_dir)
       end
 
       # Resolves a relative location against a base location.
@@ -139,6 +311,7 @@ module WSDL
       # @param relative [String] the relative location
       # @param base [String] the base location
       # @return [String] the resolved absolute location
+      #
       def resolve_relative(relative, base)
         if base =~ URL_PATTERN
           resolve_relative_url(relative, base)
@@ -152,6 +325,7 @@ module WSDL
       # @param relative [String] the relative URL
       # @param base [String] the base URL
       # @return [String] the resolved absolute URL
+      #
       def resolve_relative_url(relative, base)
         base_uri = URI.parse(base)
         resolved = base_uri.merge(relative)
@@ -163,6 +337,7 @@ module WSDL
       # @param relative [String] the relative file path
       # @param base [String] the base file path
       # @return [String] the resolved absolute file path
+      #
       def resolve_relative_path(relative, base)
         # Get the directory of the base file
         base_dir = File.dirname(base)
@@ -175,6 +350,7 @@ module WSDL
       #
       # @param path [String] the path to check
       # @return [Boolean] true if the path is absolute
+      #
       def absolute_path?(path)
         # On Unix, absolute paths start with /
         # On Windows, they start with a drive letter (e.g., C:\)

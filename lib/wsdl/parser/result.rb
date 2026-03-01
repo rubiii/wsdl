@@ -12,9 +12,13 @@ module WSDL
     # is used internally by {WSDL::Client} to access WSDL information.
     #
     # @example Accessing services
-    #   result = Parser::Result.new('http://example.com/service?wsdl', http)
+    #   result = Parser::Result.new('http://example.com/service?wsdl', http, file_access: :disabled)
     #   result.services
     #   # => {"ServiceName" => {ports: {"PortName" => {type: "...", location: "..."}}}}
+    #
+    # @example Loading from file with sandbox
+    #   result = Parser::Result.new('/app/wsdl/service.wsdl', http,
+    #                               file_access: :sandbox, sandbox_paths: ['/app/wsdl'])
     #
     # @example Getting operation names
     #   operations = result.operations('ServiceName', 'PortName')
@@ -27,11 +31,21 @@ module WSDL
       #
       # @param wsdl [String] a URL, file path, or raw XML string of the WSDL document
       # @param http [Object] an HTTP adapter instance for fetching remote documents
-      def initialize(wsdl, http)
+      # @param file_access [Symbol] file access mode for schema resolution:
+      #   - `:unrestricted` — No restrictions (default for internal API)
+      #   - `:sandbox` — Allow file access only within `sandbox_paths`
+      #   - `:disabled` — No file access at all
+      # @param sandbox_paths [Array<String>, nil] directories where file access is allowed.
+      #   Only used when `file_access` is `:sandbox`.
+      #
+      # @note Security controls are enforced at the {WSDL::Client} level, which is the
+      #   public API. This class defaults to unrestricted access for internal use.
+      #
+      def initialize(wsdl, http, file_access: :unrestricted, sandbox_paths: nil)
         @documents = DocumentCollection.new
         @schemas = Schema::Collection.new
 
-        resolver = Resolver.new(http)
+        resolver = Resolver.new(http, file_access:, sandbox_paths:)
         importer = Importer.new(resolver, @documents, @schemas)
         importer.import(wsdl)
       end

@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- 
+  Test fixture for path traversal attack simulation.
+  This WSDL contains malicious schemaLocation attributes that attempt
+  to read files outside the expected directory tree.
+-->
+<definitions name="MaliciousService"
+             targetNamespace="http://example.com/malicious"
+             xmlns="http://schemas.xmlsoap.org/wsdl/"
+             xmlns:tns="http://example.com/malicious"
+             xmlns:xs="http://www.w3.org/2001/XMLSchema"
+             xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/">
+
+  <types>
+    <xs:schema targetNamespace="http://example.com/malicious">
+      <!-- Path traversal attempt: try to import /etc/passwd -->
+      <xs:import namespace="http://evil.com/passwd" 
+                 schemaLocation="../../../../../../../../etc/passwd"/>
+      
+      <!-- Another traversal attempt with different depth -->
+      <xs:import namespace="http://evil.com/shadow" 
+                 schemaLocation="../../../../../../../etc/shadow"/>
+      
+      <xs:element name="Request" type="xs:string"/>
+      <xs:element name="Response" type="xs:string"/>
+    </xs:schema>
+  </types>
+
+  <message name="RequestMessage">
+    <part name="parameters" element="tns:Request"/>
+  </message>
+
+  <message name="ResponseMessage">
+    <part name="parameters" element="tns:Response"/>
+  </message>
+
+  <portType name="MaliciousPortType">
+    <operation name="DoSomething">
+      <input message="tns:RequestMessage"/>
+      <output message="tns:ResponseMessage"/>
+    </operation>
+  </portType>
+
+  <binding name="MaliciousBinding" type="tns:MaliciousPortType">
+    <soap:binding style="document" transport="http://schemas.xmlsoap.org/soap/http"/>
+    <operation name="DoSomething">
+      <soap:operation soapAction="http://example.com/DoSomething"/>
+      <input>
+        <soap:body use="literal"/>
+      </input>
+      <output>
+        <soap:body use="literal"/>
+      </output>
+    </operation>
+  </binding>
+
+  <service name="MaliciousService">
+    <port name="MaliciousPort" binding="tns:MaliciousBinding">
+      <soap:address location="http://example.com/service"/>
+    </port>
+  </service>
+
+</definitions>

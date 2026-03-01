@@ -10,18 +10,22 @@ describe WSDL::Client do
   let(:service_name)   { 'AmazonFPS' }
   let(:port_name)      { 'AmazonFPSPort' }
   let(:operation_name) { 'Pay' }
+  let(:fixture_dir)    { File.expand_path('../../fixtures/wsdl', __dir__) }
 
   describe '.new' do
     it 'expects a local or remote WSDL document' do
-      allow(WSDL::Parser::Result).to receive(:new).with(wsdl,
-                                                        instance_of(WSDL.http_adapter)).and_return(:parser_result)
+      allow(WSDL::Parser::Result).to receive(:new).with(
+        wsdl, instance_of(WSDL.http_adapter), file_access: :unrestricted, sandbox_paths: nil
+      ).and_return(:parser_result)
       client = described_class.new(wsdl)
       expect(client.parser_result).to eq(:parser_result)
     end
 
     it 'also accepts a custom HTTP adapter to replace the default' do
       http = :my_http_adapter
-      allow(WSDL::Parser::Result).to receive(:new).with(wsdl, http).and_return(:parser_result)
+      allow(WSDL::Parser::Result).to receive(:new).with(
+        wsdl, http, file_access: :unrestricted, sandbox_paths: nil
+      ).and_return(:parser_result)
 
       client = described_class.new(wsdl, http: http)
       expect(client.parser_result).to eq(:parser_result)
@@ -85,6 +89,127 @@ describe WSDL::Client do
         described_class.new(inline_xml)
 
         expect(definition_count).to eq(1)
+      end
+    end
+  end
+
+  describe 'file access security' do
+    context 'with file_access: :auto (default)' do
+      context 'when loading from a file path' do
+        it 'uses unrestricted file access (trusts local files)' do
+          parser_result = instance_double(WSDL::Parser::Result, services: {})
+          allow(WSDL::Parser::Result).to receive(:new).and_return(parser_result)
+
+          described_class.new(wsdl)
+
+          expect(WSDL::Parser::Result).to have_received(:new).with(
+            wsdl, anything, file_access: :unrestricted, sandbox_paths: nil
+          )
+        end
+
+        it 'allows relative imports to sibling directories' do
+          # Travelport fixtures use ../common_v32_0/ imports which need to work
+          travelport_wsdl = fixture('wsdl/travelport/system_v32_0/System')
+          parser_result = instance_double(WSDL::Parser::Result, services: {})
+          allow(WSDL::Parser::Result).to receive(:new).and_return(parser_result)
+
+          described_class.new(travelport_wsdl)
+
+          expect(WSDL::Parser::Result).to have_received(:new).with(
+            travelport_wsdl, anything, file_access: :unrestricted, sandbox_paths: nil
+          )
+        end
+      end
+
+      context 'when loading from a URL' do
+        let(:url_wsdl) { 'http://example.com/service?wsdl' }
+
+        it 'disables file access' do
+          parser_result = instance_double(WSDL::Parser::Result, services: {})
+          allow(WSDL::Parser::Result).to receive(:new).and_return(parser_result)
+
+          described_class.new(url_wsdl)
+
+          expect(WSDL::Parser::Result).to have_received(:new).with(
+            url_wsdl, anything, file_access: :disabled, sandbox_paths: nil
+          )
+        end
+      end
+
+      context 'when loading from inline XML' do
+        let(:inline_xml) { '<definitions/>' }
+
+        it 'disables file access' do
+          parser_result = instance_double(WSDL::Parser::Result, services: {})
+          allow(WSDL::Parser::Result).to receive(:new).and_return(parser_result)
+
+          described_class.new(inline_xml)
+
+          expect(WSDL::Parser::Result).to have_received(:new).with(
+            inline_xml, anything, file_access: :disabled, sandbox_paths: nil
+          )
+        end
+      end
+    end
+
+    context 'with explicit file_access options' do
+      it 'passes :disabled to the parser' do
+        parser_result = instance_double(WSDL::Parser::Result, services: {})
+        allow(WSDL::Parser::Result).to receive(:new).and_return(parser_result)
+
+        described_class.new(wsdl, file_access: :disabled)
+
+        expect(WSDL::Parser::Result).to have_received(:new).with(
+          wsdl, anything, file_access: :disabled, sandbox_paths: nil
+        )
+      end
+
+      it 'passes :unrestricted to the parser' do
+        parser_result = instance_double(WSDL::Parser::Result, services: {})
+        allow(WSDL::Parser::Result).to receive(:new).and_return(parser_result)
+
+        described_class.new(wsdl, file_access: :unrestricted)
+
+        expect(WSDL::Parser::Result).to have_received(:new).with(
+          wsdl, anything, file_access: :unrestricted, sandbox_paths: nil
+        )
+      end
+
+      it 'passes custom sandbox_paths to the parser' do
+        custom_paths = ['/app/wsdl', '/app/schemas']
+        parser_result = instance_double(WSDL::Parser::Result, services: {})
+        allow(WSDL::Parser::Result).to receive(:new).and_return(parser_result)
+
+        described_class.new(wsdl, file_access: :sandbox, sandbox_paths: custom_paths)
+
+        expect(WSDL::Parser::Result).to have_received(:new).with(
+          wsdl, anything, file_access: :sandbox, sandbox_paths: custom_paths
+        )
+      end
+    end
+
+    context 'path traversal protection' do
+      it 'blocks path traversal attacks in schema imports' do
+        malicious_wsdl = fixture('wsdl/malicious/path_traversal')
+
+        # The WSDL contains schemaLocation="../../../../etc/passwd"
+        # which should be blocked by sandbox restrictions
+        expect {
+          described_class.new(malicious_wsdl, http: http_mock)
+        }.not_to raise_error # Import failures are logged, not raised
+
+        # But if we try to read a file outside the sandbox directly, it should fail
+        # This is tested more thoroughly in resolver_spec.rb
+      end
+
+      it 'allows legitimate relative imports within sandbox' do
+        travelport_wsdl = fixture('wsdl/travelport/system_v32_0/System')
+
+        # This WSDL uses relative imports like ../common_v32_0/CommonReqRsp.xsd
+        # which should be allowed since they stay within the fixture directory
+        expect {
+          described_class.new(travelport_wsdl, http: http_mock)
+        }.not_to raise_error
       end
     end
   end

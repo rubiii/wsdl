@@ -50,6 +50,25 @@ module WSDL
   class UnresolvableImportError < Error
   end
 
+  # Raised when a file path violates sandbox restrictions.
+  #
+  # This occurs when a WSDL or schema import attempts to access files outside
+  # the allowed directory tree. This protection prevents path traversal attacks
+  # where malicious schemaLocation attributes could read arbitrary system files.
+  #
+  # @example
+  #   begin
+  #     # WSDL with malicious import: schemaLocation="../../../../etc/passwd"
+  #     client = WSDL::Client.new('/app/wsdl/malicious.wsdl')
+  #   rescue WSDL::PathRestrictionError => e
+  #     puts "Blocked file access: #{e.message}"
+  #   end
+  #
+  # @see https://cheatsheetseries.owasp.org/cheatsheets/Server_Side_Request_Forgery_Prevention_Cheat_Sheet.html
+  #
+  class PathRestrictionError < Error
+  end
+
   # Raised when signature verification fails on a response.
   #
   # This error is raised when:

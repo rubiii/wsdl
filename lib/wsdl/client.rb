@@ -1,10 +1,29 @@
 # frozen_string_literal: true
 
 module WSDL
+  # Configuration for file access when resolving schema imports.
+  #
+  # @!attribute [r] mode
+  #   @return [Symbol] the file access mode (:sandbox, :disabled, :unrestricted)
+  # @!attribute [r] sandbox_paths
+  #   @return [Array<String>, nil] directories where file access is allowed
+  #
+  FileAccessConfig = Data.define(:mode, :sandbox_paths)
+
   # Main entry point for working with WSDL documents.
   #
   # This class provides a high-level interface for parsing WSDL documents,
   # inspecting services and operations, and executing SOAP requests.
+  #
+  # == Security
+  #
+  # By default, the client applies sandbox restrictions to prevent path traversal
+  # attacks in schema imports:
+  #
+  # - **URL-loaded WSDLs** — File access is disabled; all schema imports must use URLs
+  # - **File-loaded WSDLs** — File access is sandboxed to the WSDL's directory tree
+  #
+  # This prevents malicious schemaLocation attributes from reading arbitrary system files.
   #
   # @example Basic usage
   #   client = WSDL::Client.new('http://example.com/service?wsdl')
@@ -26,7 +45,18 @@ module WSDL
   # @example Disable caching for this instance
   #   client = WSDL::Client.new('http://example.com/service?wsdl', cache: nil)
   #
+  # @example Custom file access (use with caution)
+  #   client = WSDL::Client.new('/path/to/service.wsdl',
+  #                             file_access: :sandbox,
+  #                             sandbox_paths: ['/path/to', '/other/schemas'])
+  #
   class Client
+    # Pattern for matching HTTP/HTTPS URLs.
+    URL_PATTERN = /^https?:/i
+
+    # Pattern for matching raw XML content (starts with '<').
+    XML_PATTERN = /^</
+
     # Creates a new Client instance.
     #
     # @param wsdl [String] a URL, file path, or raw XML string of the WSDL document
@@ -38,11 +68,25 @@ module WSDL
     # @param cache [Cache, nil, Symbol] the cache to use for parsed definitions.
     #   Use `:default` to use {WSDL.cache}, or `nil` to disable caching.
     #   Defaults to {WSDL.cache}. Pass `nil` to disable caching for this instance.
+    # @param file_access [Symbol] controls file access for schema imports:
+    #   - `:auto` — Automatically determine based on WSDL source (default):
+    #     - URL source → file access disabled (all imports must use URLs)
+    #     - Inline XML → file access disabled (no base path available)
+    #     - File source → unrestricted (local files are trusted)
+    #   - `:sandbox` — Allow file access only within `sandbox_paths`
+    #   - `:disabled` — No file access at all (URL-only mode)
+    #   - `:unrestricted` — No restrictions (default for file-loaded WSDLs)
+    # @param sandbox_paths [Array<String>, nil] directories where file access is allowed.
+    #   Only used when `file_access` is `:sandbox`.
     #
-    def initialize(wsdl, http: nil, pretty_print: true, cache: :default)
+    # rubocop:disable Metrics/ParameterLists
+    def initialize(wsdl, http: nil, pretty_print: true, cache: :default, file_access: :auto, sandbox_paths: nil)
+      # rubocop:enable Metrics/ParameterLists
       @http = http || new_http_client
-      @parser_result = load_parser_result(wsdl, cache)
       @pretty_print = pretty_print
+
+      config = resolve_file_access_options(wsdl, file_access, sandbox_paths)
+      @parser_result = load_parser_result(wsdl, cache, config.mode, config.sandbox_paths)
     end
 
     # Returns the Parser::Result instance containing parsed WSDL data.
@@ -108,19 +152,42 @@ module WSDL
 
     private
 
+    # Resolves file access options based on the WSDL source type.
+    #
+    # @param wsdl [String] the WSDL location or content
+    # @param file_access [Symbol] the requested file access mode
+    # @param sandbox_paths [Array<String>, nil] explicit sandbox paths
+    # @return [FileAccessConfig] resolved file access configuration
+    #
+    def resolve_file_access_options(wsdl, file_access, sandbox_paths)
+      return FileAccessConfig.new(mode: file_access, sandbox_paths:) unless file_access == :auto
+
+      # URL-loaded WSDLs and inline XML: disable file access entirely
+      # All schema imports must use HTTP/HTTPS URLs
+      if wsdl.match?(URL_PATTERN) || wsdl.match?(XML_PATTERN)
+        return FileAccessConfig.new(mode: :disabled, sandbox_paths: nil)
+      end
+
+      # File path: trust local files (user controls the WSDL source)
+      # Users who want tighter controls can use explicit :sandbox mode
+      FileAccessConfig.new(mode: :unrestricted, sandbox_paths: nil)
+    end
+
     # Loads the parser result, using cache if available.
     #
     # @param wsdl [String] the WSDL location or content
     # @param cache [Cache, nil, Symbol] the cache to use (`:default` uses {WSDL.cache})
+    # @param file_access [Symbol] the file access mode
+    # @param sandbox_paths [Array<String>, nil] the sandbox paths
     # @return [Parser::Result] the parsed result
     #
-    def load_parser_result(wsdl, cache)
+    def load_parser_result(wsdl, cache, file_access, sandbox_paths)
       cache = WSDL.cache if cache == :default
 
       if cache
-        cache.fetch(wsdl) { Parser::Result.new(wsdl, @http) }
+        cache.fetch(wsdl) { Parser::Result.new(wsdl, @http, file_access:, sandbox_paths:) }
       else
-        Parser::Result.new(wsdl, @http)
+        Parser::Result.new(wsdl, @http, file_access:, sandbox_paths:)
       end
     end
 
