@@ -24,7 +24,10 @@ module WSDL
     # @see https://docs.oasis-open.org/wss/v1.1/wss-v1.1-spec-os-SOAPMessageSecurity.pdf
     #
     class SecurityHeader
-      include Constants
+      # Local aliases for namespace constants
+      NS = Constants::NS
+      SecurityNS = NS::Security
+      AddressingNS = NS::Addressing
 
       # Returns the security configuration.
       # @return [Config]
@@ -109,8 +112,8 @@ module WSDL
       #
       def create_security_element(document, header_node)
         security = Nokogiri::XML::Node.new('Security', document)
-        security.add_namespace_definition('wsse', NS_WSSE)
-        security.add_namespace_definition('wsu', NS_WSU)
+        security.add_namespace_definition('wsse', SecurityNS::WSSE)
+        security.add_namespace_definition('wsu', SecurityNS::WSU)
         security.namespace = security.namespace_definitions.find { |ns| ns.prefix == 'wsse' }
 
         # Add mustUnderstand attribute (required by WS-Security)
@@ -130,7 +133,7 @@ module WSDL
         timestamp = @config.timestamp_config
 
         builder = Nokogiri::XML::Builder.new do |xml|
-          xml['wsu'].Timestamp('xmlns:wsu' => NS_WSU, 'wsu:Id' => timestamp.id) do
+          xml['wsu'].Timestamp('xmlns:wsu' => SecurityNS::WSU, 'wsu:Id' => timestamp.id) do
             xml['wsu'].Created(timestamp.created_at_xml)
             xml['wsu'].Expires(timestamp.expires_at_xml)
           end
@@ -157,7 +160,8 @@ module WSDL
       #
       def build_username_token_xml(token)
         Nokogiri::XML::Builder.new do |xml|
-          xml['wsse'].UsernameToken('xmlns:wsse' => NS_WSSE, 'xmlns:wsu' => NS_WSU, 'wsu:Id' => token.id) do
+          xml['wsse'].UsernameToken('xmlns:wsse' => SecurityNS::WSSE, 'xmlns:wsu' => SecurityNS::WSU,
+                                    'wsu:Id' => token.id) do
             xml['wsse'].Username(token.username)
             xml['wsse'].Password(token.password_value, 'Type' => token.password_type)
             add_digest_elements(xml, token) if token.digest?
@@ -171,7 +175,7 @@ module WSDL
       # @param token [UsernameToken] the token configuration
       #
       def add_digest_elements(xml, token)
-        xml['wsse'].Nonce(token.encoded_nonce, 'EncodingType' => BASE64_ENCODING_URI)
+        xml['wsse'].Nonce(token.encoded_nonce, 'EncodingType' => Constants::Encoding::BASE64)
         xml['wsu'].Created(token.created_at_xml)
       end
 
@@ -234,12 +238,12 @@ module WSDL
         header_node = find_header_node(document)
         return unless header_node
 
-        WS_ADDRESSING_HEADERS.each do |header_name|
+        Constants::WS_ADDRESSING_HEADERS.each do |header_name|
           # Try the standard WS-Addressing 1.0 namespace first
-          node = header_node.at_xpath("wsa:#{header_name}", 'wsa' => NS_WSA)
+          node = header_node.at_xpath("wsa:#{header_name}", 'wsa' => AddressingNS::V1_0)
 
           # Fall back to 2004/08 namespace if not found
-          node ||= header_node.at_xpath("wsa2004:#{header_name}", 'wsa2004' => NS_WSA_2004)
+          node ||= header_node.at_xpath("wsa2004:#{header_name}", 'wsa2004' => AddressingNS::V2004)
 
           if node
             header_id = ensure_wsu_id(node, header_name)
@@ -264,7 +268,7 @@ module WSDL
       # @return [Nokogiri::XML::Node, nil]
       #
       def find_timestamp_node(security_node)
-        security_node.at_xpath('wsu:Timestamp', 'wsu' => NS_WSU)
+        security_node.at_xpath('wsu:Timestamp', 'wsu' => SecurityNS::WSU)
       end
 
       # Finds the SOAP Body element.
@@ -285,12 +289,12 @@ module WSDL
       #
       def ensure_wsu_id(node, prefix)
         # Check for existing wsu:Id
-        existing_id = node.attribute_with_ns('Id', NS_WSU)&.value
+        existing_id = node.attribute_with_ns('Id', SecurityNS::WSU)&.value
         return existing_id if existing_id
 
         # Add wsu namespace if not present
-        wsu_ns = node.namespace_definitions.find { |ns| ns.href == NS_WSU }
-        node.add_namespace_definition('wsu', NS_WSU) unless wsu_ns
+        wsu_ns = node.namespace_definitions.find { |ns| ns.href == SecurityNS::WSU }
+        node.add_namespace_definition('wsu', SecurityNS::WSU) unless wsu_ns
 
         # Generate and set ID
         id = "#{prefix}-#{SecureRandom.uuid}"

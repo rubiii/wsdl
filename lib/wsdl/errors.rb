@@ -172,4 +172,45 @@ module WSDL
   #
   class TimestampValidationError < Error
   end
+
+  # Raised when an algorithm is not supported or not recognized.
+  #
+  # This error is raised during signature verification when:
+  # - The response specifies an unknown or unsupported algorithm URI
+  # - An algorithm downgrade attack may be in progress
+  # - A required algorithm parameter is missing
+  #
+  # This strict validation prevents algorithm confusion attacks where an
+  # attacker modifies the algorithm URI to cause verification with the
+  # wrong algorithm.
+  #
+  # @example Catching unsupported algorithm errors
+  #   begin
+  #     response.security.verify_signature!
+  #   rescue WSDL::UnsupportedAlgorithmError => e
+  #     log_security_event("Unsupported algorithm: #{e.message}")
+  #     log_security_event("Algorithm URI: #{e.algorithm_uri}")
+  #     log_security_event("Algorithm type: #{e.algorithm_type}")
+  #   end
+  #
+  # @see https://www.w3.org/TR/xmldsig-bestpractices/
+  #
+  class UnsupportedAlgorithmError < Error
+    # @return [String, nil] the unrecognized algorithm URI
+    attr_reader :algorithm_uri
+
+    # @return [Symbol, nil] the type of algorithm (:digest, :signature, :canonicalization)
+    attr_reader :algorithm_type
+
+    # Creates a new UnsupportedAlgorithmError.
+    #
+    # @param message [String] error message
+    # @param algorithm_uri [String, nil] the URI that was not recognized
+    # @param algorithm_type [Symbol, nil] the type of algorithm
+    def initialize(message = nil, algorithm_uri: nil, algorithm_type: nil)
+      @algorithm_uri = algorithm_uri
+      @algorithm_type = algorithm_type
+      super(message)
+    end
+  end
 end

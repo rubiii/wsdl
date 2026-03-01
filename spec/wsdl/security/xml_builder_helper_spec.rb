@@ -3,10 +3,10 @@
 require 'spec_helper'
 
 describe WSDL::Security::XmlBuilderHelper do
-  let(:ns_ds) { WSDL::Security::Constants::NS_DS }
-  let(:ns_wsse) { WSDL::Security::Constants::NS_WSSE }
-  let(:ns_wsu) { WSDL::Security::Constants::NS_WSU }
-  let(:ns_ec) { WSDL::Security::Constants::NS_EC }
+  let(:ns_ds) { WSDL::Security::Constants::NS::Signature::DS }
+  let(:ns_wsse) { WSDL::Security::Constants::NS::Security::WSSE }
+  let(:ns_wsu) { WSDL::Security::Constants::NS::Security::WSU }
+  let(:ns_ec) { WSDL::Security::Constants::NS::Signature::EC }
 
   describe '#initialize' do
     it 'defaults explicit_prefixes to false' do

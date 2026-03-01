@@ -22,15 +22,13 @@ module WSDL
     #   options.key_reference           # => :issuer_serial
     #
     class SignatureOptions
-      include Constants
-
       # Default values for signature options
       DEFAULTS = {
         sign_body: true,
         sign_timestamp: true,
         sign_addressing: false,
         explicit_namespace_prefixes: false,
-        key_reference: KeyReference::BINARY_SECURITY_TOKEN,
+        key_reference: Constants::KeyReference::BINARY_SECURITY_TOKEN,
         digest_algorithm: :sha256
       }.freeze
 

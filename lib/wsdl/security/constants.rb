@@ -4,121 +4,208 @@ module WSDL
   module Security
     # WS-Security constants including namespaces and URIs from OASIS specifications.
     #
+    # Constants are organized into nested modules for discoverability:
+    # - {NS} — XML namespace URIs
+    # - {Algorithms} — Cryptographic algorithm URIs
+    # - {TokenProfiles} — WS-Security token profile URIs
+    # - {Encoding} — Encoding type URIs
+    # - {KeyReference} — Certificate reference methods
+    #
+    # @example Accessing namespace constants
+    #   WSDL::Security::Constants::NS::Security::WSSE
+    #   # => "http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd"
+    #
+    # @example Accessing algorithm constants
+    #   WSDL::Security::Constants::Algorithms::Digest::SHA256
+    #   # => "http://www.w3.org/2001/04/xmlenc#sha256"
+    #
     # @see https://docs.oasis-open.org/wss/v1.1/wss-v1.1-spec-os-SOAPMessageSecurity.pdf
     # @see https://docs.oasis-open.org/wss/v1.1/wss-v1.1-spec-os-UsernameTokenProfile.pdf
     # @see https://docs.oasis-open.org/wss/v1.1/wss-v1.1-spec-os-x509TokenProfile.pdf
     #
     module Constants
-      # WS-Security Extension namespace (wsse)
-      NS_WSSE = 'http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd'
+      # XML namespace URIs organized by specification.
+      module NS
+        # WS-Security namespaces (OASIS).
+        # @see https://docs.oasis-open.org/wss/v1.1/
+        module Security
+          # WS-Security Extension namespace (wsse)
+          WSSE = 'http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd'
 
-      # WS-Security Utility namespace (wsu)
-      NS_WSU = 'http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd'
+          # WS-Security Utility namespace (wsu)
+          WSU = 'http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd'
+        end
 
-      # XML Digital Signature namespace (ds)
-      NS_DS = 'http://www.w3.org/2000/09/xmldsig#'
+        # XML Digital Signature namespaces (W3C).
+        # @see https://www.w3.org/TR/xmldsig-core1/
+        module Signature
+          # XML Digital Signature namespace (ds)
+          DS = 'http://www.w3.org/2000/09/xmldsig#'
 
-      # Exclusive XML Canonicalization namespace (ec)
-      NS_EC = 'http://www.w3.org/2001/10/xml-exc-c14n#'
+          # Exclusive XML Canonicalization namespace (ec)
+          EC = 'http://www.w3.org/2001/10/xml-exc-c14n#'
+        end
 
-      # --- WS-Addressing Namespaces ---
+        # WS-Addressing namespaces (W3C).
+        # @see https://www.w3.org/TR/ws-addr-core/
+        module Addressing
+          # WS-Addressing 1.0 namespace (2005)
+          V1_0 = 'http://www.w3.org/2005/08/addressing'
 
-      # WS-Addressing 1.0 namespace (wsa)
-      NS_WSA = 'http://www.w3.org/2005/08/addressing'
+          # WS-Addressing 2004/08 namespace (legacy)
+          V2004 = 'http://schemas.xmlsoap.org/ws/2004/08/addressing'
+        end
 
-      # WS-Addressing 2004/08 namespace (legacy)
-      NS_WSA_2004 = 'http://schemas.xmlsoap.org/ws/2004/08/addressing'
+        # SOAP envelope namespaces.
+        module SOAP
+          # SOAP 1.1 namespace
+          V1_1 = 'http://schemas.xmlsoap.org/soap/envelope/'
 
-      # --- SOAP Namespaces ---
+          # SOAP 1.2 namespace
+          V1_2 = 'http://www.w3.org/2003/05/soap-envelope'
+        end
+      end
 
-      # SOAP 1.1 namespace
-      NS_SOAP_1_1 = 'http://schemas.xmlsoap.org/soap/envelope/'
+      # Cryptographic algorithm URIs for XML Digital Signatures.
+      #
+      # @see https://www.w3.org/TR/xmldsig-core1/
+      # @see https://www.w3.org/TR/xmlenc-core1/
+      module Algorithms
+        # Digest algorithm URIs.
+        module Digest
+          # SHA-1 digest algorithm (legacy, discouraged for new signatures)
+          SHA1 = 'http://www.w3.org/2000/09/xmldsig#sha1'
 
-      # SOAP 1.2 namespace
-      NS_SOAP_1_2 = 'http://www.w3.org/2003/05/soap-envelope'
+          # SHA-224 digest algorithm
+          SHA224 = 'http://www.w3.org/2001/04/xmldsig-more#sha224'
 
-      # Base URI for WS-Security token profiles
-      BASE_WSS_URI = 'http://docs.oasis-open.org/wss/2004/01'
+          # SHA-256 digest algorithm (recommended)
+          SHA256 = 'http://www.w3.org/2001/04/xmlenc#sha256'
 
-      # --- UsernameToken Profile URIs ---
+          # SHA-384 digest algorithm
+          SHA384 = 'http://www.w3.org/2001/04/xmldsig-more#sha384'
 
-      # Password type: plain text
-      PASSWORD_TEXT_URI = "#{BASE_WSS_URI}/oasis-200401-wss-username-token-profile-1.0#PasswordText".freeze
+          # SHA-512 digest algorithm
+          SHA512 = 'http://www.w3.org/2001/04/xmlenc#sha512'
+        end
 
-      # Password type: digest (SHA-1)
-      PASSWORD_DIGEST_URI = "#{BASE_WSS_URI}/oasis-200401-wss-username-token-profile-1.0#PasswordDigest".freeze
+        # Signature algorithm URIs.
+        module Signature
+          # RSA with SHA-1 (legacy, verification only)
+          RSA_SHA1 = 'http://www.w3.org/2000/09/xmldsig#rsa-sha1'
 
-      # --- X.509 Token Profile URIs ---
+          # RSA with SHA-224
+          RSA_SHA224 = 'http://www.w3.org/2001/04/xmldsig-more#rsa-sha224'
 
-      # X.509 v3 certificate token type
-      X509_V3_URI = "#{BASE_WSS_URI}/oasis-200401-wss-x509-token-profile-1.0#X509v3".freeze
+          # RSA with SHA-256 (recommended)
+          RSA_SHA256 = 'http://www.w3.org/2001/04/xmldsig-more#rsa-sha256'
 
-      # X.509 Subject Key Identifier reference type
-      X509_SKI_URI = "#{BASE_WSS_URI}/oasis-200401-wss-x509-token-profile-1.0#X509SubjectKeyIdentifier".freeze
+          # RSA with SHA-384
+          RSA_SHA384 = 'http://www.w3.org/2001/04/xmldsig-more#rsa-sha384'
 
-      # --- Encoding Types ---
+          # RSA with SHA-512
+          RSA_SHA512 = 'http://www.w3.org/2001/04/xmldsig-more#rsa-sha512'
 
-      # Base64 binary encoding
-      BASE64_ENCODING_URI = "#{BASE_WSS_URI}/oasis-200401-wss-soap-message-security-1.0#Base64Binary".freeze
+          # ECDSA with SHA-1 (legacy, discouraged)
+          ECDSA_SHA1 = 'http://www.w3.org/2001/04/xmldsig-more#ecdsa-sha1'
 
-      # --- Canonicalization Algorithms ---
+          # ECDSA with SHA-224
+          ECDSA_SHA224 = 'http://www.w3.org/2001/04/xmldsig-more#ecdsa-sha224'
 
-      # Exclusive XML Canonicalization 1.0
-      EXC_C14N_URI = 'http://www.w3.org/2001/10/xml-exc-c14n#'
+          # ECDSA with SHA-256 (required by XML Signature 1.1)
+          ECDSA_SHA256 = 'http://www.w3.org/2001/04/xmldsig-more#ecdsa-sha256'
 
-      # Inclusive XML Canonicalization 1.0
-      C14N_URI = 'http://www.w3.org/TR/2001/REC-xml-c14n-20010315'
+          # ECDSA with SHA-384
+          ECDSA_SHA384 = 'http://www.w3.org/2001/04/xmldsig-more#ecdsa-sha384'
 
-      # Inclusive XML Canonicalization 1.1
-      C14N_11_URI = 'http://www.w3.org/2006/12/xml-c14n11'
+          # ECDSA with SHA-512
+          ECDSA_SHA512 = 'http://www.w3.org/2001/04/xmldsig-more#ecdsa-sha512'
 
-      # --- Digest Algorithms ---
+          # DSA with SHA-1 (legacy)
+          DSA_SHA1 = 'http://www.w3.org/2000/09/xmldsig#dsa-sha1'
 
-      # SHA-1 digest algorithm
-      SHA1_URI = 'http://www.w3.org/2000/09/xmldsig#sha1'
+          # DSA with SHA-256
+          DSA_SHA256 = 'http://www.w3.org/2009/xmldsig11#dsa-sha256'
+        end
 
-      # SHA-256 digest algorithm
-      SHA256_URI = 'http://www.w3.org/2001/04/xmlenc#sha256'
+        # Canonicalization algorithm URIs.
+        #
+        # @see https://www.w3.org/TR/xml-exc-c14n/
+        # @see https://www.w3.org/TR/xml-c14n/
+        # @see https://www.w3.org/TR/xml-c14n11/
+        module Canonicalization
+          # Exclusive XML Canonicalization 1.0
+          EXCLUSIVE_1_0 = 'http://www.w3.org/2001/10/xml-exc-c14n#'
 
-      # SHA-512 digest algorithm
-      SHA512_URI = 'http://www.w3.org/2001/04/xmlenc#sha512'
+          # Exclusive XML Canonicalization 1.0 with comments
+          EXCLUSIVE_1_0_WITH_COMMENTS = 'http://www.w3.org/2001/10/xml-exc-c14n#WithComments'
 
-      # --- Signature Algorithms ---
+          # Inclusive XML Canonicalization 1.0
+          INCLUSIVE_1_0 = 'http://www.w3.org/TR/2001/REC-xml-c14n-20010315'
 
-      # RSA with SHA-1 signature algorithm
-      RSA_SHA1_URI = 'http://www.w3.org/2000/09/xmldsig#rsa-sha1'
+          # Inclusive XML Canonicalization 1.0 with comments
+          INCLUSIVE_1_0_WITH_COMMENTS = 'http://www.w3.org/TR/2001/REC-xml-c14n-20010315#WithComments'
 
-      # RSA with SHA-256 signature algorithm
-      RSA_SHA256_URI = 'http://www.w3.org/2001/04/xmldsig-more#rsa-sha256'
+          # Inclusive XML Canonicalization 1.1
+          INCLUSIVE_1_1 = 'http://www.w3.org/2006/12/xml-c14n11'
 
-      # RSA with SHA-512 signature algorithm
-      RSA_SHA512_URI = 'http://www.w3.org/2001/04/xmldsig-more#rsa-sha512'
+          # Inclusive XML Canonicalization 1.1 with comments
+          INCLUSIVE_1_1_WITH_COMMENTS = 'http://www.w3.org/2006/12/xml-c14n11#WithComments'
+        end
 
-      # --- Transform Algorithms ---
+        # Transform algorithm URIs.
+        module Transform
+          # Enveloped signature transform
+          ENVELOPED_SIGNATURE = 'http://www.w3.org/2000/09/xmldsig#enveloped-signature'
+        end
+      end
 
-      # Enveloped signature transform
-      ENVELOPED_SIGNATURE_URI = 'http://www.w3.org/2000/09/xmldsig#enveloped-signature'
+      # WS-Security token profile URIs.
+      module TokenProfiles
+        # Base URI for WS-Security token profiles
+        BASE_URI = 'http://docs.oasis-open.org/wss/2004/01'
 
-      # --- Key Reference Methods ---
+        # UsernameToken profile URIs.
+        module UsernameToken
+          # Password type: plain text
+          PASSWORD_TEXT = "#{BASE_URI}/oasis-200401-wss-username-token-profile-1.0#PasswordText".freeze
 
-      # Reference methods for identifying the signing certificate in KeyInfo
+          # Password type: digest (SHA-1)
+          PASSWORD_DIGEST = "#{BASE_URI}/oasis-200401-wss-username-token-profile-1.0#PasswordDigest".freeze
+        end
+
+        # X.509 certificate token profile URIs.
+        module X509
+          # X.509 v3 certificate token type
+          V3 = "#{BASE_URI}/oasis-200401-wss-x509-token-profile-1.0#X509v3".freeze
+
+          # X.509 Subject Key Identifier reference type
+          SKI = "#{BASE_URI}/oasis-200401-wss-x509-token-profile-1.0#X509SubjectKeyIdentifier".freeze
+        end
+      end
+
+      # Encoding type URIs.
+      module Encoding
+        # Base64 binary encoding
+        BASE64 = "#{TokenProfiles::BASE_URI}/oasis-200401-wss-soap-message-security-1.0#Base64Binary".freeze
+      end
+
+      # Reference methods for identifying the signing certificate in KeyInfo.
       module KeyReference
-        # Embed certificate as BinarySecurityToken and reference by ID (default)
-        # The full certificate is included in the message
+        # Embed certificate as BinarySecurityToken and reference by ID (default).
+        # The full certificate is included in the message.
         BINARY_SECURITY_TOKEN = :binary_security_token
 
-        # Reference by X.509 Issuer Distinguished Name and Serial Number
-        # Recipient must already have the certificate
+        # Reference by X.509 Issuer Distinguished Name and Serial Number.
+        # Recipient must already have the certificate.
         ISSUER_SERIAL = :issuer_serial
 
-        # Reference by Subject Key Identifier (SKI) extension
-        # Recipient must already have the certificate; cert must have SKI extension
+        # Reference by Subject Key Identifier (SKI) extension.
+        # Recipient must already have the certificate; cert must have SKI extension.
         SUBJECT_KEY_IDENTIFIER = :subject_key_identifier
       end
 
-      # --- WS-Addressing Element Names ---
-
-      # Standard WS-Addressing header elements that may be signed
+      # Standard WS-Addressing header elements that may be signed.
       WS_ADDRESSING_HEADERS = %w[
         To
         From
@@ -129,20 +216,18 @@ module WSDL
         RelatesTo
       ].freeze
 
-      # --- Namespace Prefixes ---
-
-      # Default namespace prefixes used when building XML
-      NAMESPACES = {
-        'wsse' => NS_WSSE,
-        'wsu' => NS_WSU,
-        'ds' => NS_DS,
-        'ec' => NS_EC,
-        'wsa' => NS_WSA
+      # Default namespace prefixes used when building XML.
+      NAMESPACE_PREFIXES = {
+        'wsse' => NS::Security::WSSE,
+        'wsu' => NS::Security::WSU,
+        'ds' => NS::Signature::DS,
+        'ec' => NS::Signature::EC,
+        'wsa' => NS::Addressing::V1_0
       }.freeze
 
-      # Default explicit namespace prefixes for XML elements
-      # Used when explicit_namespace_prefixes option is enabled
-      DEFAULT_NS_PREFIXES = {
+      # Default explicit namespace prefixes for XML elements.
+      # Used when explicit_namespace_prefixes option is enabled.
+      EXPLICIT_PREFIXES = {
         wsse: 'wsse',
         wsu: 'wsu',
         ds: 'ds',

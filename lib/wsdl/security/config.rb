@@ -40,7 +40,8 @@ module WSDL
     #
     # rubocop:disable Metrics/ClassLength -- Config has many security features requiring extensive documentation
     class Config
-      include Constants
+      # Local alias for key reference constants
+      KeyRef = Constants::KeyReference
 
       # Returns the UsernameToken configuration.
       # @return [UsernameToken, nil]
@@ -287,7 +288,7 @@ module WSDL
       # @return [Symbol] one of :binary_security_token, :issuer_serial, :subject_key_identifier
       #
       def key_reference
-        @signature_options&.key_reference || KeyReference::BINARY_SECURITY_TOKEN
+        @signature_options&.key_reference || KeyRef::BINARY_SECURITY_TOKEN
       end
 
       # Enables response signature verification with optional certificate validation.
@@ -522,9 +523,9 @@ module WSDL
       #
       def validate_key_reference!(key_reference, certificate)
         valid_methods = [
-          KeyReference::BINARY_SECURITY_TOKEN,
-          KeyReference::ISSUER_SERIAL,
-          KeyReference::SUBJECT_KEY_IDENTIFIER
+          KeyRef::BINARY_SECURITY_TOKEN,
+          KeyRef::ISSUER_SERIAL,
+          KeyRef::SUBJECT_KEY_IDENTIFIER
         ]
 
         unless valid_methods.include?(key_reference)
@@ -533,7 +534,7 @@ module WSDL
         end
 
         # Raise if using SKI but certificate doesn't have the extension
-        return unless key_reference == KeyReference::SUBJECT_KEY_IDENTIFIER
+        return unless key_reference == KeyRef::SUBJECT_KEY_IDENTIFIER
 
         ski = extract_subject_key_identifier(certificate)
         return unless ski.nil?

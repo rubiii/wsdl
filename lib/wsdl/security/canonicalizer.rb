@@ -25,7 +25,8 @@ module WSDL
     # @see https://www.w3.org/TR/xml-c14n11/
     #
     class Canonicalizer
-      include Constants
+      # Local alias for canonicalization algorithm constants
+      C14N = Constants::Algorithms::Canonicalization
 
       # Supported canonicalization algorithms.
       #
@@ -37,42 +38,42 @@ module WSDL
       ALGORITHMS = {
         # Exclusive XML Canonicalization 1.0 (most common for WS-Security)
         exclusive_1_0: {
-          id: EXC_C14N_URI,
+          id: C14N::EXCLUSIVE_1_0,
           mode: Nokogiri::XML::XML_C14N_EXCLUSIVE_1_0,
           with_comments: false
         },
 
         # Exclusive XML Canonicalization 1.0 with comments
         exclusive_1_0_with_comments: {
-          id: "#{EXC_C14N_URI}#WithComments",
+          id: C14N::EXCLUSIVE_1_0_WITH_COMMENTS,
           mode: Nokogiri::XML::XML_C14N_EXCLUSIVE_1_0,
           with_comments: true
         },
 
         # Inclusive XML Canonicalization 1.0
         inclusive_1_0: {
-          id: C14N_URI,
+          id: C14N::INCLUSIVE_1_0,
           mode: Nokogiri::XML::XML_C14N_1_0,
           with_comments: false
         },
 
         # Inclusive XML Canonicalization 1.0 with comments
         inclusive_1_0_with_comments: {
-          id: "#{C14N_URI}#WithComments",
+          id: C14N::INCLUSIVE_1_0_WITH_COMMENTS,
           mode: Nokogiri::XML::XML_C14N_1_0,
           with_comments: true
         },
 
         # Inclusive XML Canonicalization 1.1
         inclusive_1_1: {
-          id: C14N_11_URI,
+          id: C14N::INCLUSIVE_1_1,
           mode: Nokogiri::XML::XML_C14N_1_1,
           with_comments: false
         },
 
         # Inclusive XML Canonicalization 1.1 with comments
         inclusive_1_1_with_comments: {
-          id: "#{C14N_11_URI}#WithComments",
+          id: C14N::INCLUSIVE_1_1_WITH_COMMENTS,
           mode: Nokogiri::XML::XML_C14N_1_1,
           with_comments: true
         }

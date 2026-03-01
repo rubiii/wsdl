@@ -65,8 +65,10 @@ The library supports multiple digest algorithms:
 | Algorithm | Option | Recommendation |
 |-----------|--------|----------------|
 | SHA-256 | `:sha256` | **Default, recommended** |
-| SHA-512 | `:sha512` | Stronger, use for long-term security |
-| SHA-1 | `:sha1` | Legacy only, not recommended |
+| SHA-384 | `:sha384` | Stronger option |
+| SHA-512 | `:sha512` | Strongest, use for long-term security |
+| SHA-224 | `:sha224` | Optional, rarely used |
+| SHA-1 | `:sha1` | Legacy only, **not recommended** |
 
 ```ruby
 # SHA-256 (default, recommended)
@@ -89,6 +91,35 @@ operation.security.signature(
   private_key: key,
   digest_algorithm: :sha1
 )
+```
+
+## Signature Algorithms
+
+The library supports the following signature algorithms for response verification:
+
+| Family | Algorithms | Notes |
+|--------|------------|-------|
+| **RSA** | RSA-SHA1, RSA-SHA224, RSA-SHA256, RSA-SHA384, RSA-SHA512 | Most common |
+| **ECDSA** | ECDSA-SHA1, ECDSA-SHA224, ECDSA-SHA256, ECDSA-SHA384, ECDSA-SHA512 | Required by XML Signature 1.1 |
+| **DSA** | DSA-SHA1, DSA-SHA256 | Legacy support |
+
+## Algorithm Security
+
+The library implements strict algorithm validation to prevent algorithm confusion attacks:
+
+- **Unknown algorithms are rejected** — If a response contains an unrecognized algorithm URI, verification fails with `UnsupportedAlgorithmError`
+- **No silent fallbacks** — The library never silently defaults to a different algorithm
+- **Clear error messages** — Errors include the unrecognized URI and algorithm type
+
+This prevents attacks where an adversary modifies the algorithm URI to cause verification with unintended parameters.
+
+```ruby
+begin
+  response.security.verify_signature!
+rescue WSDL::UnsupportedAlgorithmError => e
+  puts "Unknown algorithm: #{e.algorithm_uri}"
+  puts "Algorithm type: #{e.algorithm_type}"  # :digest, :signature, or :canonicalization
+end
 ```
 
 ## Controlling What Gets Signed

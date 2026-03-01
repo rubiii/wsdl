@@ -186,7 +186,7 @@ describe WSDL::Security::Canonicalizer do
 
     it 'returns correct URI for exclusive_1_0_with_comments' do
       canonicalizer = described_class.new(algorithm: :exclusive_1_0_with_comments)
-      expect(canonicalizer.algorithm_id).to eq('http://www.w3.org/2001/10/xml-exc-c14n##WithComments')
+      expect(canonicalizer.algorithm_id).to eq('http://www.w3.org/2001/10/xml-exc-c14n#WithComments')
     end
 
     it 'returns correct URI for inclusive_1_0' do

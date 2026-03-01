@@ -53,7 +53,7 @@ module WSDL
             body_position_valid?
           when 'Timestamp'
             timestamp_position_valid?
-          when *WS_ADDRESSING_HEADERS
+          when *Constants::WS_ADDRESSING_HEADERS
             addressing_header_position_valid?
           else
             general_position_valid?
@@ -110,7 +110,7 @@ module WSDL
         #
         # @return [Boolean] true if element has a Security ancestor
         def within_security_header?
-          @element.ancestors.any? { |a| a.name == 'Security' && a.namespace&.href == NS_WSSE }
+          @element.ancestors.any? { |a| a.name == 'Security' && a.namespace&.href == SecurityNS::WSSE }
         end
 
         # Checks if the element is within the SOAP Header.
@@ -141,7 +141,7 @@ module WSDL
         #
         # @return [Nokogiri::XML::Element, nil] the Security element or nil
         def find_security_ancestor
-          @element.ancestors.find { |a| a.name == 'Security' && a.namespace&.href == NS_WSSE }
+          @element.ancestors.find { |a| a.name == 'Security' && a.namespace&.href == SecurityNS::WSSE }
         end
 
         # Checks if the element is within a Signature element.
@@ -150,7 +150,7 @@ module WSDL
         #
         # @return [Boolean] true if element is within a Signature
         def within_signature_element?
-          @element.ancestors.any? { |a| a.name == 'Signature' && a.namespace&.href == NS_DS }
+          @element.ancestors.any? { |a| a.name == 'Signature' && a.namespace&.href == SignatureNS::DS }
         end
       end
     end

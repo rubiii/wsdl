@@ -75,7 +75,9 @@ module WSDL
     #   WS-Security UsernameToken Profile 1.1 Specification
     #
     class UsernameToken
-      include Constants
+      # Local aliases for token profile constants
+      PasswordType = Constants::TokenProfiles::UsernameToken
+      Encoding = Constants::Encoding
 
       # Returns the username.
       # @return [String]
@@ -163,9 +165,9 @@ module WSDL
       #
       def password_type
         if digest?
-          PASSWORD_DIGEST_URI
+          PasswordType::PASSWORD_DIGEST
         else
-          PASSWORD_TEXT_URI
+          PasswordType::PASSWORD_TEXT
         end
       end
 
@@ -194,7 +196,7 @@ module WSDL
           xml['wsse'].Password(password_value, 'Type' => password_type)
 
           if digest?
-            xml['wsse'].Nonce(encoded_nonce, 'EncodingType' => BASE64_ENCODING_URI)
+            xml['wsse'].Nonce(encoded_nonce, 'EncodingType' => Encoding::BASE64)
             xml['wsu'].Created(created_at_xml)
           end
         end
@@ -216,7 +218,7 @@ module WSDL
         if digest?
           token['wsse:Nonce'] = encoded_nonce
           token['wsu:Created'] = created_at_xml
-          token[:attributes!]['wsse:Nonce'] = { 'EncodingType' => BASE64_ENCODING_URI }
+          token[:attributes!]['wsse:Nonce'] = { 'EncodingType' => Encoding::BASE64 }
           token[:order!] = ['wsse:Username', 'wsse:Password', 'wsse:Nonce', 'wsu:Created']
         else
           token[:order!] = ['wsse:Username', 'wsse:Password']

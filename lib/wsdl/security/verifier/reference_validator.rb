@@ -28,6 +28,8 @@ module WSDL
       # @see https://www.w3.org/TR/xmldsig-core1/#sec-Reference
       #
       class ReferenceValidator < Base
+        # Local alias for canonicalization algorithm constants
+        C14N = Constants::Algorithms::Canonicalization
         # Pattern for valid XML element IDs (NCName production).
         # This prevents XPath injection by rejecting IDs containing quotes,
         # brackets, operators, or other characters that could alter XPath semantics.
@@ -141,7 +143,7 @@ module WSDL
         # @param ref [Nokogiri::XML::Element] the ds:Reference element
         # @return [String] the algorithm URI (defaults to Exclusive C14N)
         def extract_canonicalization_algorithm(ref)
-          ref.at_xpath('ds:Transforms/ds:Transform/@Algorithm', ns)&.value || EXC_C14N_URI
+          ref.at_xpath('ds:Transforms/ds:Transform/@Algorithm', ns)&.value || C14N::EXCLUSIVE_1_0
         end
 
         # Finds an element by ID and validates its structural position.
@@ -203,6 +205,8 @@ module WSDL
         # @return [Boolean] true if digest matches
         def verify_digest(element, ref_data)
           computed = compute_digest(element, ref_data[:c14n_alg], ref_data[:digest_alg])
+          return false if computed.nil? # Algorithm error already recorded
+
           return true if SecureCompare.equal?(computed, ref_data[:expected])
 
           add_failure("Digest mismatch for #{ref_data[:uri]}")
@@ -213,11 +217,14 @@ module WSDL
         # @param element [Nokogiri::XML::Element] the element to digest
         # @param c14n_alg [String] the canonicalization algorithm URI
         # @param digest_alg [String] the digest algorithm URI
-        # @return [String] the Base64-encoded digest
+        # @return [String, nil] the Base64-encoded digest, or nil if algorithm unsupported
         def compute_digest(element, c14n_alg, digest_alg)
           canonicalizer = Canonicalizer.new(algorithm: AlgorithmMapper.c14n_algorithm(c14n_alg))
           digester = Digester.new(algorithm: AlgorithmMapper.digest_algorithm(digest_alg))
           digester.base64_digest(canonicalizer.canonicalize(element))
+        rescue UnsupportedAlgorithmError => e
+          add_failure(e.message)
+          nil
         end
 
         # Extracts the reference ID from a URI attribute.

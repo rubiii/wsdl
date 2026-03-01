@@ -60,7 +60,9 @@ module WSDL
     # @see https://docs.oasis-open.org/wss-m/wss/v1.1.1/os/wss-SOAPMessageSecurity-v1.1.1-os.html
     #
     class Verifier
-      include Constants
+      # Local aliases for namespace constants
+      SecurityNS = Constants::NS::Security
+      SignatureNS = Constants::NS::Signature
 
       # @return [Array<String>] errors encountered during verification
       attr_reader :errors
@@ -385,9 +387,9 @@ module WSDL
 
       def ns
         {
-          'ds' => NS_DS,
-          'wsse' => NS_WSSE,
-          'wsu' => NS_WSU
+          'ds' => SignatureNS::DS,
+          'wsse' => SecurityNS::WSSE,
+          'wsu' => SecurityNS::WSU
         }
       end
 

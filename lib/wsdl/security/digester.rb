@@ -22,7 +22,8 @@ module WSDL
     # @see https://www.w3.org/TR/xmldsig-core1/#sec-DigestMethod
     #
     class Digester
-      include Constants
+      # Local alias for digest algorithm constants
+      Digest = Constants::Algorithms::Digest
 
       # Supported digest algorithms.
       #
@@ -34,21 +35,35 @@ module WSDL
       ALGORITHMS = {
         # SHA-1 (legacy, still widely used in WS-Security)
         sha1: {
-          id: SHA1_URI,
+          id: Digest::SHA1,
           name: 'SHA1',
           klass: OpenSSL::Digest::SHA1
         },
 
+        # SHA-224
+        sha224: {
+          id: Digest::SHA224,
+          name: 'SHA224',
+          klass: OpenSSL::Digest::SHA224
+        },
+
         # SHA-256 (recommended)
         sha256: {
-          id: SHA256_URI,
+          id: Digest::SHA256,
           name: 'SHA256',
           klass: OpenSSL::Digest::SHA256
         },
 
+        # SHA-384
+        sha384: {
+          id: Digest::SHA384,
+          name: 'SHA384',
+          klass: OpenSSL::Digest::SHA384
+        },
+
         # SHA-512 (strongest)
         sha512: {
-          id: SHA512_URI,
+          id: Digest::SHA512,
           name: 'SHA512',
           klass: OpenSSL::Digest::SHA512
         }

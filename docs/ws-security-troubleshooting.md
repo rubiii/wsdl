@@ -52,6 +52,31 @@ If response verification fails:
 3. Verify the response actually contains a signature (`response.security.signature_present?`)
 4. Check which elements are signed (`response.security.signed_elements`)
 
+### Unsupported Algorithm Errors
+
+If you receive an `UnsupportedAlgorithmError`, the response contains an algorithm URI that the library doesn't recognize:
+
+```ruby
+begin
+  response.security.verify_signature!
+rescue WSDL::UnsupportedAlgorithmError => e
+  puts "Algorithm URI: #{e.algorithm_uri}"
+  puts "Algorithm type: #{e.algorithm_type}"  # :digest, :signature, or :canonicalization
+end
+```
+
+**Supported Algorithms:**
+
+| Type | Supported |
+|------|-----------|
+| **Digest** | SHA-1, SHA-224, SHA-256, SHA-384, SHA-512 |
+| **Signature** | RSA-SHA*, ECDSA-SHA*, DSA-SHA1, DSA-SHA256 |
+| **Canonicalization** | Exclusive C14N 1.0, Inclusive C14N 1.0/1.1 (with/without comments) |
+
+If the server uses an algorithm not in this list, please open an issue with the algorithm URI.
+
+**Security Note:** The library intentionally rejects unknown algorithms to prevent algorithm confusion attacks. It never silently falls back to a default algorithm.
+
 ### Namespace Issues
 
 Some servers are sensitive to namespace prefixes. If you encounter issues:

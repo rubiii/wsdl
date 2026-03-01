@@ -30,14 +30,16 @@ module WSDL
     #   #    </ds:Signature>
     #
     class XmlBuilderHelper
-      include Constants
+      # Local aliases for namespace constants
+      SecurityNS = Constants::NS::Security
+      SignatureNS = Constants::NS::Signature
 
       # Namespace prefix to URI mapping
       NAMESPACE_URIS = {
-        ds: NS_DS,
-        wsse: NS_WSSE,
-        wsu: NS_WSU,
-        ec: NS_EC
+        ds: SignatureNS::DS,
+        wsse: SecurityNS::WSSE,
+        wsu: SecurityNS::WSU,
+        ec: SignatureNS::EC
       }.freeze
 
       # Returns whether explicit namespace prefixes are enabled.

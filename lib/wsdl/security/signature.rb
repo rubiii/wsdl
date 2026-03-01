@@ -40,20 +40,26 @@ module WSDL
     # @see https://docs.oasis-open.org/wss/v1.1/wss-v1.1-spec-os-x509TokenProfile.pdf
     #
     class Signature
-      include Constants
+      # Local aliases for constants
+      SigAlg = Constants::Algorithms::Signature
+      SecurityNS = Constants::NS::Security
+      SignatureNS = Constants::NS::Signature
+      X509 = Constants::TokenProfiles::X509
+      Encoding = Constants::Encoding
+      KeyRef = Constants::KeyReference
 
       # Signature algorithm configurations
       SIGNATURE_ALGORITHMS = {
         sha1: {
-          id: RSA_SHA1_URI,
+          id: SigAlg::RSA_SHA1,
           digest: 'SHA1'
         },
         sha256: {
-          id: RSA_SHA256_URI,
+          id: SigAlg::RSA_SHA256,
           digest: 'SHA256'
         },
         sha512: {
-          id: RSA_SHA512_URI,
+          id: SigAlg::RSA_SHA512,
           digest: 'SHA512'
         }
       }.freeze
@@ -62,7 +68,7 @@ module WSDL
       DEFAULT_ALGORITHM = :sha256
 
       # Default key reference method
-      DEFAULT_KEY_REFERENCE = KeyReference::BINARY_SECURITY_TOKEN
+      DEFAULT_KEY_REFERENCE = Constants::KeyReference::BINARY_SECURITY_TOKEN
 
       # Returns the X.509 certificate.
       # @return [OpenSSL::X509::Certificate]
@@ -265,7 +271,7 @@ module WSDL
       #
       def extract_id(node)
         # Try wsu:Id first (most common in WS-Security)
-        id = node.attribute_with_ns('Id', NS_WSU)&.value
+        id = node.attribute_with_ns('Id', SecurityNS::WSU)&.value
         return id if id
 
         # Fall back to plain Id attribute
@@ -305,7 +311,7 @@ module WSDL
                                     Algorithm: @canonicalizer.algorithm_id) do
               if reference.inclusive_namespaces?
                 xml['ec'].InclusiveNamespaces(
-                  'xmlns:ec' => NS_EC,
+                  'xmlns:ec' => SignatureNS::EC,
                   PrefixList: reference.prefix_list
                 )
               end
@@ -336,7 +342,7 @@ module WSDL
       #
       def build_signature_element(_document, security_node, signed_info, signature_value)
         # Add BinarySecurityToken if using that key reference method
-        if @key_reference == KeyReference::BINARY_SECURITY_TOKEN
+        if @key_reference == KeyRef::BINARY_SECURITY_TOKEN
           bst = build_binary_security_token
           security_node.add_child(bst)
         end
@@ -374,13 +380,13 @@ module WSDL
       #
       def build_key_info(xml)
         @xml_helper.build_child(xml, :ds, 'KeyInfo') do
-          xml['wsse'].SecurityTokenReference('xmlns:wsse' => NS_WSSE) do
+          xml['wsse'].SecurityTokenReference('xmlns:wsse' => SecurityNS::WSSE) do
             case @key_reference
-            when KeyReference::BINARY_SECURITY_TOKEN
+            when KeyRef::BINARY_SECURITY_TOKEN
               build_bst_reference(xml)
-            when KeyReference::ISSUER_SERIAL
+            when KeyRef::ISSUER_SERIAL
               build_issuer_serial_reference(xml)
-            when KeyReference::SUBJECT_KEY_IDENTIFIER
+            when KeyRef::SUBJECT_KEY_IDENTIFIER
               build_ski_reference(xml)
             end
           end
@@ -394,7 +400,7 @@ module WSDL
       def build_bst_reference(xml)
         xml['wsse'].Reference(
           URI: "##{@security_token_id}",
-          ValueType: X509_V3_URI
+          ValueType: X509::V3
         )
       end
 
@@ -418,8 +424,8 @@ module WSDL
       def build_ski_reference(xml)
         xml['wsse'].KeyIdentifier(
           encoded_subject_key_identifier,
-          'ValueType' => X509_SKI_URI,
-          'EncodingType' => BASE64_ENCODING_URI
+          'ValueType' => X509::SKI,
+          'EncodingType' => Encoding::BASE64
         )
       end
 
@@ -471,11 +477,11 @@ module WSDL
       def build_binary_security_token
         builder = Nokogiri::XML::Builder.new do |xml|
           xml['wsse'].BinarySecurityToken(
-            'xmlns:wsse' => NS_WSSE,
-            'xmlns:wsu' => NS_WSU,
+            'xmlns:wsse' => SecurityNS::WSSE,
+            'xmlns:wsu' => SecurityNS::WSU,
             'wsu:Id' => @security_token_id,
-            'ValueType' => X509_V3_URI,
-            'EncodingType' => BASE64_ENCODING_URI
+            'ValueType' => X509::V3,
+            'EncodingType' => Encoding::BASE64
           ) do
             xml.text(encoded_certificate)
           end

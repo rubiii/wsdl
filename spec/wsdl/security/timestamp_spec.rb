@@ -118,21 +118,21 @@ describe WSDL::Security::Timestamp do
 
     it 'builds valid XML with Nokogiri builder' do
       builder = Nokogiri::XML::Builder.new do |xml|
-        xml.root('xmlns:wsu' => WSDL::Security::Constants::NS_WSU) do
+        xml.root('xmlns:wsu' => WSDL::Security::Constants::NS::Security::WSU) do
           timestamp.to_xml(xml)
         end
       end
 
       doc = builder.doc
-      ts_node = doc.at_xpath('//wsu:Timestamp', 'wsu' => WSDL::Security::Constants::NS_WSU)
+      ts_node = doc.at_xpath('//wsu:Timestamp', 'wsu' => WSDL::Security::Constants::NS::Security::WSU)
 
       expect(ts_node).not_to be_nil
       expect(ts_node['wsu:Id']).to eq('TS-test-123')
 
-      created = ts_node.at_xpath('wsu:Created', 'wsu' => WSDL::Security::Constants::NS_WSU)
+      created = ts_node.at_xpath('wsu:Created', 'wsu' => WSDL::Security::Constants::NS::Security::WSU)
       expect(created.text).to eq('2026-02-01T12:00:00Z')
 
-      expires = ts_node.at_xpath('wsu:Expires', 'wsu' => WSDL::Security::Constants::NS_WSU)
+      expires = ts_node.at_xpath('wsu:Expires', 'wsu' => WSDL::Security::Constants::NS::Security::WSU)
       expect(expires.text).to eq('2026-02-01T12:05:00Z')
     end
   end

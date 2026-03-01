@@ -143,7 +143,7 @@ describe WSDL::Security::UsernameToken do
       subject(:token) { described_class.new(username, password) }
 
       it 'returns the PasswordText URI' do
-        expect(token.password_type).to eq(WSDL::Security::Constants::PASSWORD_TEXT_URI)
+        expect(token.password_type).to eq(WSDL::Security::Constants::TokenProfiles::UsernameToken::PASSWORD_TEXT)
       end
     end
 
@@ -151,7 +151,7 @@ describe WSDL::Security::UsernameToken do
       subject(:token) { described_class.new(username, password, digest: true) }
 
       it 'returns the PasswordDigest URI' do
-        expect(token.password_type).to eq(WSDL::Security::Constants::PASSWORD_DIGEST_URI)
+        expect(token.password_type).to eq(WSDL::Security::Constants::TokenProfiles::UsernameToken::PASSWORD_DIGEST)
       end
     end
   end
@@ -165,31 +165,31 @@ describe WSDL::Security::UsernameToken do
       it 'builds valid XML with Nokogiri builder' do
         builder = Nokogiri::XML::Builder.new do |xml|
           xml.root(
-            'xmlns:wsse' => WSDL::Security::Constants::NS_WSSE,
-            'xmlns:wsu' => WSDL::Security::Constants::NS_WSU
+            'xmlns:wsse' => WSDL::Security::Constants::NS::Security::WSSE,
+            'xmlns:wsu' => WSDL::Security::Constants::NS::Security::WSU
           ) do
             token.to_xml(xml)
           end
         end
 
         doc = builder.doc
-        ut_node = doc.at_xpath('//wsse:UsernameToken', 'wsse' => WSDL::Security::Constants::NS_WSSE)
+        ut_node = doc.at_xpath('//wsse:UsernameToken', 'wsse' => WSDL::Security::Constants::NS::Security::WSSE)
 
         expect(ut_node).not_to be_nil
         expect(ut_node['wsu:Id']).to eq('UT-plain-test')
 
-        username_node = ut_node.at_xpath('wsse:Username', 'wsse' => WSDL::Security::Constants::NS_WSSE)
+        username_node = ut_node.at_xpath('wsse:Username', 'wsse' => WSDL::Security::Constants::NS::Security::WSSE)
         expect(username_node.text).to eq(username)
 
-        password_node = ut_node.at_xpath('wsse:Password', 'wsse' => WSDL::Security::Constants::NS_WSSE)
+        password_node = ut_node.at_xpath('wsse:Password', 'wsse' => WSDL::Security::Constants::NS::Security::WSSE)
         expect(password_node.text).to eq(password)
-        expect(password_node['Type']).to eq(WSDL::Security::Constants::PASSWORD_TEXT_URI)
+        expect(password_node['Type']).to eq(WSDL::Security::Constants::TokenProfiles::UsernameToken::PASSWORD_TEXT)
 
         # Should not have Nonce or Created in plain text mode
-        nonce_node = ut_node.at_xpath('wsse:Nonce', 'wsse' => WSDL::Security::Constants::NS_WSSE)
+        nonce_node = ut_node.at_xpath('wsse:Nonce', 'wsse' => WSDL::Security::Constants::NS::Security::WSSE)
         expect(nonce_node).to be_nil
 
-        created_node = ut_node.at_xpath('wsu:Created', 'wsu' => WSDL::Security::Constants::NS_WSU)
+        created_node = ut_node.at_xpath('wsu:Created', 'wsu' => WSDL::Security::Constants::NS::Security::WSU)
         expect(created_node).to be_nil
       end
     end
@@ -200,28 +200,28 @@ describe WSDL::Security::UsernameToken do
       it 'builds valid XML with Nonce and Created elements' do
         builder = Nokogiri::XML::Builder.new do |xml|
           xml.root(
-            'xmlns:wsse' => WSDL::Security::Constants::NS_WSSE,
-            'xmlns:wsu' => WSDL::Security::Constants::NS_WSU
+            'xmlns:wsse' => WSDL::Security::Constants::NS::Security::WSSE,
+            'xmlns:wsu' => WSDL::Security::Constants::NS::Security::WSU
           ) do
             token.to_xml(xml)
           end
         end
 
         doc = builder.doc
-        ut_node = doc.at_xpath('//wsse:UsernameToken', 'wsse' => WSDL::Security::Constants::NS_WSSE)
+        ut_node = doc.at_xpath('//wsse:UsernameToken', 'wsse' => WSDL::Security::Constants::NS::Security::WSSE)
 
         expect(ut_node).not_to be_nil
 
-        password_node = ut_node.at_xpath('wsse:Password', 'wsse' => WSDL::Security::Constants::NS_WSSE)
-        expect(password_node['Type']).to eq(WSDL::Security::Constants::PASSWORD_DIGEST_URI)
+        password_node = ut_node.at_xpath('wsse:Password', 'wsse' => WSDL::Security::Constants::NS::Security::WSSE)
+        expect(password_node['Type']).to eq(WSDL::Security::Constants::TokenProfiles::UsernameToken::PASSWORD_DIGEST)
         expect(password_node.text).to eq(token.password_value)
 
-        nonce_node = ut_node.at_xpath('wsse:Nonce', 'wsse' => WSDL::Security::Constants::NS_WSSE)
+        nonce_node = ut_node.at_xpath('wsse:Nonce', 'wsse' => WSDL::Security::Constants::NS::Security::WSSE)
         expect(nonce_node).not_to be_nil
         expect(nonce_node.text).to eq(token.encoded_nonce)
-        expect(nonce_node['EncodingType']).to eq(WSDL::Security::Constants::BASE64_ENCODING_URI)
+        expect(nonce_node['EncodingType']).to eq(WSDL::Security::Constants::Encoding::BASE64)
 
-        created_node = ut_node.at_xpath('wsu:Created', 'wsu' => WSDL::Security::Constants::NS_WSU)
+        created_node = ut_node.at_xpath('wsu:Created', 'wsu' => WSDL::Security::Constants::NS::Security::WSU)
         expect(created_node).not_to be_nil
         expect(created_node.text).to eq('2026-02-01T12:00:00Z')
       end
@@ -246,7 +246,7 @@ describe WSDL::Security::UsernameToken do
         hash = token.to_hash
 
         expect(hash['wsse:UsernameToken'][:attributes!]['wsse:Password']).to eq(
-          { 'Type' => WSDL::Security::Constants::PASSWORD_TEXT_URI }
+          { 'Type' => WSDL::Security::Constants::TokenProfiles::UsernameToken::PASSWORD_TEXT }
         )
       end
 
@@ -279,7 +279,7 @@ describe WSDL::Security::UsernameToken do
         hash = token.to_hash
 
         expect(hash['wsse:UsernameToken'][:attributes!]['wsse:Nonce']).to eq(
-          { 'EncodingType' => WSDL::Security::Constants::BASE64_ENCODING_URI }
+          { 'EncodingType' => WSDL::Security::Constants::Encoding::BASE64 }
         )
       end
 

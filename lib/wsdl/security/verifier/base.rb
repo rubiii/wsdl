@@ -26,10 +26,13 @@ module WSDL
       #   end
       #
       class Base
-        include Constants
+        # Local aliases for namespace constants
+        SecurityNS = Constants::NS::Security
+        SignatureNS = Constants::NS::Signature
+        SOAPNS = Constants::NS::SOAP
 
         # SOAP namespace URIs for both versions.
-        SOAP_NAMESPACES = [NS_SOAP_1_1, NS_SOAP_1_2].freeze
+        SOAP_NAMESPACES = [SOAPNS::V1_1, SOAPNS::V1_2].freeze
 
         # @return [Array<String>] errors encountered during validation
         attr_reader :errors
@@ -54,11 +57,11 @@ module WSDL
         # @return [Hash{String => String}] prefix to URI mappings
         def ns
           {
-            'ds' => NS_DS,
-            'wsse' => NS_WSSE,
-            'wsu' => NS_WSU,
-            'soap' => NS_SOAP_1_1,
-            'soap12' => NS_SOAP_1_2
+            'ds' => SignatureNS::DS,
+            'wsse' => SecurityNS::WSSE,
+            'wsu' => SecurityNS::WSU,
+            'soap' => SOAPNS::V1_1,
+            'soap12' => SOAPNS::V1_2
           }
         end
 

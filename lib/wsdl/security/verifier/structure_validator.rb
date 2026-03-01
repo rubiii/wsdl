@@ -97,7 +97,7 @@ module WSDL
 
           id_nodes.flat_map do |node|
             [
-              node.attribute_with_ns('Id', NS_WSU)&.value,
+              node.attribute_with_ns('Id', SecurityNS::WSU)&.value,
               node['Id'],
               node.attribute_with_ns('id', 'http://www.w3.org/XML/1998/namespace')&.value
             ].compact
@@ -124,7 +124,7 @@ module WSDL
           sig = signature_node
           parent = sig.parent
 
-          return true if parent && parent.name == 'Security' && parent.namespace&.href == NS_WSSE
+          return true if parent && parent.name == 'Security' && parent.namespace&.href == SecurityNS::WSSE
 
           add_failure('Signature element must be within wsse:Security header (possible signature wrapping attack)')
         end

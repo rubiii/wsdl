@@ -85,6 +85,8 @@ module WSDL
         # @return [Boolean] true if signature is valid
         def verify_signature
           canonical_signed_info = canonicalize_signed_info
+          return false unless canonical_signed_info # Algorithm error already recorded
+
           signature_bytes = decode_signature_value
 
           verify_with_public_key(canonical_signed_info, signature_bytes)
@@ -92,11 +94,14 @@ module WSDL
 
         # Canonicalizes the SignedInfo element.
         #
-        # @return [String] the canonicalized SignedInfo
+        # @return [String, nil] the canonicalized SignedInfo, or nil if algorithm unsupported
         def canonicalize_signed_info
           algorithm = AlgorithmMapper.c14n_algorithm(canonicalization_algorithm)
           canonicalizer = Canonicalizer.new(algorithm:)
           canonicalizer.canonicalize(signed_info_node)
+        rescue UnsupportedAlgorithmError => e
+          add_failure(e.message)
+          nil
         end
 
         # Decodes the Base64-encoded SignatureValue.
@@ -113,6 +118,8 @@ module WSDL
         # @return [Boolean] true if verification succeeds
         def verify_with_public_key(data, signature)
           digest = build_digest_for_signature
+          return false unless digest # Algorithm error already recorded
+
           public_key = @certificate.public_key
 
           return true if public_key.verify(digest, signature, data)
@@ -124,10 +131,13 @@ module WSDL
 
         # Builds the OpenSSL::Digest for signature verification.
         #
-        # @return [OpenSSL::Digest] the digest instance
+        # @return [OpenSSL::Digest, nil] the digest instance, or nil if algorithm unsupported
         def build_digest_for_signature
           digest_name = AlgorithmMapper.signature_digest(signature_algorithm)
           OpenSSL::Digest.new(digest_name)
+        rescue UnsupportedAlgorithmError => e
+          add_failure(e.message)
+          nil
         end
       end
     end
