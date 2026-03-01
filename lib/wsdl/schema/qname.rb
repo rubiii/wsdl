@@ -36,7 +36,7 @@ module WSDL
       # Expands a qualified name to local name and namespace URI.
       #
       # @param qname [String] the qualified name ("prefix:localName" or "localName")
-      # @param namespaces [Hash<String, String>] namespace declarations (xmlns:prefix => URI)
+      # @param namespaces [Hash{String => String}] namespace declarations (xmlns:prefix => URI)
       # @param default_namespace [String, nil] namespace to use when no prefix present
       # @return [Array(String, String, nil)] tuple of [localName, namespaceURI]
       #

@@ -47,22 +47,22 @@ module WSDL
       # @return [String, nil] the location this schema was loaded from
       attr_reader :source_location
 
-      # @return [Hash<String, Node>] global element declarations
+      # @return [Hash{String => Node}] global element declarations
       attr_reader :elements
 
-      # @return [Hash<String, Node>] complex type definitions
+      # @return [Hash{String => Node}] complex type definitions
       attr_reader :complex_types
 
-      # @return [Hash<String, Node>] simple type definitions
+      # @return [Hash{String => Node}] simple type definitions
       attr_reader :simple_types
 
-      # @return [Hash<String, Node>] global attribute declarations
+      # @return [Hash{String => Node}] global attribute declarations
       attr_reader :attributes
 
-      # @return [Hash<String, Node>] attribute group definitions
+      # @return [Hash{String => Node}] attribute group definitions
       attr_reader :attribute_groups
 
-      # @return [Hash<String, String>] namespace to schemaLocation mappings
+      # @return [Hash{String => String}] namespace to schemaLocation mappings
       attr_reader :imports
 
       # @return [Array<String>] schemaLocation values for includes

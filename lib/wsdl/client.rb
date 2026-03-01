@@ -35,7 +35,8 @@ module WSDL
     # @param pretty_print [Boolean] whether to format XML output with indentation
     #   and margins. Set to `false` for whitespace-sensitive SOAP servers.
     #   Defaults to `true`.
-    # @param cache [Cache, nil, :default] the cache to use for parsed definitions.
+    # @param cache [Cache, nil, Symbol] the cache to use for parsed definitions.
+    #   Use `:default` to use {WSDL.cache}, or `nil` to disable caching.
     #   Defaults to {WSDL.cache}. Pass `nil` to disable caching for this instance.
     #
     def initialize(wsdl, http: nil, pretty_print: true, cache: :default)
@@ -110,7 +111,7 @@ module WSDL
     # Loads the parser result, using cache if available.
     #
     # @param wsdl [String] the WSDL location or content
-    # @param cache [Cache, nil, :default] the cache to use
+    # @param cache [Cache, nil, Symbol] the cache to use (`:default` uses {WSDL.cache})
     # @return [Parser::Result] the parsed result
     #
     def load_parser_result(wsdl, cache)

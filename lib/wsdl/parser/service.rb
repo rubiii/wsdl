@@ -28,7 +28,7 @@ module WSDL
 
       # Returns the ports defined in this service.
       #
-      # @return [Hash<String, Port>] a hash of port names to port objects
+      # @return [Hash{String => Port}] a hash of port names to port objects
       def ports
         @ports ||= ports!
       end
@@ -56,7 +56,7 @@ module WSDL
       # Only ports with SOAP address elements (SOAP 1.1 or 1.2) are included.
       # Non-SOAP ports are skipped.
       #
-      # @return [Hash<String, Port>] the parsed ports
+      # @return [Hash{String => Port}] the parsed ports
       def ports!
         ports = {}
 

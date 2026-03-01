@@ -42,5 +42,6 @@ group :development do
   gem 'rubocop', require: false
   gem 'rubocop-rake', require: false
   gem 'rubocop-rspec', require: false
+  gem 'rubocop-yard', require: false
   gem 'yard', require: false
 end

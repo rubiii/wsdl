@@ -27,7 +27,7 @@ module WSDL
 
       # Returns the operations defined in this port type.
       #
-      # @return [Hash<String, PortTypeOperation>] a hash of operation names to port type operations
+      # @return [Hash{String => PortTypeOperation}] a hash of operation names to port type operations
       def operations
         @operations ||= operations!
       end
@@ -36,7 +36,7 @@ module WSDL
 
       # Parses and returns all operations from the port type node.
       #
-      # @return [Hash<String, PortTypeOperation>] the parsed operations
+      # @return [Hash{String => PortTypeOperation}] the parsed operations
       def operations!
         operations = {}
 

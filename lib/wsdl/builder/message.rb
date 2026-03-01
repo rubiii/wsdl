@@ -269,7 +269,7 @@ module WSDL
       # @param name [String] the element name as a string
       # @param symbol_name [Symbol] the element name as a symbol
       # @param message [Hash] the message hash to extract from
-      # @return [Object, :unspecified] the value, or :unspecified if the key is not present
+      # @return [Object, Symbol] the value, or `:unspecified` if the key is not present
       def extract_value(name, symbol_name, message)
         if message.include? name
           message[name]

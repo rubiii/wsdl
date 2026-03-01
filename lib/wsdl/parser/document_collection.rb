@@ -44,28 +44,28 @@ module WSDL
 
       # Returns all messages from all documents in the collection.
       #
-      # @return [Hash<String, MessageInfo>] a merged hash of all messages keyed by name
+      # @return [Hash{String => MessageInfo}] a merged hash of all messages keyed by name
       def messages
         @messages ||= collect_sections(&:messages)
       end
 
       # Returns all port types from all documents in the collection.
       #
-      # @return [Hash<String, PortType>] a merged hash of all port types keyed by name
+      # @return [Hash{String => PortType}] a merged hash of all port types keyed by name
       def port_types
         @port_types ||= collect_sections(&:port_types)
       end
 
       # Returns all bindings from all documents in the collection.
       #
-      # @return [Hash<String, Binding>] a merged hash of all bindings keyed by name
+      # @return [Hash{String => Binding}] a merged hash of all bindings keyed by name
       def bindings
         @bindings ||= collect_sections(&:bindings)
       end
 
       # Returns all services from all documents in the collection.
       #
-      # @return [Hash<String, Service>] a merged hash of all services keyed by name
+      # @return [Hash{String => Service}] a merged hash of all services keyed by name
       def services
         @services ||= collect_sections(&:services)
       end

@@ -123,7 +123,7 @@ module WSDL
 
       # Adds a Timestamp element to the security header.
       #
-      # @param document [Nokogiri::XML::Document]
+      # @param _document [Nokogiri::XML::Document] the SOAP document (unused)
       # @param security_node [Nokogiri::XML::Node]
       #
       def add_timestamp(_document, security_node)
@@ -141,7 +141,7 @@ module WSDL
 
       # Adds a UsernameToken element to the security header.
       #
-      # @param document [Nokogiri::XML::Document]
+      # @param _document [Nokogiri::XML::Document] the SOAP document (unused)
       # @param security_node [Nokogiri::XML::Node]
       #
       def add_username_token(_document, security_node)

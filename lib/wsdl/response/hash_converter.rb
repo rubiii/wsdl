@@ -167,7 +167,7 @@ module WSDL
       # Builds a lookup map from element names to schema elements.
       #
       # @param schema [Array<WSDL::XML::Element>]
-      # @return [Hash<String, WSDL::XML::Element>]
+      # @return [Hash{String => WSDL::XML::Element}]
       #
       def build_schema_map(schema)
         return {} unless schema
@@ -227,7 +227,7 @@ module WSDL
       # Processes XML elements that match schema definitions.
       #
       # @param schema_elements [Array<WSDL::XML::Element>] expected schema elements
-      # @param xml_children [Hash<String, Array>] grouped XML children (mutated)
+      # @param xml_children [Hash{String => Array}] grouped XML children (mutated)
       # @param result [Hash] the result hash to populate
       #
       def process_schema_elements(schema_elements, xml_children, result)
@@ -244,7 +244,7 @@ module WSDL
 
       # Processes XML elements not defined in the schema.
       #
-      # @param xml_children [Hash<String, Array>] remaining XML children
+      # @param xml_children [Hash{String => Array}] remaining XML children
       # @param result [Hash] the result hash to populate
       #
       def process_unknown_elements(xml_children, result)

@@ -144,7 +144,7 @@ module WSDL
     # This is useful for building XPath queries that need to
     # reference namespaced elements.
     #
-    # @return [Hash<String, String>] namespace prefix to URI mappings
+    # @return [Hash{String => String}] namespace prefix to URI mappings
     # @example
     #   response.xml_namespaces
     #   # => { "xmlns:soap" => "http://schemas.xmlsoap.org/soap/envelope/",
@@ -338,7 +338,7 @@ module WSDL
     # Parses XML elements that match schema definitions.
     #
     # @param schema_parts [Array<WSDL::XML::Element>] schema elements
-    # @param xml_children [Hash<String, Array>] grouped XML children
+    # @param xml_children [Hash{String => Array}] grouped XML children
     # @param result [Hash] the result hash to populate
     #
     def parse_schema_elements(schema_parts, xml_children, result)
@@ -355,7 +355,7 @@ module WSDL
 
     # Parses XML elements not defined in the schema.
     #
-    # @param xml_children [Hash<String, Array>] remaining XML children
+    # @param xml_children [Hash{String => Array}] remaining XML children
     # @param result [Hash] the result hash to populate
     #
     def parse_unknown_elements(xml_children, result)

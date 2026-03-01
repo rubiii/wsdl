@@ -32,16 +32,16 @@ module WSDL
         )
       end
 
-      # @return [Hash<String, MessageInfo>] the messages defined in this document
+      # @return [Hash{String => MessageInfo}] the messages defined in this document
       attr_reader :messages
 
-      # @return [Hash<String, PortType>] the port types defined in this document
+      # @return [Hash{String => PortType}] the port types defined in this document
       attr_reader :port_types
 
-      # @return [Hash<String, Binding>] the bindings defined in this document
+      # @return [Hash{String => Binding}] the bindings defined in this document
       attr_reader :bindings
 
-      # @return [Hash<String, Service>] the services defined in this document
+      # @return [Hash{String => Service}] the services defined in this document
       attr_reader :services
 
       # Returns the name of the WSDL definitions element.

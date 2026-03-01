@@ -104,7 +104,7 @@ module WSDL
     # encoding. For SOAP 1.1, includes a SOAPAction header. For SOAP 1.2,
     # the action is included in the Content-Type header.
     #
-    # @return [Hash<String, String>] the HTTP headers
+    # @return [Hash{String => String}] the HTTP headers
     def http_headers
       return @http_headers if @http_headers
 
@@ -125,7 +125,7 @@ module WSDL
 
     # @!attribute [w] http_headers
     #   Sets custom HTTP headers for the request.
-    #   @return [Hash<String, String>] the HTTP headers
+    #   @return [Hash{String => String}] the HTTP headers
     attr_writer :http_headers
 
     # @!attribute [rw] header

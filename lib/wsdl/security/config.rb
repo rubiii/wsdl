@@ -120,14 +120,15 @@ module WSDL
       #   (PEM string or Certificate object)
       # @param private_key [OpenSSL::PKey::RSA, OpenSSL::PKey::EC, String] the private key
       #   (PEM string or key object)
-      # @param key_password [String, nil] password for encrypted private key
-      # @param digest_algorithm [Symbol] the digest algorithm (:sha1, :sha256, :sha512)
-      # @param sign_body [Boolean] whether to sign the SOAP body (default: true)
-      # @param sign_timestamp [Boolean] whether to sign the timestamp (default: true)
-      # @param sign_addressing [Boolean] whether to sign WS-Addressing headers (default: false)
-      # @param explicit_namespace_prefixes [Boolean] whether to use explicit namespace
+      # @param options [Hash] additional signing options
+      # @option options [String, nil] :key_password password for encrypted private key
+      # @option options [Symbol] :digest_algorithm the digest algorithm (:sha1, :sha256, :sha512)
+      # @option options [Boolean] :sign_body whether to sign the SOAP body (default: true)
+      # @option options [Boolean] :sign_timestamp whether to sign the timestamp (default: true)
+      # @option options [Boolean] :sign_addressing whether to sign WS-Addressing headers (default: false)
+      # @option options [Boolean] :explicit_namespace_prefixes whether to use explicit namespace
       #   prefixes like ds:Signature instead of default namespace (default: false)
-      # @param key_reference [Symbol] how to reference the signing certificate in KeyInfo:
+      # @option options [Symbol] :key_reference how to reference the signing certificate in KeyInfo:
       #   - :binary_security_token (default) - embed certificate in BinarySecurityToken
       #   - :issuer_serial - reference by issuer DN and serial number
       #   - :subject_key_identifier - reference by Subject Key Identifier extension

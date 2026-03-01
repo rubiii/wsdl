@@ -299,7 +299,7 @@ module WSDL
 
       # Builds and inserts the complete Signature element into the Security header.
       #
-      # @param document [Nokogiri::XML::Document] the SOAP document
+      # @param _document [Nokogiri::XML::Document] the SOAP document (unused)
       # @param security_node [Nokogiri::XML::Node] the wsse:Security element
       # @param signed_info [Nokogiri::XML::Node] the SignedInfo element
       # @param signature_value [String] the computed signature value

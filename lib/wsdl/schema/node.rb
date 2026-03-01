@@ -69,7 +69,7 @@ module WSDL
       # @return [Nokogiri::XML::Node] the underlying XML node
       attr_reader :xml_node
 
-      # @return [Hash<String, String>] XML namespace declarations in scope
+      # @return [Hash{String => String}] XML namespace declarations in scope
       attr_reader :namespaces
 
       # @!group Common Attributes
@@ -306,7 +306,7 @@ module WSDL
 
       # Supports Ruby pattern matching.
       #
-      # @param keys [Array<Symbol>, nil] keys to extract
+      # @param _keys [Array<Symbol>, nil] keys to extract (unused, returns all keys)
       # @return [Hash] deconstructed key-value pairs
       #
       # @example
@@ -339,7 +339,7 @@ module WSDL
       # Extracts attributes from XML node into a hash.
       #
       # @param xml_node [Nokogiri::XML::Node] the XML node
-      # @return [Hash<String, String>] attribute name to value mapping
+      # @return [Hash{String => String}] attribute name to value mapping
       def extract_attributes(xml_node)
         xml_node.attributes.transform_values(&:value)
       end

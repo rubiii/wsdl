@@ -1,5 +1,5 @@
 --markup markdown
---output-dir doc
+--output-dir yard_docs
 --protected
 --no-private
 --readme README.md

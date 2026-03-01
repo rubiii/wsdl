@@ -155,7 +155,7 @@ module WSDL
       # Includes all registered namespaces plus the SOAP envelope namespace
       # appropriate for the SOAP version being used.
       #
-      # @return [Hash<String, String>] namespace declarations
+      # @return [Hash{String => String}] namespace declarations
       def collect_namespaces
         # registered namespaces
         namespaces = @namespaces.each_with_object({}) do |(namespace, nsid), memo|

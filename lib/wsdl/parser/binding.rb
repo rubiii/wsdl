@@ -53,7 +53,7 @@ module WSDL
 
       # Returns the operations defined in this binding.
       #
-      # @return [Hash<String, BindingOperation>] a hash of operation names to binding operations
+      # @return [Hash{String => BindingOperation}] a hash of operation names to binding operations
       def operations
         @operations ||= operations!
       end
@@ -62,7 +62,7 @@ module WSDL
 
       # Parses and returns all operations from the binding node.
       #
-      # @return [Hash<String, BindingOperation>] the parsed operations
+      # @return [Hash{String => BindingOperation}] the parsed operations
       def operations!
         operations = {}
 
