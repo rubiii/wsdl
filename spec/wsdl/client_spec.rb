@@ -214,6 +214,58 @@ describe WSDL::Client do
     end
   end
 
+  describe 'DOCTYPE rejection' do
+    let(:wsdl_with_doctype) do
+      <<~XML
+        <?xml version="1.0"?>
+        <!DOCTYPE definitions SYSTEM "http://example.com/wsdl.dtd">
+        <definitions xmlns="http://schemas.xmlsoap.org/wsdl/"
+                     xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
+                     name="TestService">
+          <service name="TestService">
+            <port name="TestPort" binding="tns:TestBinding">
+              <soap:address location="http://example.com/test"/>
+            </port>
+          </service>
+        </definitions>
+      XML
+    end
+
+    it 'rejects WSDL with DOCTYPE by default' do
+      expect {
+        described_class.new(wsdl_with_doctype, http: http_mock)
+      }.to raise_error(WSDL::XMLSecurityError, /DOCTYPE declarations are not allowed/)
+    end
+
+    it 'allows WSDL with DOCTYPE when reject_doctype: false' do
+      expect {
+        described_class.new(wsdl_with_doctype, http: http_mock, reject_doctype: false)
+      }.not_to raise_error
+    end
+
+    it 'passes reject_doctype option to parser' do
+      parser_result = instance_double(WSDL::Parser::Result, services: {})
+      allow(WSDL::Parser::Result).to receive(:new).and_return(parser_result)
+
+      described_class.new(wsdl, http: http_mock, reject_doctype: false)
+
+      expect(WSDL::Parser::Result).to have_received(:new).with(
+        wsdl, anything, hash_including(reject_doctype: false)
+      )
+    end
+
+    it 'defaults reject_doctype to true' do
+      parser_result = instance_double(WSDL::Parser::Result, services: {})
+      allow(WSDL::Parser::Result).to receive(:new).and_return(parser_result)
+
+      described_class.new(wsdl, http: http_mock)
+
+      expect(WSDL::Parser::Result).to have_received(:new).with(
+        wsdl, anything, hash_including(reject_doctype: true)
+      )
+    end
+  end
+
   describe '#pretty_print' do
     it 'defaults to true' do
       expect(client.pretty_print).to be(true)

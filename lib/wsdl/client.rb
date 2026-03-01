@@ -81,14 +81,19 @@ module WSDL
     # @param limits [Limits, nil] resource limits for DoS protection.
     #   If nil, uses {WSDL.limits}. Use a custom Limits instance to increase
     #   limits for specific WSDLs that exceed defaults.
+    # @param reject_doctype [Boolean] whether to reject XML documents containing
+    #   DOCTYPE declarations (default: true). This is a defense-in-depth measure
+    #   since legitimate SOAP/WSDL documents never require DOCTYPE. Set to false
+    #   only for legacy systems that include DOCTYPE declarations.
     #
     # rubocop:disable Metrics/ParameterLists
     def initialize(wsdl, http: nil, pretty_print: true, cache: :default, file_access: :auto, sandbox_paths: nil,
-                   limits: nil)
+                   limits: nil, reject_doctype: true)
       # rubocop:enable Metrics/ParameterLists
       @http = http || new_http_client
       @pretty_print = pretty_print
       @limits = limits || WSDL.limits
+      @reject_doctype = reject_doctype
 
       config = resolve_file_access_options(wsdl, file_access, sandbox_paths)
       @parser_result = load_parser_result(wsdl, cache, config.mode, config.sandbox_paths)
@@ -196,9 +201,13 @@ module WSDL
       cache = WSDL.cache if cache == :default
 
       if cache
-        cache.fetch(wsdl) { Parser::Result.new(wsdl, @http, file_access:, sandbox_paths:, limits: @limits) }
+        cache.fetch(wsdl) do
+          Parser::Result.new(wsdl, @http, file_access:, sandbox_paths:,
+                                          limits: @limits, reject_doctype: @reject_doctype)
+        end
       else
-        Parser::Result.new(wsdl, @http, file_access:, sandbox_paths:, limits: @limits)
+        Parser::Result.new(wsdl, @http, file_access:, sandbox_paths:,
+                                        limits: @limits, reject_doctype: @reject_doctype)
       end
     end
 

@@ -39,17 +39,21 @@ module WSDL
       #   Only used when `file_access` is `:sandbox`.
       # @param limits [Limits, nil] resource limits for DoS protection.
       #   If nil, uses {WSDL.limits}.
+      # @param reject_doctype [Boolean] whether to reject XML with DOCTYPE declarations
+      #   (default: true). This is a defense-in-depth security measure.
       #
       # @note Security controls are enforced at the {WSDL::Client} level, which is the
       #   public API. This class defaults to unrestricted access for internal use.
       #
-      def initialize(wsdl, http, file_access: :unrestricted, sandbox_paths: nil, limits: nil)
+      # rubocop:disable Metrics/ParameterLists
+      def initialize(wsdl, http, file_access: :unrestricted, sandbox_paths: nil, limits: nil, reject_doctype: true)
+        # rubocop:enable Metrics/ParameterLists
         @documents = DocumentCollection.new
         @schemas = Schema::Collection.new
         @limits = limits || WSDL.limits
 
         resolver = Resolver.new(http, file_access:, sandbox_paths:, limits: @limits)
-        importer = Importer.new(resolver, @documents, @schemas, limits: @limits)
+        importer = Importer.new(resolver, @documents, @schemas, limits: @limits, reject_doctype:)
         importer.import(wsdl)
       end
 

@@ -22,13 +22,16 @@ module WSDL
       # @param schemas [Schema::Collection] the collection to store parsed schemas
       # @param limits [Limits, nil] resource limits for DoS protection.
       #   If nil, uses {WSDL.limits}.
-      def initialize(resolver, documents, schemas, limits: nil)
+      # @param reject_doctype [Boolean] whether to reject XML with DOCTYPE declarations
+      #   (default: true). This is a defense-in-depth security measure.
+      def initialize(resolver, documents, schemas, limits: nil, reject_doctype: true)
         @logger = Logging.logger[self]
 
         @resolver = resolver
         @documents = documents
         @schemas = schemas
         @limits = limits || WSDL.limits
+        @reject_doctype = reject_doctype
         @schema_count = 0
       end
 
@@ -72,7 +75,8 @@ module WSDL
         xml = @resolver.resolve(location, base: base)
         @import_locations << resolved_location
 
-        document = Document.new(XML::Parser.parse_with_logging(xml, @logger, strict: false), @schemas)
+        parsed = XML::Parser.parse_with_logging(xml, @logger, strict: false, reject_doctype: @reject_doctype)
+        document = Document.new(parsed, @schemas)
         block.call(document, resolved_location)
 
         # Resolve WSDL imports (relative to this document's location)
@@ -162,7 +166,8 @@ module WSDL
         xml = @resolver.resolve(schema_location, base: base)
         @import_locations << resolved_location
 
-        document = Document.new(XML::Parser.parse_with_logging(xml, @logger, strict: false), @schemas)
+        parsed = XML::Parser.parse_with_logging(xml, @logger, strict: false, reject_doctype: @reject_doctype)
+        document = Document.new(parsed, @schemas)
         new_schemas = document.schemas(resolved_location)
 
         apply_schemas(new_schemas, include_into)

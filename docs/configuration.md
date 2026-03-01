@@ -14,6 +14,20 @@ By default, the library uses `HTTPClient` to make HTTP requests. You can access 
 >
 > If you use a custom adapter (like Faraday), you don't need to install httpclient at all.
 
+### Secure Defaults
+
+The default HTTPClient adapter applies secure defaults out of the box:
+
+| Setting | Default | Description |
+|---------|---------|-------------|
+| `connect_timeout` | 30 seconds | Maximum time to establish a connection |
+| `send_timeout` | 60 seconds | Maximum time to send request data |
+| `receive_timeout` | 120 seconds | Maximum time to receive response data |
+| `follow_redirect_count` | 5 | Maximum redirects to follow |
+| SSL verification | Enabled | Verifies server certificates (VERIFY_PEER) |
+
+These defaults prevent indefinite hangs, redirect loops, and man-in-the-middle attacks.
+
 ### Configuring the Default HTTPClient
 
 Access the underlying HTTPClient instance through the `http` method:
@@ -24,10 +38,9 @@ client = WSDL::Client.new('http://example.com/service?wsdl')
 # Access the HTTPClient instance
 http_client = client.http
 
-# Configure timeouts
-http_client.connect_timeout = 30
-http_client.send_timeout = 60
-http_client.receive_timeout = 60
+# Customize timeouts (overriding secure defaults)
+http_client.connect_timeout = 10   # Shorter timeout
+http_client.receive_timeout = 300  # Longer timeout for slow services
 
 # Configure SSL
 http_client.ssl_config.verify_mode = OpenSSL::SSL::VERIFY_PEER
@@ -111,6 +124,9 @@ If you must disable verification for development with self-signed certificates:
 client = WSDL::Client.new('https://localhost/service?wsdl')
 client.http.ssl_config.verify_mode = OpenSSL::SSL::VERIFY_NONE
 ```
+
+> **Note:** When SSL verification is disabled, the library logs a warning on the first request:
+> `SSL certificate verification is disabled. This makes connections vulnerable to man-in-the-middle attacks.`
 
 A safer alternative for development is to add your development CA to the trust store:
 

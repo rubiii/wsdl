@@ -118,14 +118,13 @@ describe WSDL::HTTPClient do
         http2.client.ssl_config.verify_mode = OpenSSL::SSL::VERIFY_NONE
         allow(http2.client).to receive(:request).and_return(response)
 
-        logger2 = Logging.logger[http2]
-        allow(logger2).to receive(:warn)
-
+        # Both adapters use the same class-based logger, so we check
+        # that each instance logs once (total of 2 warnings)
         http.get('https://example.com')
         http2.get('https://example.com')
 
-        expect(logger).to have_received(:warn).once
-        expect(logger2).to have_received(:warn).once
+        # Each adapter instance should log once, for a total of 2 warnings
+        expect(logger).to have_received(:warn).twice
       end
     end
   end

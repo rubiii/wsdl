@@ -12,10 +12,36 @@ The library includes comprehensive protection against XML-based attacks. All XML
 
 | Protection | Description |
 |------------|-------------|
+| **DOCTYPE Rejection** | DOCTYPE declarations are rejected by default as defense-in-depth |
 | **XXE Prevention** | External entities are not loaded, preventing file reads and network requests |
 | **SSRF Prevention** | Network access during XML parsing is blocked via the `NONET` option |
 | **DTD Attack Prevention** | External DTD loading is disabled |
 | **Entity Expansion Limits** | Internal entity expansion is limited, protecting against XML bombs |
+
+### DOCTYPE Rejection
+
+By default, the library rejects any XML document containing a `<!DOCTYPE` declaration. This is a defense-in-depth measure because:
+
+- Legitimate SOAP/WSDL documents never require DOCTYPE declarations
+- DOCTYPE is the attack vector for XXE, entity expansion, and DTD-based attacks
+- Rejecting DOCTYPE before parsing prevents any parser vulnerabilities from being exploited
+
+When a DOCTYPE is detected in a WSDL document, `WSDL::XMLSecurityError` is raised:
+
+```ruby
+# This will raise XMLSecurityError
+client = WSDL::Client.new('http://example.com/service-with-doctype?wsdl')
+# => WSDL::XMLSecurityError: DOCTYPE declarations are not allowed...
+```
+
+For rare cases where you need to parse a WSDL with DOCTYPE (e.g., legacy systems), you can disable this protection:
+
+```ruby
+# Not recommended for untrusted sources
+client = WSDL::Client.new('http://example.com/legacy?wsdl', reject_doctype: false)
+```
+
+Even with DOCTYPE rejection disabled, the underlying XXE and entity expansion protections remain active.
 
 ### XXE (XML External Entity) Prevention
 
@@ -79,35 +105,13 @@ client = WSDL::Client.new('http://example.com/service?wsdl')
 # a warning is logged: "Potential XML attack detected: doctype, entity_declaration"
 ```
 
-### Using the Secure Parser Directly
-
-For custom XML parsing needs, use the secure parser directly:
-
-```ruby
-# Strict parsing (raises on malformed XML, XMLSecurityError on attacks)
-doc = WSDL::XML::Parser.parse(xml_string)
-
-# Relaxed parsing (tolerates malformed XML, still secure)
-doc = WSDL::XML::Parser.parse_relaxed(xml_string)
-
-# Parse with threat callback (for pre-parse pattern detection)
-WSDL::XML::Parser.parse_untrusted(xml_string) do |threats|
-  if threats.include?(:external_reference)
-    raise WSDL::XMLSecurityError, "External references not allowed"
-  end
-end
-
-# Parse with automatic logging
-doc = WSDL::XML::Parser.parse_with_logging(xml_string, logger)
-```
-
 ## Detected Threat Types
 
 The threat detection system identifies the following patterns:
 
 | Threat | Description | Risk |
 |--------|-------------|------|
-| `:doctype` | DOCTYPE declaration | Often used in XXE attacks |
+| `:doctype` | DOCTYPE declaration | Rejected by default; attack vector for XXE |
 | `:entity_declaration` | ENTITY definitions | Used to define XXE payloads |
 | `:external_reference` | SYSTEM or PUBLIC identifiers | External resource access |
 | `:parameter_entity` | Parameter entity references (`%entity;`) | Advanced XXE techniques |
