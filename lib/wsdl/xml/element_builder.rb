@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require 'wsdl/schema/qname'
 require 'wsdl/xml/element'
 require 'wsdl/xml/attribute'
 
@@ -7,18 +8,17 @@ class WSDL
   class XML
     # Builds XML Element trees from WSDL message part definitions.
     #
-    # This class is responsible for transforming WSDL message parts into
-    # a tree of {Element} objects that represent the structure of SOAP
-    # messages. It resolves type references, handles complex and simple
-    # types, and detects recursive type definitions to prevent infinite
-    # loops during element building.
+    # Transforms WSDL message parts into a tree of {Element} objects that
+    # represent the structure of SOAP messages. Resolves type references,
+    # handles complex and simple types, and detects recursive type definitions
+    # to prevent infinite loops during element building.
     #
-    # @api private
-    # # -- cohesive builder class, splitting would create artificial boundaries
     class ElementBuilder
+      include Schema::QName
+
       # Creates a new ElementBuilder instance.
       #
-      # @param schemas [XS::SchemaCollection] the schema collection for resolving types
+      # @param schemas [Schema::Collection] the schema collection for resolving types
       def initialize(schemas)
         @logger = Logging.logger[self]
         @schemas = schemas
@@ -27,33 +27,29 @@ class WSDL
       # Builds Element trees from WSDL message parts.
       #
       # Each part can reference either a type (via @type attribute) or an
-      # element (via @element attribute). This method processes each part
-      # and returns the corresponding Element objects.
+      # element (via @element attribute). Processes each part and returns
+      # the corresponding Element objects.
       #
       # @param parts [Array<Hash>] the message parts to build elements from
       # @return [Array<Element>] the built element trees
       def build(parts)
-        parts.map { |part|
+        parts.filter_map { |part|
           if part[:type]
             build_type_element(part)
           elsif part[:element]
             build_element(part)
           end
-        }.compact
+        }
       end
 
       private
 
       # Builds an Element from a part with a @type attribute.
       #
-      # Resolves the type reference and creates an Element with that type.
-      # The element is unqualified since it's defined by type rather than
-      # a global element declaration.
-      #
       # @param part [Hash] the part definition with :type, :name, and :namespaces keys
       # @return [Element] the built element
       def build_type_element(part)
-        type = find_type part[:type], part[:namespaces]
+        type = find_type(part[:type], part[:namespaces])
 
         element = Element.new
         element.name = part[:name]
@@ -65,27 +61,23 @@ class WSDL
 
       # Builds an Element from a part with an @element attribute.
       #
-      # Resolves the element reference from the schema, then resolves its
-      # type. The element is qualified since it references a global element
-      # declaration.
-      #
       # @param part [Hash] the part definition with :element and :namespaces keys
       # @return [Element] the built element
       # @raise [RuntimeError] if the schema cannot be found
-      # rubocop:disable Metrics/AbcSize -- building element from part requires multiple assignments
+      # rubocop:disable Metrics/AbcSize -- linear element construction, splitting would hurt readability
       def build_element(part)
         local, namespace = expand_qname(part[:element], part[:namespaces])
         schema = @schemas.find_by_namespace(namespace)
         raise "Unable to find schema for #{namespace.inspect}" unless schema
 
-        xs_element = schema.elements.fetch(local)
-        type = find_type_for_element(xs_element)
+        schema_element = schema.elements.fetch(local)
+        type = find_type_for_element(schema_element)
 
         element = Element.new
-        element.name = xs_element.name
+        element.name = schema_element.name
         element.form = 'qualified'
         element.namespace = namespace
-        element.nillable = xs_element.nillable?
+        element.nillable = schema_element.nillable?
 
         handle_type(element, type)
         element
@@ -95,77 +87,84 @@ class WSDL
       # Applies type information to an element.
       #
       # Handles four cases:
-      # - ComplexType: Sets up child elements and attributes
-      # - SimpleType: Sets the base type from the restriction
+      # - Complex type node: Sets up child elements and attributes
+      # - Simple type node: Sets the base type from the restriction
       # - String: Sets the base type directly (built-in type)
-      # - nil: Element may have any content (e.g., inline xs:any)
+      # - nil: Element may have any content
       #
       # @param element [Element] the element to configure
-      # @param type [XS::ComplexType, XS::SimpleType, String, nil] the type information
+      # @param type [Schema::Node, String, nil] the type information
       # @return [void]
       def handle_type(element, type)
         case type
+        when Schema::Node
+          handle_schema_node_type(element, type)
+        when String
+          element.base_type = type
+        end
+      end
 
-        when XS::ComplexType
-          element.complex_type_id = type.id
+      # Handles a Schema::Node type based on its kind.
+      #
+      # @param element [Element] the element to configure
+      # @param type [Schema::Node] the schema node
+      # @return [void]
+      def handle_schema_node_type(element, type)
+        case type.kind
+        when :complexType
+          element.complex_type_id = type.type_id
           children_and_wildcards = child_elements(element, type)
           element.children = children_and_wildcards[:elements]
           element.any_content = children_and_wildcards[:has_any]
           element.attributes = element_attributes(type)
-
-        when XS::SimpleType
-          element.base_type = type.base
-
-        when String
-          element.base_type = type
-
+        when :simpleType
+          element.base_type = type.restriction_base
         end
       end
 
       # Applies type information to an attribute.
       #
       # @param attribute [Attribute] the attribute to configure
-      # @param type [XS::SimpleType, String] the type information
+      # @param type [Schema::Node, String] the type information
       # @return [void]
       def handle_simple_type(attribute, type)
         case type
-        when XS::SimpleType then attribute.base_type = type.base
-        when String         then attribute.base_type = type
+        when Schema::Node
+          attribute.base_type = type.restriction_base if type.kind == :simpleType
+        when String
+          attribute.base_type = type
         end
       end
 
       # Builds Attribute objects from a complex type's attribute definitions.
       #
-      # Handles both direct attributes and attribute references (@ref).
-      # Referenced attributes are resolved from the schema collection.
-      #
-      # @param type [XS::ComplexType] the complex type to extract attributes from
+      # @param type [Schema::Node] the complex type to extract attributes from
       # @return [Array<Attribute>] the built attribute objects
-      # rubocop:disable Metrics/AbcSize -- clear linear logic for building attributes
+      # rubocop:disable Metrics/AbcSize -- linear attribute construction logic
       def element_attributes(type)
-        type.attributes.map { |attribute|
+        type.attributes.filter_map { |schema_attr|
           attr = Attribute.new
 
-          if attribute.ref
-            local, namespace = expand_qname(attribute.ref, attribute.namespaces)
+          if schema_attr.ref
+            local, namespace = expand_qname(schema_attr.ref, schema_attr.namespaces)
             schema = find_schema(namespace)
 
             if schema
-              attribute = schema.attributes[local]
+              schema_attr = schema.attributes[local]
             else
-              @logger.debug("Unable to find schema for attribute@ref #{attribute.ref.inspect}")
+              @logger.debug("Unable to find schema for attribute@ref #{schema_attr.ref.inspect}")
               next
             end
           end
 
-          type = find_type_for_attribute(attribute)
-          handle_simple_type(attr, type)
+          attr_type = find_type_for_element(schema_attr)
+          handle_simple_type(attr, attr_type)
 
-          attr.name = attribute.name
-          attr.use = attribute.use
+          attr.name = schema_attr.name
+          attr.use = schema_attr.use
 
           attr
-        }.compact
+        }
       end
       # rubocop:enable Metrics/AbcSize
 
@@ -173,10 +172,10 @@ class WSDL
       #
       # Processes each child element in the type, resolving references and
       # types. Detects recursive type definitions to prevent infinite loops.
-      # Also detects xs:any wildcards to mark elements that allow arbitrary content.
+      # Also detects xs:any wildcards to mark elements allowing arbitrary content.
       #
       # @param parent [Element] the parent element
-      # @param type [XS::ComplexType] the complex type to extract children from
+      # @param type [Schema::Node] the complex type to extract children from
       # @return [Hash] a hash with :elements (Array<Element>) and :has_any (Boolean)
       # rubocop:disable Metrics/AbcSize -- cohesive element-building logic, splitting would hurt readability
       def child_elements(parent, type)
@@ -184,8 +183,7 @@ class WSDL
         elements = []
 
         type.elements.each do |child_element|
-          # Check if this is an xs:any wildcard
-          if child_element.is_a?(XS::Any)
+          if child_element.kind == :any
             has_any = true
             next
           end
@@ -207,8 +205,7 @@ class WSDL
           el.namespace = child_element.namespace
           el.nillable = child_element.nillable?
 
-          # prevent recursion
-          if recursive_child_definition? parent, child_element
+          if recursive_child_definition?(parent, child_element)
             el.recursive_type = child_element.type
           else
             child_type = find_type_for_element(child_element)
@@ -225,17 +222,17 @@ class WSDL
       # Checks if an element's type creates a recursive definition.
       #
       # Walks up the parent chain to see if any ancestor element has the
-      # same complex type ID as this element. If so, the definition is
-      # recursive and should not be expanded further.
+      # same complex type ID. If so, the definition is recursive and
+      # should not be expanded further.
       #
       # @param parent [Element] the parent element to start checking from
-      # @param element [XS::Element] the element to check for recursion
+      # @param element [Schema::Node] the element to check for recursion
       # @return [Boolean] true if the element creates a recursive definition
       def recursive_child_definition?(parent, element)
         return false unless element.type
 
         local, namespace = expand_qname(element.type, element.namespaces)
-        id = [namespace, local].join(':')
+        id = "#{namespace}:#{local}"
 
         current_parent = parent
 
@@ -253,8 +250,8 @@ class WSDL
       # If the element has a @type attribute, resolves it. Otherwise,
       # returns the inline type definition.
       #
-      # @param element [XS::Element] the element to find the type for
-      # @return [XS::ComplexType, XS::SimpleType, String, nil] the resolved type
+      # @param element [Schema::Node] the element to find the type for
+      # @return [Schema::Node, String, nil] the resolved type
       def find_type_for_element(element)
         if element.type
           find_type(element.type, element.namespaces)
@@ -263,44 +260,27 @@ class WSDL
         end
       end
 
-      alias find_type_for_attribute find_type_for_element
-
       # Finds and resolves a type by its qualified name.
       #
       # Handles three cases:
       # - Built-in XSD types (returns the qname string)
-      # - Custom complex types (returns the ComplexType object)
-      # - Custom simple types (returns the SimpleType object)
+      # - Custom complex types (returns the Node)
+      # - Custom simple types (returns the Node)
       #
       # @param qname [String] the qualified type name (prefix:localName)
       # @param namespaces [Hash] namespace declarations in scope
-      # @return [XS::ComplexType, XS::SimpleType, String] the resolved type
+      # @return [Schema::Node, String] the resolved type
       def find_type(qname, namespaces)
         local, namespace = expand_qname(qname, namespaces)
 
-        # assume built-in or unknown type for unqualified type qnames for now.
-        # we could fallback to the element's default namespace. needs tests.
         return qname unless namespace
 
         schema = find_schema(namespace)
 
-        # custom type
         if schema
-
-          # complex type
-          if (complex_type = schema.complex_types[local])
-            complex_type
-
-          # simple type
-          elsif (simple_type = schema.simple_types[local])
-            simple_type
-
-          end
-
-        # built-in or unknown type
+          schema.complex_types[local] || schema.simple_types[local]
         else
           qname
-
         end
       end
 
@@ -308,49 +288,28 @@ class WSDL
       #
       # @param qname [String] the qualified element name (prefix:localName)
       # @param namespaces [Hash] namespace declarations in scope
-      # @return [XS::Element] the resolved element
+      # @return [Schema::Node] the resolved element
       def find_element(qname, namespaces)
         local, namespace = expand_qname(qname, namespaces)
-        @schemas.element(namespace, local)
+        @schemas.find_element(namespace, local)
       end
 
       # Finds a global attribute by its qualified name.
       #
       # @param qname [String] the qualified attribute name (prefix:localName)
       # @param namespaces [Hash] namespace declarations in scope
-      # @return [XS::Attribute] the resolved attribute
+      # @return [Schema::Node] the resolved attribute
       def find_attribute(qname, namespaces)
         local, namespace = expand_qname(qname, namespaces)
-        @schemas.attribute(namespace, local)
+        @schemas.find_attribute(namespace, local)
       end
 
       # Finds a schema by its target namespace.
       #
       # @param namespace [String] the namespace URI
-      # @return [XS::Schema, nil] the matching schema, or nil if not found
+      # @return [Schema::Definition, nil] the matching schema, or nil if not found
       def find_schema(namespace)
         @schemas.find_by_namespace(namespace)
-      end
-
-      # Splits a qualified name into local name and prefix.
-      #
-      # @param qname [String] the qualified name (prefix:localName or just localName)
-      # @return [Array<String>] a tuple of [localName, prefix]
-      def split_qname(qname)
-        qname.split(':').reverse
-      end
-
-      # Expands a qualified name to local name and namespace URI.
-      #
-      # @param qname [String] the qualified name (prefix:localName or just localName)
-      # @param namespaces [Hash] namespace declarations (xmlns:prefix => URI)
-      # @return [Array<String, String>] a tuple of [localName, namespaceURI]
-      def expand_qname(qname, namespaces)
-        local, nsid = split_qname(qname)
-        # When there's no prefix (nsid is nil), use the default namespace (xmlns)
-        namespace = nsid ? namespaces["xmlns:#{nsid}"] : namespaces['xmlns']
-
-        [local, namespace]
       end
     end
   end

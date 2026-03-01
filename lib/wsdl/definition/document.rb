@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'wsdl/xs/schema'
+require 'wsdl/schema'
 require 'wsdl/definition/message'
 require 'wsdl/definition/port_type'
 require 'wsdl/definition/binding'
@@ -10,17 +10,15 @@ class WSDL
   class Definition
     # Represents a single parsed WSDL document.
     #
-    # This class parses a WSDL XML document and provides access to its
-    # various sections including messages, bindings, port types, and services.
-    # It also extracts XML Schema definitions embedded within the WSDL.
-    #
-    # @api private
+    # Parses a WSDL XML document and provides access to its various sections
+    # including messages, bindings, port types, and services. Also extracts
+    # XML Schema definitions embedded within the WSDL.
     #
     class Document
       # Creates a new Document by parsing a Nokogiri XML document.
       #
       # @param document [Nokogiri::XML::Document] the parsed WSDL XML document
-      # @param schemas [XS::SchemaCollection] the schema collection for resolving types
+      # @param schemas [Schema::Collection] the schema collection for resolving types
       def initialize(document, schemas)
         @document = document
         @schemas = schemas
@@ -70,9 +68,9 @@ class WSDL
       #
       # @param source_location [String, nil] the location this document was loaded from,
       #   used for resolving relative imports/includes within the schemas
-      # @return [Array<XS::Schema>] the parsed schema objects
+      # @return [Array<Schema::Definition>] the parsed schema objects
       def schemas(source_location = nil)
-        schema_nodes.map { |node| XS::Schema.new(node, @schemas, source_location) }
+        schema_nodes.map { |node| Schema::Definition.new(node, @schemas, source_location) }
       end
 
       # Returns the locations of imported WSDL documents.

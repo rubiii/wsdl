@@ -2,7 +2,7 @@
 
 require 'wsdl/definition/operation'
 require 'wsdl/definition/document_collection'
-require 'wsdl/xs/schema_collection'
+require 'wsdl/schema'
 require 'wsdl/resolver'
 require 'wsdl/importer'
 
@@ -29,7 +29,7 @@ class WSDL
     # @param http [Object] an HTTP adapter instance for fetching remote documents
     def initialize(wsdl, http)
       @documents = Definition::DocumentCollection.new
-      @schemas = XS::SchemaCollection.new
+      @schemas = Schema::Collection.new
 
       resolver = Resolver.new(http)
       importer = Importer.new(resolver, @documents, @schemas)
@@ -43,7 +43,7 @@ class WSDL
 
     # The collection of XML schemas referenced by the WSDL.
     #
-    # @return [XS::SchemaCollection] the schema collection
+    # @return [Schema::Collection] the schema collection
     attr_reader :schemas
 
     # Returns the name of the primary service.

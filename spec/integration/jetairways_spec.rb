@@ -46,11 +46,11 @@ describe 'Integration with Jetairways\'s SessionCreate Service' do
 
     expect(operation.example_header).to eq(
       MessageHeader:
-        { From: { PartyId: [{}], Role: 'string' },
-          To: { PartyId: [{}], Role: 'string' },
+        { From: { PartyId: [{ _type: 's:string' }], Role: 'string' },
+          To: { PartyId: [{ _type: 's:string' }], Role: 'string' },
           CPAId: 'string',
           ConversationId: 'string',
-          Service: {},
+          Service: { _type: 's:string' },
           Action: 'string',
           MessageData:
           { MessageId: 'string',
