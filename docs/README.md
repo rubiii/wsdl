@@ -3,11 +3,11 @@
 ## Table of Contents
 
 - [Getting Started](getting-started.md)
+- [Configuration](configuration.md)
 - [Inspecting Services](inspecting-services.md)
 - [Building Requests](building-requests.md)
 - [Handling Responses](handling-responses.md)
 - [Resolving Imports](resolving-imports.md)
-- [Configuration](configuration.md)
 - [WS-Security](ws-security.md)
 
 ## Overview

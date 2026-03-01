@@ -139,3 +139,4 @@ Naming/PredicateMethod:
     - add_failure
     - add_failure_nil
     - verify_signature!
+    - parse_boolean

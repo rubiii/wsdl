@@ -4,16 +4,15 @@ require 'nokogiri'
 
 class WSDL
   # Converts XML documents to Ruby Hashes.
-  # Simple replacement for the Nori library as we already use Nokogiri.
   #
   # This class provides a simple way to parse XML into nested Hashes
-  # with symbolized, snake_case keys. Namespace prefixes are stripped
-  # from element names.
+  # with symbolized keys. Namespace prefixes are stripped from element
+  # names, but the original casing is preserved.
   #
   # @example Basic usage
   #   xml = "<Envelope><Body><Result>42</Result></Body></Envelope>"
   #   hash = WSDL::XmlHash.parse(xml)
-  #   # => { envelope: { body: { result: "42" } } }
+  #   # => { Envelope: { Body: { Result: "42" } } }
   #
   # @example Parsing a Nokogiri document
   #   doc = Nokogiri::XML(xml)
@@ -32,16 +31,13 @@ class WSDL
       else Nokogiri::XML(xml).root
       end
 
-      instance = new
-      key = instance.send(:to_snakecase, node.name).to_sym
-
-      { key => instance.convert(node) }
+      { node.name.to_sym => new.convert(node) }
     end
 
     # Converts an XML node to a Hash recursively.
     #
     # - Strips namespace prefixes from element names
-    # - Converts element names to snake_case symbols
+    # - Converts element names to symbols (preserving original casing)
     # - Handles repeated elements by converting them to arrays
     # - Returns text content for leaf nodes
     #
@@ -49,11 +45,10 @@ class WSDL
     # @return [Hash, String] the converted hash or text content
     def convert(node)
       children = node.element_children
-
       return node.text if children.empty?
 
       children.each_with_object({}) do |child, result|
-        key = to_snakecase(child.name).to_sym
+        key = child.name.to_sym
         value = convert(child)
 
         if result.key?(key)
@@ -63,24 +58,6 @@ class WSDL
           result[key] = value
         end
       end
-    end
-
-    private
-
-    # Converts a string to snake_case.
-    #
-    # @param string [String] the string to convert
-    # @return [String] the snake_case version
-    # @example
-    #   to_snakecase("GetUserResponse") # => "get_user_response"
-    #   to_snakecase("XMLParser")       # => "xml_parser"
-    #   to_snakecase("getHTTPResponse") # => "get_http_response"
-    def to_snakecase(string)
-      string
-        .gsub(/([A-Z]+)([A-Z][a-z])/, '\1_\2')
-        .gsub(/([a-z\d])([A-Z])/, '\1_\2')
-        .tr('-', '_')
-        .downcase
     end
   end
 end

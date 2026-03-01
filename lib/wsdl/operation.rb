@@ -238,7 +238,7 @@ class WSDL
       message = (xml_envelope.nil? ? build : xml_envelope)
 
       raw_response = @http.post(endpoint, http_headers, message)
-      Response.new(raw_response)
+      Response.new(raw_response, output_parts: @operation.output.body_parts)
     end
 
     # Returns the input style for this operation.

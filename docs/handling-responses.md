@@ -2,88 +2,33 @@
 
 After calling an operation, you receive a `WSDL::Response` object that provides multiple ways to access the response data.
 
-## Making a Call
-
 ``` ruby
-operation = client.operation('OrderService', 'OrderServiceSoap', 'GetOrder')
-operation.body = { GetOrder: { orderId: 123 } }
+operation = wsdl.operation('OrderService', 'OrderServiceSoap', 'GetOrder')
+operation.body = { GetOrder: { OrderId: 123 } }
 
 response = operation.call
 ```
 
-## Accessing Response Data
-
-### Parsed Body
-
-The most common way to access response data is through the `body` method, which returns the SOAP body as a parsed Hash:
-
-``` ruby
-response.body
-# => {
-#   get_order_response: {
-#     order: {
-#       id: '123',
-#       status: 'shipped',
-#       customer_name: 'John Doe'
-#     }
-#   }
-# }
-```
-
-Note: Element names are converted to snake_case symbols.
-
-### Parsed Header
-
-Access SOAP headers in the response:
-
-``` ruby
-response.header
-# => {
-#   session_info: {
-#     session_id: 'abc123',
-#     expires_at: '2024-01-15T10:30:00Z'
-#   }
-# }
-```
-
-Returns an empty Hash or nil if no headers are present.
-
-### Full Parsed Response
-
-To get the entire parsed envelope (including both header and body):
-
-``` ruby
-response.hash
-# => {
-#   envelope: {
-#     header: { ... },
-#     body: { ... }
-#   }
-# }
-```
-
 ## Raw XML Access
 
-### Raw Response String
+The simplest way to inspect a response is to look at the raw XML.
 
-Get the unprocessed XML response:
+### Raw Response String
 
 ``` ruby
 response.raw
 # => '<?xml version="1.0"?><soap:Envelope xmlns:soap="...">...</soap:Envelope>'
 ```
 
-Useful for debugging or when you need to process the XML yourself.
-
 ### Nokogiri Document
 
-Access the response as a Nokogiri XML document for advanced querying:
+For more control, access the response as a Nokogiri XML document:
 
 ``` ruby
 response.doc
 # => #<Nokogiri::XML::Document:...>
 
-response.doc.at_xpath('//order/status').text
+response.doc.at_xpath('//Order/Status').text
 # => 'shipped'
 ```
 
@@ -92,10 +37,10 @@ response.doc.at_xpath('//order/status').text
 Query the response document directly using XPath:
 
 ``` ruby
-response.xpath('//order')
-# => [#<Nokogiri::XML::Element:... name="order">]
+response.xpath('//Order')
+# => [#<Nokogiri::XML::Element:... name="Order">]
 
-response.xpath('//order/status').first.text
+response.xpath('//Order/Status').first.text
 # => 'shipped'
 ```
 
@@ -110,75 +55,136 @@ response.xml_namespaces
 #   'xmlns:ns1' => 'http://example.com/orders'
 # }
 
-# Query using the document's namespace prefixes
-response.xpath('//ns1:order')
+response.xpath('//ns1:Order')
 ```
 
 You can also provide custom namespace mappings:
 
 ``` ruby
-custom_ns = {
-  'o' => 'http://example.com/orders',
-  's' => 'http://schemas.xmlsoap.org/soap/envelope/'
-}
-
-response.xpath('//o:order', custom_ns)
+response.xpath('//o:Order', 'o' => 'http://example.com/orders')
 ```
 
-## Working with the Parsed Data
+## Parsed Header
 
-### Navigating Nested Structures
+Access SOAP headers as a Hash with symbol keys:
 
 ``` ruby
-body = response.body
-
-# Access nested data
-order = body[:get_order_response][:order]
-order[:id]           # => '123'
-order[:status]       # => 'shipped'
-order[:customer_name] # => 'John Doe'
+response.header
+# => {
+#   SessionInfo: {
+#     SessionId: 'abc123',
+#     ExpiresAt: '2024-01-15T10:30:00Z'
+#   }
+# }
 ```
 
-### Handling Arrays
+Returns an empty Hash if no headers are present.
 
-When the response contains multiple elements:
+## Parsed Body
+
+The `body` method returns the SOAP body as a Hash. Because the response is parsed using schema information from the WSDL, you get two key benefits:
+
+1. **Type Conversions** - XSD types are converted to Ruby types
+2. **Consistent Arrays** - Elements with `maxOccurs > 1` are always arrays
 
 ``` ruby
 response.body
 # => {
-#   get_orders_response: {
-#     orders: {
-#       order: [
-#         { id: '1', status: 'shipped' },
-#         { id: '2', status: 'pending' },
-#         { id: '3', status: 'delivered' }
+#   GetOrderResponse: {
+#     Order: {
+#       Id: 123,                            # Integer
+#       Total: BigDecimal("149.97"),        # BigDecimal
+#       Shipped: true,                      # Boolean
+#       OrderDate: Date.new(2024, 1, 15),   # Date
+#       Items: [                            # Always an array
+#         { Name: 'Widget', Quantity: 3 }
 #       ]
 #     }
 #   }
 # }
+```
 
-orders = response.body[:get_orders_response][:orders][:order]
-orders.each do |order|
-  puts "Order #{order[:id]}: #{order[:status]}"
+Element names are converted to symbols, preserving their original casing from the WSDL.
+
+### Type Conversions
+
+The following XSD types are automatically converted:
+
+| XSD Type | Ruby Type |
+|----------|-----------|
+| `xsd:string`, `xsd:token`, `xsd:anyURI` | `String` |
+| `xsd:int`, `xsd:integer`, `xsd:long`, `xsd:short`, `xsd:byte` | `Integer` |
+| `xsd:decimal` | `BigDecimal` |
+| `xsd:float`, `xsd:double` | `Float` |
+| `xsd:boolean` | `true` / `false` |
+| `xsd:date` | `Date` |
+| `xsd:dateTime`, `xsd:time` | `Time` |
+| `xsd:base64Binary`, `xsd:hexBinary` | `String` (decoded) |
+
+Unknown types are returned as strings.
+
+### Consistent Array Handling
+
+When the schema defines an element with `maxOccurs="unbounded"` or `maxOccurs > 1`, that element is always returned as an array—even when only one element is present:
+
+``` ruby
+# Schema: <element name="Item" maxOccurs="unbounded"/>
+
+# One item in response - still an array
+response.body[:Order][:Items]
+# => [{ Name: "Widget", Price: BigDecimal("49.99") }]
+
+# Multiple items - also an array
+response.body[:Order][:Items]
+# => [
+#      { Name: "Widget", Price: BigDecimal("49.99") },
+#      { Name: "Gadget", Price: BigDecimal("29.99") }
+#    ]
+```
+
+### Nil Values
+
+Elements with `xsi:nil="true"` are returned as `nil`:
+
+``` ruby
+response.body[:Value]  # => nil
+```
+
+### Unknown Elements
+
+Elements not defined in the schema are included as strings:
+
+``` ruby
+response.body[:KnownElement]    # => 42 (Integer per schema)
+response.body[:UnknownElement]  # => "42" (String, not in schema)
+```
+
+## Working with Parsed Data
+
+### Navigating Nested Structures
+
+``` ruby
+order = response.body[:GetOrderResponse][:Order]
+
+order[:Id]     # => 123
+order[:Status] # => 'shipped'
+```
+
+### Safe Access with dig
+
+``` ruby
+order = response.body.dig(:GetOrderResponse, :Order)
+if order
+  puts "Order ID: #{order[:Id]}"
 end
 ```
 
-### Handling Missing Data
-
-Always check for the presence of nested keys:
+### Iterating Arrays
 
 ``` ruby
-body = response.body
-
-if body[:get_order_response] && body[:get_order_response][:order]
-  order = body[:get_order_response][:order]
-  # process order
-end
-
-# Or use dig (Ruby 2.3+)
-order = body.dig(:get_order_response, :order)
-if order
-  # process order
+items = response.body.dig(:GetOrderResponse, :Order, :Items)
+items.each do |item|
+  puts "#{item[:Name]}: #{item[:Quantity]}"
 end
 ```
 
@@ -187,38 +193,22 @@ end
 SOAP faults are returned in the body like any other response:
 
 ``` ruby
-response.body
-# => {
-#   fault: {
-#     faultcode: 'soap:Client',
-#     faultstring: 'Invalid order ID',
-#     detail: {
-#       error_code: '1001',
-#       message: 'Order with ID 999 not found'
-#     }
-#   }
-# }
-
-if response.body[:fault]
-  fault = response.body[:fault]
+if response.body[:Fault]
+  fault = response.body[:Fault]
   raise "SOAP Fault: #{fault[:faultstring]}"
 end
 ```
 
-## Debugging Responses
-
-When troubleshooting, examine the raw response:
+## Debugging
 
 ``` ruby
-response = operation.call
-
 # Print raw XML
 puts response.raw
 
-# Pretty print the parsed hash
+# Pretty print parsed body
 require 'pp'
 pp response.body
 
-# Inspect the XML structure
+# Inspect XML structure
 puts response.doc.to_xml(indent: 2)
 ```

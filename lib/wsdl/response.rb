@@ -1,12 +1,16 @@
 # frozen_string_literal: true
 
 require_relative 'xml_hash'
+require_relative 'response_parser'
 
 class WSDL
   # Represents a SOAP response from an operation call.
   #
   # This class wraps the raw HTTP response and provides methods
-  # for parsing and accessing the SOAP envelope contents.
+  # for parsing and accessing the SOAP envelope contents. When
+  # schema information is available, response values are automatically
+  # converted to appropriate Ruby types and arrays are handled
+  # consistently based on the schema's maxOccurs definitions.
   #
   # @example Accessing the response body
   #   response = operation.call
@@ -20,6 +24,13 @@ class WSDL
   #   response = operation.call
   #   users = response.xpath('//ns:User', 'ns' => 'http://example.com/users')
   #   users.each { |user| puts user.text }
+  #
+  # @example Type conversions (with schema)
+  #   response = operation.call
+  #   response.body[:order][:id]       # => 123 (Integer, not "123")
+  #   response.body[:order][:total]    # => BigDecimal("99.99")
+  #   response.body[:order][:shipped]  # => true (Boolean, not "true")
+  #   response.body[:order][:items]    # => [{ name: "Widget" }] (always Array)
   #
   # @example Verifying signature
   #   response = operation.call
@@ -36,10 +47,13 @@ class WSDL
     # Creates a new Response instance.
     #
     # @param raw_response [String] the raw HTTP response body (XML)
+    # @param output_parts [Array<WSDL::XML::Element>, nil] optional schema elements
+    #   describing the expected response structure for type-aware parsing
     # @param verify_certificate [OpenSSL::X509::Certificate, nil] optional certificate
     #   to use for signature verification instead of extracting from message
-    def initialize(raw_response, verify_certificate: nil)
+    def initialize(raw_response, output_parts: nil, verify_certificate: nil)
       @raw_response = raw_response
+      @output_parts = output_parts
       @verify_certificate = verify_certificate
       @verifier = nil
     end
@@ -53,31 +67,47 @@ class WSDL
 
     # Returns the parsed SOAP body as a Hash.
     #
-    # The body is extracted from the SOAP envelope and returned
-    # with symbolized, snake_case keys.
+    # When schema information is available (output_parts), values are
+    # automatically converted to appropriate Ruby types:
+    # - xsd:int, xsd:integer, xsd:long → Integer
+    # - xsd:decimal → BigDecimal
+    # - xsd:float, xsd:double → Float
+    # - xsd:boolean → true/false
+    # - xsd:date → Date
+    # - xsd:dateTime → Time
+    # - xsd:base64Binary → decoded String
+    #
+    # Elements with maxOccurs > 1 are always returned as Arrays,
+    # even when only one element is present.
     #
     # @return [Hash] the parsed body content
     # @example
     #   response.body
-    #   # => { get_user_response: { user: { name: "John", age: 30 } } }
+    #   # => { GetUserResponse: { User: { Name: "John", Age: 30 } } }
     def body
-      hash[:envelope][:body]
+      @body ||= if @output_parts
+        ResponseParser.new(@output_parts).parse(doc)
+      else
+        hash[:Envelope][:Body]
+      end
     end
     alias to_hash body
 
     # Returns the parsed SOAP header as a Hash.
     #
     # The header is extracted from the SOAP envelope and returned
-    # with symbolized, snake_case keys.
+    # with symbolized keys preserving the original element names.
     #
     # @return [Hash, nil] the parsed header content, or nil if empty
     def header
-      hash[:envelope][:header]
+      hash[:Envelope][:Header]
     end
 
     # Returns the entire parsed SOAP envelope as a Hash.
     #
-    # Keys are symbolized and converted to snake_case.
+    # Keys are symbolized, preserving original element names.
+    # Note: This method does not use schema-aware parsing.
+    # Use {#body} for schema-aware access to the response body.
     #
     # @return [Hash] the complete parsed envelope
     def hash
