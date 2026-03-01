@@ -107,7 +107,7 @@ module WSDL
       # @return [String] the canonicalized XML as a string
       #
       # @example Canonicalize a node
-      #   doc = Nokogiri::XML('<root><child>text</child></root>')
+      #   doc = WSDL::XML::Parser.parse('<root><child>text</child></root>')
       #   canonicalizer.canonicalize(doc.root)
       #   # => "<root><child>text</child></root>"
       #

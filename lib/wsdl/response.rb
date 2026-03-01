@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require 'wsdl/xml/parser'
+
 module WSDL
   # Represents a SOAP response from an operation call.
   #
@@ -120,7 +122,7 @@ module WSDL
     #
     # @return [Nokogiri::XML::Document] the parsed XML document
     def doc
-      @doc ||= Nokogiri.XML(raw)
+      @doc ||= XML::Parser.parse(raw)
     end
 
     # Executes an XPath query on the response document.

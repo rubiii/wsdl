@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'nokogiri'
+require 'wsdl/xml/parser'
 
 module WSDL
   module Parser
@@ -66,7 +66,7 @@ module WSDL
         xml = @resolver.resolve(location, base: base)
         @import_locations << resolved_location
 
-        document = Document.new(Nokogiri.XML(xml), @schemas)
+        document = Document.new(XML::Parser.parse_with_logging(xml, @logger, strict: false), @schemas)
         block.call(document, resolved_location)
 
         # Resolve WSDL imports (relative to this document's location)
@@ -156,7 +156,7 @@ module WSDL
         xml = @resolver.resolve(schema_location, base: base)
         @import_locations << resolved_location
 
-        document = Document.new(Nokogiri.XML(xml), @schemas)
+        document = Document.new(XML::Parser.parse_with_logging(xml, @logger, strict: false), @schemas)
         new_schemas = document.schemas(resolved_location)
 
         apply_schemas(new_schemas, include_into)

@@ -2,6 +2,7 @@
 
 require 'nokogiri'
 require 'date'
+require 'wsdl/xml/parser'
 require 'base64'
 require 'bigdecimal'
 
@@ -23,7 +24,7 @@ module WSDL
     #   # => { Envelope: { Body: { Result: "42" } } }
     #
     # @example Parsing a Nokogiri node
-    #   doc = Nokogiri::XML(xml)
+    #   doc = WSDL::XML::Parser.parse(xml)
     #   hash = WSDL::Response::HashConverter.parse(doc.root)
     #
     # @example Schema-aware parsing with type coercion
@@ -128,7 +129,7 @@ module WSDL
           case xml
           when Nokogiri::XML::Document then xml.root
           when Nokogiri::XML::Node then xml
-          when String then Nokogiri::XML(xml).root
+          when String then WSDL::XML::Parser.parse(xml).root
           end
         end
       end

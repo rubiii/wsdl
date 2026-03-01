@@ -2,6 +2,7 @@
 
 require 'openssl'
 require 'base64'
+require 'wsdl/xml/parser'
 
 module WSDL
   module Security
@@ -80,7 +81,7 @@ module WSDL
       def parse_document(xml)
         case xml
         when Nokogiri::XML::Document then xml
-        when String then Nokogiri::XML(xml, &:noblanks)
+        when String then XML::Parser.parse(xml, noblanks: true)
         else raise ArgumentError, "Expected String or Nokogiri::XML::Document, got #{xml.class}"
         end
       end

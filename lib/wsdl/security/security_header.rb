@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'nokogiri'
+require 'wsdl/xml/parser'
 
 module WSDL
   module Security
@@ -71,7 +72,7 @@ module WSDL
       # @return [Nokogiri::XML::Document]
       #
       def parse_document(xml)
-        Nokogiri::XML(xml, &:noblanks)
+        XML::Parser.parse(xml, noblanks: true)
       end
 
       # Returns XML save options.

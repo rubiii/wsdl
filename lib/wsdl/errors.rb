@@ -66,4 +66,32 @@ module WSDL
   #
   class SignatureVerificationError < Error
   end
+
+  # Raised when XML parsing detects a potential security attack.
+  #
+  # This error wraps security-related XML parsing failures detected by
+  # libxml2, such as:
+  #
+  # - Entity amplification attacks (Billion Laughs / XML bomb)
+  # - Excessive document depth
+  # - Other security limit violations
+  #
+  # The original Nokogiri error is preserved as the cause for debugging.
+  #
+  # @example Catching XML security attacks
+  #   begin
+  #     doc = WSDL::XML::Parser.parse(untrusted_xml)
+  #   rescue WSDL::XMLSecurityError => e
+  #     logger.warn("XML attack blocked: #{e.message}")
+  #   end
+  #
+  # @example Accessing the original error
+  #   begin
+  #     doc = WSDL::XML::Parser.parse(untrusted_xml)
+  #   rescue WSDL::XMLSecurityError => e
+  #     puts e.cause # => #<Nokogiri::XML::SyntaxError: ...>
+  #   end
+  #
+  class XMLSecurityError < Error
+  end
 end
