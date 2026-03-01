@@ -7,19 +7,21 @@ require 'wsdl/security/verifier/certificate_resolver'
 require 'wsdl/security/verifier/certificate_validator'
 require 'wsdl/security/verifier/reference_validator'
 require 'wsdl/security/verifier/signature_validator'
+require 'wsdl/security/verifier/timestamp_validator'
 
 module WSDL
   module Security
-    # Verifies XML Digital Signatures in SOAP responses.
+    # Verifies XML Digital Signatures and timestamps in SOAP responses.
     #
     # This class coordinates multiple validation steps to provide comprehensive
-    # signature verification including:
+    # security verification including:
     #
     # - *Structural Validation* — Detects XML Signature Wrapping (XSW) attacks
     # - *Certificate Resolution* — Extracts or validates signing certificates
     # - *Certificate Validation* — Checks validity period and trust chain
     # - *Reference Verification* — Validates digests of signed elements
     # - *Signature Verification* — Cryptographic validation of SignatureValue
+    # - *Timestamp Validation* — Freshness checks to prevent replay attacks
     #
     # The verification process follows W3C XML Signature Best Practices,
     # running structural checks before expensive cryptographic operations.
@@ -44,6 +46,14 @@ module WSDL
     # @example With custom CA certificates
     #   verifier = Verifier.new(response_xml, trust_store: [ca_cert])
     #   verifier.valid?
+    #
+    # @example With timestamp validation (enabled by default)
+    #   verifier = Verifier.new(response_xml, clock_skew: 600)
+    #   verifier.valid?  # checks signature AND timestamp
+    #
+    # @example Disable timestamp validation
+    #   verifier = Verifier.new(response_xml, validate_timestamp: false)
+    #   verifier.valid?  # checks signature only
     #
     # @see https://www.w3.org/TR/xmldsig-core1/
     # @see https://www.w3.org/TR/xmldsig-bestpractices/
@@ -72,17 +82,27 @@ module WSDL
       #   - `nil` — Skip chain validation (default)
       # @param check_validity [Boolean] whether to check the certificate's validity
       #   period (not_before and not_after). Default: true
-      def initialize(xml, certificate: nil, trust_store: nil, check_validity: true)
+      # @param validate_timestamp [Boolean] whether to validate timestamp freshness.
+      #   Default: true. Per WS-Security spec, timestamps are optional, so this only
+      #   validates when a timestamp is present.
+      # @param clock_skew [Integer] acceptable clock skew in seconds for timestamp
+      #   validation. Default: 300 (5 minutes). Per WS-I BSP guidance.
+      # rubocop:disable Metrics/ParameterLists
+      def initialize(xml, certificate: nil, trust_store: nil, check_validity: true,
+                     validate_timestamp: true, clock_skew: 300)
+        # rubocop:enable Metrics/ParameterLists
         @document = parse_document(xml)
         @provided_certificate = certificate
         @trust_store = trust_store
         @check_validity = check_validity
+        @validate_timestamp = validate_timestamp
+        @clock_skew = clock_skew
         @errors = []
         @verified = nil
         @certificate = normalize_certificate(certificate) if certificate
       end
 
-      # Returns whether the signature is valid.
+      # Returns whether the signature (and timestamp, if enabled) is valid.
       #
       # Performs full verification including:
       # 1. Structural validation (XSW protection)
@@ -90,6 +110,7 @@ module WSDL
       # 3. Certificate validation (validity period and chain)
       # 4. Reference digest verification
       # 5. Cryptographic signature verification
+      # 6. Timestamp freshness validation (if enabled and timestamp present)
       #
       # @return [Boolean] true if signature is present and valid
       def valid?
@@ -135,6 +156,32 @@ module WSDL
         signed_info_node&.at_xpath('ds:Reference/ds:DigestMethod/@Algorithm', ns)&.value
       end
 
+      # Returns whether a timestamp is present in the document.
+      #
+      # @return [Boolean] true if wsu:Timestamp exists in the Security header
+      def timestamp_present?
+        timestamp_validator.timestamp_present?
+      end
+
+      # Returns whether the timestamp is valid (fresh).
+      #
+      # Returns true if:
+      # - No timestamp is present (timestamps are optional per spec)
+      # - Timestamp is present and within acceptable time bounds
+      #
+      # @return [Boolean] true if timestamp is valid or not present
+      def timestamp_valid?
+        timestamp_validator.valid?
+      end
+
+      # Returns the parsed timestamp information.
+      #
+      # @return [Hash, nil] hash with :created_at and :expires_at keys,
+      #   or nil if no timestamp present
+      def timestamp
+        timestamp_validator.timestamp
+      end
+
       private
 
       # ============================================================
@@ -176,7 +223,10 @@ module WSDL
         return false unless run_reference_validation
 
         # Phase 5: Cryptographic signature verification
-        run_signature_validation
+        return false unless run_signature_validation
+
+        # Phase 6: Timestamp validation (after signature, so signed timestamp is verified)
+        run_timestamp_validation
       end
 
       # ============================================================
@@ -264,6 +314,27 @@ module WSDL
         @signature_validator ||= Verifier::SignatureValidator.new(
           structure_validator.signature_node,
           @certificate
+        )
+      end
+
+      # ============================================================
+      # Phase 6: Timestamp Validation
+      # ============================================================
+
+      def run_timestamp_validation # rubocop:disable Naming/PredicateMethod
+        return true unless @validate_timestamp
+
+        validator = timestamp_validator
+        return true if validator.valid?
+
+        aggregate_errors(validator)
+        false
+      end
+
+      def timestamp_validator
+        @timestamp_validator ||= Verifier::TimestampValidator.new(
+          @document,
+          clock_skew: @clock_skew
         )
       end
 

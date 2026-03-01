@@ -47,10 +47,10 @@ If the server rejects signatures:
 
 If response verification fails:
 
-1. Check `response.signature_errors` for details
+1. Check `response.security.errors` for details
 2. Ensure you have the correct server certificate
-3. Verify the response actually contains a signature (`response.signature_present?`)
-4. Check which elements are signed (`response.signed_elements`)
+3. Verify the response actually contains a signature (`response.security.signature_present?`)
+4. Check which elements are signed (`response.security.signed_elements`)
 
 ### Namespace Issues
 
@@ -119,20 +119,6 @@ def validate_certificate(cert)
   store = OpenSSL::X509::Store.new
   store.add_file('/path/to/ca-bundle.crt')
   store.verify(cert)
-end
-```
-
-#### No Timestamp Validation on Responses
-
-While the library can verify response signatures, it does not automatically validate that response timestamps are within an acceptable time window.
-
-**Mitigation:** Implement manual timestamp checking:
-
-```ruby
-# Example: Manual timestamp validation
-def valid_timestamp?(response, max_age: 300)
-  # Parse timestamp from response and check age
-  # Implementation depends on your requirements
 end
 ```
 

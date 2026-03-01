@@ -268,11 +268,11 @@ operation.security.verify_response
 
 response = operation.call
 
-if response.signature_valid?
+if response.security.signature_valid?
   # Safe to trust the response
   puts response.body
 else
-  puts "Verification failed: #{response.signature_errors}"
+  puts "Verification failed: #{response.security.errors}"
 end
 ```
 
@@ -285,9 +285,9 @@ operation.security.verify_response = true
 ## Checking Signature Presence
 
 ```ruby
-if response.signature_present?
+if response.security.signature_present?
   puts "Response is signed"
-  puts "Signed elements: #{response.signed_elements}"
+  puts "Signed elements: #{response.security.signed_elements}"
   # => ["Body", "Timestamp"]
 else
   puts "Response is not signed"
@@ -296,40 +296,53 @@ end
 
 ## Strict Verification
 
-Use `verify_signature!` to raise an error if verification fails:
+Use `verify_signature!` to raise an error if signature verification fails:
 
 ```ruby
 begin
-  response.verify_signature!
+  response.security.verify_signature!
   # Process trusted response
 rescue WSDL::SignatureVerificationError => e
   log_security_event("Untrusted response: #{e.message}")
 end
 ```
 
-## Verification Details
-
-Inspect verification results:
+For combined signature and timestamp verification, use `verify!`:
 
 ```ruby
-response.signature_valid?      # => true/false
-response.signature_present?    # => true/false
-response.signed_elements       # => ["Body", "Timestamp"]
-response.signed_element_ids    # => ["Body-abc123", "Timestamp-xyz"]
-response.signature_algorithm   # => "http://www.w3.org/2001/04/xmldsig-more#rsa-sha256"
-response.digest_algorithm      # => "http://www.w3.org/2001/04/xmlenc#sha256"
-response.signing_certificate   # => OpenSSL::X509::Certificate
-response.signature_errors      # => ["Digest mismatch for #Body-123"]
+begin
+  response.security.verify!
+  # Process trusted and fresh response
+rescue WSDL::SignatureVerificationError => e
+  log_security_event("Signature error: #{e.message}")
+rescue WSDL::TimestampValidationError => e
+  log_security_event("Timestamp error: #{e.message}")
+end
+```
+
+## Verification Details
+
+Inspect verification results via the security context:
+
+```ruby
+response.security.signature_valid?      # => true/false
+response.security.signature_present?    # => true/false
+response.security.signed_elements       # => ["Body", "Timestamp"]
+response.security.signed_element_ids    # => ["Body-abc123", "Timestamp-xyz"]
+response.security.signature_algorithm   # => "http://www.w3.org/2001/04/xmldsig-more#rsa-sha256"
+response.security.digest_algorithm      # => "http://www.w3.org/2001/04/xmlenc#sha256"
+response.security.signing_certificate   # => OpenSSL::X509::Certificate
+response.security.errors                # => ["Digest mismatch for #Body-123"]
 ```
 
 ## Providing a Certificate
 
-If the response doesn't include the certificate (using IssuerSerial or SKI reference), provide it:
+If the response doesn't include the certificate (using IssuerSerial or SKI reference), provide it when creating a `SecurityContext` directly:
 
 ```ruby
 server_cert = OpenSSL::X509::Certificate.new(File.read('server.pem'))
-response = WSDL::Response.new(xml, verify_certificate: server_cert)
-response.signature_valid?
+context = WSDL::Response::SecurityContext.new(document, certificate: server_cert)
+context.signature_valid?
 ```
 
 ---
@@ -346,7 +359,7 @@ By default, the library checks that the signing certificate is within its validi
 - Certificates that aren't valid yet (clock skew or future-dated certs)
 
 ```ruby
-# Validity is checked by default
+# Validity and timestamp freshness are checked by default
 operation.security.verify_response
 
 # Explicitly disable validity checking (not recommended)
@@ -387,6 +400,25 @@ operation.security.verify_response(trust_store: store)
 | `Array` | Array of `OpenSSL::X509::Certificate` objects |
 | `OpenSSL::X509::Store` | Pre-configured certificate store for advanced use cases |
 
+### Timestamp Validation Options
+
+Timestamp validation is enabled by default to prevent replay attacks:
+
+```ruby
+# Custom clock skew tolerance (default: 300 seconds / 5 minutes)
+operation.security.verify_response(clock_skew: 600)  # 10 minutes
+
+# Disable timestamp validation (not recommended)
+operation.security.verify_response(validate_timestamp: false)
+```
+
+| Option | Default | Description |
+|--------|---------|-------------|
+| `validate_timestamp` | `true` | Whether to validate response timestamp freshness |
+| `clock_skew` | `300` | Clock skew tolerance in seconds (5 minutes per WS-I BSP guidance) |
+
+These options are internally mapped to a `ResponseVerification::Options` Data class with nested `certificate` and `timestamp` configuration groups.
+
 ### Full Example with Chain Validation
 
 ```ruby
@@ -397,18 +429,43 @@ operation.security
     private_key: key,
     digest_algorithm: :sha256
   )
-  .verify_response(trust_store: :system)
+  .verify_response(trust_store: :system, clock_skew: 600)
 
 response = operation.call
 
-if response.signature_valid?
-  # Certificate is valid and signed by a trusted CA
+if response.security.valid?
+  # Certificate is valid, signed by a trusted CA, and timestamp is fresh
   puts response.body
 else
-  response.signature_errors.each do |error|
+  response.security.errors.each do |error|
     puts "Error: #{error}"
   end
 end
+```
+
+### All verify_response Options
+
+| Option | Default | Description |
+|--------|---------|-------------|
+| `trust_store` | `nil` | Trust store for certificate chain validation |
+| `check_validity` | `true` | Check certificate validity period (not_before/not_after) |
+| `validate_timestamp` | `true` | Validate response timestamp freshness |
+| `clock_skew` | `300` | Clock skew tolerance in seconds for timestamp validation |
+
+Internally, these options are organized into a `ResponseVerification::Options` structure:
+
+```ruby
+# Internal structure (for advanced usage)
+verification = WSDL::Security::ResponseVerification::Options.new(
+  certificate: WSDL::Security::ResponseVerification::Certificate.new(
+    trust_store: :system,
+    verify_not_expired: true  # maps to check_validity
+  ),
+  timestamp: WSDL::Security::ResponseVerification::Timestamp.new(
+    validate: true,           # maps to validate_timestamp
+    tolerance_seconds: 300    # maps to clock_skew
+  )
+)
 ```
 
 ### When to Use Trust Store Validation
@@ -417,6 +474,106 @@ end
 - Communicating with external services
 - Compliance requirements (PCI-DSS, HIPAA, etc.)
 - You don't control the server certificate
+
+---
+
+## Timestamp Validation
+
+Timestamps help prevent replay attacks by ensuring that responses are fresh. When combined with signatures, the timestamp should be signed to prevent tampering.
+
+### How It Works
+
+Timestamp validation checks:
+
+1. **Expires** — The message must not have expired (accounting for clock skew)
+2. **Created** — The creation time must not be too far in the future (clock skew protection)
+
+Per the WS-Security specification, timestamps are optional. When present, they are validated by default.
+
+### Default Behavior
+
+Timestamp validation is **enabled by default** with a 5-minute clock skew tolerance:
+
+```ruby
+response = operation.call
+
+# Validates signature AND timestamp by default
+if response.security.valid?
+  puts "Response is signed and fresh"
+end
+
+# Or use verify! for strict checking
+response.security.verify!  # raises on failure
+```
+
+### Checking Timestamp Details
+
+```ruby
+# Check if timestamp is present
+response.security.timestamp_present?  # => true/false
+
+# Check if timestamp is valid (fresh)
+response.security.timestamp_valid?    # => true/false
+
+# Get parsed timestamp values
+response.security.timestamp
+# => { created_at: 2025-01-15 12:00:00 UTC, expires_at: 2025-01-15 12:05:00 UTC }
+
+# Strict verification
+response.security.verify_timestamp!   # raises TimestampValidationError on failure
+```
+
+### Configuring Clock Skew
+
+Clock skew tolerance accounts for unsynchronized clocks between sender and receiver. The default is 300 seconds (5 minutes), per WS-I BSP guidance:
+
+```ruby
+# Configure via operation security (recommended)
+operation.security.verify_response(clock_skew: 600)  # 10 minutes tolerance
+
+# Or with stricter tolerance for high-security scenarios
+operation.security.verify_response(clock_skew: 60)   # 1 minute tolerance
+```
+
+### Disabling Timestamp Validation
+
+For backward compatibility or when timestamps are not used:
+
+```ruby
+# Configure via operation security
+operation.security.verify_response(validate_timestamp: false)
+
+response = operation.call
+
+# Now only signature is validated
+response.security.valid?  # only checks signature
+```
+
+### Error Handling
+
+```ruby
+begin
+  response.security.verify!
+rescue WSDL::SignatureVerificationError => e
+  # Signature is invalid or missing
+  puts "Signature error: #{e.message}"
+rescue WSDL::TimestampValidationError => e
+  # Timestamp has expired or is too far in the future
+  puts "Timestamp error: #{e.message}"
+end
+```
+
+### Why Timestamp Validation Matters
+
+Without timestamp validation, an attacker can:
+
+1. Capture a valid signed response
+2. Store it indefinitely
+3. Replay it later to the client
+
+With timestamp validation, replayed messages are rejected because their timestamps have expired.
+
+> **Best Practice:** Always sign the timestamp element to prevent attackers from modifying it.
 
 **May skip when:**
 - Internal services with pre-shared certificates

@@ -104,10 +104,10 @@ operation.body = { GetOrder: { orderId: 12345 } }
 response = operation.call
 
 # Process verified response
-if response.signature_valid?
+if response.security.valid?
   puts response.body
 else
-  raise "Verification failed: #{response.signature_errors.join(', ')}"
+  raise "Verification failed: #{response.security.errors.join(', ')}"
 end
 ```
 

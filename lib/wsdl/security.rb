@@ -61,6 +61,7 @@ module WSDL
 
     # Load configuration and header builder
     require 'wsdl/security/config'
+    require 'wsdl/security/response_verification'
     require 'wsdl/security/security_header'
   end
 end

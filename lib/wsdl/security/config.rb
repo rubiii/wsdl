@@ -53,13 +53,21 @@ module WSDL
       # @return [Signature, nil]
       attr_reader :signature_config
 
-      # Returns the trust store for certificate chain validation.
+      # Returns the trust store to use for certificate chain validation.
       # @return [OpenSSL::X509::Store, Symbol, String, Array, nil]
       attr_reader :verification_trust_store
 
       # Returns whether certificate validity period checking is enabled.
       # @return [Boolean]
       attr_reader :check_certificate_validity
+
+      # Returns whether timestamp validation is enabled for response verification.
+      # @return [Boolean]
+      attr_reader :validate_timestamp
+
+      # Returns the clock skew tolerance in seconds for timestamp validation.
+      # @return [Integer]
+      attr_reader :clock_skew
 
       # Creates a new Config instance.
       #
@@ -71,6 +79,8 @@ module WSDL
         @verify_response = false
         @verification_trust_store = nil
         @check_certificate_validity = true
+        @validate_timestamp = true
+        @clock_skew = 300
       end
 
       # Configures UsernameToken authentication.
@@ -294,10 +304,14 @@ module WSDL
       #   - `nil` — Skip chain validation (default)
       # @param check_validity [Boolean] whether to check the certificate's validity
       #   period (not_before and not_after). Default: true
+      # @param validate_timestamp [Boolean] whether to validate timestamp freshness
+      #   to prevent replay attacks. Default: true
+      # @param clock_skew [Integer] acceptable clock skew in seconds for timestamp
+      #   validation. Default: 300 (5 minutes per WS-I BSP guidance)
       #
       # @return [self] for method chaining
       #
-      # @example Basic verification (validity period checked by default)
+      # @example Basic verification (validity period and timestamp checked by default)
       #   config.verify_response
       #
       # @example With system CA validation
@@ -310,16 +324,24 @@ module WSDL
       # @example Skip validity checking (not recommended)
       #   config.verify_response(check_validity: false)
       #
+      # @example With custom clock skew tolerance
+      #   config.verify_response(clock_skew: 600)  # 10 minutes
+      #
+      # @example Disable timestamp validation (not recommended)
+      #   config.verify_response(validate_timestamp: false)
+      #
       # @example Full chain with signature configuration
       #   config
       #     .timestamp
       #     .signature(certificate: cert, private_key: key)
       #     .verify_response(trust_store: :system)
       #
-      def verify_response(trust_store: nil, check_validity: true)
+      def verify_response(trust_store: nil, check_validity: true, validate_timestamp: true, clock_skew: 300)
         @verify_response = true
         @verification_trust_store = trust_store
         @check_certificate_validity = check_validity
+        @validate_timestamp = validate_timestamp
+        @clock_skew = clock_skew
         self
       end
 
@@ -340,6 +362,8 @@ module WSDL
         # Reset options when disabled
         @verification_trust_store = nil
         @check_certificate_validity = true
+        @validate_timestamp = true
+        @clock_skew = 300
       end
 
       # Returns whether response signature verification is enabled.
@@ -395,7 +419,9 @@ module WSDL
         if @verify_response
           copy.verify_response(
             trust_store: @verification_trust_store,
-            check_validity: @check_certificate_validity
+            check_validity: @check_certificate_validity,
+            validate_timestamp: @validate_timestamp,
+            clock_skew: @clock_skew
           )
         end
 

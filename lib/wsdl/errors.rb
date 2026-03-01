@@ -78,7 +78,7 @@ module WSDL
   #
   # @example
   #   begin
-  #     response.verify_signature!
+  #     response.security.verify_signature!
   #   rescue WSDL::SignatureVerificationError => e
   #     log_security_event("Signature verification failed: #{e.message}")
   #   end
@@ -123,14 +123,14 @@ module WSDL
   #
   # @example Catching certificate validation errors
   #   begin
-  #     response.verify_signature!
+  #     response.security.verify_signature!
   #   rescue WSDL::CertificateValidationError => e
   #     log_security_event("Untrusted certificate: #{e.message}")
   #   end
   #
   # @example Distinguishing from other signature errors
   #   begin
-  #     response.verify_signature!
+  #     response.security.verify_signature!
   #   rescue WSDL::CertificateValidationError => e
   #     # Certificate issue (expired, untrusted CA, etc.)
   #     puts "Certificate problem: #{e.message}"
@@ -140,5 +140,36 @@ module WSDL
   #   end
   #
   class CertificateValidationError < Error
+  end
+
+  # Raised when response timestamp validation fails.
+  #
+  # This error is raised when:
+  # - The response timestamp has expired (beyond clock skew tolerance)
+  # - The response Created time is too far in the future (clock skew exceeded)
+  # - A potential replay attack is detected
+  #
+  # Timestamp validation helps prevent replay attacks where an attacker
+  # captures a valid signed response and replays it later.
+  #
+  # @example Catching timestamp validation errors
+  #   begin
+  #     response.security.verify_timestamp!
+  #   rescue WSDL::TimestampValidationError => e
+  #     log_security_event("Stale or replayed message: #{e.message}")
+  #   end
+  #
+  # @example Distinguishing from signature errors
+  #   begin
+  #     response.security.verify!
+  #   rescue WSDL::TimestampValidationError => e
+  #     # Timestamp issue (expired, clock skew, replay)
+  #     puts "Timestamp problem: #{e.message}"
+  #   rescue WSDL::SignatureVerificationError => e
+  #     # Signature issue (tampered content, wrong key, etc.)
+  #     puts "Signature problem: #{e.message}"
+  #   end
+  #
+  class TimestampValidationError < Error
   end
 end

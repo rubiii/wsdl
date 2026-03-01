@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'wsdl/xml/parser'
+require 'wsdl/response/security_context'
 
 module WSDL
   # Represents a SOAP response from an operation call.
@@ -33,13 +34,22 @@ module WSDL
   #
   # @example Verifying signature
   #   response = operation.call
-  #   if response.signature_present?
-  #     if response.signature_valid?
+  #   if response.security.signature_present?
+  #     if response.security.valid?
   #       puts "Response is signed and valid"
-  #       puts "Signed elements: #{response.signed_elements}"
+  #       puts "Signed elements: #{response.security.signed_elements}"
   #     else
-  #       puts "Signature verification failed: #{response.signature_errors}"
+  #       puts "Signature verification failed: #{response.security.errors}"
   #     end
+  #   end
+  #
+  # @example Strict verification (signature + timestamp)
+  #   begin
+  #     response.security.verify!
+  #   rescue WSDL::SignatureVerificationError => e
+  #     puts "Signature error: #{e.message}"
+  #   rescue WSDL::TimestampValidationError => e
+  #     puts "Timestamp error: #{e.message}"
   #   end
   #
   class Response
@@ -50,28 +60,15 @@ module WSDL
     #   describing the expected body structure for type-aware parsing
     # @param output_header_parts [Array<WSDL::XML::Element>, nil] optional schema elements
     #   describing the expected header structure for type-aware parsing
-    # @param verify_certificate [OpenSSL::X509::Certificate, nil] optional certificate
-    #   to use for signature verification instead of extracting from message
-    # @param trust_store [OpenSSL::X509::Store, Symbol, String, Array, nil] trust store
-    #   for certificate chain validation:
-    #   - `:system` — Use system default CA certificates
-    #   - `String` — Path to CA bundle file or directory
-    #   - `Array<OpenSSL::X509::Certificate>` — Array of trusted CA certificates
-    #   - `OpenSSL::X509::Store` — Pre-configured certificate store
-    #   - `nil` — Skip chain validation (default)
-    # @param check_validity [Boolean] whether to check the certificate's validity
-    #   period (not_before and not_after). Default: true
-    # rubocop:disable Metrics/ParameterLists
+    # @param verification [Security::ResponseVerification] response verification options
+    #   for signature and timestamp validation
+    #
     def initialize(raw_response, output_body_parts: nil, output_header_parts: nil,
-                   verify_certificate: nil, trust_store: nil, check_validity: true)
-      # rubocop:enable Metrics/ParameterLists
+                   verification: Security::ResponseVerification::Options.default)
       @raw_response = raw_response
       @output_body_parts = output_body_parts
       @output_header_parts = output_header_parts
-      @verify_certificate = verify_certificate
-      @trust_store = trust_store
-      @check_validity = check_validity
-      @verifier = nil
+      @verification = verification
     end
 
     # Returns the raw XML response string.
@@ -168,135 +165,32 @@ module WSDL
     end
 
     # ============================================================
-    # Signature Verification Methods
+    # Security Context
     # ============================================================
 
-    # Returns whether the response contains a signature.
+    # Returns the security context for signature and timestamp verification.
     #
-    # @return [Boolean] true if a ds:Signature element is present
+    # The security context provides methods for:
+    # - Signature verification (`signature_valid?`, `verify_signature!`)
+    # - Timestamp validation (`timestamp_valid?`, `verify_timestamp!`)
+    # - Combined verification (`valid?`, `verify!`)
     #
-    # @example
-    #   if response.signature_present?
-    #     puts "Response is signed"
+    # @return [SecurityContext] the security verification context
+    #
+    # @example Check if response is secure
+    #   if response.security.valid?
+    #     puts "Response is signed and fresh"
     #   end
-    def signature_present?
-      verifier.signature_present?
-    end
-
-    # Returns whether the response signature is valid.
     #
-    # This performs full signature verification including:
-    # - Locating the signing certificate (from BinarySecurityToken or provided)
-    # - Verifying all Reference digests match the signed elements
-    # - Verifying the SignatureValue over the canonicalized SignedInfo
+    # @example Strict verification
+    #   response.security.verify!  # raises on failure
     #
-    # Returns false if no signature is present. Use {#signature_present?}
-    # to distinguish between "no signature" and "invalid signature".
+    # @example Access verification details
+    #   response.security.signed_elements  # => ["Body", "Timestamp"]
+    #   response.security.errors           # => ["Digest mismatch..."]
     #
-    # @return [Boolean] true if signature is present and valid
-    #
-    # @example
-    #   if response.signature_valid?
-    #     # Safe to trust the response content
-    #   else
-    #     puts "Errors: #{response.signature_errors}"
-    #   end
-    def signature_valid?
-      verifier.valid?
-    end
-
-    # Verifies the signature and raises an error if invalid.
-    #
-    # Use this method when you want to ensure the response is properly
-    # signed and fail loudly if it's not.
-    #
-    # @raise [SignatureVerificationError] if signature is missing or invalid
-    # @return [true] if signature is valid
-    #
-    # @example
-    #   begin
-    #     response.verify_signature!
-    #     # Process trusted response
-    #   rescue WSDL::SignatureVerificationError => e
-    #     puts "Untrusted response: #{e.message}"
-    #   end
-    def verify_signature!
-      raise SignatureVerificationError, 'Response does not contain a signature' unless signature_present?
-
-      unless signature_valid?
-        errors = signature_errors.join('; ')
-        raise SignatureVerificationError, "Signature verification failed: #{errors}"
-      end
-
-      true
-    end
-
-    # Returns the IDs of all signed elements.
-    #
-    # These are the URI references from the signature's Reference elements,
-    # typically including Body, Timestamp, and possibly WS-Addressing headers.
-    #
-    # @return [Array<String>] element IDs (e.g., ['Body-abc123', 'Timestamp-xyz789'])
-    #
-    # @example
-    #   response.signed_element_ids
-    #   # => ["Body-abc123", "Timestamp-xyz789"]
-    def signed_element_ids
-      verifier.signed_element_ids
-    end
-
-    # Returns the names of all signed elements.
-    #
-    # @return [Array<String>] element names (e.g., ['Body', 'Timestamp'])
-    #
-    # @example
-    #   response.signed_elements
-    #   # => ["Body", "Timestamp"]
-    def signed_elements
-      verifier.signed_elements
-    end
-
-    # Returns any errors from signature verification.
-    #
-    # This is populated after calling {#signature_valid?} and contains
-    # details about why verification failed.
-    #
-    # @return [Array<String>] error messages
-    #
-    # @example
-    #   unless response.signature_valid?
-    #     response.signature_errors.each do |error|
-    #       puts "Verification error: #{error}"
-    #     end
-    #   end
-    def signature_errors
-      verifier.errors
-    end
-
-    # Returns the signature algorithm used.
-    #
-    # @return [String, nil] the algorithm URI (e.g., 'http://www.w3.org/2001/04/xmldsig-more#rsa-sha256')
-    def signature_algorithm
-      verifier.signature_algorithm
-    end
-
-    # Returns the digest algorithm used.
-    #
-    # @return [String, nil] the algorithm URI from the first reference
-    def digest_algorithm
-      verifier.digest_algorithm
-    end
-
-    # Returns the certificate used to sign the response.
-    #
-    # This is either the certificate extracted from the BinarySecurityToken
-    # in the response, or the certificate provided at initialization.
-    #
-    # @return [OpenSSL::X509::Certificate, nil] the signing certificate
-    def signing_certificate
-      # Trigger verification to extract certificate
-      verifier.valid? unless verifier.certificate
-      verifier.certificate
+    def security
+      @security ||= SecurityContext.new(doc, @verification)
     end
 
     private
@@ -449,19 +343,6 @@ module WSDL
         'soap' => NS::SOAP_1_1,
         'soap12' => NS::SOAP_1_2,
         'env' => NS::SOAP_1_1
-      )
-    end
-
-    # Returns the signature verifier instance.
-    #
-    # @return [Security::Verifier]
-    #
-    def verifier
-      @verifier ||= Security::Verifier.new(
-        @raw_response,
-        certificate: @verify_certificate,
-        trust_store: @trust_store,
-        check_validity: @check_validity
       )
     end
   end
