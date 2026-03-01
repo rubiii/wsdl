@@ -11,19 +11,68 @@ module WSDL
     # The UsernameToken provides username/password authentication for SOAP
     # messages. It supports both plain text and digest password modes.
     #
-    # In digest mode, the password is computed as:
-    #   Base64(SHA-1(nonce + created + password))
+    # == Security Comparison
     #
-    # This prevents the password from being transmitted in plain text and
-    # provides replay attack protection through the nonce and timestamp.
+    # Choose the appropriate mode based on your security requirements:
     #
-    # @example Plain text password
+    # [Plain Text Mode] (+digest: false+, default)
+    #   - Password is sent as-is in the SOAP message
+    #   - *Must* only be used over HTTPS to protect the password in transit
+    #   - Simpler but provides no replay protection
+    #   - Suitable for: Development, trusted networks with HTTPS
+    #
+    # [Digest Mode] (+digest: true+, recommended)
+    #   - Password is *never* transmitted
+    #   - Computed as: +Base64(SHA-1(nonce + created + password))+
+    #   - Provides replay attack protection via nonce and timestamp
+    #   - Even if intercepted, attacker cannot recover the original password
+    #   - Suitable for: Production environments, sensitive operations
+    #
+    # [X.509 Certificate Signatures] (strongest alternative)
+    #   - For high-security requirements, consider using {Signature} instead
+    #   - Supports SHA-256/SHA-512 (configurable)
+    #   - Provides non-repudiation and stronger cryptographic guarantees
+    #   - Suitable for: Compliance requirements, financial transactions
+    #
+    # == SHA-1 Protocol Limitation
+    #
+    # The WS-Security UsernameToken Profile 1.1 specification *mandates* SHA-1
+    # for password digests. This is a protocol constraint, not a design choice.
+    # Servers expecting WS-Security compliance will reject non-SHA-1 digests.
+    #
+    # While SHA-1 has known weaknesses (collision attacks), these do not
+    # directly impact password digest security:
+    #
+    # - *Collision attacks* find two inputs with the same hash — not useful
+    #   for password cracking
+    # - *Preimage resistance* (recovering input from hash) remains
+    #   computationally infeasible
+    # - The *nonce changes every request*, preventing precomputation attacks
+    # - The real risk is *weak passwords*, not SHA-1 itself
+    #
+    # For scenarios requiring stronger cryptographic algorithms, use
+    # {Signature X.509 certificate signatures} which support SHA-256/SHA-512.
+    #
+    # == Recommendations
+    #
+    # 1. *Always use HTTPS* — regardless of password mode
+    # 2. *Prefer digest mode* over plain text for production
+    # 3. *Use strong passwords* — this is the primary security factor
+    # 4. *Consider X.509 signatures* for high-security requirements
+    #
+    # @example Plain text password (use only over HTTPS)
     #   token = UsernameToken.new('user', 'secret')
     #
-    # @example Digest password
+    # @example Digest password (recommended for production)
     #   token = UsernameToken.new('user', 'secret', digest: true)
     #
+    # @note The digest algorithm (SHA-1) is mandated by the WS-Security
+    #   UsernameToken Profile 1.1 specification and cannot be changed
+    #   without breaking interoperability with compliant servers.
+    #
+    # @see Signature For X.509 certificate-based authentication (supports SHA-256/SHA-512)
     # @see https://docs.oasis-open.org/wss/v1.1/wss-v1.1-spec-os-UsernameTokenProfile.pdf
+    #   WS-Security UsernameToken Profile 1.1 Specification
     #
     class UsernameToken
       include Constants
@@ -183,13 +232,25 @@ module WSDL
 
       private
 
-      # Computes the password digest.
+      # Computes the password digest per WS-Security UsernameToken Profile 1.1.
       #
-      # The digest is computed as: Base64(SHA-1(nonce + created + password))
-      # where nonce is the raw bytes, created is the XML timestamp string,
-      # and password is the plain text password.
+      # The digest formula is mandated by the specification as:
+      #   Base64(SHA-1(nonce + created + password))
+      #
+      # Where:
+      # - +nonce+ is the raw bytes (16 cryptographically random bytes)
+      # - +created+ is the XML Schema dateTime string (e.g., "2026-02-01T12:00:00Z")
+      # - +password+ is the plain text password
+      #
+      # @note SHA-1 is required by the WS-Security specification. While SHA-1 has
+      #   known collision weaknesses, preimage attacks (recovering the password
+      #   from the digest) remain computationally infeasible. The nonce ensures
+      #   each digest is unique, preventing replay and precomputation attacks.
       #
       # @return [String] the Base64-encoded SHA-1 digest
+      #
+      # @see https://docs.oasis-open.org/wss/v1.1/wss-v1.1-spec-os-UsernameTokenProfile.pdf
+      #   Section 4.1 - Sending Passwords in Digests
       #
       def compute_digest
         token = @nonce + created_at_xml + @password
