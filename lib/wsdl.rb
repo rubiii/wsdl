@@ -81,10 +81,38 @@ module WSDL
     attr_writer :cache
   end
 
+  # Returns the default resource limits for WSDL parsing.
+  #
+  # By default, a {Limits} instance with sensible defaults is used
+  # to prevent resource exhaustion from malicious WSDL documents.
+  #
+  # @return [Limits] the default limits instance
+  #
+  def self.limits
+    @limits ||= Limits.new
+  end
+
+  # Sets the default resource limits.
+  #
+  # @param limits [Limits] a limits instance
+  # @return [Limits] the limits instance
+  #
+  # @example Increasing the document size limit
+  #   WSDL.limits = WSDL::Limits.new(max_document_size: 20 * 1024 * 1024)
+  #
+  # @example Modifying a single limit
+  #   WSDL.limits = WSDL.limits.with(max_schemas: 100)
+  #
+  class << self
+    attr_writer :limits
+  end
+
   # Load core components
   require 'wsdl/version'
   require 'wsdl/ns'
   require 'wsdl/errors'
+  require 'wsdl/formatting'
+  require 'wsdl/limits'
   require 'wsdl/cache'
   require 'wsdl/httpclient'
 

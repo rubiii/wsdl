@@ -343,6 +343,187 @@ describe WSDL::Parser::Resolver do
     end
   end
 
+  describe 'resource limits' do
+    let(:options) { { file_access: :unrestricted } }
+
+    describe '#limits' do
+      it 'uses WSDL.limits by default' do
+        expect(resolver.limits).to eq(WSDL.limits)
+      end
+
+      it 'accepts custom limits' do
+        custom_limits = WSDL::Limits.new(max_document_size: 1024)
+        resolver_with_limits = described_class.new(http_test_client, file_access: :unrestricted, limits: custom_limits)
+
+        expect(resolver_with_limits.limits).to eq(custom_limits)
+      end
+    end
+
+    describe 'max_document_size' do
+      let(:small_file) { fixture('wsdl/authentication') }
+
+      context 'when file size is within limit' do
+        let(:options) { { file_access: :unrestricted, limits: WSDL::Limits.new(max_document_size: 10 * 1024 * 1024) } }
+
+        it 'allows reading the file' do
+          expect { resolver.resolve(small_file) }.not_to raise_error
+        end
+      end
+
+      context 'when file size exceeds limit' do
+        let(:options) { { file_access: :unrestricted, limits: WSDL::Limits.new(max_document_size: 10) } }
+
+        it 'raises ResourceLimitError' do
+          expect {
+            resolver.resolve(small_file)
+          }.to raise_error(WSDL::ResourceLimitError, /exceeds limit/)
+        end
+
+        it 'includes the limit name in the error' do
+          expect {
+            resolver.resolve(small_file)
+          }.to raise_error(WSDL::ResourceLimitError) { |e|
+            expect(e.limit_name).to eq(:max_document_size)
+          }
+        end
+
+        it 'includes the limit value in the error' do
+          expect {
+            resolver.resolve(small_file)
+          }.to raise_error(WSDL::ResourceLimitError) { |e|
+            expect(e.limit_value).to eq(10)
+          }
+        end
+      end
+
+      context 'when limit is nil (disabled)' do
+        let(:options) { { file_access: :unrestricted, limits: WSDL::Limits.new(max_document_size: nil) } }
+
+        it 'allows any file size' do
+          expect { resolver.resolve(small_file) }.not_to raise_error
+        end
+      end
+
+      context 'for HTTP responses' do
+        let(:large_content) { 'x' * 1000 }
+        let(:http_client) do
+          Class.new do
+            def initialize(content)
+              @content = content
+            end
+
+            def get(_url)
+              @content
+            end
+          end.new(large_content)
+        end
+
+        it 'raises ResourceLimitError when HTTP response exceeds limit' do
+          limited_resolver = described_class.new(
+            http_client,
+            file_access: :unrestricted,
+            limits: WSDL::Limits.new(max_document_size: 100)
+          )
+
+          expect {
+            limited_resolver.resolve('http://example.com/large.wsdl')
+          }.to raise_error(WSDL::ResourceLimitError, /exceeds limit/)
+        end
+      end
+    end
+
+    describe 'max_total_download_size' do
+      let(:small_file) { fixture('wsdl/authentication') }
+      let(:file_size) { File.size(small_file) }
+
+      context 'when total download stays within limit' do
+        let(:options) do
+          {
+            file_access: :unrestricted,
+            limits: WSDL::Limits.new(max_total_download_size: file_size * 10)
+          }
+        end
+
+        it 'allows multiple downloads' do
+          3.times do
+            resolver.resolve(small_file)
+          end
+          expect(resolver.total_bytes_downloaded).to eq(file_size * 3)
+        end
+      end
+
+      context 'when total download exceeds limit' do
+        let(:options) do
+          {
+            file_access: :unrestricted,
+            limits: WSDL::Limits.new(max_total_download_size: file_size + 1)
+          }
+        end
+
+        it 'raises ResourceLimitError on second download' do
+          resolver.resolve(small_file)
+
+          expect {
+            resolver.resolve(small_file)
+          }.to raise_error(WSDL::ResourceLimitError, /Total download size/)
+        end
+
+        it 'includes the limit name in the error' do
+          resolver.resolve(small_file)
+
+          expect {
+            resolver.resolve(small_file)
+          }.to raise_error(WSDL::ResourceLimitError) { |e|
+            expect(e.limit_name).to eq(:max_total_download_size)
+          }
+        end
+      end
+
+      context 'when limit is nil (disabled)' do
+        let(:options) { { file_access: :unrestricted, limits: WSDL::Limits.new(max_total_download_size: nil) } }
+
+        it 'allows unlimited total download' do
+          10.times do
+            resolver.resolve(small_file)
+          end
+          expect(resolver.total_bytes_downloaded).to eq(file_size * 10)
+        end
+      end
+    end
+
+    describe '#total_bytes_downloaded' do
+      it 'starts at zero' do
+        expect(resolver.total_bytes_downloaded).to eq(0)
+      end
+
+      it 'accumulates bytes from file reads' do
+        small_file = fixture('wsdl/authentication')
+        file_size = File.size(small_file)
+
+        resolver.resolve(small_file)
+        expect(resolver.total_bytes_downloaded).to eq(file_size)
+      end
+
+      it 'accumulates bytes from HTTP responses' do
+        content = 'test content'
+        http_client = Class.new do
+          def initialize(content)
+            @content = content
+          end
+
+          def get(_url)
+            @content
+          end
+        end.new(content)
+
+        http_resolver = described_class.new(http_client, file_access: :unrestricted)
+        http_resolver.resolve('http://example.com/test.wsdl')
+
+        expect(http_resolver.total_bytes_downloaded).to eq(content.bytesize)
+      end
+    end
+  end
+
   describe 'integration with real fixtures' do
     let(:fixture_dir) { File.expand_path('../../fixtures/wsdl', __dir__) }
     let(:options) { { file_access: :sandbox, sandbox_paths: [fixture_dir] } }

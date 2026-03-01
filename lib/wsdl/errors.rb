@@ -213,4 +213,53 @@ module WSDL
       super(message)
     end
   end
+
+  # Raised when a resource limit is exceeded.
+  #
+  # This error protects against denial-of-service attacks from malformed
+  # or malicious WSDL documents that could exhaust system resources.
+  #
+  # @example Catching resource limit errors
+  #   begin
+  #     client = WSDL::Client.new('http://example.com/huge.wsdl')
+  #   rescue WSDL::ResourceLimitError => e
+  #     puts "Limit exceeded: #{e.limit_name}"
+  #     puts "Limit: #{e.limit_value}, Actual: #{e.actual_value}"
+  #   end
+  #
+  # @example Handling specific limits
+  #   begin
+  #     client = WSDL::Client.new(wsdl_url)
+  #   rescue WSDL::ResourceLimitError => e
+  #     case e.limit_name
+  #     when :max_document_size
+  #       puts "Document too large"
+  #     when :max_schemas
+  #       puts "Too many schema imports"
+  #     end
+  #   end
+  #
+  class ResourceLimitError < Error
+    # @return [Symbol] the name of the limit that was exceeded
+    attr_reader :limit_name
+
+    # @return [Integer] the configured limit value
+    attr_reader :limit_value
+
+    # @return [Integer] the actual value that exceeded the limit
+    attr_reader :actual_value
+
+    # Creates a new ResourceLimitError.
+    #
+    # @param message [String] error message
+    # @param limit_name [Symbol] the name of the limit (e.g., :max_document_size)
+    # @param limit_value [Integer] the configured limit
+    # @param actual_value [Integer] the value that exceeded the limit
+    def initialize(message = nil, limit_name: nil, limit_value: nil, actual_value: nil)
+      @limit_name = limit_name
+      @limit_value = limit_value
+      @actual_value = actual_value
+      super(message)
+    end
+  end
 end

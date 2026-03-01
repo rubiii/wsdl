@@ -15,7 +15,7 @@ describe WSDL::Client do
   describe '.new' do
     it 'expects a local or remote WSDL document' do
       allow(WSDL::Parser::Result).to receive(:new).with(
-        wsdl, instance_of(WSDL.http_adapter), file_access: :unrestricted, sandbox_paths: nil
+        wsdl, instance_of(WSDL.http_adapter), hash_including(file_access: :unrestricted, sandbox_paths: nil)
       ).and_return(:parser_result)
       client = described_class.new(wsdl)
       expect(client.parser_result).to eq(:parser_result)
@@ -24,7 +24,7 @@ describe WSDL::Client do
     it 'also accepts a custom HTTP adapter to replace the default' do
       http = :my_http_adapter
       allow(WSDL::Parser::Result).to receive(:new).with(
-        wsdl, http, file_access: :unrestricted, sandbox_paths: nil
+        wsdl, http, hash_including(file_access: :unrestricted, sandbox_paths: nil)
       ).and_return(:parser_result)
 
       client = described_class.new(wsdl, http: http)
@@ -103,7 +103,7 @@ describe WSDL::Client do
           described_class.new(wsdl)
 
           expect(WSDL::Parser::Result).to have_received(:new).with(
-            wsdl, anything, file_access: :unrestricted, sandbox_paths: nil
+            wsdl, anything, hash_including(file_access: :unrestricted, sandbox_paths: nil)
           )
         end
 
@@ -116,7 +116,7 @@ describe WSDL::Client do
           described_class.new(travelport_wsdl)
 
           expect(WSDL::Parser::Result).to have_received(:new).with(
-            travelport_wsdl, anything, file_access: :unrestricted, sandbox_paths: nil
+            travelport_wsdl, anything, hash_including(file_access: :unrestricted, sandbox_paths: nil)
           )
         end
       end
@@ -131,7 +131,7 @@ describe WSDL::Client do
           described_class.new(url_wsdl)
 
           expect(WSDL::Parser::Result).to have_received(:new).with(
-            url_wsdl, anything, file_access: :disabled, sandbox_paths: nil
+            url_wsdl, anything, hash_including(file_access: :disabled, sandbox_paths: nil)
           )
         end
       end
@@ -146,7 +146,7 @@ describe WSDL::Client do
           described_class.new(inline_xml)
 
           expect(WSDL::Parser::Result).to have_received(:new).with(
-            inline_xml, anything, file_access: :disabled, sandbox_paths: nil
+            inline_xml, anything, hash_including(file_access: :disabled, sandbox_paths: nil)
           )
         end
       end
@@ -160,7 +160,7 @@ describe WSDL::Client do
         described_class.new(wsdl, file_access: :disabled)
 
         expect(WSDL::Parser::Result).to have_received(:new).with(
-          wsdl, anything, file_access: :disabled, sandbox_paths: nil
+          wsdl, anything, hash_including(file_access: :disabled, sandbox_paths: nil)
         )
       end
 
@@ -171,7 +171,7 @@ describe WSDL::Client do
         described_class.new(wsdl, file_access: :unrestricted)
 
         expect(WSDL::Parser::Result).to have_received(:new).with(
-          wsdl, anything, file_access: :unrestricted, sandbox_paths: nil
+          wsdl, anything, hash_including(file_access: :unrestricted, sandbox_paths: nil)
         )
       end
 
@@ -183,7 +183,7 @@ describe WSDL::Client do
         described_class.new(wsdl, file_access: :sandbox, sandbox_paths: custom_paths)
 
         expect(WSDL::Parser::Result).to have_received(:new).with(
-          wsdl, anything, file_access: :sandbox, sandbox_paths: custom_paths
+          wsdl, anything, hash_including(file_access: :sandbox, sandbox_paths: custom_paths)
         )
       end
     end
@@ -257,6 +257,49 @@ describe WSDL::Client do
           }
         }
       )
+    end
+  end
+
+  describe '#limits' do
+    it 'uses WSDL.limits by default' do
+      expect(client.limits).to eq(WSDL.limits)
+    end
+
+    it 'accepts custom limits' do
+      custom_limits = WSDL::Limits.new(max_schemas: 200)
+      client_with_limits = described_class.new(wsdl, http: http_mock, limits: custom_limits)
+
+      expect(client_with_limits.limits).to eq(custom_limits)
+    end
+
+    it 'passes limits to the parser result' do
+      custom_limits = WSDL::Limits.new(max_document_size: 5 * 1024 * 1024)
+      parser_result = instance_double(WSDL::Parser::Result, services: {}, limits: custom_limits)
+      allow(WSDL::Parser::Result).to receive(:new).and_return(parser_result)
+
+      described_class.new(wsdl, http: http_mock, limits: custom_limits, cache: nil)
+
+      expect(WSDL::Parser::Result).to have_received(:new).with(
+        wsdl, anything, hash_including(limits: custom_limits)
+      )
+    end
+  end
+
+  describe 'resource limit enforcement' do
+    it 'raises ResourceLimitError when document size exceeds limit' do
+      tiny_limit = WSDL::Limits.new(max_document_size: 10)
+
+      expect {
+        described_class.new(wsdl, http: http_mock, limits: tiny_limit, cache: nil)
+      }.to raise_error(WSDL::ResourceLimitError, /exceeds limit/)
+    end
+
+    it 'allows parsing with sufficient limits' do
+      generous_limits = WSDL::Limits.new(max_document_size: 10 * 1024 * 1024)
+
+      expect {
+        described_class.new(wsdl, http: http_mock, limits: generous_limits, cache: nil)
+      }.not_to raise_error
     end
   end
 

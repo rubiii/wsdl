@@ -706,10 +706,223 @@ RSpec.describe WSDL::Schema::Node do
 
   describe '#inspect' do
     it 'returns formatted debug string' do
-      node = new_node('<xs:element name="user" type="tns:User" xmlns:xs="http://www.w3.org/2001/XMLSchema"/>')
-      expect(node.inspect).to match(/#<Schema::Node:element/)
-      expect(node.inspect).to include('name="user"')
-      expect(node.inspect).to include('type="tns:User"')
+      node = new_node('<xs:element name="User" type="tns:UserType" xmlns:xs="http://www.w3.org/2001/XMLSchema"/>')
+      expect(node.inspect).to include('Schema::Node:element')
+      expect(node.inspect).to include('name="User"')
+      expect(node.inspect).to include('type="tns:UserType"')
+    end
+  end
+
+  describe 'resource limits' do
+    describe 'max_elements_per_type' do
+      it 'raises ResourceLimitError when element count exceeds limit' do
+        limits = WSDL::Limits.new(max_elements_per_type: 2)
+
+        xml = <<~XML
+          <xs:complexType name="LargeType" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+            <xs:sequence>
+              <xs:element name="field1" type="xs:string"/>
+              <xs:element name="field2" type="xs:string"/>
+              <xs:element name="field3" type="xs:string"/>
+            </xs:sequence>
+          </xs:complexType>
+        XML
+
+        node = new_node(xml)
+
+        expect {
+          node.elements([], limits:)
+        }.to raise_error(WSDL::ResourceLimitError, /Element count.*exceeds limit/)
+      end
+
+      it 'includes limit details in the error' do
+        limits = WSDL::Limits.new(max_elements_per_type: 2)
+
+        xml = <<~XML
+          <xs:complexType name="LargeType" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+            <xs:sequence>
+              <xs:element name="field1" type="xs:string"/>
+              <xs:element name="field2" type="xs:string"/>
+              <xs:element name="field3" type="xs:string"/>
+            </xs:sequence>
+          </xs:complexType>
+        XML
+
+        node = new_node(xml)
+
+        expect {
+          node.elements([], limits:)
+        }.to raise_error(WSDL::ResourceLimitError) { |e|
+          expect(e.limit_name).to eq(:max_elements_per_type)
+          expect(e.limit_value).to eq(2)
+          expect(e.actual_value).to eq(3)
+        }
+      end
+
+      it 'allows elements when count is within limit' do
+        limits = WSDL::Limits.new(max_elements_per_type: 10)
+
+        xml = <<~XML
+          <xs:complexType name="SmallType" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+            <xs:sequence>
+              <xs:element name="field1" type="xs:string"/>
+              <xs:element name="field2" type="xs:string"/>
+            </xs:sequence>
+          </xs:complexType>
+        XML
+
+        node = new_node(xml)
+
+        expect { node.elements([], limits:) }.not_to raise_error
+        expect(node.elements([], limits:).size).to eq(2)
+      end
+
+      it 'allows unlimited elements when limit is nil' do
+        limits = WSDL::Limits.new(max_elements_per_type: nil)
+
+        xml = <<~XML
+          <xs:complexType name="LargeType" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+            <xs:sequence>
+              <xs:element name="field1" type="xs:string"/>
+              <xs:element name="field2" type="xs:string"/>
+              <xs:element name="field3" type="xs:string"/>
+            </xs:sequence>
+          </xs:complexType>
+        XML
+
+        node = new_node(xml)
+
+        expect { node.elements([], limits:) }.not_to raise_error
+      end
+
+      it 'does not check limits when limits parameter is nil' do
+        xml = <<~XML
+          <xs:complexType name="LargeType" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+            <xs:sequence>
+              <xs:element name="field1" type="xs:string"/>
+              <xs:element name="field2" type="xs:string"/>
+              <xs:element name="field3" type="xs:string"/>
+            </xs:sequence>
+          </xs:complexType>
+        XML
+
+        node = new_node(xml)
+
+        expect { node.elements }.not_to raise_error
+        expect { node.elements([], limits: nil) }.not_to raise_error
+      end
+    end
+
+    describe 'max_attributes_per_element' do
+      it 'raises ResourceLimitError when attribute count exceeds limit' do
+        limits = WSDL::Limits.new(max_attributes_per_element: 2)
+
+        xml = <<~XML
+          <xs:complexType name="ManyAttrsType" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+            <xs:simpleContent>
+              <xs:extension base="xs:string">
+                <xs:attribute name="attr1" type="xs:string"/>
+                <xs:attribute name="attr2" type="xs:string"/>
+                <xs:attribute name="attr3" type="xs:string"/>
+              </xs:extension>
+            </xs:simpleContent>
+          </xs:complexType>
+        XML
+
+        node = new_node(xml)
+
+        expect {
+          node.attributes([], limits:)
+        }.to raise_error(WSDL::ResourceLimitError, /Attribute count.*exceeds limit/)
+      end
+
+      it 'includes limit details in the error' do
+        limits = WSDL::Limits.new(max_attributes_per_element: 2)
+
+        xml = <<~XML
+          <xs:complexType name="ManyAttrsType" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+            <xs:simpleContent>
+              <xs:extension base="xs:string">
+                <xs:attribute name="attr1" type="xs:string"/>
+                <xs:attribute name="attr2" type="xs:string"/>
+                <xs:attribute name="attr3" type="xs:string"/>
+              </xs:extension>
+            </xs:simpleContent>
+          </xs:complexType>
+        XML
+
+        node = new_node(xml)
+
+        expect {
+          node.attributes([], limits:)
+        }.to raise_error(WSDL::ResourceLimitError) { |e|
+          expect(e.limit_name).to eq(:max_attributes_per_element)
+          expect(e.limit_value).to eq(2)
+          expect(e.actual_value).to eq(3)
+        }
+      end
+
+      it 'mentions XML Attribute Blowup attack in error message' do
+        limits = WSDL::Limits.new(max_attributes_per_element: 2)
+
+        xml = <<~XML
+          <xs:complexType name="ManyAttrsType" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+            <xs:simpleContent>
+              <xs:extension base="xs:string">
+                <xs:attribute name="attr1" type="xs:string"/>
+                <xs:attribute name="attr2" type="xs:string"/>
+                <xs:attribute name="attr3" type="xs:string"/>
+              </xs:extension>
+            </xs:simpleContent>
+          </xs:complexType>
+        XML
+
+        node = new_node(xml)
+
+        expect {
+          node.attributes([], limits:)
+        }.to raise_error(WSDL::ResourceLimitError, /WASC-41/)
+      end
+
+      it 'allows attributes when count is within limit' do
+        limits = WSDL::Limits.new(max_attributes_per_element: 10)
+
+        xml = <<~XML
+          <xs:complexType name="SmallAttrsType" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+            <xs:simpleContent>
+              <xs:extension base="xs:string">
+                <xs:attribute name="attr1" type="xs:string"/>
+                <xs:attribute name="attr2" type="xs:string"/>
+              </xs:extension>
+            </xs:simpleContent>
+          </xs:complexType>
+        XML
+
+        node = new_node(xml)
+
+        expect { node.attributes([], limits:) }.not_to raise_error
+        expect(node.attributes([], limits:).size).to eq(2)
+      end
+
+      it 'allows unlimited attributes when limit is nil' do
+        limits = WSDL::Limits.new(max_attributes_per_element: nil)
+
+        xml = <<~XML
+          <xs:complexType name="ManyAttrsType" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+            <xs:simpleContent>
+              <xs:extension base="xs:string">
+                <xs:attribute name="attr1" type="xs:string"/>
+                <xs:attribute name="attr2" type="xs:string"/>
+                <xs:attribute name="attr3" type="xs:string"/>
+              </xs:extension>
+            </xs:simpleContent>
+          </xs:complexType>
+        XML
+
+        node = new_node(xml)
+
+        expect { node.attributes([], limits:) }.not_to raise_error
+      end
     end
   end
 end

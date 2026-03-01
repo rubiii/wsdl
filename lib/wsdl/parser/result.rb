@@ -37,16 +37,19 @@ module WSDL
       #   - `:disabled` — No file access at all
       # @param sandbox_paths [Array<String>, nil] directories where file access is allowed.
       #   Only used when `file_access` is `:sandbox`.
+      # @param limits [Limits, nil] resource limits for DoS protection.
+      #   If nil, uses {WSDL.limits}.
       #
       # @note Security controls are enforced at the {WSDL::Client} level, which is the
       #   public API. This class defaults to unrestricted access for internal use.
       #
-      def initialize(wsdl, http, file_access: :unrestricted, sandbox_paths: nil)
+      def initialize(wsdl, http, file_access: :unrestricted, sandbox_paths: nil, limits: nil)
         @documents = DocumentCollection.new
         @schemas = Schema::Collection.new
+        @limits = limits || WSDL.limits
 
-        resolver = Resolver.new(http, file_access:, sandbox_paths:)
-        importer = Importer.new(resolver, @documents, @schemas)
+        resolver = Resolver.new(http, file_access:, sandbox_paths:, limits: @limits)
+        importer = Importer.new(resolver, @documents, @schemas, limits: @limits)
         importer.import(wsdl)
       end
 
@@ -59,6 +62,11 @@ module WSDL
       #
       # @return [Schema::Collection] the schema collection
       attr_reader :schemas
+
+      # The resource limits used for parsing.
+      #
+      # @return [Limits] the limits instance
+      attr_reader :limits
 
       # Returns the name of the primary service.
       #

@@ -20,12 +20,16 @@ module WSDL
       # @param resolver [Resolver] the resolver for fetching documents
       # @param documents [DocumentCollection] the collection to store parsed documents
       # @param schemas [Schema::Collection] the collection to store parsed schemas
-      def initialize(resolver, documents, schemas)
+      # @param limits [Limits, nil] resource limits for DoS protection.
+      #   If nil, uses {WSDL.limits}.
+      def initialize(resolver, documents, schemas, limits: nil)
         @logger = Logging.logger[self]
 
         @resolver = resolver
         @documents = documents
         @schemas = schemas
+        @limits = limits || WSDL.limits
+        @schema_count = 0
       end
 
       # Imports a WSDL document and all its dependencies.
@@ -38,7 +42,9 @@ module WSDL
         @logger.info("Resolving WSDL document #{location.inspect}.")
         import_document(location, base: nil) do |document, resolved_location|
           @documents << document
-          @schemas.push(document.schemas(resolved_location))
+          schemas = document.schemas(resolved_location)
+          track_schema_count(schemas.size)
+          @schemas.push(schemas)
         end
 
         # Resolve XML schema imports and includes
@@ -160,9 +166,8 @@ module WSDL
         new_schemas = document.schemas(resolved_location)
 
         apply_schemas(new_schemas, include_into)
-      rescue UnresolvableImportError
-        # Re-raise errors about unresolvable relative paths - these are user errors
-        # that need to be fixed, not transient failures
+      rescue UnresolvableImportError, ResourceLimitError
+        # Re-raise intentional errors - these are limits or user errors that need attention
         raise
       rescue StandardError => e
         # Log and skip other errors (e.g., file not found, network errors)
@@ -177,6 +182,9 @@ module WSDL
       # @param include_into [Schema::Definition, nil] if provided, merge into this schema
       # @return [void]
       def apply_schemas(new_schemas, include_into)
+        # Count all schemas toward the limit (includes add complexity too)
+        track_schema_count(new_schemas.size)
+
         if include_into
           # For includes, merge the schema contents into the including schema
           new_schemas.each { |s| include_into.merge(s) }
@@ -184,6 +192,25 @@ module WSDL
           # For imports, add as separate schemas
           @schemas.push(new_schemas)
         end
+      end
+
+      # Tracks schema count and validates against limit.
+      #
+      # @param count [Integer] the number of schemas to add
+      # @raise [ResourceLimitError] if total exceeds max_schemas
+      def track_schema_count(count)
+        @schema_count += count
+
+        return unless @limits.max_schemas
+        return if @schema_count <= @limits.max_schemas
+
+        raise ResourceLimitError.new(
+          "Schema count #{@schema_count} exceeds limit of #{@limits.max_schemas}. " \
+          'Consider increasing limits or reviewing the WSDL for excessive imports.',
+          limit_name: :max_schemas,
+          limit_value: @limits.max_schemas,
+          actual_value: @schema_count
+        )
       end
     end
   end

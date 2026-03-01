@@ -1,6 +1,10 @@
 # frozen_string_literal: true
 
 module WSDL
+  # XML Schema (XSD) parsing and representation.
+  #
+  # This module provides classes for parsing XML Schema definitions embedded
+  # in WSDL documents and resolving type references.
   module Schema
     # Unified representation of all XSD schema nodes.
     #
@@ -169,17 +173,20 @@ module WSDL
       # extension base type inheritance.
       #
       # @param memo [Array<Node>] accumulator for recursive traversal
+      # @param limits [Limits, nil] resource limits for validation
       # @return [Array<Node>] all element definitions found
-      def elements(memo = [])
+      # @raise [ResourceLimitError] if element count exceeds max_elements_per_type
+      def elements(memo = [], limits: nil)
         return memo if ELEMENT_TERMINATORS.include?(kind)
 
-        include_base_type_elements(memo) if kind == :extension
+        include_base_type_elements(memo, limits:) if kind == :extension
 
         children.each do |child|
           if ELEMENT_KINDS.include?(child.kind)
             memo << child
+            validate_element_count!(memo.size, limits)
           else
-            memo = child.elements(memo)
+            memo = child.elements(memo, limits:)
           end
         end
 
@@ -192,17 +199,20 @@ module WSDL
       # Handles attributeGroup references.
       #
       # @param memo [Array<Node>] accumulator for recursive traversal
+      # @param limits [Limits, nil] resource limits for validation
       # @return [Array<Node>] all attribute definitions found
-      def attributes(memo = [])
+      # @raise [ResourceLimitError] if attribute count exceeds max_attributes_per_element
+      def attributes(memo = [], limits: nil)
         return memo if ATTRIBUTE_TERMINATORS.include?(kind)
 
-        return resolve_attribute_group_ref(memo) if kind == :attributeGroup && ref
+        return resolve_attribute_group_ref(memo, limits:) if kind == :attributeGroup && ref
 
         children.each do |child|
           if ATTRIBUTE_KINDS.include?(child.kind)
             memo << child
+            validate_attribute_count!(memo.size, limits)
           else
-            memo = child.attributes(memo)
+            memo = child.attributes(memo, limits:)
           end
         end
 
@@ -347,21 +357,23 @@ module WSDL
       # Includes elements from the base type for extensions.
       #
       # @param memo [Array<Node>] accumulator for elements
+      # @param limits [Limits, nil] resource limits for validation
       # @return [void]
-      def include_base_type_elements(memo)
+      def include_base_type_elements(memo, limits: nil)
         return unless base
 
         base_type = resolve_type(base)
-        base_type&.elements(memo)
+        base_type&.elements(memo, limits:)
       end
 
       # Resolves attribute group reference and returns its attributes.
       #
       # @param memo [Array<Node>] accumulator for attributes
+      # @param limits [Limits, nil] resource limits for validation
       # @return [Array<Node>] attributes from the referenced group
-      def resolve_attribute_group_ref(memo)
+      def resolve_attribute_group_ref(memo, limits: nil)
         group = resolve_attribute_group(ref)
-        group ? memo + group.attributes : memo
+        group ? memo + group.attributes([], limits:) : memo
       end
 
       # Resolves a qualified type name to a Node.
@@ -380,6 +392,42 @@ module WSDL
       def resolve_attribute_group(qname)
         local, ns = expand_qname(qname, @namespaces, @context[:target_namespace])
         @collection&.find_attribute_group(ns, local)
+      end
+
+      # Validates element count against limits.
+      #
+      # @param count [Integer] the current element count
+      # @param limits [Limits, nil] resource limits for validation
+      # @raise [ResourceLimitError] if count exceeds max_elements_per_type
+      def validate_element_count!(count, limits)
+        return unless limits&.max_elements_per_type
+        return if count <= limits.max_elements_per_type
+
+        raise ResourceLimitError.new(
+          "Element count #{count} in type #{name.inspect} exceeds limit of #{limits.max_elements_per_type}. " \
+          'This may indicate a malicious WSDL or an unusually complex type definition.',
+          limit_name: :max_elements_per_type,
+          limit_value: limits.max_elements_per_type,
+          actual_value: count
+        )
+      end
+
+      # Validates attribute count against limits.
+      #
+      # @param count [Integer] the current attribute count
+      # @param limits [Limits, nil] resource limits for validation
+      # @raise [ResourceLimitError] if count exceeds max_attributes_per_element
+      def validate_attribute_count!(count, limits)
+        return unless limits&.max_attributes_per_element
+        return if count <= limits.max_attributes_per_element
+
+        raise ResourceLimitError.new(
+          "Attribute count #{count} in element #{name.inspect} exceeds limit of " \
+          "#{limits.max_attributes_per_element}. This may indicate an XML Attribute Blowup attack (WASC-41).",
+          limit_name: :max_attributes_per_element,
+          limit_value: limits.max_attributes_per_element,
+          actual_value: count
+        )
       end
     end
   end

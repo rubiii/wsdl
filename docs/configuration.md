@@ -279,6 +279,81 @@ WSDL.cache = RedisCache.new(Redis.new, ttl: 3600)
 
 The built-in `WSDL::Cache` is thread-safe. It uses a mutex to ensure that concurrent requests for the same uncached WSDL only trigger a single fetch operation.
 
+## Resource Limits
+
+The library enforces configurable resource limits to prevent denial-of-service attacks from malformed or malicious WSDL documents. These limits protect against excessive memory consumption, infinite loops, and other resource exhaustion attacks.
+
+### Default Limits
+
+| Limit | Default | Description |
+|-------|---------|-------------|
+| `max_document_size` | 10 MB | Maximum size for a single WSDL or schema document |
+| `max_total_download_size` | 50 MB | Maximum cumulative bytes downloaded across all documents |
+| `max_schemas` | 50 | Maximum number of schema definitions allowed |
+| `max_elements_per_type` | 500 | Maximum child elements in a complex type |
+| `max_attributes_per_element` | 100 | Maximum attributes on an XML element |
+| `max_type_nesting_depth` | 50 | Maximum depth of type inheritance/nesting |
+
+### Configuring Limits Globally
+
+``` ruby
+# Create custom limits
+WSDL.limits = WSDL::Limits.new(
+  max_document_size: 20 * 1024 * 1024,  # 20 MB
+  max_schemas: 100
+)
+
+# Or modify specific limits from defaults
+WSDL.limits = WSDL.limits.with(max_schemas: 100)
+```
+
+### Configuring Limits Per-Client
+
+``` ruby
+# Create custom limits for a specific client
+custom_limits = WSDL::Limits.new(max_schemas: 100, max_document_size: 20 * 1024 * 1024)
+client = WSDL::Client.new('http://example.com/service?wsdl', limits: custom_limits)
+
+# Or derive from global limits
+custom_limits = WSDL.limits.with(max_schemas: 100)
+client = WSDL::Client.new('http://example.com/service?wsdl', limits: custom_limits)
+```
+
+### Disabling Specific Limits
+
+Set a limit to `nil` to disable it:
+
+``` ruby
+# Disable schema count limit (not recommended)
+unlimited_schemas = WSDL.limits.with(max_schemas: nil)
+client = WSDL::Client.new('http://example.com/service?wsdl', limits: unlimited_schemas)
+```
+
+### Handling Limit Errors
+
+When a limit is exceeded, `WSDL::ResourceLimitError` is raised with details:
+
+``` ruby
+begin
+  client = WSDL::Client.new('http://example.com/huge.wsdl')
+rescue WSDL::ResourceLimitError => e
+  puts "Limit exceeded: #{e.limit_name}"
+  puts "Limit value: #{e.limit_value}"
+  puts "Actual value: #{e.actual_value}"
+  puts "Message: #{e.message}"
+end
+```
+
+### Inspecting Limits
+
+``` ruby
+puts WSDL.limits.inspect
+# => #<WSDL::Limits max_document_size=10MB max_total_download_size=50MB max_schemas=50 ...>
+
+puts WSDL.limits.to_h
+# => {:max_document_size=>10485760, :max_total_download_size=>52428800, ...}
+```
+
 ## Operation Defaults
 
 Operation settings can be configured after obtaining an operation object.

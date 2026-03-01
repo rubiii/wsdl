@@ -60,8 +60,9 @@ module WSDL
           header_part_names.include? part[:name]
         end
 
-        @header_parts = XML::ElementBuilder.new(@parser_result.schemas).build(header_parts)
-        @body_parts = XML::ElementBuilder.new(@parser_result.schemas).build(body_parts)
+        builder = XML::ElementBuilder.new(@parser_result.schemas, limits: @parser_result.limits)
+        @header_parts = builder.build(header_parts)
+        @body_parts = builder.build(body_parts)
       end
 
       # Collects the body parts from the referenced message.

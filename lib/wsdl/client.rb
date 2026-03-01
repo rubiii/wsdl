@@ -78,12 +78,17 @@ module WSDL
     #   - `:unrestricted` — No restrictions (default for file-loaded WSDLs)
     # @param sandbox_paths [Array<String>, nil] directories where file access is allowed.
     #   Only used when `file_access` is `:sandbox`.
+    # @param limits [Limits, nil] resource limits for DoS protection.
+    #   If nil, uses {WSDL.limits}. Use a custom Limits instance to increase
+    #   limits for specific WSDLs that exceed defaults.
     #
     # rubocop:disable Metrics/ParameterLists
-    def initialize(wsdl, http: nil, pretty_print: true, cache: :default, file_access: :auto, sandbox_paths: nil)
+    def initialize(wsdl, http: nil, pretty_print: true, cache: :default, file_access: :auto, sandbox_paths: nil,
+                   limits: nil)
       # rubocop:enable Metrics/ParameterLists
       @http = http || new_http_client
       @pretty_print = pretty_print
+      @limits = limits || WSDL.limits
 
       config = resolve_file_access_options(wsdl, file_access, sandbox_paths)
       @parser_result = load_parser_result(wsdl, cache, config.mode, config.sandbox_paths)
@@ -102,6 +107,12 @@ module WSDL
     # @return [Boolean] true if XML will be formatted with indentation
     #
     attr_reader :pretty_print
+
+    # Returns the resource limits used for parsing.
+    #
+    # @return [Limits] the limits instance
+    #
+    attr_reader :limits
 
     # Returns the HTTP adapter's client instance for configuration.
     #
@@ -185,9 +196,9 @@ module WSDL
       cache = WSDL.cache if cache == :default
 
       if cache
-        cache.fetch(wsdl) { Parser::Result.new(wsdl, @http, file_access:, sandbox_paths:) }
+        cache.fetch(wsdl) { Parser::Result.new(wsdl, @http, file_access:, sandbox_paths:, limits: @limits) }
       else
-        Parser::Result.new(wsdl, @http, file_access:, sandbox_paths:)
+        Parser::Result.new(wsdl, @http, file_access:, sandbox_paths:, limits: @limits)
       end
     end
 

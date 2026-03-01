@@ -40,6 +40,8 @@ module WSDL
     # @api private
     #
     class Resolver
+      include Formatting
+
       # Valid file access modes.
       VALID_FILE_ACCESS_MODES = %i[sandbox disabled unrestricted].freeze
 
@@ -61,14 +63,18 @@ module WSDL
       #   - `:unrestricted` — No restrictions (not recommended)
       # @param sandbox_paths [Array<String>, nil] directories where file access is allowed.
       #   Only used when `file_access` is `:sandbox`. If nil, no files can be read.
+      # @param limits [Limits, nil] resource limits for DoS protection.
+      #   If nil, uses {WSDL.limits}.
       #
-      def initialize(http, file_access: :sandbox, sandbox_paths: nil)
+      def initialize(http, file_access: :sandbox, sandbox_paths: nil, limits: nil)
         validate_file_access_mode!(file_access)
         validate_sandbox_paths_config!(file_access, sandbox_paths)
 
         @http = http
         @file_access = file_access
         @sandbox_paths = normalize_sandbox_paths(sandbox_paths)
+        @limits = limits || WSDL.limits
+        @total_bytes_downloaded = 0
       end
 
       # Returns the file access mode.
@@ -82,6 +88,18 @@ module WSDL
       # @return [Array<String>, nil] the allowed directories for file access
       #
       attr_reader :sandbox_paths
+
+      # Returns the resource limits.
+      #
+      # @return [Limits] the limits instance
+      #
+      attr_reader :limits
+
+      # Returns the total bytes downloaded so far.
+      #
+      # @return [Integer] cumulative bytes downloaded
+      #
+      attr_reader :total_bytes_downloaded
 
       # Resolves a location to its XML content.
       #
@@ -237,7 +255,7 @@ module WSDL
       #
       def fetch(location)
         case location
-        when URL_PATTERN then @http.get(location)
+        when URL_PATTERN then fetch_http(location)
         when XML_PATTERN then location
         else fetch_file(location)
         end
@@ -248,10 +266,92 @@ module WSDL
       # @param path [String] the file path to read
       # @return [String] the file content
       # @raise [PathRestrictionError] if file access is not allowed or path is outside sandbox
+      # @raise [ResourceLimitError] if file size exceeds limits
       #
       def fetch_file(path)
         validate_file_access!(path)
-        File.read(path)
+        validate_file_size!(path)
+
+        content = File.read(path)
+        track_download(content.bytesize)
+        content
+      end
+
+      # Validates file size before reading.
+      #
+      # @param path [String] the file path to check
+      # @raise [ResourceLimitError] if file size exceeds max_document_size
+      #
+      def validate_file_size!(path)
+        return unless @limits.max_document_size
+
+        # Check if file exists first; if not, let File.read raise the appropriate error
+        return unless File.exist?(path)
+
+        file_size = File.size(path)
+        return if file_size <= @limits.max_document_size
+
+        raise ResourceLimitError.new(
+          "File size #{format_bytes(file_size)} exceeds limit of #{format_bytes(@limits.max_document_size)}: #{path}",
+          limit_name: :max_document_size,
+          limit_value: @limits.max_document_size,
+          actual_value: file_size
+        )
+      end
+
+      # Fetches content via HTTP with size validation.
+      #
+      # @param url [String] the URL to fetch
+      # @return [String] the response body
+      # @raise [ResourceLimitError] if response size exceeds limits
+      #
+      def fetch_http(url)
+        content = @http.get(url)
+        content_size = content.bytesize
+
+        validate_document_size!(content_size, url)
+        track_download(content_size)
+
+        content
+      end
+
+      # Validates document size against limits.
+      #
+      # @param size [Integer] the document size in bytes
+      # @param location [String] the document location for error messages
+      # @raise [ResourceLimitError] if size exceeds max_document_size
+      #
+      def validate_document_size!(size, location)
+        return unless @limits.max_document_size
+        return if size <= @limits.max_document_size
+
+        raise ResourceLimitError.new(
+          "Document size #{format_bytes(size)} exceeds limit of " \
+          "#{format_bytes(@limits.max_document_size)}: #{location}",
+          limit_name: :max_document_size,
+          limit_value: @limits.max_document_size,
+          actual_value: size
+        )
+      end
+
+      # Tracks cumulative download size and validates against total limit.
+      #
+      # @param bytes [Integer] the number of bytes downloaded
+      # @raise [ResourceLimitError] if total exceeds max_total_download_size
+      #
+      def track_download(bytes)
+        @total_bytes_downloaded += bytes
+
+        return unless @limits.max_total_download_size
+        return if @total_bytes_downloaded <= @limits.max_total_download_size
+
+        raise ResourceLimitError.new(
+          "Total download size #{format_bytes(@total_bytes_downloaded)} exceeds limit of " \
+          "#{format_bytes(@limits.max_total_download_size)}",
+          limit_name: :max_total_download_size,
+          limit_value: @limits.max_total_download_size,
+          actual_value: @total_bytes_downloaded
+        )
       end
 
       # Validates that file access is allowed for the given path.

@@ -19,9 +19,12 @@ module WSDL
       # Creates a new ElementBuilder instance.
       #
       # @param schemas [Schema::Collection] the schema collection for resolving types
-      def initialize(schemas)
+      # @param limits [Limits, nil] resource limits for DoS protection.
+      #   If nil, uses {WSDL.limits}.
+      def initialize(schemas, limits: nil)
         @logger = Logging.logger[self]
         @schemas = schemas
+        @limits = limits || WSDL.limits
       end
 
       # Builds Element trees from WSDL message parts.
@@ -32,6 +35,7 @@ module WSDL
       #
       # @param parts [Array<Hash>] the message parts to build elements from
       # @return [Array<Element>] the built element trees
+      # @raise [ResourceLimitError] if type nesting depth exceeds limits
       def build(parts)
         parts.filter_map { |part|
           if part[:type]
@@ -94,11 +98,12 @@ module WSDL
       #
       # @param element [Element] the element to configure
       # @param type [Schema::Node, String, nil] the type information
+      # @param depth [Integer] the current nesting depth (default: 1)
       # @return [void]
-      def handle_type(element, type)
+      def handle_type(element, type, depth: 1)
         case type
         when Schema::Node
-          handle_schema_node_type(element, type)
+          handle_schema_node_type(element, type, depth:)
         when String
           element.base_type = type
         end
@@ -108,12 +113,13 @@ module WSDL
       #
       # @param element [Element] the element to configure
       # @param type [Schema::Node] the schema node
+      # @param depth [Integer] the current nesting depth
       # @return [void]
-      def handle_schema_node_type(element, type)
+      def handle_schema_node_type(element, type, depth: 1)
         case type.kind
         when :complexType
           element.complex_type_id = type.type_id
-          children_and_wildcards = child_elements(element, type)
+          children_and_wildcards = child_elements(element, type, depth:)
           element.children = children_and_wildcards[:elements]
           element.any_content = children_and_wildcards[:has_any]
           element.attributes = element_attributes(type)
@@ -142,7 +148,7 @@ module WSDL
       # @return [Array<Attribute>] the built attribute objects
       # rubocop:disable Metrics/AbcSize -- linear attribute construction logic
       def element_attributes(type)
-        type.attributes.filter_map { |schema_attr|
+        type.attributes([], limits: @limits).filter_map { |schema_attr|
           attr = Attribute.new
 
           if schema_attr.ref
@@ -176,13 +182,16 @@ module WSDL
       #
       # @param parent [Element] the parent element
       # @param type [Schema::Node] the complex type to extract children from
+      # @param depth [Integer] the current nesting depth (default: 1)
       # @return [Hash] a hash with :elements (Array<Element>) and :has_any (Boolean)
-      # rubocop:disable Metrics/AbcSize -- cohesive element-building logic, splitting would hurt readability
-      def child_elements(parent, type)
+      # @raise [ResourceLimitError] if nesting depth exceeds max_type_nesting_depth
+      # rubocop:disable Metrics/AbcSize, Metrics/MethodLength -- cohesive element-building logic, splitting would hurt readability
+      def child_elements(parent, type, depth: 1)
+        validate_nesting_depth!(depth, type)
         has_any = false
         elements = []
 
-        type.elements.each do |child_element|
+        type.elements([], limits: @limits).each do |child_element|
           if child_element.kind == :any
             has_any = true
             next
@@ -209,7 +218,7 @@ module WSDL
             el.recursive_type = child_element.type
           else
             child_type = find_type_for_element(child_element)
-            handle_type(el, child_type)
+            handle_type(el, child_type, depth: depth + 1)
           end
 
           elements << el
@@ -217,7 +226,7 @@ module WSDL
 
         { elements: elements, has_any: has_any }
       end
-      # rubocop:enable Metrics/AbcSize
+      # rubocop:enable Metrics/AbcSize, Metrics/MethodLength
 
       # Checks if an element's type creates a recursive definition.
       #
@@ -310,6 +319,25 @@ module WSDL
       # @return [Schema::Definition, nil] the matching schema, or nil if not found
       def find_schema(namespace)
         @schemas.find_by_namespace(namespace)
+      end
+
+      # Validates nesting depth against limits.
+      #
+      # @param depth [Integer] the current nesting depth
+      # @param type [Schema::Node] the type being processed (for error messages)
+      # @raise [ResourceLimitError] if depth exceeds max_type_nesting_depth
+      def validate_nesting_depth!(depth, type)
+        return unless @limits.max_type_nesting_depth
+        return if depth <= @limits.max_type_nesting_depth
+
+        raise ResourceLimitError.new(
+          "Type nesting depth #{depth} exceeds limit of #{@limits.max_type_nesting_depth} " \
+          "while processing type #{type.name.inspect}. This may indicate a recursive type definition " \
+          'or an unusually deep type hierarchy.',
+          limit_name: :max_type_nesting_depth,
+          limit_value: @limits.max_type_nesting_depth,
+          actual_value: depth
+        )
       end
     end
   end
