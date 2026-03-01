@@ -40,8 +40,17 @@ operation = client.operation('ServiceName', 'PortName', 'Operation1')
 operation.example_body
 # => { Operation1: { Parameter1: 'string', Parameter2: 'int' } }
 
-# Set the body and call the operation
+# Set the body
 operation.body = { Operation1: { Parameter1: 'value', Parameter2: 42 } }
+
+# Optionally, sign requests with WS-Security (see docs/ws-security.md)
+operation.security.timestamp
+operation.security.signature(
+  certificate: File.read('cert.pem'),
+  private_key: File.read('key.pem')
+)
+
+# Call the operation
 response = operation.call
 
 # Access the response

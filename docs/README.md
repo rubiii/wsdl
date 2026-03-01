@@ -8,6 +8,7 @@
 - [Handling Responses](handling-responses.md)
 - [Resolving Imports](resolving-imports.md)
 - [Configuration](configuration.md)
+- [WS-Security](ws-security.md)
 
 ## Overview
 

@@ -8,6 +8,7 @@ require 'wsdl/cache'
 require 'wsdl/definition'
 require 'wsdl/operation'
 require 'wsdl/httpclient'
+require 'wsdl/security'
 
 # Main entry point for working with WSDL documents.
 #

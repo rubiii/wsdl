@@ -3,6 +3,7 @@
 require 'wsdl/response'
 require 'wsdl/envelope'
 require 'wsdl/example_message'
+require 'wsdl/security'
 
 class WSDL
   # Represents a SOAP operation that can be called.
@@ -29,6 +30,20 @@ class WSDL
   #   operation.header = { auth_token: 'secret' }
   #   operation.soap_action = 'CustomAction'
   #   operation.endpoint = 'https://other-server.example.com/soap'
+  #   response = operation.call
+  #
+  # @example WS-Security with UsernameToken
+  #   operation = wsdl.operation('Service', 'Port', 'SecureOperation')
+  #   operation.security.username_token('user', 'secret')
+  #   response = operation.call
+  #
+  # @example WS-Security with X.509 signing
+  #   cert = OpenSSL::X509::Certificate.new(File.read('cert.pem'))
+  #   key = OpenSSL::PKey::RSA.new(File.read('key.pem'), 'password')
+  #
+  #   operation = wsdl.operation('Service', 'Port', 'SecureOperation')
+  #   operation.security.timestamp
+  #   operation.security.signature(certificate: cert, private_key: key)
   #   response = operation.call
   #
   class Operation
@@ -161,15 +176,43 @@ class WSDL
       @operation.input.body_parts.inject([]) { |memo, part| memo + part.to_a }
     end
 
+    # Returns the security configuration for this operation.
+    #
+    # Use this to configure WS-Security features such as UsernameToken
+    # authentication, timestamps, and X.509 certificate signing.
+    #
+    # @return [Security::Config] the security configuration
+    #
+    # @example UsernameToken authentication
+    #   operation.security.username_token('user', 'secret')
+    #
+    # @example Digest authentication
+    #   operation.security.username_token('user', 'secret', digest: true)
+    #
+    # @example Timestamp
+    #   operation.security.timestamp(expires_in: 300)
+    #
+    # @example X.509 signing
+    #   operation.security.signature(
+    #     certificate: cert,
+    #     private_key: key,
+    #     digest_algorithm: :sha256
+    #   )
+    #
+    def security
+      @security ||= Security::Config.new
+    end
+
     # Builds the SOAP request envelope XML.
     #
     # This method constructs the complete SOAP envelope including
     # the header and body based on the current {#header} and {#body}
-    # values.
+    # values. If security is configured, the WS-Security header is
+    # also applied.
     #
     # @return [String] the SOAP envelope XML
     def build
-      @build ||= Envelope.new(@operation, header, body, pretty_print:).to_s
+      @build ||= build_envelope
     end
 
     # @!attribute [rw] xml_envelope
@@ -216,6 +259,23 @@ class WSDL
     # @return [String] the output style (e.g., 'document/literal')
     def output_style
       @output_style ||= @operation.output_style
+    end
+
+    private
+
+    # Builds the SOAP envelope with optional security header.
+    #
+    # @return [String] the complete SOAP envelope XML
+    #
+    def build_envelope
+      envelope_xml = Envelope.new(@operation, header, body, pretty_print:).to_s
+
+      if security.configured?
+        security_header = Security::SecurityHeader.new(security)
+        envelope_xml = security_header.apply(envelope_xml)
+      end
+
+      envelope_xml
     end
   end
 end

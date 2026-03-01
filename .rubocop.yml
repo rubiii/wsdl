@@ -33,12 +33,20 @@ Metrics/BlockLength:
 
 Metrics/ClassLength:
   Max: 200
+  Exclude:
+    - 'lib/wsdl/security/signature.rb'
 
 Metrics/MethodLength:
   Max: 29
 
 Metrics/AbcSize:
   Max: 19
+  Exclude:
+    - 'lib/wsdl/security/signature.rb'
+
+Metrics/ParameterLists:
+  Exclude:
+    - 'lib/wsdl/security/signature.rb'
 
 Layout/CaseIndentation:
   IndentOneStep: false
@@ -107,3 +115,27 @@ RSpec/DescribeClass:
 
 RSpec/ContextWording:
   Enabled: false
+
+RSpec/NestedGroups:
+  Max: 5
+  Exclude:
+    - 'spec/wsdl/security/**/*'
+
+# Allow version numbers in symbol names for WS-Security algorithms
+# (e.g., :exclusive_1_0, :inclusive_1_1)
+Naming/VariableNumber:
+  AllowedIdentifiers:
+    - exclusive_1_0
+    - exclusive_1_0_with_comments
+    - inclusive_1_0
+    - inclusive_1_0_with_comments
+    - inclusive_1_1
+    - inclusive_1_1_with_comments
+
+# Allow helper methods that return boolean but aren't predicates
+# (e.g., add_failure returns false after recording an error)
+Naming/PredicateMethod:
+  AllowedMethods:
+    - add_failure
+    - add_failure_nil
+    - verify_signature!

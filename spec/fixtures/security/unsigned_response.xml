@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+  <soap:Header/>
+  <soap:Body>
+    <ns2:GetUserResponse xmlns:ns2="http://example.com/users">
+      <return>
+        <userId>123</userId>
+        <name>John Doe</name>
+        <email>john.doe@example.com</email>
+        <status>active</status>
+        <createdAt>2024-01-01T00:00:00Z</createdAt>
+      </return>
+    </ns2:GetUserResponse>
+  </soap:Body>
+</soap:Envelope>

@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"
+               xmlns:wsa="http://www.w3.org/2005/08/addressing">
+  <soap:Header>
+    <wsa:To>http://example.com/services/UserService</wsa:To>
+    <wsa:From>
+      <wsa:Address>http://client.example.com/callback</wsa:Address>
+    </wsa:From>
+    <wsa:ReplyTo>
+      <wsa:Address>http://client.example.com/reply</wsa:Address>
+    </wsa:ReplyTo>
+    <wsa:FaultTo>
+      <wsa:Address>http://client.example.com/fault</wsa:Address>
+    </wsa:FaultTo>
+    <wsa:Action>http://example.com/users/GetUser</wsa:Action>
+    <wsa:MessageID>urn:uuid:550e8400-e29b-41d4-a716-446655440000</wsa:MessageID>
+    <wsa:RelatesTo RelationshipType="http://www.w3.org/2005/08/addressing/reply">urn:uuid:6ba7b810-9dad-11d1-80b4-00c04fd430c8</wsa:RelatesTo>
+  </soap:Header>
+  <soap:Body>
+    <GetUser xmlns="http://example.com/users">
+      <userId>123</userId>
+    </GetUser>
+  </soap:Body>
+</soap:Envelope>
