@@ -13,7 +13,8 @@ describe WSDL::Parser::Resolver do
     end.new
   end
 
-  let(:options) { { file_access: :unrestricted } }
+  let(:fixture_dir) { File.expand_path('../../fixtures/wsdl', __dir__) }
+  let(:options) { { sandbox_paths: [fixture_dir] } }
 
   describe '#resolve' do
     it 'resolves remote files using a simple HTTP client interface' do
@@ -23,7 +24,7 @@ describe WSDL::Parser::Resolver do
       expect(xml).to eq("raw_response for #{url}")
     end
 
-    it 'resolves local files when file access is allowed' do
+    it 'resolves local files when sandbox_paths is configured' do
       fixture_path = fixture('wsdl/authentication')
 
       xml = resolver.resolve(fixture_path)
@@ -120,11 +121,10 @@ describe WSDL::Parser::Resolver do
   end
 
   describe 'sandbox restrictions' do
-    context 'with file_access: :sandbox' do
-      let(:options) { { file_access: :sandbox, sandbox_paths: ['/app/wsdl', '/app/schemas'] } }
+    context 'with sandbox_paths configured' do
+      let(:options) { { sandbox_paths: ['/app/wsdl', '/app/schemas'] } }
 
       it 'allows files within sandbox paths' do
-        # Create a mock for File.read since we're testing the validation logic
         allow(File).to receive(:read).with('/app/wsdl/service.wsdl').and_return('<xml/>')
 
         expect { resolver.resolve('/app/wsdl/service.wsdl') }.not_to raise_error
@@ -184,24 +184,8 @@ describe WSDL::Parser::Resolver do
       end
     end
 
-    context 'with file_access: :sandbox but no sandbox_paths' do
-      it 'raises ArgumentError immediately on initialization' do
-        expect {
-          described_class.new(http_test_client, file_access: :sandbox, sandbox_paths: nil)
-        }.to raise_error(ArgumentError, /sandbox_paths to be specified/)
-      end
-    end
-
-    context 'with file_access: :sandbox and empty sandbox_paths' do
-      it 'raises ArgumentError immediately on initialization' do
-        expect {
-          described_class.new(http_test_client, file_access: :sandbox, sandbox_paths: [])
-        }.to raise_error(ArgumentError, /sandbox_paths to be specified/)
-      end
-    end
-
-    context 'with file_access: :disabled' do
-      let(:options) { { file_access: :disabled } }
+    context 'with sandbox_paths: nil (file access disabled)' do
+      let(:options) { { sandbox_paths: nil } }
 
       it 'allows URL access' do
         xml = resolver.resolve('http://example.com/service.wsdl')
@@ -222,69 +206,22 @@ describe WSDL::Parser::Resolver do
       it 'includes helpful message about alternatives' do
         expect {
           resolver.resolve('/path/to/file.wsdl')
-        }.to raise_error(WSDL::PathRestrictionError, /use file_access: :sandbox with explicit sandbox_paths/)
+        }.to raise_error(WSDL::PathRestrictionError, /provide sandbox_paths to allow file access/)
       end
-
-      it 'mentions the current mode in error message' do
-        expect {
-          resolver.resolve('/path/to/file.wsdl')
-        }.to raise_error(WSDL::PathRestrictionError, /mode: :disabled/)
-      end
-    end
-
-    context 'with file_access: :unrestricted' do
-      let(:options) { { file_access: :unrestricted } }
-
-      it 'allows any file access' do
-        fixture_path = fixture('wsdl/authentication')
-
-        xml = resolver.resolve(fixture_path)
-        expect(xml).to eq(File.read(fixture_path))
-      end
-
-      it 'allows files outside any sandbox' do
-        # We can't actually read /etc/passwd in tests, but we can verify
-        # that the validation doesn't raise an error before File.read
-        allow(File).to receive(:read).with('/etc/passwd').and_return('root:x:0:0:root')
-
-        expect { resolver.resolve('/etc/passwd') }.not_to raise_error
-      end
-    end
-  end
-
-  describe 'invalid file_access mode' do
-    it 'raises ArgumentError immediately on initialization' do
-      expect {
-        described_class.new(http_test_client, file_access: :invalid_mode)
-      }.to raise_error(ArgumentError, /Invalid file_access mode: :invalid_mode/)
-    end
-
-    it 'includes valid modes in error message' do
-      expect {
-        described_class.new(http_test_client, file_access: :bogus)
-      }.to raise_error(ArgumentError, /:sandbox.*:disabled.*:unrestricted/)
     end
   end
 
   describe '#file_access_allowed?' do
-    context 'with file_access: :disabled' do
-      let(:options) { { file_access: :disabled } }
+    context 'with sandbox_paths: nil' do
+      let(:options) { { sandbox_paths: nil } }
 
       it 'returns false' do
         expect(resolver.file_access_allowed?).to be false
       end
     end
 
-    context 'with file_access: :sandbox' do
-      let(:options) { { file_access: :sandbox, sandbox_paths: ['/app'] } }
-
-      it 'returns true' do
-        expect(resolver.file_access_allowed?).to be true
-      end
-    end
-
-    context 'with file_access: :unrestricted' do
-      let(:options) { { file_access: :unrestricted } }
+    context 'with sandbox_paths configured' do
+      let(:options) { { sandbox_paths: ['/app'] } }
 
       it 'returns true' do
         expect(resolver.file_access_allowed?).to be true
@@ -293,7 +230,7 @@ describe WSDL::Parser::Resolver do
   end
 
   describe 'sandbox path normalization' do
-    let(:options) { { file_access: :sandbox, sandbox_paths: ['./relative/path', '../other'] } }
+    let(:options) { { sandbox_paths: ['./relative/path', '../other'] } }
 
     it 'normalizes relative sandbox paths to absolute paths' do
       expect(resolver.sandbox_paths).to all(start_with('/'))
@@ -307,7 +244,7 @@ describe WSDL::Parser::Resolver do
 
   describe 'edge cases for path comparison' do
     context 'with sandbox containing trailing slash' do
-      let(:options) { { file_access: :sandbox, sandbox_paths: ['/app/wsdl/'] } }
+      let(:options) { { sandbox_paths: ['/app/wsdl/'] } }
 
       it 'allows files in the directory' do
         allow(File).to receive(:read).with('/app/wsdl/service.wsdl').and_return('<xml/>')
@@ -317,7 +254,7 @@ describe WSDL::Parser::Resolver do
     end
 
     context 'with similar-looking paths (prefix attack)' do
-      let(:options) { { file_access: :sandbox, sandbox_paths: ['/app/wsdl'] } }
+      let(:options) { { sandbox_paths: ['/app/wsdl'] } }
 
       it 'blocks /app/wsdl-malicious (not a true subdirectory)' do
         expect {
@@ -333,7 +270,7 @@ describe WSDL::Parser::Resolver do
     end
 
     context 'allowing the sandbox directory itself' do
-      let(:options) { { file_access: :sandbox, sandbox_paths: ['/app/wsdl'] } }
+      let(:options) { { sandbox_paths: ['/app/wsdl'] } }
 
       it 'allows reading the sandbox directory path itself' do
         allow(File).to receive(:read).with('/app/wsdl').and_return('<xml/>')
@@ -344,8 +281,6 @@ describe WSDL::Parser::Resolver do
   end
 
   describe 'resource limits' do
-    let(:options) { { file_access: :unrestricted } }
-
     describe '#limits' do
       it 'uses WSDL.limits by default' do
         expect(resolver.limits).to eq(WSDL.limits)
@@ -353,7 +288,8 @@ describe WSDL::Parser::Resolver do
 
       it 'accepts custom limits' do
         custom_limits = WSDL::Limits.new(max_document_size: 1024)
-        resolver_with_limits = described_class.new(http_test_client, file_access: :unrestricted, limits: custom_limits)
+        resolver_with_limits = described_class.new(http_test_client, sandbox_paths: [fixture_dir],
+                                                                     limits: custom_limits)
 
         expect(resolver_with_limits.limits).to eq(custom_limits)
       end
@@ -363,7 +299,7 @@ describe WSDL::Parser::Resolver do
       let(:small_file) { fixture('wsdl/authentication') }
 
       context 'when file size is within limit' do
-        let(:options) { { file_access: :unrestricted, limits: WSDL::Limits.new(max_document_size: 10 * 1024 * 1024) } }
+        let(:options) { { sandbox_paths: [fixture_dir], limits: WSDL::Limits.new(max_document_size: 10 * 1024 * 1024) } }
 
         it 'allows reading the file' do
           expect { resolver.resolve(small_file) }.not_to raise_error
@@ -371,7 +307,7 @@ describe WSDL::Parser::Resolver do
       end
 
       context 'when file size exceeds limit' do
-        let(:options) { { file_access: :unrestricted, limits: WSDL::Limits.new(max_document_size: 10) } }
+        let(:options) { { sandbox_paths: [fixture_dir], limits: WSDL::Limits.new(max_document_size: 10) } }
 
         it 'raises ResourceLimitError' do
           expect {
@@ -397,7 +333,7 @@ describe WSDL::Parser::Resolver do
       end
 
       context 'when limit is nil (disabled)' do
-        let(:options) { { file_access: :unrestricted, limits: WSDL::Limits.new(max_document_size: nil) } }
+        let(:options) { { sandbox_paths: [fixture_dir], limits: WSDL::Limits.new(max_document_size: nil) } }
 
         it 'allows any file size' do
           expect { resolver.resolve(small_file) }.not_to raise_error
@@ -421,7 +357,7 @@ describe WSDL::Parser::Resolver do
         it 'raises ResourceLimitError when HTTP response exceeds limit' do
           limited_resolver = described_class.new(
             http_client,
-            file_access: :unrestricted,
+            sandbox_paths: nil,
             limits: WSDL::Limits.new(max_document_size: 100)
           )
 
@@ -439,7 +375,7 @@ describe WSDL::Parser::Resolver do
       context 'when total download stays within limit' do
         let(:options) do
           {
-            file_access: :unrestricted,
+            sandbox_paths: [fixture_dir],
             limits: WSDL::Limits.new(max_total_download_size: file_size * 10)
           }
         end
@@ -455,7 +391,7 @@ describe WSDL::Parser::Resolver do
       context 'when total download exceeds limit' do
         let(:options) do
           {
-            file_access: :unrestricted,
+            sandbox_paths: [fixture_dir],
             limits: WSDL::Limits.new(max_total_download_size: file_size + 1)
           }
         end
@@ -480,7 +416,7 @@ describe WSDL::Parser::Resolver do
       end
 
       context 'when limit is nil (disabled)' do
-        let(:options) { { file_access: :unrestricted, limits: WSDL::Limits.new(max_total_download_size: nil) } }
+        let(:options) { { sandbox_paths: [fixture_dir], limits: WSDL::Limits.new(max_total_download_size: nil) } }
 
         it 'allows unlimited total download' do
           10.times do
@@ -516,7 +452,7 @@ describe WSDL::Parser::Resolver do
           end
         end.new(content)
 
-        http_resolver = described_class.new(http_client, file_access: :unrestricted)
+        http_resolver = described_class.new(http_client, sandbox_paths: nil)
         http_resolver.resolve('http://example.com/test.wsdl')
 
         expect(http_resolver.total_bytes_downloaded).to eq(content.bytesize)
@@ -525,8 +461,7 @@ describe WSDL::Parser::Resolver do
   end
 
   describe 'integration with real fixtures' do
-    let(:fixture_dir) { File.expand_path('../../fixtures/wsdl', __dir__) }
-    let(:options) { { file_access: :sandbox, sandbox_paths: [fixture_dir] } }
+    let(:options) { { sandbox_paths: [fixture_dir] } }
 
     it 'allows reading fixtures within the sandbox' do
       fixture_path = fixture('wsdl/authentication')
@@ -538,7 +473,7 @@ describe WSDL::Parser::Resolver do
     it 'resolves relative imports within the sandbox' do
       # Travelport fixture uses relative imports like ../common_v32_0/CommonReqRsp.xsd
       travelport_dir = File.join(fixture_dir, 'travelport')
-      sandbox_resolver = described_class.new(http_test_client, file_access: :sandbox, sandbox_paths: [travelport_dir])
+      sandbox_resolver = described_class.new(http_test_client, sandbox_paths: [travelport_dir])
 
       base = File.join(travelport_dir, 'system_v32_0/System.xsd')
       resolved = sandbox_resolver.resolve_location('../common_v32_0/CommonReqRsp.xsd', base)

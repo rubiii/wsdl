@@ -11,14 +11,14 @@ module WSDL
     # This is the main result object produced by the parsing process and
     # is used internally by {WSDL::Client} to access WSDL information.
     #
-    # @example Accessing services
-    #   result = Parser::Result.new('http://example.com/service?wsdl', http, file_access: :disabled)
+    # @example Accessing services (URL-loaded, no file access)
+    #   result = Parser::Result.new('http://example.com/service?wsdl', http)
     #   result.services
     #   # => {"ServiceName" => {ports: {"PortName" => {type: "...", location: "..."}}}}
     #
     # @example Loading from file with sandbox
     #   result = Parser::Result.new('/app/wsdl/service.wsdl', http,
-    #                               file_access: :sandbox, sandbox_paths: ['/app/wsdl'])
+    #                               sandbox_paths: ['/app/wsdl'])
     #
     # @example Getting operation names
     #   operations = result.operations('ServiceName', 'PortName')
@@ -27,32 +27,34 @@ module WSDL
     # @api private
     #
     class Result
+      # Pattern for matching HTTP/HTTPS URLs.
+      URL_PATTERN = /^https?:/i
+
+      # Pattern for matching raw XML content (starts with '<').
+      XML_PATTERN = /^</
+
       # Creates a new Result by importing and parsing a WSDL document.
       #
       # @param wsdl [String] a URL, file path, or raw XML string of the WSDL document
       # @param http [Object] an HTTP adapter instance for fetching remote documents
-      # @param file_access [Symbol] file access mode for schema resolution:
-      #   - `:unrestricted` — No restrictions (default for internal API)
-      #   - `:sandbox` — Allow file access only within `sandbox_paths`
-      #   - `:disabled` — No file access at all
-      # @param sandbox_paths [Array<String>, nil] directories where file access is allowed.
-      #   Only used when `file_access` is `:sandbox`.
+      # @param sandbox_paths [Array<String>, nil, Symbol] directories where file access is allowed.
+      #   - `:auto` (default) — Automatically determine based on WSDL source:
+      #     - URL/inline XML → file access disabled
+      #     - File path → sandboxed to WSDL's parent directory
+      #   - `Array<String>` — Use the specified directories as the sandbox
+      #   - `nil` — Disable file access entirely
       # @param limits [Limits, nil] resource limits for DoS protection.
       #   If nil, uses {WSDL.limits}.
       # @param reject_doctype [Boolean] whether to reject XML with DOCTYPE declarations
       #   (default: true). This is a defense-in-depth security measure.
       #
-      # @note Security controls are enforced at the {WSDL::Client} level, which is the
-      #   public API. This class defaults to unrestricted access for internal use.
-      #
-      # rubocop:disable Metrics/ParameterLists
-      def initialize(wsdl, http, file_access: :unrestricted, sandbox_paths: nil, limits: nil, reject_doctype: true)
-        # rubocop:enable Metrics/ParameterLists
+      def initialize(wsdl, http, sandbox_paths: :auto, limits: nil, reject_doctype: true)
         @documents = DocumentCollection.new
         @schemas = Schema::Collection.new
         @limits = limits || WSDL.limits
 
-        resolver = Resolver.new(http, file_access:, sandbox_paths:, limits: @limits)
+        resolved_sandbox_paths = resolve_sandbox_paths(wsdl, sandbox_paths)
+        resolver = Resolver.new(http, sandbox_paths: resolved_sandbox_paths, limits: @limits)
         importer = Importer.new(resolver, @documents, @schemas, limits: @limits, reject_doctype:)
         importer.import(wsdl)
       end
@@ -168,6 +170,24 @@ module WSDL
 
         raise ArgumentError, "Unknown service #{service_name.inspect} or port #{port_name.inspect}.\n" \
                              "Here is a list of known services and port:\n" + services.inspect
+      end
+
+      # Resolves sandbox paths based on the WSDL source type.
+      #
+      # @param wsdl [String] the WSDL location or content
+      # @param sandbox_paths [Symbol, Array<String>, nil] explicit sandbox paths or :auto
+      # @return [Array<String>, nil] resolved sandbox paths, or nil if file access is disabled
+      #
+      def resolve_sandbox_paths(wsdl, sandbox_paths)
+        # If explicit sandbox_paths provided (not :auto), use them as-is
+        return sandbox_paths unless sandbox_paths == :auto
+
+        # URL-loaded WSDLs and inline XML: disable file access entirely
+        return nil if wsdl.match?(URL_PATTERN) || wsdl.match?(XML_PATTERN)
+
+        # File path: sandbox to the WSDL's parent directory
+        wsdl_directory = File.dirname(File.expand_path(wsdl))
+        [wsdl_directory]
       end
     end
   end

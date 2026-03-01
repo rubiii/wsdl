@@ -20,8 +20,8 @@ Relative paths in `schemaLocation` attributes are resolved against the parent do
 
 ``` ruby
 # WSDL loaded from: /app/wsdl/service.wsdl
-# Schema import:    schemaLocation="../schemas/types.xsd"
-# Resolved to:      /app/schemas/types.xsd
+# Schema import:    schemaLocation="./types.xsd"
+# Resolved to:      /app/wsdl/types.xsd
 
 client = WSDL::Client.new('/app/wsdl/service.wsdl')
 ```
@@ -75,21 +75,21 @@ Without protection, this would resolve to `/etc/passwd` and expose sensitive sys
 
 ### Default Security Behavior
 
-By default, the library uses **automatic mode** (`file_access: :auto`) which applies different restrictions based on the WSDL source:
+By default, the library automatically determines file access based on the WSDL source:
 
 | WSDL Source | File Access | Reason |
 |-------------|-------------|--------|
 | **URL** (`http://...`) | Disabled | All imports must use URLs |
-| **File path** | Unrestricted | Local files are trusted |
+| **File path** | Sandboxed | Restricted to WSDL's parent directory |
 | **Inline XML** | Disabled | No base path to sandbox against |
 
 This means:
 
 - **URL-loaded WSDLs** cannot read local files at all — this is the primary security control
-- **File-loaded WSDLs** can read any local files — the user controls the WSDL source
+- **File-loaded WSDLs** can only read files within the WSDL's parent directory — prevents path traversal
 - **Inline XML** cannot have relative file imports
 
-The rationale: if you're loading a WSDL from your own filesystem, you presumably trust its contents. The main security concern is URL-loaded or inline WSDLs that could be attacker-controlled.
+The rationale: even locally-stored WSDLs could be downloaded from untrusted sources, so sandboxing to the parent directory provides defense-in-depth against path traversal attacks while still allowing typical relative imports within the same directory.
 
 ### Example: URL-Loaded WSDL
 
@@ -107,65 +107,38 @@ client = WSDL::Client.new('http://example.com/service?wsdl')
 ### Example: File-Loaded WSDL
 
 ``` ruby
-# Loading from file: unrestricted (trusts local files)
+# Loading from file: sandboxed to parent directory
 client = WSDL::Client.new('/app/wsdl/service.wsdl')
 
-# All relative imports work, including sibling directories:
+# Imports within the same directory work:
+# ./types.xsd → /app/wsdl/types.xsd (allowed)
+# subdirectory/schema.xsd → /app/wsdl/subdirectory/schema.xsd (allowed)
+
+# Imports to sibling directories are blocked:
+# ../schemas/types.xsd → /app/schemas/types.xsd (blocked - outside sandbox)
+```
+
+### Expanding the Sandbox
+
+If your WSDL imports schemas from sibling directories, use the `sandbox_paths` option:
+
+``` ruby
+# Allow access to multiple directories
+client = WSDL::Client.new('/app/wsdl/service.wsdl',
+                          sandbox_paths: ['/app/wsdl', '/app/schemas', '/app/common'])
+
+# Now these imports work:
 # ../schemas/types.xsd → /app/schemas/types.xsd (allowed)
 # ../common/base.xsd → /app/common/base.xsd (allowed)
-
-# If you need stricter controls, use explicit sandbox mode:
-client = WSDL::Client.new('/app/wsdl/service.wsdl',
-                          file_access: :sandbox,
-                          sandbox_paths: ['/app/wsdl', '/app/schemas'])
 ```
-
-### Configuring File Access
-
-You can customize file access behavior:
-
-``` ruby
-# Disable file access entirely (URL-only mode)
-client = WSDL::Client.new('/path/to/service.wsdl', file_access: :disabled)
-
-# Allow access to specific directories (sandbox_paths is required with :sandbox)
-client = WSDL::Client.new('/path/to/service.wsdl',
-                          file_access: :sandbox,
-                          sandbox_paths: ['/path/to', '/shared/schemas'])
-
-# Unrestricted (not recommended for untrusted WSDLs)
-client = WSDL::Client.new('/path/to/service.wsdl', file_access: :unrestricted)
-```
-
-**Note:** Invalid options are validated immediately on initialization:
-
-``` ruby
-# Invalid file_access mode raises ArgumentError
-WSDL::Client.new('service.wsdl', file_access: :invalid)
-# => ArgumentError: Invalid file_access mode: :invalid. Valid modes are: :sandbox, :disabled, :unrestricted
-
-# :sandbox mode without sandbox_paths raises ArgumentError
-WSDL::Client.new('service.wsdl', file_access: :sandbox)
-# => ArgumentError: file_access: :sandbox requires sandbox_paths to be specified.
-```
-
-### File Access Options
-
-| Option | Description | Use Case |
-|--------|-------------|----------|
-| `:auto` | Automatic based on source (default) | Most applications |
-| `:sandbox` | Allow only specified directories | High-security environments |
-| `:disabled` | No file access at all | URL-only mode |
-| `:unrestricted` | No restrictions | Explicit trust (same as auto for files) |
 
 ### Blocked Patterns
 
 The following are always blocked regardless of settings:
 
 - `file://` URLs — Use file paths instead if you need local files
-- File access when the WSDL is loaded from a URL (in `:auto` mode)
-
-When using `:sandbox` mode, path traversal that escapes the sandbox is also blocked (e.g., `../../../../etc/passwd`).
+- File access when the WSDL is loaded from a URL
+- Path traversal that escapes the sandbox (e.g., `../../../../etc/passwd`)
 
 ## Inline XML Limitations
 
@@ -193,9 +166,9 @@ client = WSDL::Client.new(xml)
 Raised when file access is blocked:
 
 ``` ruby
-# When file access is disabled
-WSDL::PathRestrictionError: File access is disabled (mode: :disabled). Cannot read "/path/to/schema.xsd".
-All schema imports must use URLs, or use file_access: :sandbox with explicit sandbox_paths.
+# When file access is disabled (URL-loaded WSDL)
+WSDL::PathRestrictionError: File access is disabled. Cannot read "/path/to/schema.xsd".
+All schema imports must use URLs, or provide sandbox_paths to allow file access.
 
 # When path is outside sandbox
 WSDL::PathRestrictionError: Path "/etc/passwd" is outside the allowed directories.
@@ -232,10 +205,10 @@ client = WSDL::Client.new('http://example.com/service?wsdl')
 
 ### Common Errors
 
-**PathRestrictionError: File access is disabled (mode: :disabled)**
+**PathRestrictionError: File access is disabled**
 
 - Cause: WSDL was loaded from URL but has file-based schema imports
-- Fix: Ensure all schema imports use HTTP/HTTPS URLs, or use `file_access: :sandbox` with explicit `sandbox_paths`
+- Fix: Ensure all schema imports use HTTP/HTTPS URLs
 
 **PathRestrictionError: Path is outside the allowed directories**
 
@@ -265,14 +238,13 @@ The schema was not imported. Possible causes:
 
 1. **Use URLs for remote WSDLs** — When loading WSDLs from external sources, always use HTTP/HTTPS URLs so that file access is automatically disabled.
 
-2. **Use `:sandbox` for untrusted local files** — If you're loading a WSDL from a location where the content might be attacker-controlled, use explicit sandbox mode:
+2. **Use explicit sandbox_paths for multi-directory imports** — If your WSDL imports schemas from sibling directories, specify explicit sandbox paths:
    ```ruby
-   client = WSDL::Client.new(untrusted_path,
-                             file_access: :sandbox,
-                             sandbox_paths: [File.dirname(untrusted_path)])
+   client = WSDL::Client.new('/app/wsdl/service.wsdl',
+                             sandbox_paths: ['/app/wsdl', '/app/schemas', '/app/common'])
    ```
 
-3. **Minimize sandbox scope** — When using `:sandbox`, only include the directories that are actually needed.
+3. **Minimize sandbox scope** — Only include the directories that are actually needed.
 
 4. **Review import logs** — Enable debug logging when testing new WSDLs to see all import resolutions.
 

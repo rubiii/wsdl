@@ -14,8 +14,9 @@ describe WSDL::Client do
 
   describe '.new' do
     it 'expects a local or remote WSDL document' do
+      wsdl_directory = File.dirname(File.expand_path(wsdl))
       allow(WSDL::Parser::Result).to receive(:new).with(
-        wsdl, instance_of(WSDL.http_adapter), hash_including(file_access: :unrestricted, sandbox_paths: nil)
+        wsdl, instance_of(WSDL.http_adapter), hash_including(sandbox_paths: [wsdl_directory])
       ).and_return(:parser_result)
       client = described_class.new(wsdl)
       expect(client.parser_result).to eq(:parser_result)
@@ -23,8 +24,9 @@ describe WSDL::Client do
 
     it 'also accepts a custom HTTP adapter to replace the default' do
       http = :my_http_adapter
+      wsdl_directory = File.dirname(File.expand_path(wsdl))
       allow(WSDL::Parser::Result).to receive(:new).with(
-        wsdl, http, hash_including(file_access: :unrestricted, sandbox_paths: nil)
+        wsdl, http, hash_including(sandbox_paths: [wsdl_directory])
       ).and_return(:parser_result)
 
       client = described_class.new(wsdl, http: http)
@@ -94,29 +96,32 @@ describe WSDL::Client do
   end
 
   describe 'file access security' do
-    context 'with file_access: :auto (default)' do
+    context 'with default sandbox behavior' do
       context 'when loading from a file path' do
-        it 'uses unrestricted file access (trusts local files)' do
+        it 'sandboxes to WSDL parent directory' do
+          wsdl_directory = File.dirname(File.expand_path(wsdl))
           parser_result = instance_double(WSDL::Parser::Result, services: {})
           allow(WSDL::Parser::Result).to receive(:new).and_return(parser_result)
 
           described_class.new(wsdl)
 
           expect(WSDL::Parser::Result).to have_received(:new).with(
-            wsdl, anything, hash_including(file_access: :unrestricted, sandbox_paths: nil)
+            wsdl, anything, hash_including(sandbox_paths: [wsdl_directory])
           )
         end
 
-        it 'allows relative imports to sibling directories' do
-          # Travelport fixtures use ../common_v32_0/ imports which need to work
+        it 'sandboxes to the WSDL parent directory for relative imports' do
+          # Travelport fixtures use ../common_v32_0/ imports
+          # These will be blocked since sandbox is the WSDL's parent directory only
           travelport_wsdl = fixture('wsdl/travelport/system_v32_0/System')
+          travelport_directory = File.dirname(File.expand_path(travelport_wsdl))
           parser_result = instance_double(WSDL::Parser::Result, services: {})
           allow(WSDL::Parser::Result).to receive(:new).and_return(parser_result)
 
           described_class.new(travelport_wsdl)
 
           expect(WSDL::Parser::Result).to have_received(:new).with(
-            travelport_wsdl, anything, hash_including(file_access: :unrestricted, sandbox_paths: nil)
+            travelport_wsdl, anything, hash_including(sandbox_paths: [travelport_directory])
           )
         end
       end
@@ -131,7 +136,7 @@ describe WSDL::Client do
           described_class.new(url_wsdl)
 
           expect(WSDL::Parser::Result).to have_received(:new).with(
-            url_wsdl, anything, hash_including(file_access: :disabled, sandbox_paths: nil)
+            url_wsdl, anything, hash_including(sandbox_paths: nil)
           )
         end
       end
@@ -146,44 +151,22 @@ describe WSDL::Client do
           described_class.new(inline_xml)
 
           expect(WSDL::Parser::Result).to have_received(:new).with(
-            inline_xml, anything, hash_including(file_access: :disabled, sandbox_paths: nil)
+            inline_xml, anything, hash_including(sandbox_paths: nil)
           )
         end
       end
     end
 
-    context 'with explicit file_access options' do
-      it 'passes :disabled to the parser' do
-        parser_result = instance_double(WSDL::Parser::Result, services: {})
-        allow(WSDL::Parser::Result).to receive(:new).and_return(parser_result)
-
-        described_class.new(wsdl, file_access: :disabled)
-
-        expect(WSDL::Parser::Result).to have_received(:new).with(
-          wsdl, anything, hash_including(file_access: :disabled, sandbox_paths: nil)
-        )
-      end
-
-      it 'passes :unrestricted to the parser' do
-        parser_result = instance_double(WSDL::Parser::Result, services: {})
-        allow(WSDL::Parser::Result).to receive(:new).and_return(parser_result)
-
-        described_class.new(wsdl, file_access: :unrestricted)
-
-        expect(WSDL::Parser::Result).to have_received(:new).with(
-          wsdl, anything, hash_including(file_access: :unrestricted, sandbox_paths: nil)
-        )
-      end
-
-      it 'passes custom sandbox_paths to the parser' do
+    context 'with explicit sandbox_paths option' do
+      it 'overrides automatic sandbox with custom paths' do
         custom_paths = ['/app/wsdl', '/app/schemas']
         parser_result = instance_double(WSDL::Parser::Result, services: {})
         allow(WSDL::Parser::Result).to receive(:new).and_return(parser_result)
 
-        described_class.new(wsdl, file_access: :sandbox, sandbox_paths: custom_paths)
+        described_class.new(wsdl, sandbox_paths: custom_paths)
 
         expect(WSDL::Parser::Result).to have_received(:new).with(
-          wsdl, anything, hash_including(file_access: :sandbox, sandbox_paths: custom_paths)
+          wsdl, anything, hash_including(sandbox_paths: custom_paths)
         )
       end
     end

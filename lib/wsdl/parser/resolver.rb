@@ -20,30 +20,22 @@ module WSDL
     # `../../../../etc/passwd`, the resolver blocks access to files outside
     # the allowed directory tree.
     #
-    # File access is controlled by the `file_access` option:
-    # - `:sandbox` — Allow file access only within specified directories (default)
-    # - `:disabled` — No file access at all (URL-only mode)
-    # - `:unrestricted` — No restrictions (use with caution)
+    # File access is controlled by the `sandbox_paths` option:
+    # - When `sandbox_paths` is provided: file access is allowed within those directories
+    # - When `sandbox_paths` is nil: file access is disabled (URL-only mode)
     #
-    # @example Resolving a URL
+    # @example Resolving a URL (no file access needed)
     #   resolver = Resolver.new(http_adapter)
     #   xml = resolver.resolve('http://example.com/service?wsdl')
     #
-    # @example Resolving a local file with automatic sandboxing
+    # @example Resolving a local file with sandboxing
     #   resolver = Resolver.new(http_adapter, sandbox_paths: ['/app/wsdl'])
     #   xml = resolver.resolve('/app/wsdl/service.wsdl')
-    #
-    # @example Disabling file access for URL-loaded WSDLs
-    #   resolver = Resolver.new(http_adapter, file_access: :disabled)
-    #   xml = resolver.resolve('http://example.com/service?wsdl')
     #
     # @api private
     #
     class Resolver
       include Formatting
-
-      # Valid file access modes.
-      VALID_FILE_ACCESS_MODES = %i[sandbox disabled unrestricted].freeze
 
       # Pattern for matching HTTP/HTTPS URLs.
       URL_PATTERN = /^https?:/i
@@ -57,31 +49,17 @@ module WSDL
       # Creates a new Resolver instance.
       #
       # @param http [Object] an HTTP adapter instance that responds to `get(url)`
-      # @param file_access [Symbol] file access mode:
-      #   - `:sandbox` — Allow file access only within `sandbox_paths` (default)
-      #   - `:disabled` — No file access at all
-      #   - `:unrestricted` — No restrictions (not recommended)
       # @param sandbox_paths [Array<String>, nil] directories where file access is allowed.
-      #   Only used when `file_access` is `:sandbox`. If nil, no files can be read.
+      #   When nil, file access is disabled and all imports must use URLs.
       # @param limits [Limits, nil] resource limits for DoS protection.
       #   If nil, uses {WSDL.limits}.
       #
-      def initialize(http, file_access: :sandbox, sandbox_paths: nil, limits: nil)
-        validate_file_access_mode!(file_access)
-        validate_sandbox_paths_config!(file_access, sandbox_paths)
-
+      def initialize(http, sandbox_paths: nil, limits: nil)
         @http = http
-        @file_access = file_access
         @sandbox_paths = normalize_sandbox_paths(sandbox_paths)
         @limits = limits || WSDL.limits
         @total_bytes_downloaded = 0
       end
-
-      # Returns the file access mode.
-      #
-      # @return [Symbol] the file access mode (`:sandbox`, `:disabled`, or `:unrestricted`)
-      #
-      attr_reader :file_access
 
       # Returns the sandbox paths (normalized to absolute paths).
       #
@@ -170,38 +148,10 @@ module WSDL
       # @return [Boolean] true if file access is allowed
       #
       def file_access_allowed?
-        @file_access != :disabled
+        !@sandbox_paths.nil?
       end
 
       private
-
-      # Validates that the file_access mode is valid.
-      #
-      # @param mode [Symbol] the file access mode to validate
-      # @raise [ArgumentError] if the mode is invalid
-      #
-      def validate_file_access_mode!(mode)
-        return if VALID_FILE_ACCESS_MODES.include?(mode)
-
-        raise ArgumentError,
-              "Invalid file_access mode: #{mode.inspect}. " \
-              "Valid modes are: #{VALID_FILE_ACCESS_MODES.map(&:inspect).join(', ')}"
-      end
-
-      # Validates that sandbox_paths is configured when file_access is :sandbox.
-      #
-      # @param file_access [Symbol] the file access mode
-      # @param sandbox_paths [Array<String>, nil] the sandbox paths
-      # @raise [ArgumentError] if :sandbox mode is used without sandbox_paths
-      #
-      def validate_sandbox_paths_config!(file_access, sandbox_paths)
-        return unless file_access == :sandbox
-        return if sandbox_paths && !sandbox_paths.empty?
-
-        raise ArgumentError,
-              'file_access: :sandbox requires sandbox_paths to be specified. ' \
-              'Provide an array of allowed directories, e.g., sandbox_paths: ["/app/wsdl"]'
-      end
 
       # Normalizes sandbox paths to absolute paths.
       #
@@ -318,30 +268,37 @@ module WSDL
       # Validates document size against limits.
       #
       # @param size [Integer] the document size in bytes
-      # @param location [String] the document location for error messages
+      # @param source [String] the source URL or path for error messages
       # @raise [ResourceLimitError] if size exceeds max_document_size
       #
-      def validate_document_size!(size, location)
+      def validate_document_size!(size, source)
         return unless @limits.max_document_size
         return if size <= @limits.max_document_size
 
         raise ResourceLimitError.new(
           "Document size #{format_bytes(size)} exceeds limit of " \
-          "#{format_bytes(@limits.max_document_size)}: #{location}",
+          "#{format_bytes(@limits.max_document_size)}: #{source}",
           limit_name: :max_document_size,
           limit_value: @limits.max_document_size,
           actual_value: size
         )
       end
 
-      # Tracks cumulative download size and validates against total limit.
+      # Tracks bytes downloaded and validates against total download limit.
       #
       # @param bytes [Integer] the number of bytes downloaded
-      # @raise [ResourceLimitError] if total exceeds max_total_download_size
+      # @raise [ResourceLimitError] if total download size exceeds limit
       #
       def track_download(bytes)
         @total_bytes_downloaded += bytes
+        validate_total_download_size!
+      end
 
+      # Validates total download size against limits.
+      #
+      # @raise [ResourceLimitError] if total exceeds max_total_download_size
+      #
+      def validate_total_download_size!
         return unless @limits.max_total_download_size
         return if @total_bytes_downloaded <= @limits.max_total_download_size
 
@@ -360,16 +317,13 @@ module WSDL
       # @raise [PathRestrictionError] if access is not allowed
       #
       def validate_file_access!(path)
-        case @file_access
-        when :disabled
+        if @sandbox_paths.nil?
           raise PathRestrictionError,
-                "File access is disabled (mode: :disabled). Cannot read #{path.inspect}. " \
-                'All schema imports must use URLs, or use file_access: :sandbox with explicit sandbox_paths.'
-        when :sandbox
-          validate_path_in_sandbox!(path)
-        when :unrestricted
-          # No validation needed
+                "File access is disabled. Cannot read #{path.inspect}. " \
+                'All schema imports must use URLs, or provide sandbox_paths to allow file access.'
         end
+
+        validate_path_in_sandbox!(path)
       end
 
       # Validates that a path is within the allowed sandbox directories.
@@ -427,22 +381,19 @@ module WSDL
       # @return [String] the resolved absolute URL
       #
       def resolve_relative_url(relative, base)
-        base_uri = URI.parse(base)
-        resolved = base_uri.merge(relative)
-        resolved.to_s
+        URI.join(base, relative).to_s
       end
 
       # Resolves a relative file path against a base file path.
       #
-      # @param relative [String] the relative file path
-      # @param base [String] the base file path
-      # @return [String] the resolved absolute file path
+      # @param relative [String] the relative path
+      # @param base [String] the base path
+      # @return [String] the resolved absolute path
       #
       def resolve_relative_path(relative, base)
         # Get the directory of the base file
-        base_dir = File.dirname(base)
-
-        # Join and normalize the path
+        base_dir = File.dirname(File.expand_path(base))
+        # Resolve the relative path against it
         File.expand_path(relative, base_dir)
       end
 
@@ -452,9 +403,7 @@ module WSDL
       # @return [Boolean] true if the path is absolute
       #
       def absolute_path?(path)
-        # On Unix, absolute paths start with /
-        # On Windows, they start with a drive letter (e.g., C:\)
-        path.start_with?('/') || path.match?(/^[A-Za-z]:/)
+        Pathname.new(path).absolute?
       end
     end
   end

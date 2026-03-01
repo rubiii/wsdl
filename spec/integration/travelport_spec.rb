@@ -3,8 +3,14 @@
 require 'spec_helper'
 
 describe 'Integration with Travelport' do
-  subject(:client) { WSDL::Client.new(wsdl_path, http: http_mock) }
+  # The Travelport WSDL imports schemas from sibling directories (../common_v32_0/)
+  # so we need to explicitly sandbox to the parent travelport directory
+  subject(:client) do
+    WSDL::Client.new(wsdl_path, http: http_mock,
+                                sandbox_paths: [travelport_dir])
+  end
 
+  let(:travelport_dir) { File.expand_path('../fixtures/wsdl/travelport', __dir__) }
   # Using local file paths to test relative path resolution (Issue #5)
   let(:wsdl_path) { fixture('wsdl/travelport/system_v32_0/System.wsdl') }
 
