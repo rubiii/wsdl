@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class WSDL
+module WSDL
   # Base error class for all WSDL-related errors.
   #
   # All custom exceptions raised by this library inherit from this class,
@@ -8,14 +8,14 @@ class WSDL
   #
   # @example Rescuing all WSDL errors
   #   begin
-  #     wsdl = WSDL.new('http://example.com/service?wsdl')
-  #     operation = wsdl.operation('Service', 'Port', 'Operation')
+  #     client = WSDL::Client.new('http://example.com/service?wsdl')
+  #     operation = client.operation('Service', 'Port', 'Operation')
   #     operation.call
   #   rescue WSDL::Error => e
   #     puts "WSDL error: #{e.message}"
   #   end
   #
-  class Error < RuntimeError
+  class Error < StandardError
   end
 
   # Raised when an operation uses an unsupported SOAP style.
@@ -25,7 +25,7 @@ class WSDL
   #
   # @example
   #   begin
-  #     operation = wsdl.operation('Service', 'Port', 'LegacyOperation')
+  #     operation = client.operation('Service', 'Port', 'LegacyOperation')
   #   rescue WSDL::UnsupportedStyleError => e
   #     puts "Operation style not supported: #{e.message}"
   #   end
@@ -42,11 +42,28 @@ class WSDL
   # @example
   #   begin
   #     # This will fail if the inline XML has relative imports
-  #     wsdl = WSDL.new('<definitions>...</definitions>')
+  #     client = WSDL::Client.new('<definitions>...</definitions>')
   #   rescue WSDL::UnresolvableImportError => e
   #     puts "Cannot resolve import: #{e.message}"
   #   end
   #
   class UnresolvableImportError < Error
+  end
+
+  # Raised when signature verification fails on a response.
+  #
+  # This error is raised when:
+  # - The response does not contain a signature when one is expected
+  # - The signature verification process fails
+  # - The digest values do not match the signed content
+  #
+  # @example
+  #   begin
+  #     response.verify_signature!
+  #   rescue WSDL::SignatureVerificationError => e
+  #     log_security_event("Signature verification failed: #{e.message}")
+  #   end
+  #
+  class SignatureVerificationError < Error
   end
 end

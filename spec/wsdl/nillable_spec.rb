@@ -3,11 +3,11 @@
 require 'spec_helper'
 
 describe 'Nillable elements' do
-  let(:wsdl) { WSDL::Definition.new(fixture('wsdl/nillable_elements'), http_mock) }
-  let(:operation) { wsdl.operation('UserService', 'UserServicePort', 'CreateUser') }
+  let(:parser_result) { WSDL::Parser::Result.new(fixture('wsdl/nillable_elements'), http_mock) }
+  let(:operation_info) { parser_result.operation('UserService', 'UserServicePort', 'CreateUser') }
 
   describe 'element nillable attribute parsing' do
-    let(:body_parts) { operation.input.body_parts }
+    let(:body_parts) { operation_info.input.body_parts }
     let(:create_user_element) { body_parts.first }
 
     it 'parses nillable="true" on simple type elements' do
@@ -59,7 +59,7 @@ describe 'Nillable elements' do
 
   describe 'xsi:nil serialization' do
     context 'when a nillable simple type element has a nil value' do
-      subject(:envelope) { WSDL::Envelope.new(operation, nil, body) }
+      subject(:envelope) { WSDL::Builder::Envelope.new(operation_info, nil, body) }
 
       let(:body) do
         {
@@ -104,7 +104,7 @@ describe 'Nillable elements' do
     end
 
     context 'when a non-nillable element has a nil value' do
-      subject(:envelope) { WSDL::Envelope.new(operation, nil, body) }
+      subject(:envelope) { WSDL::Builder::Envelope.new(operation_info, nil, body) }
 
       let(:body) do
         {
@@ -129,7 +129,7 @@ describe 'Nillable elements' do
     end
 
     context 'when a nillable complex type element has a nil value' do
-      subject(:envelope) { WSDL::Envelope.new(operation, nil, body) }
+      subject(:envelope) { WSDL::Builder::Envelope.new(operation_info, nil, body) }
 
       let(:body) do
         {
@@ -148,7 +148,7 @@ describe 'Nillable elements' do
     end
 
     context 'when nested nillable elements have nil values' do
-      subject(:envelope) { WSDL::Envelope.new(operation, nil, body) }
+      subject(:envelope) { WSDL::Builder::Envelope.new(operation_info, nil, body) }
 
       let(:body) do
         {
@@ -177,7 +177,7 @@ describe 'Nillable elements' do
     end
 
     context 'when an array contains nil values and elements are nillable' do
-      subject(:envelope) { WSDL::Envelope.new(operation, nil, body) }
+      subject(:envelope) { WSDL::Builder::Envelope.new(operation_info, nil, body) }
 
       let(:body) do
         {
@@ -200,7 +200,7 @@ describe 'Nillable elements' do
     end
 
     context 'when no nil values are present' do
-      subject(:envelope) { WSDL::Envelope.new(operation, nil, body) }
+      subject(:envelope) { WSDL::Builder::Envelope.new(operation_info, nil, body) }
 
       let(:body) do
         {
@@ -225,7 +225,7 @@ describe 'Nillable elements' do
     end
 
     context 'with mixed nillable and non-nillable nil values' do
-      subject(:envelope) { WSDL::Envelope.new(operation, nil, body) }
+      subject(:envelope) { WSDL::Builder::Envelope.new(operation_info, nil, body) }
 
       let(:body) do
         {

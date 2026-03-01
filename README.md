@@ -23,7 +23,7 @@ gem 'httpclient'  # optional: required for default HTTP adapter
 require 'wsdl'
 
 # Load a WSDL document
-client = WSDL.new('http://example.com/service?wsdl')
+client = WSDL::Client.new('http://example.com/service?wsdl')
 
 # Inspect available services
 client.services

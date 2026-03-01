@@ -4,7 +4,7 @@ require 'spec_helper'
 
 describe 'Integration with Telefonkatalogen' do
   # reference: savon#295
-  subject(:client) { WSDL.new fixture('wsdl/telefonkatalogen') }
+  subject(:client) { WSDL::Client.new fixture('wsdl/telefonkatalogen') }
 
   it 'returns a map of services and ports' do
     expect(client.services).to eq(

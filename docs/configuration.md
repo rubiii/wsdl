@@ -19,7 +19,7 @@ By default, the library uses `HTTPClient` to make HTTP requests. You can access 
 Access the underlying HTTPClient instance through the `http` method:
 
 ``` ruby
-client = WSDL.new('http://example.com/service?wsdl')
+client = WSDL::Client.new('http://example.com/service?wsdl')
 
 # Access the HTTPClient instance
 http_client = client.http
@@ -91,14 +91,14 @@ end
 WSDL.http_adapter = MyHTTPAdapter
 
 # All new clients will use the custom adapter
-client = WSDL.new('http://example.com/service?wsdl')
+client = WSDL::Client.new('http://example.com/service?wsdl')
 ```
 
 #### Setting the Custom Adapter Per-Client
 
 ``` ruby
 http = MyHTTPAdapter.new
-client = WSDL.new('http://example.com/service?wsdl', http)
+client = WSDL::Client.new('http://example.com/service?wsdl', http)
 ```
 
 #### Resetting to Default
@@ -117,10 +117,10 @@ When you create a `WSDL` instance, the parsed definition is cached by its locati
 
 ``` ruby
 # First call fetches and parses the WSDL
-client1 = WSDL.new('http://example.com/service?wsdl')
+client1 = WSDL::Client.new('http://example.com/service?wsdl')
 
 # Second call returns the cached definition - no HTTP request
-client2 = WSDL.new('http://example.com/service?wsdl')
+client2 = WSDL::Client.new('http://example.com/service?wsdl')
 ```
 
 For inline XML (raw WSDL strings), the cache key is a SHA256 hash of the content.
@@ -149,14 +149,14 @@ WSDL.cache = nil
 #### Disabling Caching Per-Client
 
 ``` ruby
-client = WSDL.new('http://example.com/service?wsdl', cache: nil)
+client = WSDL::Client.new('http://example.com/service?wsdl', cache: nil)
 ```
 
 #### Using a Separate Cache Instance
 
 ``` ruby
 my_cache = WSDL::Cache.new(ttl: 1800)
-client = WSDL.new('http://example.com/service?wsdl', cache: my_cache)
+client = WSDL::Client.new('http://example.com/service?wsdl', cache: my_cache)
 ```
 
 ### Custom Cache Implementation
@@ -260,7 +260,7 @@ By default, the library generates XML with indentation and line breaks for reada
 To generate compact XML without indentation or line breaks, set `pretty_print: false` when creating the client:
 
 ``` ruby
-client = WSDL.new('http://example.com/service?wsdl', pretty_print: false)
+client = WSDL::Client.new('http://example.com/service?wsdl', pretty_print: false)
 ```
 
 All operations created from this client will generate compact XML:
@@ -278,7 +278,7 @@ puts operation.build
 You can also change the setting on individual operations:
 
 ``` ruby
-client = WSDL.new('http://example.com/service?wsdl')
+client = WSDL::Client.new('http://example.com/service?wsdl')
 
 operation = client.operation('Service', 'Port', 'Operation')
 operation.pretty_print = false  # Override for this operation only
@@ -315,20 +315,20 @@ require 'wsdl'
 require 'logging'
 
 # Enable logging for WSDL classes
-logger = Logging.logger['WSDL::Importer']
+logger = Logging.logger['WSDL::Parser::Importer']
 logger.add_appenders(Logging.appenders.stdout)
 logger.level = :debug
 
-client = WSDL.new('http://example.com/service?wsdl')
+client = WSDL::Client.new('http://example.com/service?wsdl')
 # Debug output will show WSDL/schema import progress
 ```
 
 ### Available Loggers
 
-- `WSDL::Importer` - WSDL and schema import process
-- `WSDL::Envelope` - Request envelope building
-- `WSDL::Message` - Message part building
-- `WSDL::XS` - XML Schema type resolution
+- `WSDL::Parser::Importer` - WSDL and schema import process
+- `WSDL::Builder::Envelope` - Request envelope building
+- `WSDL::Builder::Message` - Message part building
+- `WSDL::Schema` - XML Schema type resolution
 - `WSDL::XML::ElementBuilder` - Element building
 
 ## Environment Variables
@@ -336,7 +336,7 @@ client = WSDL.new('http://example.com/service?wsdl')
 Set the `DEBUG` environment variable to enable logging for a specific class:
 
 ``` bash
-DEBUG=WSDL::Importer ruby my_script.rb
+DEBUG=WSDL::Parser::Importer ruby my_script.rb
 ```
 
 This requires the logging setup in your code:

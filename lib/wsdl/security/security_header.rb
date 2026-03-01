@@ -2,7 +2,7 @@
 
 require 'nokogiri'
 
-class WSDL
+module WSDL
   module Security
     # Builds the complete wsse:Security header for a SOAP message.
     #

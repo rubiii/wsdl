@@ -3,7 +3,7 @@
 require 'spec_helper'
 
 describe 'Integration with Stockquote service' do
-  subject(:client) { WSDL.new fixture('wsdl/stockquote') }
+  subject(:client) { WSDL::Client.new fixture('wsdl/stockquote') }
 
   let(:service_name) { :StockQuote }
   let(:port_name)    { :StockQuoteSoap }

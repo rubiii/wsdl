@@ -2,7 +2,7 @@
 
 require 'nokogiri'
 
-class WSDL
+module WSDL
   module Security
     # Handles XML Canonicalization (C14N) for digital signatures.
     #

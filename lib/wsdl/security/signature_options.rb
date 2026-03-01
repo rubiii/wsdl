@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class WSDL
+module WSDL
   module Security
     # Value object encapsulating signature configuration options.
     #

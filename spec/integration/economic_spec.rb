@@ -5,7 +5,7 @@ require 'benchmark'
 
 describe 'Integration with Economic' do
   before :all do
-    @client = WSDL.new fixture('wsdl/economic')
+    @client = WSDL::Client.new fixture('wsdl/economic')
   end
 
   it 'returns a map of services and ports' do

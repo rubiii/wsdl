@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class WSDL
+module WSDL
   module Schema
     # A collection of XML Schema definitions with lookup capabilities.
     #

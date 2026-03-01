@@ -3,7 +3,7 @@
 require 'spec_helper'
 
 describe 'Integration with RATP' do
-  subject(:client) { WSDL.new fixture('wsdl/ratp') }
+  subject(:client) { WSDL::Client.new fixture('wsdl/ratp') }
 
   let(:service_name) { :Wsiv }
   let(:port_name)    { :WsivSOAP11port_http }

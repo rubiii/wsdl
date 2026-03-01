@@ -2,7 +2,7 @@
 
 require 'openssl'
 
-class WSDL
+module WSDL
   module Security
     # Configuration container for WS-Security settings on an operation.
     #

@@ -3,7 +3,7 @@
 require 'spec_helper'
 
 describe 'Integration with Atlassian Jira' do
-  subject(:client) { WSDL.new fixture('wsdl/jira') }
+  subject(:client) { WSDL::Client.new fixture('wsdl/jira') }
 
   it 'returns a map of services and ports' do
     expect(client.services).to eq(

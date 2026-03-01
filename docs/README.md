@@ -26,7 +26,7 @@ WSDL is a Ruby library for parsing WSDL documents and interacting with SOAP serv
 require 'wsdl'
 
 # Load WSDL
-client = WSDL.new('http://example.com/service?wsdl')
+client = WSDL::Client.new('http://example.com/service?wsdl')
 
 # Inspect
 client.services                                    # List all services
@@ -42,7 +42,7 @@ response = op.call                                 # Make the call
 WSDL.cache.clear                                   # Clear the cache
 WSDL.cache = WSDL::Cache.new(ttl: 3600)            # Use TTL (seconds)
 WSDL.cache = nil                                   # Disable caching globally
-WSDL.new(url, cache: nil)                          # Disable per-client
+WSDL::Client.new(url, cache: nil)                  # Disable per-client
 ```
 
 ## Support

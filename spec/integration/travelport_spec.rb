@@ -3,7 +3,7 @@
 require 'spec_helper'
 
 describe 'Integration with Travelport' do
-  subject(:client) { WSDL.new(wsdl_path, http: http_mock) }
+  subject(:client) { WSDL::Client.new(wsdl_path, http: http_mock) }
 
   # Using local file paths to test relative path resolution (Issue #5)
   let(:wsdl_path) { fixture('wsdl/travelport/system_v32_0/System.wsdl') }

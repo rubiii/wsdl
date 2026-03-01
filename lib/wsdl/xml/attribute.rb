@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-class WSDL
-  class XML
+module WSDL
+  module XML
     # Represents an XML attribute definition used for building SOAP messages.
     #
     # Attributes are defined on complex type elements and can be either

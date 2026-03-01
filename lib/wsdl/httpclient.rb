@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class WSDL
+module WSDL
   # HTTP adapter using the httpclient gem.
   #
   # This is the default HTTP adapter used by {WSDL}. It wraps the

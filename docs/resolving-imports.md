@@ -23,7 +23,7 @@ Relative paths in `schemaLocation` attributes are resolved against the parent do
 # Schema import:    schemaLocation="../schemas/types.xsd"
 # Resolved to:      /app/schemas/types.xsd
 
-client = WSDL.new('/app/wsdl/service.wsdl')
+client = WSDL::Client.new('/app/wsdl/service.wsdl')
 ```
 
 ### From a URL
@@ -33,7 +33,7 @@ client = WSDL.new('/app/wsdl/service.wsdl')
 # Schema import:    schemaLocation="../schemas/types.xsd"
 # Resolved to:      http://example.com/schemas/types.xsd
 
-client = WSDL.new('http://example.com/wsdl/service.wsdl')
+client = WSDL::Client.new('http://example.com/wsdl/service.wsdl')
 ```
 
 ### From a Relative Path
@@ -45,7 +45,7 @@ When loading from a relative path, it's first expanded against the current worki
 # WSDL path:         wsdl/service.wsdl
 # Expanded to:       /app/wsdl/service.wsdl
 
-client = WSDL.new('wsdl/service.wsdl')
+client = WSDL::Client.new('wsdl/service.wsdl')
 ```
 
 ## XSD Imports vs Includes
@@ -65,7 +65,7 @@ When loading a WSDL from a raw XML string, relative imports cannot be resolved:
 
 ``` ruby
 xml = '<definitions>...</definitions>'
-client = WSDL.new(xml)
+client = WSDL::Client.new(xml)
 # If the WSDL contains relative imports, raises:
 # WSDL::UnresolvableImportError: Cannot resolve relative path "types.xsd":
 # base is inline XML. When loading WSDL from a string, all schema imports
@@ -85,11 +85,11 @@ client = WSDL.new(xml)
 ``` ruby
 require 'logging'
 
-logger = Logging.logger['WSDL::Importer']
+logger = Logging.logger['WSDL::Parser::Importer']
 logger.add_appenders(Logging.appenders.stdout)
 logger.level = :debug
 
-client = WSDL.new('http://example.com/service?wsdl')
+client = WSDL::Client.new('http://example.com/service?wsdl')
 # Logs each import/include resolution
 ```
 

@@ -3,7 +3,7 @@
 require 'spec_helper'
 
 describe 'Integration with Amazon' do
-  subject(:client) { WSDL.new fixture('wsdl/amazon') }
+  subject(:client) { WSDL::Client.new fixture('wsdl/amazon') }
 
   it 'returns a map of services and ports' do
     expect(client.services).to eq(
@@ -127,7 +127,7 @@ describe 'Integration with Amazon' do
       #   </xs:complexType>
       # </xs:element>
 
-      schemas = client.wsdl.schemas
+      schemas = client.parser_result.schemas
       builder = WSDL::XML::ElementBuilder.new(schemas)
 
       part = { element: 'tns:Error', namespaces: { 'xmlns:tns' => namespace } }
@@ -142,7 +142,7 @@ describe 'Integration with Amazon' do
     end
 
     it 'includes any_content flag in body_parts for elements with xs:any' do
-      schemas = client.wsdl.schemas
+      schemas = client.parser_result.schemas
       builder = WSDL::XML::ElementBuilder.new(schemas)
 
       part = { element: 'tns:Error', namespaces: { 'xmlns:tns' => namespace } }
@@ -159,13 +159,13 @@ describe 'Integration with Amazon' do
     end
 
     it 'generates an example message with placeholder for arbitrary content' do
-      schemas = client.wsdl.schemas
+      schemas = client.parser_result.schemas
       builder = WSDL::XML::ElementBuilder.new(schemas)
 
       part = { element: 'tns:Error', namespaces: { 'xmlns:tns' => namespace } }
       elements = builder.build([part])
 
-      example = WSDL::ExampleMessage.build(elements)
+      example = WSDL::Builder::ExampleMessage.build(elements)
 
       # The Detail element should have the any content placeholder
       detail = example.dig(:Error, :Detail)
@@ -173,17 +173,17 @@ describe 'Integration with Amazon' do
     end
 
     it 'serializes arbitrary content in elements with xs:any' do
-      schemas = client.wsdl.schemas
+      schemas = client.parser_result.schemas
       builder = WSDL::XML::ElementBuilder.new(schemas)
 
       part = { element: 'tns:Error', namespaces: { 'xmlns:tns' => namespace } }
       elements = builder.build([part])
 
       # Create a mock envelope for the Message builder
-      envelope = instance_double(WSDL::Envelope)
+      envelope = instance_double(WSDL::Builder::Envelope)
       allow(envelope).to receive(:register_namespace).and_return('ns1')
 
-      message = WSDL::Message.new(envelope, elements)
+      message = WSDL::Builder::Message.new(envelope, elements)
 
       # Build with both defined and arbitrary content in Detail
       result = message.build({

@@ -2,7 +2,7 @@
 
 require 'securerandom'
 
-class WSDL
+module WSDL
   module Security
     # Utility module for generating unique WS-Security element IDs.
     #

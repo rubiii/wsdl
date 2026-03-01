@@ -5,7 +5,7 @@ require 'wsdl/schema/node'
 require 'wsdl/schema/collection'
 require 'wsdl/schema/definition'
 
-class WSDL
+module WSDL
   # XML Schema (XSD) parsing and representation.
   #
   # This module contains classes for parsing and traversing XML Schema

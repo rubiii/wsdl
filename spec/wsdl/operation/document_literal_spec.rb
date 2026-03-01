@@ -7,7 +7,7 @@ describe WSDL::Operation do
   #   http://www.ibm.com/developerworks/webservices/library/ws-tip-namespace/index.html
   context 'with a document/literal wrapped document' do
     it 'works for op1' do
-      client = WSDL.new fixture('wsdl/document_literal_wrapped')
+      client = WSDL::Client.new fixture('wsdl/document_literal_wrapped')
 
       op1 = client.operation('SampleService', 'Sample', 'op1')
       expect(op1.input_style).to eq('document/literal')
@@ -33,7 +33,7 @@ describe WSDL::Operation do
     end
 
     it 'works for op2' do
-      client = WSDL.new fixture('wsdl/document_literal_wrapped')
+      client = WSDL::Client.new fixture('wsdl/document_literal_wrapped')
 
       op2 = client.operation('SampleService', 'Sample', 'op2')
       expect(op2.input_style).to eq('document/literal')
@@ -59,7 +59,7 @@ describe WSDL::Operation do
     end
 
     it 'works for op3' do
-      client = WSDL.new fixture('wsdl/document_literal_wrapped')
+      client = WSDL::Client.new fixture('wsdl/document_literal_wrapped')
 
       op3 = client.operation('SampleService', 'Sample', 'op3')
       expect(op3.input_style).to eq('document/literal')

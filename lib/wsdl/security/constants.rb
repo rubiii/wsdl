@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class WSDL
+module WSDL
   module Security
     # WS-Security constants including namespaces and URIs from OASIS specifications.
     #

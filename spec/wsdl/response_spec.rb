@@ -20,7 +20,7 @@ describe WSDL::Response, type: :unit do
     XML
   end
 
-  describe 'without output_parts (fallback to XmlHash)' do
+  describe 'without schema parts (fallback to HashConverter)' do
     subject(:response) { described_class.new(soap_response) }
 
     describe '#raw' do
@@ -90,7 +90,7 @@ describe WSDL::Response, type: :unit do
     end
   end
 
-  describe 'with output_parts (schema-aware parsing)' do
+  describe 'with output_body_parts (schema-aware body parsing)' do
     describe '#body' do
       it 'converts integer types to Integer' do
         xml = <<-XML
@@ -105,9 +105,9 @@ describe WSDL::Response, type: :unit do
 
         count_element = schema_element('Count', type: 'xsd:int')
         response_element = schema_element('Response', children: [count_element])
-        output_parts = [response_element]
+        output_body_parts = [response_element]
 
-        response = described_class.new(xml, output_parts: output_parts)
+        response = described_class.new(xml, output_body_parts:)
 
         expect(response.body[:Response][:Count]).to eq(42)
         expect(response.body[:Response][:Count]).to be_a(Integer)
@@ -126,9 +126,9 @@ describe WSDL::Response, type: :unit do
 
         price_element = schema_element('Price', type: 'xsd:decimal')
         response_element = schema_element('Response', children: [price_element])
-        output_parts = [response_element]
+        output_body_parts = [response_element]
 
-        response = described_class.new(xml, output_parts: output_parts)
+        response = described_class.new(xml, output_body_parts:)
 
         expect(response.body[:Response][:Price]).to eq(BigDecimal('99.99'))
         expect(response.body[:Response][:Price]).to be_a(BigDecimal)
@@ -149,9 +149,9 @@ describe WSDL::Response, type: :unit do
         active_element = schema_element('Active', type: 'xsd:boolean')
         deleted_element = schema_element('Deleted', type: 'xsd:boolean')
         response_element = schema_element('Response', children: [active_element, deleted_element])
-        output_parts = [response_element]
+        output_body_parts = [response_element]
 
-        response = described_class.new(xml, output_parts: output_parts)
+        response = described_class.new(xml, output_body_parts:)
 
         expect(response.body[:Response][:Active]).to be true
         expect(response.body[:Response][:Deleted]).to be false
@@ -170,9 +170,9 @@ describe WSDL::Response, type: :unit do
 
         date_element = schema_element('BirthDate', type: 'xsd:date')
         response_element = schema_element('Response', children: [date_element])
-        output_parts = [response_element]
+        output_body_parts = [response_element]
 
-        response = described_class.new(xml, output_parts: output_parts)
+        response = described_class.new(xml, output_body_parts:)
 
         expect(response.body[:Response][:BirthDate]).to eq(Date.new(2024, 1, 15))
         expect(response.body[:Response][:BirthDate]).to be_a(Date)
@@ -191,9 +191,9 @@ describe WSDL::Response, type: :unit do
 
         datetime_element = schema_element('CreatedAt', type: 'xsd:dateTime')
         response_element = schema_element('Response', children: [datetime_element])
-        output_parts = [response_element]
+        output_body_parts = [response_element]
 
-        response = described_class.new(xml, output_parts: output_parts)
+        response = described_class.new(xml, output_body_parts:)
 
         expect(response.body[:Response][:CreatedAt]).to be_a(Time)
         expect(response.body[:Response][:CreatedAt].year).to eq(2024)
@@ -213,9 +213,9 @@ describe WSDL::Response, type: :unit do
 
           item_element = schema_element('Item', type: 'xsd:string', singular: false)
           response_element = schema_element('Response', children: [item_element])
-          output_parts = [response_element]
+          output_body_parts = [response_element]
 
-          response = described_class.new(xml, output_parts: output_parts)
+          response = described_class.new(xml, output_body_parts:)
 
           expect(response.body[:Response][:Item]).to eq(['only-one'])
           expect(response.body[:Response][:Item]).to be_an(Array)
@@ -234,9 +234,9 @@ describe WSDL::Response, type: :unit do
 
           item_element = schema_element('Item', type: 'xsd:string', singular: true)
           response_element = schema_element('Response', children: [item_element])
-          output_parts = [response_element]
+          output_body_parts = [response_element]
 
-          response = described_class.new(xml, output_parts: output_parts)
+          response = described_class.new(xml, output_body_parts:)
 
           expect(response.body[:Response][:Item]).to eq('only-one')
           expect(response.body[:Response][:Item]).not_to be_an(Array)
@@ -257,9 +257,9 @@ describe WSDL::Response, type: :unit do
 
           item_element = schema_element('Item', type: 'xsd:string', singular: false)
           response_element = schema_element('Response', children: [item_element])
-          output_parts = [response_element]
+          output_body_parts = [response_element]
 
-          response = described_class.new(xml, output_parts: output_parts)
+          response = described_class.new(xml, output_body_parts:)
 
           expect(response.body[:Response][:Item]).to eq(%w[one two three])
         end
@@ -282,9 +282,9 @@ describe WSDL::Response, type: :unit do
           age_element = schema_element('Age', type: 'xsd:int')
           user_element = schema_element('User', children: [name_element, age_element], singular: false)
           response_element = schema_element('Response', children: [user_element])
-          output_parts = [response_element]
+          output_body_parts = [response_element]
 
-          response = described_class.new(xml, output_parts: output_parts)
+          response = described_class.new(xml, output_body_parts:)
 
           expect(response.body[:Response][:User]).to eq([{ Name: 'Alice', Age: 30 }])
           expect(response.body[:Response][:User].first[:Age]).to be_a(Integer)
@@ -305,9 +305,9 @@ describe WSDL::Response, type: :unit do
 
           value_element = schema_element('Value', type: 'xsd:string', nillable: true)
           response_element = schema_element('Response', children: [value_element])
-          output_parts = [response_element]
+          output_body_parts = [response_element]
 
-          response = described_class.new(xml, output_parts: output_parts)
+          response = described_class.new(xml, output_body_parts:)
 
           expect(response.body[:Response][:Value]).to be_nil
         end
@@ -328,9 +328,9 @@ describe WSDL::Response, type: :unit do
 
           known_element = schema_element('Known', type: 'xsd:string')
           response_element = schema_element('Response', children: [known_element])
-          output_parts = [response_element]
+          output_body_parts = [response_element]
 
-          response = described_class.new(xml, output_parts: output_parts)
+          response = described_class.new(xml, output_body_parts:)
 
           expect(response.body[:Response][:Known]).to eq('expected')
           expect(response.body[:Response][:Unknown]).to eq('extra')
@@ -339,7 +339,7 @@ describe WSDL::Response, type: :unit do
     end
 
     describe '#header' do
-      it 'still returns the parsed SOAP header using XmlHash' do
+      it 'returns the parsed SOAP header without type conversion when no header parts provided' do
         xml = <<-XML
           <env:Envelope xmlns:env="http://schemas.xmlsoap.org/soap/envelope/">
             <env:Header>
@@ -355,9 +355,9 @@ describe WSDL::Response, type: :unit do
 
         result_element = schema_element('Result', type: 'xsd:int')
         response_element = schema_element('Response', children: [result_element])
-        output_parts = [response_element]
+        output_body_parts = [response_element]
 
-        response = described_class.new(xml, output_parts: output_parts)
+        response = described_class.new(xml, output_body_parts:)
 
         expect(response.header).to eq({ SessionId: 'abc123' })
       end
@@ -377,13 +377,124 @@ describe WSDL::Response, type: :unit do
 
         count_element = schema_element('Count', type: 'xsd:int')
         response_element = schema_element('Response', children: [count_element])
-        output_parts = [response_element]
+        output_body_parts = [response_element]
 
-        response = described_class.new(xml, output_parts: output_parts)
+        response = described_class.new(xml, output_body_parts:)
 
         # hash method does NOT use schema-aware parsing
         expect(response.hash[:Envelope][:Body][:Response][:Count]).to eq('42')
       end
+    end
+  end
+
+  describe 'with output_header_parts (schema-aware header parsing)' do
+    describe '#header' do
+      it 'converts header values using schema types' do
+        xml = <<-XML
+          <env:Envelope xmlns:env="http://schemas.xmlsoap.org/soap/envelope/">
+            <env:Header>
+              <RequestId>12345</RequestId>
+              <Timestamp>2024-01-15T10:30:00Z</Timestamp>
+            </env:Header>
+            <env:Body>
+              <Response>
+                <Result>OK</Result>
+              </Response>
+            </env:Body>
+          </env:Envelope>
+        XML
+
+        request_id_element = schema_element('RequestId', type: 'xsd:int')
+        timestamp_element = schema_element('Timestamp', type: 'xsd:dateTime')
+        output_header_parts = [request_id_element, timestamp_element]
+
+        response = described_class.new(xml, output_header_parts:)
+
+        expect(response.header[:RequestId]).to eq(12_345)
+        expect(response.header[:RequestId]).to be_a(Integer)
+        expect(response.header[:Timestamp]).to be_a(Time)
+        expect(response.header[:Timestamp].year).to eq(2024)
+      end
+
+      it 'handles arrays in headers based on maxOccurs' do
+        xml = <<-XML
+          <env:Envelope xmlns:env="http://schemas.xmlsoap.org/soap/envelope/">
+            <env:Header>
+              <Token>token1</Token>
+              <Token>token2</Token>
+            </env:Header>
+            <env:Body>
+              <Response><Result>OK</Result></Response>
+            </env:Body>
+          </env:Envelope>
+        XML
+
+        token_element = schema_element('Token', type: 'xsd:string', singular: false)
+        output_header_parts = [token_element]
+
+        response = described_class.new(xml, output_header_parts:)
+
+        expect(response.header[:Token]).to eq(%w[token1 token2])
+      end
+
+      it 'handles complex header elements' do
+        xml = <<-XML
+          <env:Envelope xmlns:env="http://schemas.xmlsoap.org/soap/envelope/">
+            <env:Header>
+              <AuthHeader>
+                <UserId>user123</UserId>
+                <Expires>300</Expires>
+              </AuthHeader>
+            </env:Header>
+            <env:Body>
+              <Response><Result>OK</Result></Response>
+            </env:Body>
+          </env:Envelope>
+        XML
+
+        user_id_element = schema_element('UserId', type: 'xsd:string')
+        expires_element = schema_element('Expires', type: 'xsd:int')
+        auth_header_element = schema_element('AuthHeader', children: [user_id_element, expires_element])
+        output_header_parts = [auth_header_element]
+
+        response = described_class.new(xml, output_header_parts:)
+
+        expect(response.header[:AuthHeader]).to eq({ UserId: 'user123', Expires: 300 })
+        expect(response.header[:AuthHeader][:Expires]).to be_a(Integer)
+      end
+    end
+  end
+
+  describe 'with both body and header parts' do
+    it 'applies schema-aware parsing to both body and header' do
+      xml = <<-XML
+        <env:Envelope xmlns:env="http://schemas.xmlsoap.org/soap/envelope/">
+          <env:Header>
+            <SessionExpiry>3600</SessionExpiry>
+          </env:Header>
+          <env:Body>
+            <Response>
+              <Count>42</Count>
+            </Response>
+          </env:Body>
+        </env:Envelope>
+      XML
+
+      # Body schema
+      count_element = schema_element('Count', type: 'xsd:int')
+      response_element = schema_element('Response', children: [count_element])
+      output_body_parts = [response_element]
+
+      # Header schema
+      expiry_element = schema_element('SessionExpiry', type: 'xsd:int')
+      output_header_parts = [expiry_element]
+
+      response = described_class.new(xml, output_body_parts:, output_header_parts:)
+
+      expect(response.body[:Response][:Count]).to eq(42)
+      expect(response.body[:Response][:Count]).to be_a(Integer)
+      expect(response.header[:SessionExpiry]).to eq(3600)
+      expect(response.header[:SessionExpiry]).to be_a(Integer)
     end
   end
 
@@ -429,9 +540,9 @@ describe WSDL::Response, type: :unit do
       ])
 
       response_element = schema_element('GetOrderResponse', children: [order_element])
-      output_parts = [response_element]
+      output_body_parts = [response_element]
 
-      response = described_class.new(xml, output_parts: output_parts)
+      response = described_class.new(xml, output_body_parts:)
 
       expect(response.body).to eq({
         GetOrderResponse: {

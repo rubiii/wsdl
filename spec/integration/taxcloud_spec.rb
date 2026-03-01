@@ -3,7 +3,7 @@
 require 'spec_helper'
 
 describe 'Integration with Taxcloud' do
-  subject(:client) { WSDL.new fixture('wsdl/taxcloud') }
+  subject(:client) { WSDL::Client.new fixture('wsdl/taxcloud') }
 
   it 'returns a map of services and ports' do
     expect(client.services).to eq(

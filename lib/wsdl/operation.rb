@@ -1,11 +1,6 @@
 # frozen_string_literal: true
 
-require 'wsdl/response'
-require 'wsdl/envelope'
-require 'wsdl/example_message'
-require 'wsdl/security'
-
-class WSDL
+module WSDL
   # Represents a SOAP operation that can be called.
   #
   # This class provides the interface for building and executing SOAP requests.
@@ -13,27 +8,27 @@ class WSDL
   # and execute the operation to receive a response.
   #
   # @example Basic operation call
-  #   operation = wsdl.operation('Service', 'Port', 'GetUser')
+  #   operation = client.operation('Service', 'Port', 'GetUser')
   #   operation.body = { user_id: 123 }
   #   response = operation.call
   #   puts response.body
   #
   # @example Using example messages
-  #   operation = wsdl.operation('Service', 'Port', 'CreateUser')
+  #   operation = client.operation('Service', 'Port', 'CreateUser')
   #   operation.body = operation.example_body
   #   operation.body[:user][:name] = 'John Doe'
   #   operation.body[:user][:email] = 'john@example.com'
   #   response = operation.call
   #
   # @example Customizing the request
-  #   operation = wsdl.operation('Service', 'Port', 'SecureOperation')
+  #   operation = client.operation('Service', 'Port', 'SecureOperation')
   #   operation.header = { auth_token: 'secret' }
   #   operation.soap_action = 'CustomAction'
   #   operation.endpoint = 'https://other-server.example.com/soap'
   #   response = operation.call
   #
   # @example WS-Security with UsernameToken
-  #   operation = wsdl.operation('Service', 'Port', 'SecureOperation')
+  #   operation = client.operation('Service', 'Port', 'SecureOperation')
   #   operation.security.username_token('user', 'secret')
   #   response = operation.call
   #
@@ -41,7 +36,7 @@ class WSDL
   #   cert = OpenSSL::X509::Certificate.new(File.read('cert.pem'))
   #   key = OpenSSL::PKey::RSA.new(File.read('key.pem'), 'password')
   #
-  #   operation = wsdl.operation('Service', 'Port', 'SecureOperation')
+  #   operation = client.operation('Service', 'Port', 'SecureOperation')
   #   operation.security.timestamp
   #   operation.security.signature(certificate: cert, private_key: key)
   #   response = operation.call
@@ -58,19 +53,22 @@ class WSDL
 
     # Creates a new Operation instance.
     #
-    # @param operation [Definition::Operation] the parsed operation definition
-    # @param wsdl [Definition] the WSDL definition
+    # @param operation_info [Parser::OperationInfo] the parsed operation definition
+    # @param parser_result [Parser::Result] the parser result
     # @param http [Object] the HTTP adapter instance
     # @param pretty_print [Boolean] whether to format XML output with indentation
-    def initialize(operation, wsdl, http, pretty_print: true)
-      @operation = operation
-      @wsdl = wsdl
+    #
+    # @api private
+    #
+    def initialize(operation_info, parser_result, http, pretty_print: true)
+      @operation_info = operation_info
+      @parser_result = parser_result
       @http = http
       @pretty_print = pretty_print
 
-      @endpoint = operation.endpoint
-      @soap_version = operation.soap_version
-      @soap_action = operation.soap_action
+      @endpoint = operation_info.endpoint
+      @soap_version = operation_info.soap_version
+      @soap_action = operation_info.soap_action
       @encoding = ENCODING
     end
 
@@ -142,7 +140,7 @@ class WSDL
     #
     # @return [Hash] an example header hash with placeholder values
     def example_header
-      ExampleMessage.build(@operation.input.header_parts)
+      Builder::ExampleMessage.build(@operation_info.input.header_parts)
     end
 
     # @!attribute [rw] body
@@ -163,7 +161,7 @@ class WSDL
     #   body[:user][:age] = 30
     #   operation.body = body
     def example_body
-      ExampleMessage.build(@operation.input.body_parts)
+      Builder::ExampleMessage.build(@operation_info.input.body_parts)
     end
 
     # Returns the input body parts used to build the request body.
@@ -173,7 +171,7 @@ class WSDL
     #
     # @return [Array<Array>] an array of body part definitions
     def body_parts
-      @operation.input.body_parts.inject([]) { |memo, part| memo + part.to_a }
+      @operation_info.input.body_parts.inject([]) { |memo, part| memo + part.to_a }
     end
 
     # Returns the security configuration for this operation.
@@ -238,7 +236,11 @@ class WSDL
       message = (xml_envelope.nil? ? build : xml_envelope)
 
       raw_response = @http.post(endpoint, http_headers, message)
-      Response.new(raw_response, output_parts: @operation.output.body_parts)
+      Response.new(
+        raw_response,
+        output_body_parts: @operation_info.output.body_parts,
+        output_header_parts: @operation_info.output.header_parts
+      )
     end
 
     # Returns the input style for this operation.
@@ -248,7 +250,7 @@ class WSDL
     #
     # @return [String] the input style (e.g., 'document/literal')
     def input_style
-      @input_style ||= @operation.input_style
+      @input_style ||= @operation_info.input_style
     end
 
     # Returns the output style for this operation.
@@ -258,7 +260,7 @@ class WSDL
     #
     # @return [String] the output style (e.g., 'document/literal')
     def output_style
-      @output_style ||= @operation.output_style
+      @output_style ||= @operation_info.output_style
     end
 
     private
@@ -268,7 +270,7 @@ class WSDL
     # @return [String] the complete SOAP envelope XML
     #
     def build_envelope
-      envelope_xml = Envelope.new(@operation, header, body, pretty_print:).to_s
+      envelope_xml = Builder::Envelope.new(@operation_info, header, body, pretty_print:).to_s
 
       if security.configured?
         security_header = Security::SecurityHeader.new(security)

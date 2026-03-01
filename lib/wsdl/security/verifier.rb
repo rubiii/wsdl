@@ -3,7 +3,7 @@
 require 'openssl'
 require 'base64'
 
-class WSDL
+module WSDL
   module Security
     # Verifies XML Digital Signatures in SOAP responses.
     #

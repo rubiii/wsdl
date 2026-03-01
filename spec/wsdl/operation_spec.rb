@@ -3,10 +3,10 @@
 require 'spec_helper'
 
 describe WSDL::Operation do
-  subject(:operation)  { described_class.new(wsdl_operation, wsdl, http_mock) }
+  subject(:operation)  { described_class.new(operation_info, parser_result, http_mock) }
 
-  let(:wsdl)           { WSDL::Definition.new fixture('wsdl/temperature'), http_mock }
-  let(:wsdl_operation) { wsdl.operation('ConvertTemperature', 'ConvertTemperatureSoap12', 'ConvertTemp') }
+  let(:parser_result)  { WSDL::Parser::Result.new fixture('wsdl/temperature'), http_mock }
+  let(:operation_info) { parser_result.operation('ConvertTemperature', 'ConvertTemperatureSoap12', 'ConvertTemp') }
 
   describe '#endpoint' do
     it 'returns the SOAP endpoint' do
@@ -75,7 +75,7 @@ describe WSDL::Operation do
     end
 
     it 'can be set via constructor' do
-      operation = described_class.new(wsdl_operation, wsdl, http_mock, pretty_print: false)
+      operation = described_class.new(operation_info, parser_result, http_mock, pretty_print: false)
       expect(operation.pretty_print).to be(false)
     end
   end
@@ -88,8 +88,8 @@ describe WSDL::Operation do
     end
 
     it 'returns a Hash of HTTP headers for a SOAP 1.1 operation' do
-      wsdl_operation = wsdl.operation('ConvertTemperature', 'ConvertTemperatureSoap', 'ConvertTemp')
-      operation = described_class.new(wsdl_operation, wsdl, http_mock)
+      soap11_operation_info = parser_result.operation('ConvertTemperature', 'ConvertTemperatureSoap', 'ConvertTemp')
+      operation = described_class.new(soap11_operation_info, parser_result, http_mock)
 
       expect(operation.http_headers).to eq(
         'SOAPAction' => '"http://www.webserviceX.NET/ConvertTemp"',
@@ -147,7 +147,7 @@ describe WSDL::Operation do
     end
 
     context 'with pretty_print: false' do
-      let(:compact_operation) { described_class.new(wsdl_operation, wsdl, http_mock, pretty_print: false) }
+      let(:compact_operation) { described_class.new(operation_info, parser_result, http_mock, pretty_print: false) }
 
       it 'returns compact XML without indentation' do
         compact_operation.body = {

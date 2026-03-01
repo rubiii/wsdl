@@ -1,0 +1,46 @@
+# frozen_string_literal: true
+
+require 'spec_helper'
+
+describe WSDL::Parser::Result do
+  subject(:parser_result) { described_class.new fixture('wsdl/authentication'), http_mock }
+
+  let(:operation_name) { 'authenticate' }
+  let(:service_name)   { 'AuthenticationWebServiceImplService' }
+  let(:port_name)      { 'AuthenticationWebServiceImplPort' }
+
+  describe '#service_name' do
+    it 'returns the name of the service' do
+      expect(parser_result.service_name).to eq('AuthenticationWebServiceImplService')
+    end
+  end
+
+  describe '#services' do
+    it 'returns a map of services and ports' do
+      expect(parser_result.services).to eq(
+        'AuthenticationWebServiceImplService' => {
+          ports: {
+            'AuthenticationWebServiceImplPort' => {
+              type: 'http://schemas.xmlsoap.org/wsdl/soap/',
+              location: 'http://example.com/validation/1.0/AuthenticationService'
+            }
+          }
+        }
+      )
+    end
+  end
+
+  describe '#operations' do
+    it 'returns an Array of operation names' do
+      operations = parser_result.operations(service_name, port_name)
+      expect(operations).to eq([operation_name])
+    end
+  end
+
+  describe '#operation' do
+    it 'returns a single operation by name' do
+      operation = parser_result.operation(service_name, port_name, operation_name)
+      expect(operation).to be_a(WSDL::Parser::OperationInfo)
+    end
+  end
+end

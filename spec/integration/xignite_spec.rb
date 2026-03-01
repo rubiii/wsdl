@@ -4,7 +4,7 @@ require 'spec_helper'
 
 describe 'Integration with Xignite' do
   # reference: http://www.xignite.com/product/global-security-master-data/api/GetSecurities/
-  subject(:client) { WSDL.new fixture('wsdl/xignite') }
+  subject(:client) { WSDL::Client.new fixture('wsdl/xignite') }
 
   let(:service_name) { :XigniteGlobalMaster }
   let(:port_name)    { :XigniteGlobalMasterSoap12 }

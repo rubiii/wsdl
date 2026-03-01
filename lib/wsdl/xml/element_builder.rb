@@ -4,8 +4,8 @@ require 'wsdl/schema/qname'
 require 'wsdl/xml/element'
 require 'wsdl/xml/attribute'
 
-class WSDL
-  class XML
+module WSDL
+  module XML
     # Builds XML Element trees from WSDL message part definitions.
     #
     # Transforms WSDL message parts into a tree of {Element} objects that

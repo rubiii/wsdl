@@ -3,7 +3,7 @@
 require 'openssl'
 require 'base64'
 
-class WSDL
+module WSDL
   module Security
     # Handles XML Digital Signature (XML-DSig) creation for WS-Security.
     #

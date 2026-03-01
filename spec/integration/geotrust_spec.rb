@@ -3,7 +3,7 @@
 require 'spec_helper'
 
 describe 'Integration with Geotrust' do
-  subject(:client) { WSDL.new fixture('wsdl/geotrust') }
+  subject(:client) { WSDL::Client.new fixture('wsdl/geotrust') }
 
   it 'returns a map of services and ports' do
     expect(client.services).to eq(

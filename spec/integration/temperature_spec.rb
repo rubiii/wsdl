@@ -3,7 +3,7 @@
 require 'spec_helper'
 
 describe 'Integration with Temperature service' do
-  subject(:client) { WSDL.new fixture('wsdl/temperature') }
+  subject(:client) { WSDL::Client.new fixture('wsdl/temperature') }
 
   let(:service_name) { :ConvertTemperature }
   let(:port_name)    { :ConvertTemperatureSoap12 }

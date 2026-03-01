@@ -7,7 +7,7 @@ Once you've loaded a WSDL document, you can inspect its structure to understand 
 A WSDL document defines one or more **services**, each containing one or more **ports**. A port specifies a binding and a network address (endpoint).
 
 ``` ruby
-client = WSDL.new('http://example.com/service?wsdl')
+client = WSDL::Client.new('http://example.com/service?wsdl')
 
 client.services
 # => {

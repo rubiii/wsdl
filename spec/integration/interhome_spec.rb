@@ -3,7 +3,7 @@
 require 'spec_helper'
 
 describe 'Integration with Interhome' do
-  subject(:client) { WSDL.new fixture('wsdl/interhome') }
+  subject(:client) { WSDL::Client.new fixture('wsdl/interhome') }
 
   let(:service_name) { :WebService }
   let(:port_name)    { :WebServiceSoap }

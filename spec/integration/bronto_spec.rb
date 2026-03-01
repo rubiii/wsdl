@@ -3,7 +3,7 @@
 require 'spec_helper'
 
 describe 'Integration with Bronto' do
-  subject(:client) { WSDL.new fixture('wsdl/bronto') }
+  subject(:client) { WSDL::Client.new fixture('wsdl/bronto') }
 
   let(:service_name) { :BrontoSoapApiImplService }
   let(:port_name)    { :BrontoSoapApiImplPort }

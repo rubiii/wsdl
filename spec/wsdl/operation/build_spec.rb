@@ -4,7 +4,7 @@ require 'spec_helper'
 
 describe WSDL::Operation do
   let(:add_logins) do
-    client = WSDL.new fixture('wsdl/bronto')
+    client = WSDL::Client.new fixture('wsdl/bronto')
 
     service_name = :BrontoSoapApiImplService
     port_name    = :BrontoSoapApiImplPort
@@ -13,14 +13,14 @@ describe WSDL::Operation do
   end
 
   let(:get_mu_bets_lite) do
-    client = WSDL.new fixture('wsdl/betfair')
+    client = WSDL::Client.new fixture('wsdl/betfair')
 
     service_name = port_name = :BFExchangeService
     client.operation(service_name, port_name, :getMUBetsLite)
   end
 
   let(:vat_account_update_from_data_array) do
-    client = WSDL.new fixture('wsdl/arrays_with_attributes')
+    client = WSDL::Client.new fixture('wsdl/arrays_with_attributes')
 
     service = 'EconomicWebService'
     port = 'EconomicWebServiceSoap'
@@ -29,7 +29,7 @@ describe WSDL::Operation do
   end
 
   let(:zanox_export_service) do
-    client = WSDL.new fixture('wsdl/zanox_export_service')
+    client = WSDL::Client.new fixture('wsdl/zanox_export_service')
 
     service = 'ExportService'
     port = 'ExportServiceSoap'

@@ -2,7 +2,7 @@
 
 require 'nokogiri'
 
-class WSDL
+module WSDL
   module Security
     # Helper for building XML with or without explicit namespace prefixes.
     #

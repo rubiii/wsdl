@@ -3,7 +3,7 @@
 require 'spec_helper'
 
 describe 'Integration with Bookt' do
-  subject(:client) { WSDL.new(wsdl_url, http: http_mock) }
+  subject(:client) { WSDL::Client.new(wsdl_url, http: http_mock) }
 
   let(:wsdl_url)  { 'http://connect.bookt.com/svc/connect.svc?wsdl' }
   let(:wsdl2_url) { 'http://connect.bookt.com/svc/connect.svc?wsdl=wsdl1' }

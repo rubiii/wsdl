@@ -3,7 +3,7 @@
 require 'spec_helper'
 
 describe 'Integration with IWS' do
-  subject(:client) { WSDL.new fixture('wsdl/iws') }
+  subject(:client) { WSDL::Client.new fixture('wsdl/iws') }
 
   it 'returns a map of services and ports' do
     expect(client.services).to eq(

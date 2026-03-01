@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class WSDL
+module WSDL
   # WS-Security implementation for SOAP message security.
   #
   # This module provides support for the OASIS WS-Security specifications:

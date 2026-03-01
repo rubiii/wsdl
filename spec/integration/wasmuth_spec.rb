@@ -3,7 +3,7 @@
 require 'spec_helper'
 
 describe 'Integration with Wasmuth' do
-  subject(:client) { WSDL.new(wsdl_url, http: http_mock) }
+  subject(:client) { WSDL::Client.new(wsdl_url, http: http_mock) }
 
   let(:wsdl_url) { 'http://www3.mediaservice-wasmuth.de/online-ws-2.0/OnlineSync?wsdl' }
 

@@ -22,7 +22,7 @@ The library implements the following OASIS specifications:
 WS-Security is configured on individual operations through the `security` method:
 
 ``` ruby
-client = WSDL.new('http://example.com/service?wsdl')
+client = WSDL::Client.new('http://example.com/service?wsdl')
 operation = client.operation('Service', 'Port', 'Operation')
 
 # Configure security
@@ -458,7 +458,7 @@ puts operation.build
 require 'wsdl'
 
 # Load WSDL
-client = WSDL.new('https://secure-service.example.com/orders?wsdl')
+client = WSDL::Client.new('https://secure-service.example.com/orders?wsdl')
 
 # Get operation
 operation = client.operation('OrderService', 'OrderServiceSoap', 'GetOrder')

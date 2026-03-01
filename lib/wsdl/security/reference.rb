@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class WSDL
+module WSDL
   module Security
     # Represents a signed reference in an XML Digital Signature.
     #

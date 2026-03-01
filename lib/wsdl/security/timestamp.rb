@@ -2,7 +2,7 @@
 
 require 'time'
 
-class WSDL
+module WSDL
   module Security
     # Represents a WS-Security Timestamp element.
     #

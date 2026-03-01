@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class WSDL
+module WSDL
   module Security
     # Maps XML Digital Signature algorithm URIs to internal symbols.
     #

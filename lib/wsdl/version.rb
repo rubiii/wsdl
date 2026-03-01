@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class WSDL
+module WSDL
   # The current version of the WSDL gem.
   #
   # @return [String] the semantic version string

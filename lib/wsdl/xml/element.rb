@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class WSDL
+module WSDL
   # Namespace for XML-related classes used in SOAP message construction.
   #
   # This module contains classes for representing XML elements and attributes
@@ -8,7 +8,7 @@ class WSDL
   #
   # @api private
   #
-  class XML
+  module XML
     # Represents an XML element definition used for building SOAP messages.
     #
     # Elements are the building blocks of SOAP message structures. They can be

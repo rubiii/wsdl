@@ -2,7 +2,7 @@
 
 require 'digest'
 
-class WSDL
+module WSDL
   # Thread-safe in-memory cache for parsed WSDL definitions.
   #
   # This cache is designed to avoid redundant HTTP requests and parsing

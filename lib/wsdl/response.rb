@@ -1,9 +1,6 @@
 # frozen_string_literal: true
 
-require_relative 'xml_hash'
-require_relative 'response_parser'
-
-class WSDL
+module WSDL
   # Represents a SOAP response from an operation call.
   #
   # This class wraps the raw HTTP response and provides methods
@@ -47,13 +44,16 @@ class WSDL
     # Creates a new Response instance.
     #
     # @param raw_response [String] the raw HTTP response body (XML)
-    # @param output_parts [Array<WSDL::XML::Element>, nil] optional schema elements
-    #   describing the expected response structure for type-aware parsing
+    # @param output_body_parts [Array<WSDL::XML::Element>, nil] optional schema elements
+    #   describing the expected body structure for type-aware parsing
+    # @param output_header_parts [Array<WSDL::XML::Element>, nil] optional schema elements
+    #   describing the expected header structure for type-aware parsing
     # @param verify_certificate [OpenSSL::X509::Certificate, nil] optional certificate
     #   to use for signature verification instead of extracting from message
-    def initialize(raw_response, output_parts: nil, verify_certificate: nil)
+    def initialize(raw_response, output_body_parts: nil, output_header_parts: nil, verify_certificate: nil)
       @raw_response = raw_response
-      @output_parts = output_parts
+      @output_body_parts = output_body_parts
+      @output_header_parts = output_header_parts
       @verify_certificate = verify_certificate
       @verifier = nil
     end
@@ -67,7 +67,7 @@ class WSDL
 
     # Returns the parsed SOAP body as a Hash.
     #
-    # When schema information is available (output_parts), values are
+    # When schema information is available (output_body_parts), values are
     # automatically converted to appropriate Ruby types:
     # - xsd:int, xsd:integer, xsd:long → Integer
     # - xsd:decimal → BigDecimal
@@ -85,33 +85,32 @@ class WSDL
     #   response.body
     #   # => { GetUserResponse: { User: { Name: "John", Age: 30 } } }
     def body
-      @body ||= if @output_parts
-        ResponseParser.new(@output_parts).parse(doc)
-      else
-        hash[:Envelope][:Body]
-      end
+      @body ||= parse_body
     end
     alias to_hash body
 
     # Returns the parsed SOAP header as a Hash.
+    #
+    # When schema information is available (output_header_parts), values are
+    # automatically converted to appropriate Ruby types, similar to {#body}.
     #
     # The header is extracted from the SOAP envelope and returned
     # with symbolized keys preserving the original element names.
     #
     # @return [Hash, nil] the parsed header content, or nil if empty
     def header
-      hash[:Envelope][:Header]
+      @header ||= parse_header
     end
 
     # Returns the entire parsed SOAP envelope as a Hash.
     #
     # Keys are symbolized, preserving original element names.
     # Note: This method does not use schema-aware parsing.
-    # Use {#body} for schema-aware access to the response body.
+    # Use {#body} and {#header} for schema-aware access.
     #
     # @return [Hash] the complete parsed envelope
     def hash
-      @hash ||= XmlHash.parse(doc)
+      @hash ||= HashConverter.parse(doc)
     end
 
     # Returns the response as a Nokogiri XML document.
@@ -286,6 +285,157 @@ class WSDL
 
     private
 
+    # Parses the SOAP body using schema information if available.
+    #
+    # @return [Hash] the parsed body content
+    #
+    def parse_body
+      body_node = find_soap_body
+      return {} unless body_node
+
+      if @output_body_parts&.any?
+        parse_envelope_part(body_node, @output_body_parts)
+      else
+        envelope_hash = HashConverter.parse(doc)
+        envelope_hash.dig(:Envelope, :Body) || {}
+      end
+    end
+
+    # Parses the SOAP header using schema information if available.
+    #
+    # @return [Hash, nil] the parsed header content
+    #
+    def parse_header
+      header_node = find_soap_header
+      return nil unless header_node
+
+      if @output_header_parts&.any?
+        parse_envelope_part(header_node, @output_header_parts)
+      else
+        envelope_hash = hash
+        envelope_hash.dig(:Envelope, :Header)
+      end
+    end
+
+    # Parses an envelope part (body or header) with schema information.
+    #
+    # @param node [Nokogiri::XML::Element] the envelope part node
+    # @param schema_parts [Array<WSDL::XML::Element>] the schema elements
+    # @return [Hash] the parsed content
+    #
+    def parse_envelope_part(node, schema_parts)
+      xml_children = node.element_children.group_by(&:name)
+      result = {}
+
+      parse_schema_elements(schema_parts, xml_children, result)
+      parse_unknown_elements(xml_children, result)
+
+      result
+    end
+
+    # Parses XML elements that match schema definitions.
+    #
+    # @param schema_parts [Array<WSDL::XML::Element>] schema elements
+    # @param xml_children [Hash<String, Array>] grouped XML children
+    # @param result [Hash] the result hash to populate
+    #
+    def parse_schema_elements(schema_parts, xml_children, result)
+      schema_parts.each do |schema_el|
+        xml_nodes = xml_children.delete(schema_el.name) || []
+        next if xml_nodes.empty?
+
+        key = schema_el.name.to_sym
+        values = xml_nodes.map { |xml_node| convert_schema_element(xml_node, schema_el) }
+
+        result[key] = schema_el.singular? ? values.first : values
+      end
+    end
+
+    # Parses XML elements not defined in the schema.
+    #
+    # @param xml_children [Hash<String, Array>] remaining XML children
+    # @param result [Hash] the result hash to populate
+    #
+    def parse_unknown_elements(xml_children, result)
+      xml_children.each do |name, nodes|
+        key = name.to_sym
+        values = nodes.map { |n| HashConverter.parse(n).values.first }
+        result[key] = values.size == 1 ? values.first : values
+      end
+    end
+
+    # Converts a schema element from XML.
+    #
+    # @param xml_node [Nokogiri::XML::Element] the XML element
+    # @param schema_el [WSDL::XML::Element] the schema element definition
+    # @return [Object] the converted value
+    #
+    def convert_schema_element(xml_node, schema_el)
+      return nil if xsi_nil?(xml_node)
+
+      if schema_el.simple_type?
+        convert_typed_value(xml_node.text, schema_el.base_type)
+      elsif schema_el.complex_type?
+        parse_envelope_part(xml_node, schema_el.children)
+      else
+        xml_node.text
+      end
+    end
+
+    # Checks if an element has xsi:nil="true".
+    #
+    # @param node [Nokogiri::XML::Element] the XML element
+    # @return [Boolean] true if the element is nil
+    #
+    def xsi_nil?(node)
+      nil_attr = node.attribute_with_ns('nil', 'http://www.w3.org/2001/XMLSchema-instance')
+      nil_attr&.value == 'true'
+    end
+
+    # Converts a typed value using XSD type information.
+    #
+    # @param value [String] the string value
+    # @param type [String] the XSD type (e.g., "xsd:int")
+    # @return [Object] the converted value
+    #
+    def convert_typed_value(value, type)
+      return value if value.nil? || value.empty?
+
+      local_type = type&.split(':')&.last
+      converter = HashConverter::TYPE_CONVERTERS[local_type]
+
+      return value if converter.nil? || converter == :to_s
+
+      # Create a temporary converter instance to use conversion methods
+      HashConverter.new.send(:send, converter, value)
+    end
+
+    # Finds the SOAP Body element in the document.
+    #
+    # @return [Nokogiri::XML::Element, nil] the Body element
+    #
+    def find_soap_body
+      doc.at_xpath(
+        '//soap:Body | //soap12:Body | //env:Body',
+        'soap' => NS::SOAP_1_1,
+        'soap12' => NS::SOAP_1_2,
+        'env' => NS::SOAP_1_1
+      )
+    end
+
+    # Finds the SOAP Header element in the document.
+    #
+    # @return [Nokogiri::XML::Element, nil] the Header element
+    #
+    def find_soap_header
+      doc.at_xpath(
+        '//soap:Header | //soap12:Header | //env:Header',
+        'soap' => NS::SOAP_1_1,
+        'soap12' => NS::SOAP_1_2,
+        'env' => NS::SOAP_1_1
+      )
+    end
+
     # Returns the signature verifier instance.
     #
     # @return [Security::Verifier]
@@ -294,14 +444,4 @@ class WSDL
       @verifier ||= Security::Verifier.new(@raw_response, certificate: @verify_certificate)
     end
   end
-
-  # Error raised when signature verification fails.
-  #
-  # @example
-  #   begin
-  #     response.verify_signature!
-  #   rescue WSDL::SignatureVerificationError => e
-  #     log_security_event("Signature verification failed: #{e.message}")
-  #   end
-  class SignatureVerificationError < StandardError; end
 end

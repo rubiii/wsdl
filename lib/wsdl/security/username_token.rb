@@ -4,7 +4,7 @@ require 'time'
 require 'base64'
 require 'openssl'
 
-class WSDL
+module WSDL
   module Security
     # Represents a WS-Security UsernameToken element.
     #

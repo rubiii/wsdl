@@ -3,7 +3,7 @@
 require 'spec_helper'
 
 describe 'Integration with Juniper' do
-  subject(:client) { WSDL.new fixture('wsdl/juniper') }
+  subject(:client) { WSDL::Client.new fixture('wsdl/juniper') }
 
   it 'skips the relative schema import to still show other information' do
     expect(client.services).to eq(

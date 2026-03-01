@@ -3,7 +3,7 @@
 require 'spec_helper'
 
 describe 'Integration with Atlassian Crowd' do
-  subject(:client) { WSDL.new fixture('wsdl/crowd') }
+  subject(:client) { WSDL::Client.new fixture('wsdl/crowd') }
 
   it 'returns a map of services and ports' do
     expect(client.services).to eq(

@@ -3,7 +3,7 @@
 require 'spec_helper'
 
 describe 'Integration with Oracle' do
-  subject(:client) { WSDL.new fixture('wsdl/oracle') }
+  subject(:client) { WSDL::Client.new fixture('wsdl/oracle') }
 
   it 'returns a map of services and ports' do
     expect(client.services).to include(
@@ -116,7 +116,7 @@ describe 'Integration with Oracle' do
       # </xsd:element>
 
       # Build from the response element which contains JobInfo with detailedInfo
-      schemas = client.wsdl.schemas
+      schemas = client.parser_result.schemas
       builder = WSDL::XML::ElementBuilder.new(schemas)
 
       part = { element: 'sawsoap:getJobInfoResult', namespaces: { 'xmlns:sawsoap' => namespace } }
@@ -144,13 +144,13 @@ describe 'Integration with Oracle' do
       # But the response getJobInfoResult -> jobInfo -> ... -> detailedInfo
       # Let's check the response structure instead by building from the schema directly
 
-      schemas = client.wsdl.schemas
+      schemas = client.parser_result.schemas
       builder = WSDL::XML::ElementBuilder.new(schemas)
 
       part = { element: 'sawsoap:getJobInfoResult', namespaces: { 'xmlns:sawsoap' => namespace } }
       elements = builder.build([part])
 
-      example = WSDL::ExampleMessage.build(elements)
+      example = WSDL::Builder::ExampleMessage.build(elements)
 
       # The detailedInfo element should have the any content placeholder
       detailed_info = example.dig(:getJobInfoResult, :jobInfo, :detailedInfo)
@@ -158,17 +158,17 @@ describe 'Integration with Oracle' do
     end
 
     it 'serializes arbitrary content in elements with xs:any' do
-      schemas = client.wsdl.schemas
+      schemas = client.parser_result.schemas
       builder = WSDL::XML::ElementBuilder.new(schemas)
 
       part = { element: 'sawsoap:getJobInfoResult', namespaces: { 'xmlns:sawsoap' => namespace } }
       elements = builder.build([part])
 
       # Create a mock envelope for the Message builder
-      envelope = instance_double(WSDL::Envelope)
+      envelope = instance_double(WSDL::Builder::Envelope)
       allow(envelope).to receive(:register_namespace).and_return('ns1')
 
-      message = WSDL::Message.new(envelope, elements)
+      message = WSDL::Builder::Message.new(envelope, elements)
 
       # Build with arbitrary content in detailedInfo
       result = message.build({

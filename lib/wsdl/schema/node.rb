@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class WSDL
+module WSDL
   module Schema
     # Unified representation of all XSD schema nodes.
     #

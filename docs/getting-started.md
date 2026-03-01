@@ -29,20 +29,20 @@ The `WSDL` class accepts WSDL documents from various sources:
 ``` ruby
 require 'wsdl'
 
-client = WSDL.new('http://example.com/service?wsdl')
+client = WSDL::Client.new('http://example.com/service?wsdl')
 ```
 
 ### From a Local File
 
 ``` ruby
-client = WSDL.new('/path/to/service.wsdl')
+client = WSDL::Client.new('/path/to/service.wsdl')
 ```
 
 ### From a Raw XML String
 
 ``` ruby
 xml = File.read('/path/to/service.wsdl')
-client = WSDL.new(xml)
+client = WSDL::Client.new(xml)
 ```
 
 ## Basic Workflow
