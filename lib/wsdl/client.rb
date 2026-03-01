@@ -6,18 +6,6 @@ module WSDL
   # This class provides a high-level interface for parsing WSDL documents,
   # inspecting services and operations, and executing SOAP requests.
   #
-  # == Security
-  #
-  # By default, the client applies sandbox restrictions to prevent path traversal
-  # attacks in schema imports:
-  #
-  # - **URL-loaded WSDLs** — File access is disabled; all imports must use URLs
-  # - **File-loaded WSDLs** — File access is sandboxed to the WSDL's parent directory
-  # - **Inline XML** — File access is disabled; all imports must use URLs
-  #
-  # This prevents malicious schemaLocation attributes from reading arbitrary system files.
-  # Use the `sandbox_paths` option to allow access to additional directories when needed.
-  #
   # @example Basic usage
   #   client = WSDL::Client.new('http://example.com/service?wsdl')
   #   client.services
@@ -38,7 +26,7 @@ module WSDL
   # @example Disable caching for this instance
   #   client = WSDL::Client.new('http://example.com/service?wsdl', cache: nil)
   #
-  # @example Custom sandbox paths for imports spanning multiple directories
+  # @example Custom sandbox paths for local imports spanning multiple directories
   #   client = WSDL::Client.new('/path/to/service.wsdl',
   #                             sandbox_paths: ['/path/to', '/other/schemas'])
   #
@@ -78,7 +66,7 @@ module WSDL
     def initialize(wsdl, http: nil, pretty_print: true, cache: :default, sandbox_paths: nil,
                    limits: nil, reject_doctype: true)
       # rubocop:enable Metrics/ParameterLists
-      @http = http || new_http_client
+      @http = http || WSDL.http_adapter.new
       @pretty_print = pretty_print
       @limits = limits || WSDL.limits
       @reject_doctype = reject_doctype
@@ -195,14 +183,6 @@ module WSDL
         Parser::Result.new(wsdl, @http, sandbox_paths:,
                                         limits: @limits, reject_doctype: @reject_doctype)
       end
-    end
-
-    # Returns a new instance of the HTTP adapter.
-    #
-    # @return [Object] a new HTTP adapter instance
-    #
-    def new_http_client
-      WSDL.http_adapter.new
     end
 
     # Raises if the operation style is not supported.
