@@ -658,6 +658,8 @@ end
 
 16. **Monitor for threats** — The library logs warnings when suspicious XML patterns are detected. Monitor these logs in production for potential attack attempts.
 
+17. **XPath injection protection** — The signature verifier validates element IDs against a strict allowlist pattern (XML NCName) before using them in XPath queries. This prevents attackers from injecting malicious XPath expressions through crafted Reference URIs in signed documents.
+
 ## Security Limitations
 
 ### Not Supported

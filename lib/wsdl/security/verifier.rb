@@ -26,6 +26,24 @@ module WSDL
     class Verifier
       include Constants
 
+      # Pattern for valid XML element IDs (NCName production).
+      # This prevents XPath injection by rejecting IDs containing quotes,
+      # brackets, operators, or other characters that could alter XPath semantics.
+      #
+      # Allowed characters (explicit allowlist):
+      #   - First character: ASCII letter (a-z, A-Z) or underscore
+      #   - Subsequent: ASCII letters, digits, underscores, hyphens, periods
+      #
+      # Explicitly disallowed (non-exhaustive):
+      #   - Single/double quotes (' ")
+      #   - Brackets ([ ] ( ) { })
+      #   - XPath operators (| / @ = < >)
+      #   - Whitespace
+      #   - Null bytes and control characters
+      #
+      # @see https://www.w3.org/TR/xml-id/
+      VALID_ID_PATTERN = /\A[a-zA-Z_][a-zA-Z0-9_.-]*\z/
+
       # @return [Array<String>] errors encountered during verification
       attr_reader :errors
 
@@ -191,9 +209,26 @@ module WSDL
       end
 
       def find_element_by_id(id)
+        return nil unless valid_element_id?(id)
+
         @document.at_xpath("//*[@wsu:Id='#{id}']", ns) ||
           @document.at_xpath("//*[@Id='#{id}']") ||
           @document.at_xpath("//*[@xml:id='#{id}']")
+      end
+
+      # Validates that an element ID is safe to use in XPath queries.
+      #
+      # This prevents XPath injection attacks by ensuring IDs contain only
+      # characters allowed in XML NCName (letters, digits, hyphens, underscores, periods).
+      #
+      # @param id [String, nil] the element ID to validate
+      # @return [Boolean] true if the ID is valid and safe to use
+      # @see VALID_ID_PATTERN
+      def valid_element_id?(id)
+        return add_failure('Reference URI is empty') if id.nil? || id.empty?
+        return true if id.match?(VALID_ID_PATTERN)
+
+        add_failure("Invalid element ID format (possible XPath injection): #{id.inspect}")
       end
 
       def signature_node
