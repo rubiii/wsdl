@@ -13,16 +13,18 @@ describe WSDL::Client do
 
   describe '.new' do
     it 'expects a local or remote WSDL document' do
-      expect(WSDL::Parser::Result).to receive(:new).with(wsdl,
-                                                         instance_of(WSDL.http_adapter)).and_return(:parser_result)
-      described_class.new(wsdl)
+      allow(WSDL::Parser::Result).to receive(:new).with(wsdl,
+                                                        instance_of(WSDL.http_adapter)).and_return(:parser_result)
+      client = described_class.new(wsdl)
+      expect(client.parser_result).to eq(:parser_result)
     end
 
     it 'also accepts a custom HTTP adapter to replace the default' do
       http = :my_http_adapter
-      expect(WSDL::Parser::Result).to receive(:new).with(wsdl, http).and_return(:parser_result)
+      allow(WSDL::Parser::Result).to receive(:new).with(wsdl, http).and_return(:parser_result)
 
-      described_class.new(wsdl, http: http)
+      client = described_class.new(wsdl, http: http)
+      expect(client.parser_result).to eq(:parser_result)
     end
 
     context 'with caching enabled' do
@@ -182,55 +184,6 @@ describe WSDL::Client do
       expect { client.operation(service_name, port_name, :UnknownOperation) }
         .to raise_error(ArgumentError,
                         /Unknown operation "UnknownOperation" for service "AmazonFPS" and port "AmazonFPSPort"/)
-    end
-  end
-end
-
-describe WSDL do
-  describe '.http_adapter' do
-    it 'returns the default HTTP client to use' do
-      expect(described_class.http_adapter).to eq(WSDL::HTTPClient)
-    end
-
-    it 'can be changed to use a custom adapter' do
-      adapter = double('http-adapter')
-
-      described_class.http_adapter = adapter
-      expect(described_class.http_adapter).to eq(adapter)
-
-      allow(adapter).to receive_messages(new: adapter, client: 'http-client')
-
-      client = WSDL::Client.new(fixture('wsdl/amazon'))
-      expect(client.http).to eq('http-client')
-
-      # reset global state!
-      described_class.http_adapter = nil
-    end
-  end
-
-  describe '.cache' do
-    it 'returns a default Cache instance when not nil' do
-      described_class.cache = WSDL::Cache.new
-      expect(described_class.cache).to be_an_instance_of(WSDL::Cache)
-    end
-
-    it 'returns the same instance on subsequent calls' do
-      described_class.cache = WSDL::Cache.new
-      first_call = described_class.cache
-      second_call = described_class.cache
-      expect(first_call).to be(second_call)
-    end
-
-    it 'can be changed to use a custom cache' do
-      custom_cache = WSDL::Cache.new(ttl: 3600)
-
-      described_class.cache = custom_cache
-      expect(described_class.cache).to be(custom_cache)
-    end
-
-    it 'returns nil when set to nil' do
-      described_class.cache = nil
-      expect(described_class.cache).to be_nil
     end
   end
 end

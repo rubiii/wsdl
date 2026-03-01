@@ -11,6 +11,9 @@ AllCops:
     - 'tmp/**/*'
     - 'pkg/**/*'
 
+Style/FrozenStringLiteralComment:
+  Enabled: true
+
 Style/StringLiterals:
   EnforcedStyle: single_quotes
 
@@ -86,29 +89,12 @@ RSpec/InstanceVariable:
 RSpec/SpecFilePathFormat:
   Enabled: false
 
-RSpec/NoExpectationExample:
-  Enabled: false
-
-RSpec/RepeatedDescription:
-  Enabled: false
-
-RSpec/IteratedExpectation:
-  Enabled: false
-
-RSpec/VerifiedDoubles:
-  Enabled: false
-
-RSpec/StubbedMock:
-  Enabled: false
-
-RSpec/MessageSpies:
-  Enabled: false
-
 RSpec/MultipleMemoizedHelpers:
   Enabled: false
 
 RSpec/MultipleDescribes:
-  Enabled: false
+  Exclude:
+    - 'spec/wsdl/schema/collection_spec.rb'
 
 RSpec/DescribeClass:
    Enabled: false
