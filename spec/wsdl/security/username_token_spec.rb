@@ -336,4 +336,92 @@ describe WSDL::Security::UsernameToken do
       expect(token1.password_value).to eq(expected_digest)
     end
   end
+
+  describe '#inspect' do
+    context 'in plain text mode' do
+      subject(:token) { described_class.new(username, password) }
+
+      it 'includes the class name' do
+        expect(token.inspect).to include('WSDL::Security::UsernameToken')
+      end
+
+      it 'includes the username' do
+        expect(token.inspect).to include("username=#{username.inspect}")
+      end
+
+      it 'redacts the password' do
+        expect(token.inspect).to include('password=[REDACTED]')
+        expect(token.inspect).not_to include(password)
+      end
+
+      it 'includes the digest mode' do
+        expect(token.inspect).to include('digest=false')
+      end
+
+      it 'does not include nonce (not present in plain text mode)' do
+        expect(token.inspect).not_to include('nonce=')
+      end
+    end
+
+    context 'in digest mode' do
+      subject(:token) { described_class.new(username, password, digest: true) }
+
+      it 'includes the class name' do
+        expect(token.inspect).to include('WSDL::Security::UsernameToken')
+      end
+
+      it 'redacts the password' do
+        expect(token.inspect).to include('password=[REDACTED]')
+        expect(token.inspect).not_to include(password)
+      end
+
+      it 'includes the digest mode' do
+        expect(token.inspect).to include('digest=true')
+      end
+
+      it 'redacts the nonce' do
+        expect(token.inspect).to include('nonce=[REDACTED]')
+        # Ensure the actual nonce bytes are not in the output
+        expect(token.inspect).not_to include(token.nonce.inspect)
+      end
+    end
+
+    context 'security scenarios' do
+      subject(:token) { described_class.new(username, password, digest: true) }
+
+      it 'is safe when used in string interpolation' do
+        output = "Debug token: #{token.inspect}"
+        expect(output).not_to include(password)
+      end
+
+      it 'is safe when used in exception messages' do
+        raise StandardError, "Token error: #{token.inspect}"
+      rescue StandardError => e
+        expect(e.message).not_to include(password)
+        expect(e.message).to include('[REDACTED]')
+      end
+
+      it 'is safe when token is in an array' do
+        array = [token, 'other']
+        output = array.inspect
+        expect(output).not_to include(password)
+        expect(output).to include('[REDACTED]')
+      end
+
+      it 'is safe when token is in a hash' do
+        hash = { token: token, name: 'test' }
+        output = hash.inspect
+        expect(output).not_to include(password)
+        expect(output).to include('[REDACTED]')
+      end
+
+      it 'never exposes sensitive data regardless of password content' do
+        dangerous_password = '"><script>alert(1)</script>'
+        dangerous_token = described_class.new(username, dangerous_password, digest: true)
+
+        expect(dangerous_token.inspect).not_to include(dangerous_password)
+        expect(dangerous_token.inspect).not_to include('script')
+      end
+    end
+  end
 end

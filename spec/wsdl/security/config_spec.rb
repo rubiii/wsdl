@@ -763,4 +763,118 @@ describe WSDL::Security::Config do
       expect(config.explicit_namespace_prefixes?).to be true
     end
   end
+
+  describe '#inspect' do
+    subject(:config) { described_class.new }
+
+    context 'with no configuration' do
+      it 'shows all features as false' do
+        expect(config.inspect).to include('username_token=false')
+        expect(config.inspect).to include('timestamp=false')
+        expect(config.inspect).to include('signature=false')
+        expect(config.inspect).to include('verify_response=false')
+      end
+
+      it 'includes the class name' do
+        expect(config.inspect).to include('WSDL::Security::Config')
+      end
+    end
+
+    context 'with username_token configured' do
+      let(:username) { 'admin' }
+      let(:password) { 'super_secret_password_123' }
+
+      before do
+        config.username_token(username, password, digest: true)
+      end
+
+      it 'shows username_token as true' do
+        expect(config.inspect).to include('username_token=true')
+      end
+
+      it 'includes the username' do
+        expect(config.inspect).to include("username_token.username=#{username.inspect}")
+      end
+
+      it 'redacts the password' do
+        expect(config.inspect).to include('username_token.password=[REDACTED]')
+        expect(config.inspect).not_to include(password)
+      end
+
+      it 'includes the digest mode' do
+        expect(config.inspect).to include('username_token.digest=true')
+      end
+    end
+
+    context 'with signature configured' do
+      before do
+        config.signature(
+          certificate: certificate,
+          private_key: private_key,
+          digest_algorithm: :sha256
+        )
+      end
+
+      it 'shows signature as true' do
+        expect(config.inspect).to include('signature=true')
+      end
+
+      it 'includes the certificate subject' do
+        expect(config.inspect).to include('signature.certificate=')
+        expect(config.inspect).to include('Test Certificate')
+      end
+
+      it 'redacts the private key' do
+        expect(config.inspect).to include('signature.private_key=[REDACTED]')
+      end
+
+      it 'includes the algorithm' do
+        expect(config.inspect).to include('signature.algorithm=:sha256')
+      end
+
+      it 'never exposes private key material' do
+        # Ensure the actual key material is not present
+        expect(config.inspect).not_to include('BEGIN')
+        expect(config.inspect).not_to include('PRIVATE KEY')
+        expect(config.inspect).not_to include(private_key.to_pem)
+      end
+    end
+
+    context 'security scenarios' do
+      let(:password) { 'very_secret_password' }
+
+      before do
+        config
+          .username_token('user', password)
+          .signature(certificate: certificate, private_key: private_key)
+      end
+
+      it 'is safe when used in string interpolation' do
+        output = "Config: #{config.inspect}"
+        expect(output).not_to include(password)
+        expect(output).to include('[REDACTED]')
+      end
+
+      it 'is safe when used in exception messages' do
+        raise StandardError, "Config error: #{config.inspect}"
+      rescue StandardError => e
+        expect(e.message).not_to include(password)
+        expect(e.message).to include('[REDACTED]')
+      end
+
+      it 'is safe when config is in an array' do
+        array = [config, 'other']
+        output = array.inspect
+        expect(output).not_to include(password)
+        expect(output).to include('[REDACTED]')
+      end
+
+      it 'is safe when config is in a hash' do
+        hash = { config: config, name: 'test' }
+        output = hash.inspect
+        expect(output).not_to include(password)
+        expect(output).to include('[REDACTED]')
+      end
+    end
+  end
 end

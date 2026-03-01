@@ -226,6 +226,36 @@ module WSDL
         self
       end
 
+      # Returns a safe string representation that hides the private key.
+      #
+      # This method ensures that private keys are never accidentally exposed
+      # in logs, error messages, debugger output, or stack traces.
+      #
+      # @return [String] a redacted representation safe for logging
+      #
+      # @example
+      #   signature = Signature.new(certificate: cert, private_key: key)
+      #   signature.inspect
+      #   # => '#<WSDL::Security::Signature algorithm=:sha256 ... private_key=[REDACTED] ...>'
+      #
+      def inspect
+        cert_subject = begin
+          @certificate.subject.to_s
+        rescue StandardError
+          'unknown'
+        end
+
+        parts = [
+          "algorithm=#{@digest_algorithm.inspect}",
+          "key_reference=#{@key_reference.inspect}",
+          'private_key=[REDACTED]',
+          "certificate=#{cert_subject.inspect}",
+          "references=#{@references.size}"
+        ]
+
+        "#<#{self.class.name} #{parts.join(' ')}>"
+      end
+
       private
 
       # Extracts the wsu:Id attribute from a node.

@@ -230,6 +230,29 @@ module WSDL
         }
       end
 
+      # Returns a safe string representation that hides sensitive values.
+      #
+      # This method ensures that passwords and nonces are never accidentally
+      # exposed in logs, error messages, debugger output, or stack traces.
+      #
+      # @return [String] a redacted representation safe for logging
+      #
+      # @example
+      #   token = UsernameToken.new('admin', 'super_secret', digest: true)
+      #   token.inspect
+      #   # => '#<WSDL::Security::UsernameToken username="admin" password=[REDACTED] digest=true nonce=[REDACTED]>'
+      #
+      def inspect
+        parts = [
+          "username=#{@username.inspect}",
+          'password=[REDACTED]',
+          "digest=#{@digest}"
+        ]
+        parts << 'nonce=[REDACTED]' if @nonce
+
+        "#<#{self.class.name} #{parts.join(' ')}>"
+      end
+
       private
 
       # Computes the password digest per WS-Security UsernameToken Profile 1.1.

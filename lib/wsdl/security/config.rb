@@ -38,6 +38,7 @@ module WSDL
     # @example Use IssuerSerial key reference
     #   config.signature(certificate: cert, private_key: key, key_reference: :issuer_serial)
     #
+    # rubocop:disable Metrics/ClassLength -- Config has many security features requiring extensive documentation
     class Config
       include Constants
 
@@ -374,6 +375,28 @@ module WSDL
         @verify_response == true
       end
 
+      # Returns a safe string representation that hides sensitive values.
+      #
+      # This method ensures that passwords, private keys, and other secrets
+      # are never accidentally exposed in logs, error messages, debugger
+      # output, or stack traces.
+      #
+      # @return [String] a redacted representation safe for logging
+      #
+      # @example
+      #   config = Config.new
+      #   config.username_token('admin', 'secret')
+      #   config.inspect
+      #   # => '#<WSDL::Security::Config username_token=true timestamp=false signature=false>'
+      #
+      def inspect
+        parts = inspect_base_parts
+        parts.concat(inspect_username_token_parts) if @username_token_config
+        parts.concat(inspect_signature_parts) if @signature_config
+
+        "#<#{self.class.name} #{parts.join(' ')}>"
+      end
+
       # Clears all security configuration.
       #
       # @return [self] for method chaining
@@ -429,6 +452,32 @@ module WSDL
       end
 
       private
+
+      def inspect_base_parts
+        [
+          "username_token=#{username_token?}",
+          "timestamp=#{timestamp?}",
+          "signature=#{signature?}",
+          "verify_response=#{verify_response?}"
+        ]
+      end
+
+      def inspect_username_token_parts
+        [
+          "username_token.username=#{@username_token_config.username.inspect}",
+          'username_token.password=[REDACTED]',
+          "username_token.digest=#{@username_token_config.digest?}"
+        ]
+      end
+
+      def inspect_signature_parts
+        cert_subject = @signature_config.certificate.subject.to_s rescue 'unknown' # rubocop:disable Style/RescueModifier
+        [
+          "signature.certificate=#{cert_subject.inspect}",
+          'signature.private_key=[REDACTED]',
+          "signature.algorithm=#{@signature_options&.digest_algorithm.inspect}"
+        ]
+      end
 
       # Normalizes certificate input to OpenSSL::X509::Certificate.
       #
@@ -507,6 +556,7 @@ module WSDL
         end
         nil
       end
+      # rubocop:enable Metrics/ClassLength
     end
   end
 end
