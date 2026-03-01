@@ -239,7 +239,9 @@ module WSDL
       Response.new(
         raw_response,
         output_body_parts: @operation_info.output.body_parts,
-        output_header_parts: @operation_info.output.header_parts
+        output_header_parts: @operation_info.output.header_parts,
+        trust_store: security.verification_trust_store,
+        check_validity: security.check_certificate_validity
       )
     end
 

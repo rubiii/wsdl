@@ -263,7 +263,8 @@ For high-security scenarios, verify that responses from the server are properly 
 ## Enabling Verification
 
 ```ruby
-operation.security.verify_response = true
+# Basic verification (checks validity period by default)
+operation.security.verify_response
 
 response = operation.call
 
@@ -273,6 +274,12 @@ if response.signature_valid?
 else
   puts "Verification failed: #{response.signature_errors}"
 end
+```
+
+You can also use the setter syntax:
+
+```ruby
+operation.security.verify_response = true
 ```
 
 ## Checking Signature Presence
@@ -324,6 +331,106 @@ server_cert = OpenSSL::X509::Certificate.new(File.read('server.pem'))
 response = WSDL::Response.new(xml, verify_certificate: server_cert)
 response.signature_valid?
 ```
+
+---
+
+## Certificate Validation
+
+When verifying response signatures, you can validate the signing certificate's validity period and trust chain.
+
+### Validity Period Checking (Default: Enabled)
+
+By default, the library checks that the signing certificate is within its validity period (not expired and not before its start date). This catches:
+
+- Expired certificates from decommissioned systems
+- Certificates that aren't valid yet (clock skew or future-dated certs)
+
+```ruby
+# Validity is checked by default
+operation.security.verify_response
+
+# Explicitly disable validity checking (not recommended)
+operation.security.verify_response(check_validity: false)
+```
+
+### Trust Store Validation (Optional)
+
+For higher security, validate the certificate chain against trusted Certificate Authorities:
+
+```ruby
+# Use system CA certificates (most common)
+operation.security.verify_response(trust_store: :system)
+
+# Use a specific CA bundle file
+operation.security.verify_response(trust_store: '/etc/ssl/certs/ca-certificates.crt')
+
+# Use a directory of CA certificates
+operation.security.verify_response(trust_store: '/etc/ssl/certs/')
+
+# Use specific CA certificates
+ca = OpenSSL::X509::Certificate.new(File.read('company-ca.pem'))
+operation.security.verify_response(trust_store: [ca])
+
+# Use a pre-configured OpenSSL store
+store = OpenSSL::X509::Store.new
+store.add_file('ca-bundle.crt')
+operation.security.verify_response(trust_store: store)
+```
+
+### Trust Store Options
+
+| Option | Description |
+|--------|-------------|
+| `:system` | System default CA certificates (e.g., `/etc/ssl/certs`) |
+| `String` (file) | Path to CA bundle file (`.crt`, `.pem`) |
+| `String` (dir) | Path to directory containing CA certificates |
+| `Array` | Array of `OpenSSL::X509::Certificate` objects |
+| `OpenSSL::X509::Store` | Pre-configured certificate store for advanced use cases |
+
+### Full Example with Chain Validation
+
+```ruby
+operation.security
+  .timestamp(expires_in: 300)
+  .signature(
+    certificate: cert,
+    private_key: key,
+    digest_algorithm: :sha256
+  )
+  .verify_response(trust_store: :system)
+
+response = operation.call
+
+if response.signature_valid?
+  # Certificate is valid and signed by a trusted CA
+  puts response.body
+else
+  response.signature_errors.each do |error|
+    puts "Error: #{error}"
+  end
+end
+```
+
+### When to Use Trust Store Validation
+
+**Recommended when:**
+- Communicating with external services
+- Compliance requirements (PCI-DSS, HIPAA, etc.)
+- You don't control the server certificate
+
+**May skip when:**
+- Internal services with pre-shared certificates
+- Development/testing environments
+- You provide the expected certificate explicitly via `verify_certificate`
+
+### Certificate Validation Error Messages
+
+| Error | Meaning |
+|-------|---------|
+| `Certificate has expired (expired ...)` | Certificate's `notAfter` date has passed |
+| `Certificate is not yet valid (valid from ...)` | Certificate's `notBefore` date is in the future |
+| `Certificate chain validation failed: self signed certificate` | Self-signed cert rejected by trust store |
+| `Certificate chain validation failed: unable to get local issuer certificate` | CA not found in trust store |
 
 ---
 

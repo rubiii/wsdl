@@ -385,20 +385,118 @@ describe WSDL::Security::Config do
     subject(:config) { described_class.new }
 
     it 'defaults to false' do
-      expect(config.verify_response).to be false
       expect(config.verify_response?).to be false
     end
 
-    it 'can be enabled' do
-      config.verify_response = true
-      expect(config.verify_response).to be true
-      expect(config.verify_response?).to be true
+    it 'defaults check_certificate_validity to true' do
+      expect(config.check_certificate_validity).to be true
     end
 
-    it 'can be disabled after enabling' do
-      config.verify_response = true
-      config.verify_response = false
-      expect(config.verify_response?).to be false
+    it 'defaults verification_trust_store to nil' do
+      expect(config.verification_trust_store).to be_nil
+    end
+
+    describe 'as a setter (verify_response=)' do
+      it 'can be enabled with boolean' do
+        config.verify_response = true
+        expect(config.verify_response?).to be true
+      end
+
+      it 'can be disabled after enabling' do
+        config.verify_response = true
+        config.verify_response = false
+        expect(config.verify_response?).to be false
+      end
+
+      it 'resets trust_store when disabled' do
+        config.verify_response(trust_store: :system)
+        config.verify_response = false
+        expect(config.verification_trust_store).to be_nil
+      end
+
+      it 'resets check_validity to true when disabled' do
+        config.verify_response(check_validity: false)
+        config.verify_response = false
+        expect(config.check_certificate_validity).to be true
+      end
+    end
+
+    describe 'as a chainable method' do
+      it 'enables verification' do
+        config.verify_response
+        expect(config.verify_response?).to be true
+      end
+
+      it 'returns self for chaining' do
+        result = config.verify_response
+        expect(result).to be(config)
+      end
+
+      it 'accepts trust_store option' do
+        config.verify_response(trust_store: :system)
+        expect(config.verification_trust_store).to eq(:system)
+      end
+
+      it 'accepts check_validity option' do
+        config.verify_response(check_validity: false)
+        expect(config.check_certificate_validity).to be false
+      end
+
+      it 'can chain with other configuration methods' do
+        result = config
+          .timestamp
+          .signature(certificate: certificate, private_key: private_key)
+          .verify_response(trust_store: :system)
+
+        expect(result).to be(config)
+        expect(config.timestamp?).to be true
+        expect(config.signature?).to be true
+        expect(config.verify_response?).to be true
+        expect(config.verification_trust_store).to eq(:system)
+      end
+
+      it 'accepts string path as trust_store' do
+        config.verify_response(trust_store: '/path/to/ca-bundle.crt')
+        expect(config.verification_trust_store).to eq('/path/to/ca-bundle.crt')
+      end
+
+      it 'accepts certificate array as trust_store' do
+        ca_certs = [certificate]
+        config.verify_response(trust_store: ca_certs)
+        expect(config.verification_trust_store).to eq(ca_certs)
+      end
+
+      it 'accepts OpenSSL::X509::Store as trust_store' do
+        store = OpenSSL::X509::Store.new
+        config.verify_response(trust_store: store)
+        expect(config.verification_trust_store).to eq(store)
+      end
+    end
+  end
+
+  describe '#verification_trust_store' do
+    subject(:config) { described_class.new }
+
+    it 'returns nil by default' do
+      expect(config.verification_trust_store).to be_nil
+    end
+
+    it 'returns the configured trust store' do
+      config.verify_response(trust_store: :system)
+      expect(config.verification_trust_store).to eq(:system)
+    end
+  end
+
+  describe '#check_certificate_validity' do
+    subject(:config) { described_class.new }
+
+    it 'returns true by default' do
+      expect(config.check_certificate_validity).to be true
+    end
+
+    it 'returns the configured value' do
+      config.verify_response(check_validity: false)
+      expect(config.check_certificate_validity).to be false
     end
   end
 

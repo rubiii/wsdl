@@ -53,9 +53,13 @@ module WSDL
       # @return [Signature, nil]
       attr_reader :signature_config
 
-      # Returns whether response signature verification is enabled.
+      # Returns the trust store for certificate chain validation.
+      # @return [OpenSSL::X509::Store, Symbol, String, Array, nil]
+      attr_reader :verification_trust_store
+
+      # Returns whether certificate validity period checking is enabled.
       # @return [Boolean]
-      attr_accessor :verify_response
+      attr_reader :check_certificate_validity
 
       # Creates a new Config instance.
       #
@@ -65,6 +69,8 @@ module WSDL
         @signature_config = nil
         @signature_options = nil
         @verify_response = false
+        @verification_trust_store = nil
+        @check_certificate_validity = true
       end
 
       # Configures UsernameToken authentication.
@@ -273,6 +279,69 @@ module WSDL
         @signature_options&.key_reference || KeyReference::BINARY_SECURITY_TOKEN
       end
 
+      # Enables response signature verification with optional certificate validation.
+      #
+      # When called without arguments, enables basic signature verification with
+      # validity period checking (default). Add a trust_store to also validate
+      # the certificate chain against trusted CAs.
+      #
+      # @param trust_store [OpenSSL::X509::Store, Symbol, String, Array, nil]
+      #   Trust store for certificate chain validation:
+      #   - `:system` — Use system default CA certificates
+      #   - `String` — Path to CA bundle file or directory
+      #   - `Array<OpenSSL::X509::Certificate>` — Array of trusted CA certificates
+      #   - `OpenSSL::X509::Store` — Pre-configured certificate store
+      #   - `nil` — Skip chain validation (default)
+      # @param check_validity [Boolean] whether to check the certificate's validity
+      #   period (not_before and not_after). Default: true
+      #
+      # @return [self] for method chaining
+      #
+      # @example Basic verification (validity period checked by default)
+      #   config.verify_response
+      #
+      # @example With system CA validation
+      #   config.verify_response(trust_store: :system)
+      #
+      # @example With custom CA certificates
+      #   ca = OpenSSL::X509::Certificate.new(File.read('ca.pem'))
+      #   config.verify_response(trust_store: [ca])
+      #
+      # @example Skip validity checking (not recommended)
+      #   config.verify_response(check_validity: false)
+      #
+      # @example Full chain with signature configuration
+      #   config
+      #     .timestamp
+      #     .signature(certificate: cert, private_key: key)
+      #     .verify_response(trust_store: :system)
+      #
+      def verify_response(trust_store: nil, check_validity: true)
+        @verify_response = true
+        @verification_trust_store = trust_store
+        @check_certificate_validity = check_validity
+        self
+      end
+
+      # Sets whether response signature verification is enabled.
+      #
+      # This setter provides a simple way to enable/disable verification.
+      # For configuration options, use {#verify_response} instead.
+      #
+      # @param value [Boolean] true to enable, false to disable
+      #
+      # @example
+      #   config.verify_response = true
+      #
+      def verify_response=(value)
+        @verify_response = value
+        return if value
+
+        # Reset options when disabled
+        @verification_trust_store = nil
+        @check_certificate_validity = true
+      end
+
       # Returns whether response signature verification is enabled.
       #
       # @return [Boolean]
@@ -323,7 +392,13 @@ module WSDL
           )
         end
 
-        copy.verify_response = @verify_response
+        if @verify_response
+          copy.verify_response(
+            trust_store: @verification_trust_store,
+            check_validity: @check_certificate_validity
+          )
+        end
+
         copy
       end
 

@@ -4,6 +4,7 @@ require 'wsdl/xml/parser'
 require 'wsdl/security/verifier/base'
 require 'wsdl/security/verifier/structure_validator'
 require 'wsdl/security/verifier/certificate_resolver'
+require 'wsdl/security/verifier/certificate_validator'
 require 'wsdl/security/verifier/reference_validator'
 require 'wsdl/security/verifier/signature_validator'
 
@@ -16,6 +17,7 @@ module WSDL
     #
     # - *Structural Validation* — Detects XML Signature Wrapping (XSW) attacks
     # - *Certificate Resolution* — Extracts or validates signing certificates
+    # - *Certificate Validation* — Checks validity period and trust chain
     # - *Reference Verification* — Validates digests of signed elements
     # - *Signature Verification* — Cryptographic validation of SignatureValue
     #
@@ -33,6 +35,14 @@ module WSDL
     #
     # @example With a provided certificate
     #   verifier = Verifier.new(response_xml, certificate: server_cert)
+    #   verifier.valid?
+    #
+    # @example With certificate chain validation
+    #   verifier = Verifier.new(response_xml, trust_store: :system)
+    #   verifier.valid?
+    #
+    # @example With custom CA certificates
+    #   verifier = Verifier.new(response_xml, trust_store: [ca_cert])
     #   verifier.valid?
     #
     # @see https://www.w3.org/TR/xmldsig-core1/
@@ -53,9 +63,20 @@ module WSDL
       # @param xml [String, Nokogiri::XML::Document] the SOAP response XML
       # @param certificate [OpenSSL::X509::Certificate, String, nil] optional certificate
       #   to use for verification instead of extracting from the message
-      def initialize(xml, certificate: nil)
+      # @param trust_store [OpenSSL::X509::Store, Symbol, String, Array, nil] trust store
+      #   for certificate chain validation:
+      #   - `:system` — Use system default CA certificates
+      #   - `String` — Path to CA bundle file or directory
+      #   - `Array<OpenSSL::X509::Certificate>` — Array of trusted CA certificates
+      #   - `OpenSSL::X509::Store` — Pre-configured certificate store
+      #   - `nil` — Skip chain validation (default)
+      # @param check_validity [Boolean] whether to check the certificate's validity
+      #   period (not_before and not_after). Default: true
+      def initialize(xml, certificate: nil, trust_store: nil, check_validity: true)
         @document = parse_document(xml)
         @provided_certificate = certificate
+        @trust_store = trust_store
+        @check_validity = check_validity
         @errors = []
         @verified = nil
         @certificate = normalize_certificate(certificate) if certificate
@@ -66,8 +87,9 @@ module WSDL
       # Performs full verification including:
       # 1. Structural validation (XSW protection)
       # 2. Certificate resolution
-      # 3. Reference digest verification
-      # 4. Cryptographic signature verification
+      # 3. Certificate validation (validity period and chain)
+      # 4. Reference digest verification
+      # 5. Cryptographic signature verification
       #
       # @return [Boolean] true if signature is present and valid
       def valid?
@@ -147,10 +169,13 @@ module WSDL
         # Phase 2: Certificate resolution
         return false unless run_certificate_resolution
 
-        # Phase 3: Reference validation (digests and element positions)
+        # Phase 3: Certificate validation (validity + chain)
+        return false unless run_certificate_validation
+
+        # Phase 4: Reference validation (digests and element positions)
         return false unless run_reference_validation
 
-        # Phase 4: Cryptographic signature verification
+        # Phase 5: Cryptographic signature verification
         run_signature_validation
       end
 
@@ -191,7 +216,24 @@ module WSDL
       end
 
       # ============================================================
-      # Phase 3: Reference Validation
+      # Phase 3: Certificate Validation
+      # ============================================================
+
+      def run_certificate_validation
+        validator = Verifier::CertificateValidator.new(
+          @certificate,
+          trust_store: @trust_store,
+          check_validity: @check_validity
+        )
+
+        return true if validator.valid?
+
+        aggregate_errors(validator)
+        false
+      end
+
+      # ============================================================
+      # Phase 4: Reference Validation
       # ============================================================
 
       def run_reference_validation
@@ -207,7 +249,7 @@ module WSDL
       end
 
       # ============================================================
-      # Phase 4: Signature Validation
+      # Phase 5: Signature Validation
       # ============================================================
 
       def run_signature_validation

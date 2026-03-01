@@ -94,4 +94,32 @@ module WSDL
   #
   class XMLSecurityError < Error
   end
+
+  # Raised when certificate validation fails during response verification.
+  #
+  # This error is raised when:
+  # - The certificate has expired or is not yet valid
+  # - The certificate chain cannot be verified against the trust store
+  # - The certificate is self-signed and a trust store rejects it
+  #
+  # @example Catching certificate validation errors
+  #   begin
+  #     response.verify_signature!
+  #   rescue WSDL::CertificateValidationError => e
+  #     log_security_event("Untrusted certificate: #{e.message}")
+  #   end
+  #
+  # @example Distinguishing from other signature errors
+  #   begin
+  #     response.verify_signature!
+  #   rescue WSDL::CertificateValidationError => e
+  #     # Certificate issue (expired, untrusted CA, etc.)
+  #     puts "Certificate problem: #{e.message}"
+  #   rescue WSDL::SignatureVerificationError => e
+  #     # Signature issue (tampered content, wrong key, etc.)
+  #     puts "Signature problem: #{e.message}"
+  #   end
+  #
+  class CertificateValidationError < Error
+  end
 end

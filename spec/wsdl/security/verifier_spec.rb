@@ -21,6 +21,16 @@ describe WSDL::Security::Verifier, :verifier_helpers do
       expect(verifier.certificate).to eq(certificate)
     end
 
+    it 'accepts an optional trust_store' do
+      verifier = described_class.new(unsigned_soap_response, trust_store: :system)
+      expect(verifier).to be_a(described_class)
+    end
+
+    it 'accepts an optional check_validity flag' do
+      verifier = described_class.new(unsigned_soap_response, check_validity: false)
+      expect(verifier).to be_a(described_class)
+    end
+
     it 'accepts certificate as PEM string' do
       verifier = described_class.new(unsigned_soap_response, certificate: certificate.to_pem)
       expect(verifier.certificate).to be_a(OpenSSL::X509::Certificate)
@@ -301,7 +311,8 @@ describe WSDL::Security::Verifier, :verifier_helpers do
       let(:duplicate_id_fixture) { File.read('spec/fixtures/security/xsw_duplicate_id.xml') }
 
       it 'rejects documents with duplicate IDs' do
-        verifier = described_class.new(duplicate_id_fixture)
+        # Disable validity checking - fixture has expired certificate
+        verifier = described_class.new(duplicate_id_fixture, check_validity: false)
         expect(verifier.valid?).to be false
         expect(verifier.errors).to include(match(/Duplicate element IDs detected/))
       end
@@ -311,7 +322,8 @@ describe WSDL::Security::Verifier, :verifier_helpers do
       let(:signature_outside_security) { File.read('spec/fixtures/security/xsw_signature_outside_security.xml') }
 
       it 'rejects signatures outside Security header' do
-        verifier = described_class.new(signature_outside_security)
+        # Disable validity checking - fixture has expired certificate
+        verifier = described_class.new(signature_outside_security, check_validity: false)
         expect(verifier.valid?).to be false
         expect(verifier.errors).to include(match(/Signature element must be within wsse:Security header/))
       end
@@ -321,7 +333,8 @@ describe WSDL::Security::Verifier, :verifier_helpers do
       let(:body_in_wrong_position) { File.read('spec/fixtures/security/xsw_body_in_wrong_position.xml') }
 
       it 'rejects Body elements in wrong position' do
-        verifier = described_class.new(body_in_wrong_position)
+        # Disable validity checking - fixture has expired certificate
+        verifier = described_class.new(body_in_wrong_position, check_validity: false)
         expect(verifier.valid?).to be false
         expect(verifier.errors).to include(match(/Body element must be a direct child of soap:Envelope/))
       end
@@ -331,7 +344,8 @@ describe WSDL::Security::Verifier, :verifier_helpers do
       let(:duplicate_id_fixture) { File.read('spec/fixtures/security/xsw_duplicate_id.xml') }
 
       it 'detects structural issues before cryptographic verification' do
-        verifier = described_class.new(duplicate_id_fixture)
+        # Disable validity checking - fixture has expired certificate
+        verifier = described_class.new(duplicate_id_fixture, check_validity: false)
         verifier.valid?
         # First error should be structural, not crypto-related
         expect(verifier.errors.first).to match(/Duplicate element IDs|Signature element must be/)
@@ -406,6 +420,15 @@ describe WSDL::Security::Verifier, :verifier_helpers do
       expect(verifier.errors).to include('No signature found in document')
     end
 
+    it 'runs certificate validation after certificate resolution' do
+      # Build a signed response, then verify with trust store
+      # The self-signed test certificate won't be in system store
+      verifier = described_class.new(signed_soap_response, trust_store: :system)
+      verifier.valid?
+      # Should fail on certificate chain, not structure or digest
+      expect(verifier.errors).to include(match(/chain validation failed/i))
+    end
+
     it 'runs reference validation before signature validation' do
       # This is tested implicitly - if digests don't match, we don't bother
       # with signature verification
@@ -416,6 +439,120 @@ describe WSDL::Security::Verifier, :verifier_helpers do
       verifier = described_class.new(doc.to_xml)
       verifier.valid?
       expect(verifier.errors).to include(match(/Digest mismatch/))
+    end
+  end
+
+  describe 'certificate validation' do
+    let(:expired_certificate) do
+      cert = OpenSSL::X509::Certificate.new
+      cert.version = 2
+      cert.serial = 99
+      cert.subject = OpenSSL::X509::Name.new([['CN', 'Expired Test Certificate']])
+      cert.issuer = cert.subject
+      cert.public_key = private_key.public_key
+      cert.not_before = Time.now - 7200
+      cert.not_after = Time.now - 3600 # Expired 1 hour ago
+      cert.sign(private_key, OpenSSL::Digest.new('SHA256'))
+      cert
+    end
+
+    let(:expired_signed_response) do
+      envelope = <<~XML
+        <?xml version="1.0" encoding="UTF-8"?>
+        <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+          <soap:Header/>
+          <soap:Body xmlns:wsu="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd" wsu:Id="Body-expired-test">
+            <TestData>Hello</TestData>
+          </soap:Body>
+        </soap:Envelope>
+      XML
+
+      config = WSDL::Security::Config.new
+      config.timestamp
+      config.signature(certificate: expired_certificate, private_key: private_key)
+
+      header = WSDL::Security::SecurityHeader.new(config)
+      header.apply(envelope)
+    end
+
+    context 'with check_validity enabled (default)' do
+      it 'rejects responses signed with expired certificates' do
+        verifier = described_class.new(expired_signed_response, check_validity: true)
+        expect(verifier.valid?).to be false
+        expect(verifier.errors).to include(match(/expired/i))
+      end
+
+      it 'accepts responses signed with valid certificates' do
+        verifier = described_class.new(signed_soap_response, check_validity: true)
+        expect(verifier.valid?).to be true
+      end
+    end
+
+    context 'with check_validity disabled' do
+      it 'accepts responses signed with expired certificates' do
+        verifier = described_class.new(expired_signed_response, check_validity: false)
+        expect(verifier.valid?).to be true
+      end
+    end
+
+    context 'with trust_store configured' do
+      it 'rejects self-signed certificates not in trust store' do
+        verifier = described_class.new(signed_soap_response, trust_store: :system)
+        expect(verifier.valid?).to be false
+        expect(verifier.errors).to include(match(/chain validation failed/i))
+      end
+
+      it 'accepts certificates signed by trusted CA' do
+        # Build CA and signed certificate
+        ca_key = OpenSSL::PKey::RSA.new(2048)
+        ca_cert = OpenSSL::X509::Certificate.new
+        ca_cert.version = 2
+        ca_cert.serial = 1000
+        ca_cert.subject = OpenSSL::X509::Name.new([['CN', 'Test CA']])
+        ca_cert.issuer = ca_cert.subject
+        ca_cert.public_key = ca_key.public_key
+        ca_cert.not_before = Time.now - 86_400
+        ca_cert.not_after = Time.now + 86_400
+
+        ef = OpenSSL::X509::ExtensionFactory.new
+        ef.subject_certificate = ca_cert
+        ef.issuer_certificate = ca_cert
+        ca_cert.add_extension(ef.create_extension('basicConstraints', 'CA:TRUE', true))
+        ca_cert.sign(ca_key, OpenSSL::Digest.new('SHA256'))
+
+        # Create certificate signed by CA
+        signed_key = OpenSSL::PKey::RSA.new(2048)
+        signed_cert = OpenSSL::X509::Certificate.new
+        signed_cert.version = 2
+        signed_cert.serial = 1001
+        signed_cert.subject = OpenSSL::X509::Name.new([['CN', 'Signed Cert']])
+        signed_cert.issuer = ca_cert.subject
+        signed_cert.public_key = signed_key.public_key
+        signed_cert.not_before = Time.now - 3600
+        signed_cert.not_after = Time.now + 3600
+        signed_cert.sign(ca_key, OpenSSL::Digest.new('SHA256'))
+
+        # Build signed response with CA-signed certificate
+        envelope = <<~XML
+          <?xml version="1.0" encoding="UTF-8"?>
+          <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+            <soap:Header/>
+            <soap:Body xmlns:wsu="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd" wsu:Id="Body-ca-test">
+              <TestData>Hello</TestData>
+            </soap:Body>
+          </soap:Envelope>
+        XML
+
+        config = WSDL::Security::Config.new
+        config.timestamp
+        config.signature(certificate: signed_cert, private_key: signed_key)
+
+        header = WSDL::Security::SecurityHeader.new(config)
+        ca_signed_response = header.apply(envelope)
+
+        verifier = described_class.new(ca_signed_response, trust_store: [ca_cert])
+        expect(verifier.valid?).to be true
+      end
     end
   end
 end

@@ -52,11 +52,25 @@ module WSDL
     #   describing the expected header structure for type-aware parsing
     # @param verify_certificate [OpenSSL::X509::Certificate, nil] optional certificate
     #   to use for signature verification instead of extracting from message
-    def initialize(raw_response, output_body_parts: nil, output_header_parts: nil, verify_certificate: nil)
+    # @param trust_store [OpenSSL::X509::Store, Symbol, String, Array, nil] trust store
+    #   for certificate chain validation:
+    #   - `:system` — Use system default CA certificates
+    #   - `String` — Path to CA bundle file or directory
+    #   - `Array<OpenSSL::X509::Certificate>` — Array of trusted CA certificates
+    #   - `OpenSSL::X509::Store` — Pre-configured certificate store
+    #   - `nil` — Skip chain validation (default)
+    # @param check_validity [Boolean] whether to check the certificate's validity
+    #   period (not_before and not_after). Default: true
+    # rubocop:disable Metrics/ParameterLists
+    def initialize(raw_response, output_body_parts: nil, output_header_parts: nil,
+                   verify_certificate: nil, trust_store: nil, check_validity: true)
+      # rubocop:enable Metrics/ParameterLists
       @raw_response = raw_response
       @output_body_parts = output_body_parts
       @output_header_parts = output_header_parts
       @verify_certificate = verify_certificate
+      @trust_store = trust_store
+      @check_validity = check_validity
       @verifier = nil
     end
 
@@ -443,7 +457,12 @@ module WSDL
     # @return [Security::Verifier]
     #
     def verifier
-      @verifier ||= Security::Verifier.new(@raw_response, certificate: @verify_certificate)
+      @verifier ||= Security::Verifier.new(
+        @raw_response,
+        certificate: @verify_certificate,
+        trust_store: @trust_store,
+        check_validity: @check_validity
+      )
     end
   end
 end

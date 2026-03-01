@@ -132,6 +132,7 @@ Naming/PredicateMethod:
     # Verifier internal methods that run validation phases
     - run_structure_validation
     - run_certificate_resolution
+    - run_certificate_validation
     - run_reference_validation
     - run_signature_validation
     - validate_element_position
