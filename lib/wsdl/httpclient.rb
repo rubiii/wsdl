@@ -7,10 +7,23 @@ module WSDL
   # httpclient gem and provides a simple interface for making GET
   # and POST requests.
   #
-  # @example Configuring the HTTP client
-  #   wsdl = WSDL.new('http://example.com/service?wsdl')
-  #   wsdl.http.ssl_config.verify_mode = OpenSSL::SSL::VERIFY_NONE
-  #   wsdl.http.connect_timeout = 30
+  # @example Configuring timeouts
+  #   client = WSDL::Client.new('https://example.com/service?wsdl')
+  #   client.http.connect_timeout = 30
+  #   client.http.receive_timeout = 60
+  #
+  # @example Using a custom CA certificate
+  #   client = WSDL::Client.new('https://example.com/service?wsdl')
+  #   client.http.ssl_config.add_trust_ca('/path/to/ca-bundle.crt')
+  #
+  # @example Client certificate authentication (mutual TLS)
+  #   client = WSDL::Client.new('https://example.com/service?wsdl')
+  #   client.http.ssl_config.set_client_cert_file(
+  #     '/path/to/client.crt',
+  #     '/path/to/client.key'
+  #   )
+  #
+  # @see file:docs/configuration.md Configuration Guide
   #
   # @example Creating a custom adapter
   #   class MyHTTPAdapter

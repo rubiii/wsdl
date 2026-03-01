@@ -42,6 +42,83 @@ http_client.set_auth('http://example.com', 'username', 'password')
 
 See the [HTTPClient documentation](https://github.com/nahi/httpclient) for all available options.
 
+### SSL/TLS Security
+
+SSL/TLS verification is **enabled by default** and should remain enabled in production. The library verifies server certificates against your system's trusted CA bundle.
+
+#### Why SSL Verification Matters
+
+SSL verification ensures you're communicating with the intended server and not an attacker performing a man-in-the-middle attack. Disabling verification exposes your application to:
+
+- **Credential theft** — Attackers can intercept usernames, passwords, and API keys
+- **Data tampering** — SOAP messages can be modified in transit
+- **Data exfiltration** — Sensitive response data can be captured
+
+#### Custom CA Certificates
+
+If your SOAP service uses a certificate signed by an internal CA or a CA not in your system's trust store:
+
+``` ruby
+client = WSDL::Client.new('https://example.com/service?wsdl')
+
+# Add a single CA certificate
+client.http.ssl_config.add_trust_ca('/path/to/internal-ca.crt')
+
+# Or add a directory of CA certificates
+client.http.ssl_config.add_trust_ca('/path/to/ca-certs/')
+```
+
+#### Client Certificate Authentication (Mutual TLS)
+
+Some services require client certificates for authentication:
+
+``` ruby
+client = WSDL::Client.new('https://example.com/service?wsdl')
+
+# Using separate certificate and key files
+client.http.ssl_config.set_client_cert_file(
+  '/path/to/client.crt',
+  '/path/to/client.key'
+)
+
+# With an encrypted private key
+client.http.ssl_config.set_client_cert_file(
+  '/path/to/client.crt',
+  '/path/to/client.key',
+  'key-passphrase'
+)
+```
+
+#### Troubleshooting SSL Errors
+
+Common SSL errors and solutions:
+
+| Error | Cause | Solution |
+|-------|-------|----------|
+| `certificate verify failed` | Server certificate not trusted | Add the CA certificate with `add_trust_ca` |
+| `self signed certificate` | Self-signed server certificate | Add the server's certificate to trust store |
+| `certificate has expired` | Server certificate expired | Contact the service administrator |
+| `hostname mismatch` | Certificate doesn't match URL | Use the correct hostname or check certificate |
+
+#### Development Only: Disabling SSL Verification
+
+> ⚠️ **Security Warning:** Never disable SSL verification in production. This completely removes protection against man-in-the-middle attacks and should only be used for local development or testing.
+
+If you must disable verification for development with self-signed certificates:
+
+``` ruby
+# DEVELOPMENT ONLY - Never use in production!
+client = WSDL::Client.new('https://localhost/service?wsdl')
+client.http.ssl_config.verify_mode = OpenSSL::SSL::VERIFY_NONE
+```
+
+A safer alternative for development is to add your development CA to the trust store:
+
+``` ruby
+# Safer: Trust your development CA
+client.http.ssl_config.add_trust_ca('/path/to/dev-ca.crt')
+```
+
 ### Custom HTTP Adapter
 
 You can replace the default HTTP adapter with your own implementation. This allows you to use any HTTP library you prefer (Faraday, Net::HTTP, etc.) without requiring the `httpclient` gem.
