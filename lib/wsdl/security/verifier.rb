@@ -1,49 +1,46 @@
 # frozen_string_literal: true
 
-require 'openssl'
-require 'base64'
 require 'wsdl/xml/parser'
-require 'wsdl/security/secure_compare'
+require 'wsdl/security/verifier/base'
+require 'wsdl/security/verifier/structure_validator'
+require 'wsdl/security/verifier/certificate_resolver'
+require 'wsdl/security/verifier/reference_validator'
+require 'wsdl/security/verifier/signature_validator'
 
 module WSDL
   module Security
     # Verifies XML Digital Signatures in SOAP responses.
     #
-    # This provides assurance that:
-    # - The response hasn't been tampered with (integrity)
-    # - The response came from someone with the private key (authenticity)
+    # This class coordinates multiple validation steps to provide comprehensive
+    # signature verification including:
+    #
+    # - *Structural Validation* — Detects XML Signature Wrapping (XSW) attacks
+    # - *Certificate Resolution* — Extracts or validates signing certificates
+    # - *Reference Verification* — Validates digests of signed elements
+    # - *Signature Verification* — Cryptographic validation of SignatureValue
+    #
+    # The verification process follows W3C XML Signature Best Practices,
+    # running structural checks before expensive cryptographic operations.
     #
     # @example Basic verification
     #   verifier = Verifier.new(response_xml)
     #   if verifier.valid?
     #     puts "Signature is valid!"
-    #     puts "Signed elements: #{verifier.signed_element_ids}"
+    #     puts "Signed elements: #{verifier.signed_elements}"
     #   else
     #     puts "Signature invalid: #{verifier.errors}"
     #   end
     #
+    # @example With a provided certificate
+    #   verifier = Verifier.new(response_xml, certificate: server_cert)
+    #   verifier.valid?
+    #
     # @see https://www.w3.org/TR/xmldsig-core1/
+    # @see https://www.w3.org/TR/xmldsig-bestpractices/
+    # @see https://docs.oasis-open.org/wss-m/wss/v1.1.1/os/wss-SOAPMessageSecurity-v1.1.1-os.html
     #
     class Verifier
       include Constants
-
-      # Pattern for valid XML element IDs (NCName production).
-      # This prevents XPath injection by rejecting IDs containing quotes,
-      # brackets, operators, or other characters that could alter XPath semantics.
-      #
-      # Allowed characters (explicit allowlist):
-      #   - First character: ASCII letter (a-z, A-Z) or underscore
-      #   - Subsequent: ASCII letters, digits, underscores, hyphens, periods
-      #
-      # Explicitly disallowed (non-exhaustive):
-      #   - Single/double quotes (' ")
-      #   - Brackets ([ ] ( ) { })
-      #   - XPath operators (| / @ = < >)
-      #   - Whitespace
-      #   - Null bytes and control characters
-      #
-      # @see https://www.w3.org/TR/xml-id/
-      VALID_ID_PATTERN = /\A[a-zA-Z_][a-zA-Z0-9_.-]*\z/
 
       # @return [Array<String>] errors encountered during verification
       attr_reader :errors
@@ -51,51 +48,76 @@ module WSDL
       # @return [OpenSSL::X509::Certificate, nil] certificate used for verification
       attr_reader :certificate
 
+      # Creates a new Verifier instance.
+      #
       # @param xml [String, Nokogiri::XML::Document] the SOAP response XML
       # @param certificate [OpenSSL::X509::Certificate, String, nil] optional certificate
+      #   to use for verification instead of extracting from the message
       def initialize(xml, certificate: nil)
         @document = parse_document(xml)
-        @certificate = normalize_certificate(certificate) if certificate
+        @provided_certificate = certificate
         @errors = []
         @verified = nil
+        @certificate = normalize_certificate(certificate) if certificate
       end
 
       # Returns whether the signature is valid.
-      # @return [Boolean]
+      #
+      # Performs full verification including:
+      # 1. Structural validation (XSW protection)
+      # 2. Certificate resolution
+      # 3. Reference digest verification
+      # 4. Cryptographic signature verification
+      #
+      # @return [Boolean] true if signature is present and valid
       def valid?
         return @verified unless @verified.nil?
 
         @verified = perform_verification
       end
 
-      # @return [Boolean] whether a signature is present
+      # Returns whether a signature is present in the document.
+      #
+      # @return [Boolean] true if a ds:Signature element exists
       def signature_present?
-        !signature_node.nil?
+        structure_validator.signature_present?
       end
 
-      # @return [Array<String>] IDs of signed elements (without # prefix)
+      # Returns the IDs of all signed elements.
+      #
+      # @return [Array<String>] element IDs (without # prefix)
       def signed_element_ids
         return [] unless signature_present?
 
-        references.filter_map { |ref| extract_reference_id(ref) }
+        reference_validator.referenced_ids
       end
 
+      # Returns the names of all signed elements.
+      #
       # @return [Array<String>] element names (e.g., ['Body', 'Timestamp'])
       def signed_elements
-        signed_element_ids.filter_map { |id| find_element_by_id(id)&.name }
+        signed_element_ids.filter_map { |id| safe_find_element_by_id(id)&.name }
       end
 
-      # @return [String, nil] the signature algorithm URI
+      # Returns the signature algorithm URI.
+      #
+      # @return [String, nil] the algorithm URI (e.g., 'http://www.w3.org/2001/04/xmldsig-more#rsa-sha256')
       def signature_algorithm
-        signed_info_node&.at_xpath('ds:SignatureMethod/@Algorithm', ns)&.value
+        signature_validator&.signature_algorithm
       end
 
-      # @return [String, nil] the digest algorithm URI from the first reference
+      # Returns the digest algorithm URI from the first reference.
+      #
+      # @return [String, nil] the algorithm URI (e.g., 'http://www.w3.org/2001/04/xmlenc#sha256')
       def digest_algorithm
-        references.first&.at_xpath('ds:DigestMethod/@Algorithm', ns)&.value
+        signed_info_node&.at_xpath('ds:Reference/ds:DigestMethod/@Algorithm', ns)&.value
       end
 
       private
+
+      # ============================================================
+      # Document Parsing
+      # ============================================================
 
       def parse_document(xml)
         case xml
@@ -112,154 +134,152 @@ module WSDL
         raise ArgumentError, "Invalid certificate type: #{cert.class}"
       end
 
+      # ============================================================
+      # Main Verification Flow
+      # ============================================================
+
       def perform_verification
         @errors = []
-        return add_failure('No signature found in document') unless signature_present?
-        return add_failure('No certificate found for verification') unless load_certificate
-        return false unless verify_all_references
 
-        verify_signature_value
+        # Phase 1: Structural validation (fast, before expensive crypto)
+        return false unless run_structure_validation
+
+        # Phase 2: Certificate resolution
+        return false unless run_certificate_resolution
+
+        # Phase 3: Reference validation (digests and element positions)
+        return false unless run_reference_validation
+
+        # Phase 4: Cryptographic signature verification
+        run_signature_validation
       end
 
-      def load_certificate
-        return true if @certificate
+      # ============================================================
+      # Phase 1: Structure Validation
+      # ============================================================
 
-        bst = security_node&.at_xpath('wsse:BinarySecurityToken', ns)
-        return false unless bst
+      def run_structure_validation
+        validator = structure_validator
+        return true if validator.valid?
 
-        @certificate = OpenSSL::X509::Certificate.new(Base64.decode64(bst.text))
+        aggregate_errors(validator)
+        false
+      end
+
+      def structure_validator
+        @structure_validator ||= Verifier::StructureValidator.new(@document)
+      end
+
+      # ============================================================
+      # Phase 2: Certificate Resolution
+      # ============================================================
+
+      def run_certificate_resolution
+        resolver = Verifier::CertificateResolver.new(
+          @document,
+          structure_validator.security_node,
+          provided: @provided_certificate
+        )
+
+        unless resolver.resolve
+          aggregate_errors(resolver)
+          return false
+        end
+
+        @certificate = resolver.certificate
         true
-      rescue OpenSSL::X509::CertificateError => e
-        add_failure("Failed to parse BinarySecurityToken: #{e.message}")
       end
 
-      def verify_all_references
-        references.all? { |ref| verify_single_reference(ref) }
+      # ============================================================
+      # Phase 3: Reference Validation
+      # ============================================================
+
+      def run_reference_validation
+        validator = reference_validator
+        return true if validator.valid?
+
+        aggregate_errors(validator)
+        false
       end
 
-      def verify_single_reference(ref)
-        ref_data = extract_reference_data(ref)
-        return false unless ref_data
-
-        element = find_element_by_id(ref_data[:id])
-        return add_failure("Referenced element not found: #{ref_data[:uri]}") unless element
-
-        computed = compute_digest(element, ref_data[:c14n_alg], ref_data[:digest_alg])
-        return true if SecureCompare.equal?(computed, ref_data[:expected])
-
-        add_failure("Digest mismatch for #{ref_data[:uri]}")
+      def reference_validator
+        @reference_validator ||= Verifier::ReferenceValidator.new(@document, signed_info_node)
       end
 
-      def extract_reference_data(ref)
-        uri = ref['URI']
-        return add_failure_nil('Reference missing URI attribute') unless uri
+      # ============================================================
+      # Phase 4: Signature Validation
+      # ============================================================
 
-        expected = ref.at_xpath('ds:DigestValue', ns)&.text
-        return add_failure_nil("Reference missing DigestValue: #{uri}") unless expected
+      def run_signature_validation
+        validator = signature_validator
+        return true if validator.valid?
 
-        digest_alg = ref.at_xpath('ds:DigestMethod/@Algorithm', ns)&.value
-        return add_failure_nil("Reference missing DigestMethod: #{uri}") unless digest_alg
-
-        build_reference_hash(ref, uri, expected, digest_alg)
+        aggregate_errors(validator)
+        false
       end
 
-      def build_reference_hash(ref, uri, expected, digest_alg)
-        {
-          uri: uri,
-          id: uri.delete_prefix('#'),
-          expected: expected,
-          digest_alg: digest_alg,
-          c14n_alg: ref.at_xpath('ds:Transforms/ds:Transform/@Algorithm', ns)&.value || EXC_C14N_URI
-        }
+      def signature_validator
+        @signature_validator ||= Verifier::SignatureValidator.new(
+          structure_validator.signature_node,
+          @certificate
+        )
       end
 
-      def compute_digest(element, c14n_alg, digest_alg)
-        canonicalizer = Canonicalizer.new(algorithm: AlgorithmMapper.c14n_algorithm(c14n_alg))
-        digester = Digester.new(algorithm: AlgorithmMapper.digest_algorithm(digest_alg))
-        digester.base64_digest(canonicalizer.canonicalize(element))
+      # ============================================================
+      # Node Accessors
+      # ============================================================
+
+      def signed_info_node
+        structure_validator.signature_node&.at_xpath('ds:SignedInfo', ns)
       end
 
-      def verify_signature_value
-        sig_value_node = signature_node.at_xpath('ds:SignatureValue', ns)
-        return add_failure('SignatureValue not found') unless sig_value_node
+      # Safely finds an element by ID with validation.
+      # Returns nil and records error for invalid IDs.
+      #
+      # @param id [String] the element ID
+      # @return [Nokogiri::XML::Element, nil] the element or nil
+      def safe_find_element_by_id(id)
+        return nil unless valid_element_id?(id)
 
-        canonical = canonicalize_signed_info
-        verify_with_certificate(sig_value_node, canonical)
-      end
-
-      def canonicalize_signed_info
-        c14n_alg = signed_info_node.at_xpath('ds:CanonicalizationMethod/@Algorithm', ns)&.value
-        canonicalizer = Canonicalizer.new(algorithm: AlgorithmMapper.c14n_algorithm(c14n_alg))
-        canonicalizer.canonicalize(signed_info_node)
-      end
-
-      def verify_with_certificate(sig_value_node, canonical)
-        digest = OpenSSL::Digest.new(AlgorithmMapper.signature_digest(signature_algorithm))
-        signature = Base64.decode64(sig_value_node.text)
-
-        return true if @certificate.public_key.verify(digest, signature, canonical)
-
-        add_failure('SignatureValue verification failed')
-      rescue OpenSSL::PKey::PKeyError => e
-        add_failure("Signature verification error: #{e.message}")
-      end
-
-      def extract_reference_id(ref)
-        uri = ref['URI']
-        uri&.delete_prefix('#')
+        find_element_by_id(id)
       end
 
       def find_element_by_id(id)
-        return nil unless valid_element_id?(id)
-
         @document.at_xpath("//*[@wsu:Id='#{id}']", ns) ||
           @document.at_xpath("//*[@Id='#{id}']") ||
           @document.at_xpath("//*[@xml:id='#{id}']")
       end
 
-      # Validates that an element ID is safe to use in XPath queries.
+      # Validates element ID format to prevent XPath injection.
       #
-      # This prevents XPath injection attacks by ensuring IDs contain only
-      # characters allowed in XML NCName (letters, digits, hyphens, underscores, periods).
-      #
-      # @param id [String, nil] the element ID to validate
-      # @return [Boolean] true if the ID is valid and safe to use
-      # @see VALID_ID_PATTERN
+      # @param id [String, nil] the ID to validate
+      # @return [Boolean] true if valid
       def valid_element_id?(id)
-        return add_failure('Reference URI is empty') if id.nil? || id.empty?
-        return true if id.match?(VALID_ID_PATTERN)
+        return add_error('Reference URI is empty') if id.nil? || id.empty?
+        return true if id.match?(Verifier::ReferenceValidator::VALID_ID_PATTERN)
 
-        add_failure("Invalid element ID format (possible XPath injection): #{id.inspect}")
+        add_error("Invalid element ID format (possible XPath injection): #{id.inspect}")
       end
 
-      def signature_node
-        @signature_node ||= @document.at_xpath('//ds:Signature', ns)
-      end
-
-      def signed_info_node
-        @signed_info_node ||= signature_node&.at_xpath('ds:SignedInfo', ns)
-      end
-
-      def security_node
-        @security_node ||= @document.at_xpath('//wsse:Security', ns)
-      end
-
-      def references
-        @references ||= signed_info_node&.xpath('ds:Reference', ns) || []
-      end
-
-      def ns
-        { 'ds' => NS_DS, 'wsse' => NS_WSSE, 'wsu' => NS_WSU }
-      end
-
-      def add_failure(message)
+      def add_error(message)
         @errors << message
         false
       end
 
-      def add_failure_nil(message)
-        @errors << message
-        nil
+      # ============================================================
+      # Helpers
+      # ============================================================
+
+      def ns
+        {
+          'ds' => NS_DS,
+          'wsse' => NS_WSSE,
+          'wsu' => NS_WSU
+        }
+      end
+
+      def aggregate_errors(validator)
+        @errors.concat(validator.errors)
       end
     end
   end

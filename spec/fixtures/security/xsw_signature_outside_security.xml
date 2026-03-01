@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  XSW Attack Fixture: Signature Outside Security Header
+  
+  This document has the ds:Signature element placed outside the wsse:Security
+  header (directly under soap:Header). Per WS-Security SOAP Message Security
+  specification, the Signature element MUST be within the wsse:Security header.
+  
+  A signature outside the Security header could indicate tampering, where an
+  attacker moves or copies a legitimate signature to a different location.
+  
+  Expected behavior: Verifier should reject this document because the signature
+  is not within the wsse:Security header.
+-->
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"
+               xmlns:wsse="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd"
+               xmlns:wsu="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd"
+               xmlns:ds="http://www.w3.org/2000/09/xmldsig#">
+  <soap:Header>
+    <wsse:Security soap:mustUnderstand="1">
+      <wsu:Timestamp wsu:Id="Timestamp-12345">
+        <wsu:Created>2025-01-15T12:00:00.000Z</wsu:Created>
+        <wsu:Expires>2025-01-15T12:05:00.000Z</wsu:Expires>
+      </wsu:Timestamp>
+      <wsse:BinarySecurityToken
+        wsu:Id="SecurityToken-67890"
+        ValueType="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-x509-token-profile-1.0#X509v3"
+        EncodingType="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-soap-message-security-1.0#Base64Binary">MIICsDCCAhmgAwIBAgIJAOUHvh4oho0tMA0GCSqGSIb3DQEBBQUAMEUxCzAJBgNVBAYTAlVTMRMwEQYDVQQIEwpTb21lLVN0YXRlMSEwHwYDVQQKExhJbnRlcm5ldCBXaWRnaXRzIFB0eSBMdGQwHhcNMTIwNTAzMTMxODIyWhcNMTMwNTAzMTMxODIyWjBFMQswCQYDVQQGEwJVUzETMBEGA1UECBMKU29tZS1TdGF0ZTEhMB8GA1UEChMYSW50ZXJuZXQgV2lkZ2l0cyBQdHkgTHRkMIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCvK5hMPv/R5IFmwWyJOyEaFUrF/ZsmN+Gip8hvR6rLP3YPNx9iFYvPcZllFmuVwyaz7YT2N5BsqTwLdyi5v4HY4fUtuz0p8jIPoSd6dfDvcnSpf4QLTOgOaL3ciPEbgDHH2tnIksukoWzqCYva+qFZ74NFl19swXotW9fA4Jzs4QIDAQABo4GnMIGkMB0GA1UdDgQWBBRU1WEHDnP8Hr7ZulxrSzEwOcYpMzB1BgNVHSMEbjBsgBRU1WEHDnP8Hr7ZulxrSzEwOcYpM6FJpEcwRTELMAkGA1UEBhMCVVMxEzARBgNVBAgTClNvbWUtU3RhdGUxITAfBgNVBAoTGEludGVybmV0IFdpZGdpdHMgUHR5IEx0ZIIJAOUHvh4oho0tMAwGA1UdEwQFMAMBAf8wDQYJKoZIhvcNAQEFBQADgYEASY/9SAOK57q9mGnNJJeyDbmyGrAHSJTod646xTHYkMvhUqwHyk9PTr5bdfmswpmyVn+AQ43U2tU5vnpTBmKpHWD2+HSHgGa92mMLrfBOd8EBZ329NL3N2HDPIaHr4NPGyhNrSK3QVOnAq2D0jlyrGYJlLli1NxHiBz7FCEJaVI8=</wsse:BinarySecurityToken>
+      <!-- NOTE: Signature is missing from Security header -->
+    </wsse:Security>
+    <!-- ATTACK: Signature placed outside Security header (directly under soap:Header) -->
+    <ds:Signature>
+      <ds:SignedInfo>
+        <ds:CanonicalizationMethod Algorithm="http://www.w3.org/2001/10/xml-exc-c14n#"/>
+        <ds:SignatureMethod Algorithm="http://www.w3.org/2001/04/xmldsig-more#rsa-sha256"/>
+        <ds:Reference URI="#Body-test123">
+          <ds:Transforms>
+            <ds:Transform Algorithm="http://www.w3.org/2001/10/xml-exc-c14n#"/>
+          </ds:Transforms>
+          <ds:DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha256"/>
+          <ds:DigestValue>somedigestvalue123456==</ds:DigestValue>
+        </ds:Reference>
+      </ds:SignedInfo>
+      <ds:SignatureValue>fakesignaturevalue==</ds:SignatureValue>
+      <ds:KeyInfo>
+        <wsse:SecurityTokenReference>
+          <wsse:Reference URI="#SecurityToken-67890"
+                          ValueType="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-x509-token-profile-1.0#X509v3"/>
+        </wsse:SecurityTokenReference>
+      </ds:KeyInfo>
+    </ds:Signature>
+  </soap:Header>
+  <soap:Body wsu:Id="Body-test123">
+    <GetUserResponse xmlns="http://example.com/users">
+      <User>
+        <Name>John Doe</Name>
+        <Email>john@example.com</Email>
+      </User>
+    </GetUserResponse>
+  </soap:Body>
+</soap:Envelope>

@@ -39,6 +39,7 @@ Metrics/ClassLength:
   Max: 200
   Exclude:
     - 'lib/wsdl/security/signature.rb'
+    - 'lib/wsdl/security/verifier.rb'
 
 Metrics/MethodLength:
   Max: 29
@@ -125,5 +126,12 @@ Naming/PredicateMethod:
   AllowedMethods:
     - add_failure
     - add_failure_nil
+    - add_error
     - verify_signature!
     - parse_boolean
+    # Verifier internal methods that run validation phases
+    - run_structure_validation
+    - run_certificate_resolution
+    - run_reference_validation
+    - run_signature_validation
+    - validate_element_position

@@ -327,6 +327,93 @@ response.signature_valid?
 
 ---
 
+## XML Signature Wrapping (XSW) Protection
+
+XML Signature Wrapping attacks attempt to manipulate signed documents by moving signed elements or injecting malicious content while keeping signatures technically valid. The library includes built-in protections against these attacks.
+
+### How XSW Attacks Work
+
+1. **Attacker intercepts** a legitimately signed SOAP response
+2. **Moves the signed element** (e.g., Body) to a different location in the document
+3. **Injects malicious content** at the original location
+4. **Signature validates** because the signed element still exists with correct digest
+5. **Application processes** the malicious content instead of the signed content
+
+### Built-in Protections
+
+The verifier implements multiple layers of defense recommended by the [W3C XML Signature Best Practices](https://www.w3.org/TR/xmldsig-bestpractices/):
+
+#### Duplicate ID Detection
+
+Documents with duplicate `wsu:Id`, `Id`, or `xml:id` attributes are rejected. Attackers often inject elements with the same ID as signed elements.
+
+```ruby
+# This attack pattern is detected and rejected:
+# <soap:Body wsu:Id="Body-123">Malicious</soap:Body>  <!-- Injected -->
+# <soap:Body wsu:Id="Body-123">Legitimate</soap:Body> <!-- Original signed -->
+```
+
+**Error:** `Duplicate element IDs detected (possible signature wrapping attack): Body-123`
+
+#### Signature Location Validation
+
+The `ds:Signature` element must be within the `wsse:Security` header as required by WS-Security. Signatures elsewhere in the document are rejected.
+
+**Error:** `Signature element must be within wsse:Security header (possible signature wrapping attack)`
+
+#### Element Position Validation
+
+Signed elements must be in their expected structural positions:
+
+| Element | Expected Position |
+|---------|-------------------|
+| `soap:Body` | Direct child of `soap:Envelope` |
+| `wsu:Timestamp` | Within `wsse:Security` header |
+| WS-Addressing headers | Within `soap:Header` |
+
+**Error examples:**
+- `Body element must be a direct child of soap:Envelope (possible signature wrapping attack)`
+- `Timestamp element must be within wsse:Security header (possible signature wrapping attack)`
+
+### Interpreting XSW Errors
+
+When verification fails with a "signature wrapping attack" message, the document structure has been manipulated. **Do not trust the content.** These errors indicate:
+
+1. A potential attack in progress
+2. A malformed document from a buggy implementation
+3. An incompatible security configuration
+
+In all cases, reject the message and investigate the source.
+
+### Example Attack Scenario
+
+```xml
+<!-- ATTACK: Body moved to wrapper, malicious content in standard position -->
+<soap:Envelope>
+  <soap:Header>
+    <wsse:Security>
+      <ds:Signature>
+        <ds:Reference URI="#Body-123"/>  <!-- Points to wrapped body -->
+      </ds:Signature>
+    </wsse:Security>
+  </soap:Header>
+  <!-- Malicious content (application processes this) -->
+  <soap:Body>
+    <TransferResponse><amount>1000000</amount></TransferResponse>
+  </soap:Body>
+  <!-- Original signed content (verifier validates this) -->
+  <Wrapper>
+    <soap:Body wsu:Id="Body-123">
+      <TransferResponse><amount>10</amount></TransferResponse>
+    </soap:Body>
+  </Wrapper>
+</soap:Envelope>
+```
+
+The library detects this attack because the signed `Body` element is not a direct child of `Envelope`.
+
+---
+
 ## Best Practices
 
 1. **Use SHA-256 or stronger** — SHA-1 is deprecated for signatures

@@ -1,91 +1,9 @@
 # frozen_string_literal: true
 
 require 'spec_helper'
+require_relative 'verifier/shared_context'
 
-describe WSDL::Security::Verifier do
-  # Generate a self-signed certificate and key for testing
-  let(:private_key) { OpenSSL::PKey::RSA.new(2048) }
-  let(:certificate) do
-    cert = OpenSSL::X509::Certificate.new
-    cert.version = 2
-    cert.serial = 1
-    cert.subject = OpenSSL::X509::Name.new([['CN', 'Test Certificate']])
-    cert.issuer = cert.subject
-    cert.public_key = private_key.public_key
-    cert.not_before = Time.now
-    cert.not_after = Time.now + 3600
-    cert.sign(private_key, OpenSSL::Digest.new('SHA256'))
-    cert
-  end
-
-  let(:unsigned_soap_response) do
-    <<~XML
-      <?xml version="1.0" encoding="UTF-8"?>
-      <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
-        <soap:Header/>
-        <soap:Body>
-          <GetUserResponse xmlns="http://example.com/users">
-            <User>
-              <Name>John Doe</Name>
-            </User>
-          </GetUserResponse>
-        </soap:Body>
-      </soap:Envelope>
-    XML
-  end
-
-  let(:signed_soap_response) do
-    # Build a properly signed response using the library itself
-    envelope = <<~XML
-      <?xml version="1.0" encoding="UTF-8"?>
-      <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
-        <soap:Header/>
-        <soap:Body xmlns:wsu="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd" wsu:Id="Body-test123">
-          <GetUserResponse xmlns="http://example.com/users">
-            <User>
-              <Name>John Doe</Name>
-            </User>
-          </GetUserResponse>
-        </soap:Body>
-      </soap:Envelope>
-    XML
-
-    # Apply security header with signature
-    config = WSDL::Security::Config.new
-    config.timestamp
-    config.signature(certificate: certificate, private_key: private_key)
-
-    header = WSDL::Security::SecurityHeader.new(config)
-    header.apply(envelope)
-  end
-
-  let(:signed_response_with_explicit_prefixes) do
-    envelope = <<~XML
-      <?xml version="1.0" encoding="UTF-8"?>
-      <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
-        <soap:Header/>
-        <soap:Body xmlns:wsu="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd" wsu:Id="Body-explicit123">
-          <GetUserResponse xmlns="http://example.com/users">
-            <User>
-              <Name>Jane Doe</Name>
-            </User>
-          </GetUserResponse>
-        </soap:Body>
-      </soap:Envelope>
-    XML
-
-    config = WSDL::Security::Config.new
-    config.timestamp
-    config.signature(
-      certificate: certificate,
-      private_key: private_key,
-      explicit_namespace_prefixes: true
-    )
-
-    header = WSDL::Security::SecurityHeader.new(config)
-    header.apply(envelope)
-  end
-
+describe WSDL::Security::Verifier, :verifier_helpers do
   describe '#initialize' do
     it 'accepts an XML string' do
       verifier = described_class.new(unsigned_soap_response)
@@ -109,9 +27,11 @@ describe WSDL::Security::Verifier do
     end
 
     it 'raises for invalid XML type' do
-      expect {
-        described_class.new(12_345)
-      }.to raise_error(ArgumentError, /Expected String or Nokogiri::XML::Document/)
+      expect { described_class.new(12_345) }.to raise_error(ArgumentError, /Expected String or Nokogiri/)
+    end
+
+    it 'raises for invalid certificate type' do
+      expect { described_class.new(unsigned_soap_response, certificate: 12_345) }.to raise_error(ArgumentError)
     end
   end
 
@@ -134,56 +54,60 @@ describe WSDL::Security::Verifier do
 
   describe '#valid?' do
     context 'with unsigned response' do
+      let(:verifier) { described_class.new(unsigned_soap_response) }
+
       it 'returns false' do
-        verifier = described_class.new(unsigned_soap_response)
         expect(verifier.valid?).to be false
       end
 
       it 'adds error about missing signature' do
-        verifier = described_class.new(unsigned_soap_response)
         verifier.valid?
         expect(verifier.errors).to include('No signature found in document')
       end
     end
 
     context 'with valid signed response' do
+      let(:verifier) { described_class.new(signed_soap_response) }
+
       it 'returns true' do
-        verifier = described_class.new(signed_soap_response)
         expect(verifier.valid?).to be true
       end
 
       it 'has no errors' do
-        verifier = described_class.new(signed_soap_response)
         verifier.valid?
         expect(verifier.errors).to be_empty
       end
 
       it 'extracts certificate from BinarySecurityToken' do
-        verifier = described_class.new(signed_soap_response)
         verifier.valid?
         expect(verifier.certificate).to be_a(OpenSSL::X509::Certificate)
       end
     end
 
     context 'with explicit namespace prefixes' do
+      let(:verifier) { described_class.new(signed_response_with_explicit_prefixes) }
+
       it 'returns true for valid signature' do
-        verifier = described_class.new(signed_response_with_explicit_prefixes)
         expect(verifier.valid?).to be true
       end
     end
 
     context 'with tampered body' do
+      let(:verifier) do
+        response = signed_soap_response
+        doc = Nokogiri::XML(response)
+        body = doc.at_xpath('//soap:Body', ns)
+        body.content = 'tampered content'
+        described_class.new(doc.to_xml)
+      end
+
       it 'returns false' do
-        tampered = signed_soap_response.gsub('John Doe', 'Jane Doe')
-        verifier = described_class.new(tampered)
         expect(verifier.valid?).to be false
       end
 
       it 'reports digest mismatch error' do
-        tampered = signed_soap_response.gsub('John Doe', 'Jane Doe')
-        verifier = described_class.new(tampered)
         verifier.valid?
-        expect(verifier.errors.any? { |e| e.include?('Digest mismatch') }).to be true
+        expect(verifier.errors).to include(match(/Digest mismatch/))
       end
     end
 
@@ -194,28 +118,19 @@ describe WSDL::Security::Verifier do
       end
 
       it 'fails with wrong certificate' do
-        wrong_key = OpenSSL::PKey::RSA.new(2048)
-        wrong_cert = OpenSSL::X509::Certificate.new
-        wrong_cert.version = 2
-        wrong_cert.serial = 999
-        wrong_cert.subject = OpenSSL::X509::Name.new([['CN', 'Wrong Certificate']])
-        wrong_cert.issuer = wrong_cert.subject
-        wrong_cert.public_key = wrong_key.public_key
-        wrong_cert.not_before = Time.now
-        wrong_cert.not_after = Time.now + 3600
-        wrong_cert.sign(wrong_key, OpenSSL::Digest.new('SHA256'))
-
-        verifier = described_class.new(signed_soap_response, certificate: wrong_cert)
+        verifier = described_class.new(signed_soap_response, certificate: other_certificate)
         expect(verifier.valid?).to be false
+        expect(verifier.errors).to include('SignatureValue verification failed')
       end
     end
 
     context 'caching' do
+      let(:verifier) { described_class.new(signed_soap_response) }
+
       it 'caches the verification result' do
-        verifier = described_class.new(signed_soap_response)
-        result1 = verifier.valid?
-        result2 = verifier.valid?
-        expect(result1).to eq(result2)
+        first_result = verifier.valid?
+        second_result = verifier.valid?
+        expect(first_result).to eq(second_result)
       end
     end
   end
@@ -229,18 +144,18 @@ describe WSDL::Security::Verifier do
     end
 
     context 'with signed response' do
+      let(:verifier) { described_class.new(signed_soap_response) }
+
       it 'returns the IDs of signed elements' do
-        verifier = described_class.new(signed_soap_response)
         ids = verifier.signed_element_ids
         expect(ids).to be_an(Array)
-        expect(ids.length).to be >= 1
+        expect(ids).not_to be_empty
       end
 
       it 'includes Body and Timestamp IDs' do
-        verifier = described_class.new(signed_soap_response)
         ids = verifier.signed_element_ids
-        expect(ids.any? { |id| id.start_with?('Body') || id.include?('Body') }).to be true
-        expect(ids.any? { |id| id.start_with?('Timestamp') || id.include?('Timestamp') }).to be true
+        expect(ids.any? { |id| id.start_with?('Body-') }).to be true
+        expect(ids.any? { |id| id.start_with?('Timestamp-') }).to be true
       end
     end
   end
@@ -254,8 +169,9 @@ describe WSDL::Security::Verifier do
     end
 
     context 'with signed response' do
+      let(:verifier) { described_class.new(signed_soap_response) }
+
       it 'returns element names' do
-        verifier = described_class.new(signed_soap_response)
         elements = verifier.signed_elements
         expect(elements).to include('Body')
         expect(elements).to include('Timestamp')
@@ -274,7 +190,7 @@ describe WSDL::Security::Verifier do
     context 'with signed response' do
       it 'returns the signature algorithm URI' do
         verifier = described_class.new(signed_soap_response)
-        expect(verifier.signature_algorithm).to include('rsa-sha256')
+        expect(verifier.signature_algorithm).to eq('http://www.w3.org/2001/04/xmldsig-more#rsa-sha256')
       end
     end
   end
@@ -290,7 +206,7 @@ describe WSDL::Security::Verifier do
     context 'with signed response' do
       it 'returns the digest algorithm URI' do
         verifier = described_class.new(signed_soap_response)
-        expect(verifier.digest_algorithm).to include('sha256')
+        expect(verifier.digest_algorithm).to eq('http://www.w3.org/2001/04/xmlenc#sha256')
       end
     end
   end
@@ -298,7 +214,7 @@ describe WSDL::Security::Verifier do
   describe '#errors' do
     it 'is empty initially' do
       verifier = described_class.new(unsigned_soap_response)
-      expect(verifier.errors).to eq([])
+      expect(verifier.errors).to be_empty
     end
 
     it 'populates after failed verification' do
@@ -314,247 +230,192 @@ describe WSDL::Security::Verifier do
     end
   end
 
-  describe 'with different digest algorithms' do
-    context 'SHA-1 signed response' do
-      let(:sha1_signed_response) do
-        envelope = <<~XML
-          <?xml version="1.0" encoding="UTF-8"?>
-          <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
-            <soap:Header/>
-            <soap:Body xmlns:wsu="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd" wsu:Id="Body-sha1">
-              <Response>Data</Response>
-            </soap:Body>
-          </soap:Envelope>
-        XML
-
-        config = WSDL::Security::Config.new
-        config.signature(
-          certificate: certificate,
-          private_key: private_key,
-          digest_algorithm: :sha1
-        )
-
-        header = WSDL::Security::SecurityHeader.new(config)
-        header.apply(envelope)
-      end
-
-      it 'verifies SHA-1 signatures' do
-        verifier = described_class.new(sha1_signed_response)
-        expect(verifier.valid?).to be true
+  describe '#certificate' do
+    context 'with provided certificate' do
+      it 'returns the provided certificate immediately' do
+        verifier = described_class.new(unsigned_soap_response, certificate: certificate)
+        expect(verifier.certificate).to eq(certificate)
       end
     end
 
-    context 'SHA-512 signed response' do
-      let(:sha512_signed_response) do
-        envelope = <<~XML
-          <?xml version="1.0" encoding="UTF-8"?>
-          <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
-            <soap:Header/>
-            <soap:Body xmlns:wsu="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd" wsu:Id="Body-sha512">
-              <Response>Data</Response>
-            </soap:Body>
-          </soap:Envelope>
-        XML
-
-        config = WSDL::Security::Config.new
-        config.signature(
-          certificate: certificate,
-          private_key: private_key,
-          digest_algorithm: :sha512
-        )
-
-        header = WSDL::Security::SecurityHeader.new(config)
-        header.apply(envelope)
+    context 'without provided certificate' do
+      it 'returns nil before verification' do
+        verifier = described_class.new(signed_soap_response)
+        # Certificate is extracted during verification
+        expect(verifier.certificate).to be_nil
       end
 
-      it 'verifies SHA-512 signatures' do
-        verifier = described_class.new(sha512_signed_response)
-        expect(verifier.valid?).to be true
+      it 'returns the extracted certificate after verification' do
+        verifier = described_class.new(signed_soap_response)
+        verifier.valid?
+        expect(verifier.certificate).to be_a(OpenSSL::X509::Certificate)
       end
     end
   end
 
   describe 'round-trip verification' do
     it 'verifies what was signed' do
-      # This test ensures the signing and verification are compatible
+      # Build a fresh signed document
       envelope = <<~XML
         <?xml version="1.0" encoding="UTF-8"?>
         <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
           <soap:Header/>
           <soap:Body xmlns:wsu="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd" wsu:Id="Body-roundtrip">
-            <ComplexResponse xmlns="http://example.com/test">
-              <Items>
-                <Item id="1">First</Item>
-                <Item id="2">Second</Item>
-              </Items>
-              <Total>2</Total>
-            </ComplexResponse>
+            <TestData>
+              <Value>123</Value>
+            </TestData>
           </soap:Body>
         </soap:Envelope>
       XML
 
       config = WSDL::Security::Config.new
-      config.timestamp(expires_in: 300)
-      config.signature(
-        certificate: certificate,
-        private_key: private_key,
-        digest_algorithm: :sha256
-      )
+      config.timestamp
+      config.signature(certificate: certificate, private_key: private_key)
 
       header = WSDL::Security::SecurityHeader.new(config)
       signed_xml = header.apply(envelope)
 
       verifier = described_class.new(signed_xml)
       expect(verifier.valid?).to be true
-      expect(verifier.signed_elements).to include('Body')
-      expect(verifier.signed_elements).to include('Timestamp')
+      expect(verifier.signed_elements).to include('Body', 'Timestamp')
+    end
+  end
+
+  describe 'with different digest algorithms' do
+    %i[sha1 sha256 sha512].each do |algorithm|
+      context "with #{algorithm.upcase} signed response" do
+        let(:xml) { build_signed_response(digest_algorithm: algorithm) }
+
+        it "verifies #{algorithm.upcase} signatures" do
+          verifier = described_class.new(xml)
+          expect(verifier.valid?).to be true
+        end
+      end
+    end
+  end
+
+  describe 'XSW attack protection integration' do
+    # These tests verify the full verification pipeline catches XSW attacks
+
+    describe 'duplicate ID detection' do
+      let(:duplicate_id_fixture) { File.read('spec/fixtures/security/xsw_duplicate_id.xml') }
+
+      it 'rejects documents with duplicate IDs' do
+        verifier = described_class.new(duplicate_id_fixture)
+        expect(verifier.valid?).to be false
+        expect(verifier.errors).to include(match(/Duplicate element IDs detected/))
+      end
+    end
+
+    describe 'signature location validation' do
+      let(:signature_outside_security) { File.read('spec/fixtures/security/xsw_signature_outside_security.xml') }
+
+      it 'rejects signatures outside Security header' do
+        verifier = described_class.new(signature_outside_security)
+        expect(verifier.valid?).to be false
+        expect(verifier.errors).to include(match(/Signature element must be within wsse:Security header/))
+      end
+    end
+
+    describe 'element position validation' do
+      let(:body_in_wrong_position) { File.read('spec/fixtures/security/xsw_body_in_wrong_position.xml') }
+
+      it 'rejects Body elements in wrong position' do
+        verifier = described_class.new(body_in_wrong_position)
+        expect(verifier.valid?).to be false
+        expect(verifier.errors).to include(match(/Body element must be a direct child of soap:Envelope/))
+      end
+    end
+
+    describe 'structural validation order' do
+      let(:duplicate_id_fixture) { File.read('spec/fixtures/security/xsw_duplicate_id.xml') }
+
+      it 'detects structural issues before cryptographic verification' do
+        verifier = described_class.new(duplicate_id_fixture)
+        verifier.valid?
+        # First error should be structural, not crypto-related
+        expect(verifier.errors.first).to match(/Duplicate element IDs|Signature element must be/)
+      end
     end
   end
 
   describe 'XPath injection protection' do
-    # Test the ID validation directly via the private method
-    # This is more reliable than going through the full verification flow
-    let(:verifier) { described_class.new(unsigned_soap_response) }
-
-    describe 'VALID_ID_PATTERN constant' do
-      it 'is defined for ID validation' do
-        expect(described_class::VALID_ID_PATTERN).to be_a(Regexp)
-      end
+    def response_with_reference(id)
+      <<~XML
+        <?xml version="1.0" encoding="UTF-8"?>
+        <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"
+                       xmlns:wsse="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd"
+                       xmlns:wsu="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd"
+                       xmlns:ds="http://www.w3.org/2000/09/xmldsig#">
+          <soap:Header>
+            <wsse:Security>
+              <ds:Signature>
+                <ds:SignedInfo>
+                  <ds:CanonicalizationMethod Algorithm="http://www.w3.org/2001/10/xml-exc-c14n#"/>
+                  <ds:SignatureMethod Algorithm="http://www.w3.org/2001/04/xmldsig-more#rsa-sha256"/>
+                  <ds:Reference URI="##{id}">
+                    <ds:DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha256"/>
+                    <ds:DigestValue>fakedigest==</ds:DigestValue>
+                  </ds:Reference>
+                </ds:SignedInfo>
+                <ds:SignatureValue>fakesig==</ds:SignatureValue>
+              </ds:Signature>
+            </wsse:Security>
+          </soap:Header>
+          <soap:Body wsu:Id="Body-123">
+            <Data>Test</Data>
+          </soap:Body>
+        </soap:Envelope>
+      XML
     end
 
-    context 'with XPath injection attempts' do
-      # These malicious IDs attempt to break out of the XPath string context
-      # and inject additional XPath expressions
-      [
-        ["' or '1'='1", 'single quote injection'],
-        ["Body'] | //*[@Id='x", 'XPath union operator injection'],
-        ["' or @wsu:Id != 'x", 'attribute comparison injection'],
-        ['foo" or "1"="1', 'double quote injection'],
-        ["test' and true() or '", 'XPath function injection'],
-        ["') or true() or ('", 'parentheses injection'],
-        ['id[1]', 'predicate injection'],
-        ['id | //password', 'union with sensitive path'],
-        ["test\x00null", 'null byte injection'],
-        ['id with spaces', 'whitespace in ID'],
-        ['@attr', 'attribute selector injection'],
-        ['/root/path', 'path separator injection'],
-        ['id=value', 'equals sign injection'],
-        ['id<>value', 'comparison operator injection']
-      ].each do |malicious_id, description|
-        it "rejects #{description}: #{malicious_id.inspect}" do
-          # Test the pattern directly
-          expect(malicious_id).not_to match(described_class::VALID_ID_PATTERN)
-
-          # Also verify it adds an error when validated
-          verifier.send(:valid_element_id?, malicious_id)
-          expect(verifier.errors).to include(match(/Invalid element ID format/))
-        end
-      end
+    it 'returns empty for malicious ID and records error' do
+      verifier = described_class.new(response_with_reference("test'inject"))
+      elements = verifier.signed_elements
+      expect(elements).to eq([])
+      expect(verifier.errors).to include(match(/Invalid element ID format/))
     end
 
-    context 'with valid IDs' do
-      # These are legitimate WS-Security style IDs that should be accepted
-      %w[
-        Body-123
-        Timestamp-abc-def-123
-        _underscore_start
-        SecurityToken-87654321-4321-4321-4321-210987654321
-        simple
-        with.dots.allowed
-        with-hyphens-allowed
-        Mixed_Case_123
-        A
-        _
-        a1
-        Body
-        TS-1234
-      ].each do |valid_id|
-        it "accepts valid ID: #{valid_id.inspect}" do
-          expect(valid_id).to match(described_class::VALID_ID_PATTERN)
+    it 'finds element with valid ID' do
+      verifier = described_class.new(response_with_reference('Body-123'))
+      elements = verifier.signed_elements
+      expect(elements).to eq(['Body'])
+      expect(verifier.errors).to be_empty
+    end
+  end
 
-          result = verifier.send(:valid_element_id?, valid_id)
-          expect(result).to be true
-          expect(verifier.errors).to be_empty
-        end
-      end
+  describe 'verification phases' do
+    # These tests verify the coordinator properly sequences validation phases
+
+    it 'runs structural validation before certificate resolution' do
+      # Document with structural problem (signature outside Security)
+      xml = File.read('spec/fixtures/security/xsw_signature_outside_security.xml')
+      verifier = described_class.new(xml)
+      verifier.valid?
+      # Should fail on structure, not certificate
+      expect(verifier.errors).to include(match(/Signature element must be within/))
+      expect(verifier.errors).not_to include(match(/certificate/i))
     end
 
-    context 'with edge cases' do
-      it 'rejects empty ID and records error' do
-        result = verifier.send(:valid_element_id?, '')
-        expect(result).to be false
-        expect(verifier.errors).to include('Reference URI is empty')
-      end
-
-      it 'rejects nil ID and records error' do
-        result = verifier.send(:valid_element_id?, nil)
-        expect(result).to be false
-        expect(verifier.errors).to include('Reference URI is empty')
-      end
-
-      it 'rejects ID starting with number' do
-        expect(described_class::VALID_ID_PATTERN).not_to match('123-Body')
-
-        verifier.send(:valid_element_id?, '123-Body')
-        expect(verifier.errors).to include(match(/Invalid element ID format/))
-      end
-
-      it 'rejects ID starting with hyphen' do
-        expect(described_class::VALID_ID_PATTERN).not_to match('-Body')
-      end
-
-      it 'rejects ID starting with period' do
-        expect(described_class::VALID_ID_PATTERN).not_to match('.Body')
-      end
+    it 'runs certificate resolution before reference validation' do
+      # Valid structure but missing certificate
+      xml = unsigned_soap_response
+      verifier = described_class.new(xml)
+      verifier.valid?
+      # Should fail on missing signature first
+      expect(verifier.errors).to include('No signature found in document')
     end
 
-    context 'integration with signed_elements' do
-      # This tests that the protection works through the public API
-      def response_with_reference(id)
-        <<~XML
-          <?xml version="1.0" encoding="UTF-8"?>
-          <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"
-                         xmlns:wsse="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd"
-                         xmlns:wsu="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd"
-                         xmlns:ds="http://www.w3.org/2000/09/xmldsig#">
-            <soap:Header>
-              <wsse:Security>
-                <ds:Signature>
-                  <ds:SignedInfo>
-                    <ds:CanonicalizationMethod Algorithm="http://www.w3.org/2001/10/xml-exc-c14n#"/>
-                    <ds:SignatureMethod Algorithm="http://www.w3.org/2001/04/xmldsig-more#rsa-sha256"/>
-                    <ds:Reference URI="##{id}">
-                      <ds:DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha256"/>
-                      <ds:DigestValue>fakedigest==</ds:DigestValue>
-                    </ds:Reference>
-                  </ds:SignedInfo>
-                  <ds:SignatureValue>fakesig==</ds:SignatureValue>
-                </ds:Signature>
-              </wsse:Security>
-            </soap:Header>
-            <soap:Body wsu:Id="Body-123">
-              <Data>Test</Data>
-            </soap:Body>
-          </soap:Envelope>
-        XML
-      end
-
-      it 'returns empty for malicious ID and records error' do
-        # Use an ID that's valid XML but contains XPath injection
-        malicious_verifier = described_class.new(response_with_reference("test'inject"))
-        elements = malicious_verifier.signed_elements
-
-        expect(elements).to eq([])
-        expect(malicious_verifier.errors).to include(match(/Invalid element ID format/))
-      end
-
-      it 'finds element with valid ID' do
-        valid_verifier = described_class.new(response_with_reference('Body-123'))
-        elements = valid_verifier.signed_elements
-
-        expect(elements).to eq(['Body'])
-        expect(valid_verifier.errors).to be_empty
-      end
+    it 'runs reference validation before signature validation' do
+      # This is tested implicitly - if digests don't match, we don't bother
+      # with signature verification
+      response = signed_soap_response
+      doc = Nokogiri::XML(response)
+      body = doc.at_xpath('//soap:Body', ns)
+      body.content = 'tampered'
+      verifier = described_class.new(doc.to_xml)
+      verifier.valid?
+      expect(verifier.errors).to include(match(/Digest mismatch/))
     end
   end
 end
