@@ -122,9 +122,10 @@ module WSDL
     # Use {#body} and {#header} for schema-aware access.
     #
     # @return [Hash] the complete parsed envelope
-    def hash
-      @hash ||= HashConverter.parse(doc)
+    def envelope_hash
+      @envelope_hash ||= HashConverter.parse(doc)
     end
+    alias to_envelope_hash envelope_hash
 
     # Returns the response as a Nokogiri XML document.
     #
@@ -206,8 +207,8 @@ module WSDL
       if @output_body_parts&.any?
         parse_envelope_part(body_node, @output_body_parts)
       else
-        envelope_hash = HashConverter.parse(doc)
-        envelope_hash.dig(:Envelope, :Body) || {}
+        parsed_envelope = envelope_hash
+        parsed_envelope.dig(:Envelope, :Body) || {}
       end
     end
 
@@ -222,8 +223,8 @@ module WSDL
       if @output_header_parts&.any?
         parse_envelope_part(header_node, @output_header_parts)
       else
-        envelope_hash = hash
-        envelope_hash.dig(:Envelope, :Header)
+        parsed_envelope = envelope_hash
+        parsed_envelope.dig(:Envelope, :Header)
       end
     end
 

@@ -80,6 +80,27 @@ response.header
 
 Returns an empty Hash if no headers are present.
 
+## Parsed Envelope (Raw)
+
+Use `envelope_hash` when you need the full SOAP envelope (header + body) without schema-aware type conversion:
+
+``` ruby
+response.envelope_hash
+# => {
+#   Envelope: {
+#     Header: { SessionId: 'abc123' },
+#     Body:   { GetOrderResponse: { ... } }
+#   }
+# }
+```
+
+`to_envelope_hash` is an alias:
+
+``` ruby
+response.to_envelope_hash == response.envelope_hash
+# => true
+```
+
 ## Parsed Body
 
 The `body` method returns the SOAP body as a Hash. Because the response is parsed using schema information from the WSDL, you get two key benefits:

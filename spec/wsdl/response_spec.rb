@@ -51,10 +51,25 @@ describe WSDL::Response, type: :unit do
       end
     end
 
-    describe '#hash' do
+    describe '#envelope_hash' do
       it 'returns the complete parsed envelope' do
-        expect(response.hash[:Envelope][:Body]).to eq({ Response: { Result: '42' } })
-        expect(response.hash[:Envelope][:Header]).to eq({ SessionId: 'abc123' })
+        expect(response.envelope_hash[:Envelope][:Body]).to eq({ Response: { Result: '42' } })
+        expect(response.envelope_hash[:Envelope][:Header]).to eq({ SessionId: 'abc123' })
+      end
+    end
+
+    describe '#to_envelope_hash' do
+      it 'aliases #envelope_hash' do
+        expect(response.to_envelope_hash).to eq(response.envelope_hash)
+      end
+    end
+
+    describe '#hash' do
+      it 'returns an Integer and works as a Hash key' do
+        expect(response.hash).to be_a(Integer)
+
+        values = { response => :ok }
+        expect(values[response]).to eq(:ok)
       end
     end
 
@@ -363,7 +378,7 @@ describe WSDL::Response, type: :unit do
       end
     end
 
-    describe '#hash' do
+    describe '#envelope_hash' do
       it 'returns the raw hash without schema-aware parsing' do
         xml = <<-XML
           <env:Envelope xmlns:env="http://schemas.xmlsoap.org/soap/envelope/">
@@ -381,8 +396,8 @@ describe WSDL::Response, type: :unit do
 
         response = described_class.new(xml, output_body_parts:)
 
-        # hash method does NOT use schema-aware parsing
-        expect(response.hash[:Envelope][:Body][:Response][:Count]).to eq('42')
+        # envelope_hash does NOT use schema-aware parsing
+        expect(response.envelope_hash[:Envelope][:Body][:Response][:Count]).to eq('42')
       end
     end
   end
