@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<wsdl:definitions targetNamespace="urn:b"
+                  xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/"
+                  xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
+                  xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+                  xmlns:tns="urn:b">
+  <wsdl:types>
+    <xsd:schema targetNamespace="urn:b" elementFormDefault="qualified">
+      <xsd:element name="SharedRequest" type="xsd:string"/>
+      <xsd:element name="SharedResponse" type="xsd:string"/>
+    </xsd:schema>
+  </wsdl:types>
+
+  <wsdl:message name="SharedMessageIn">
+    <wsdl:part name="parameters" element="tns:SharedRequest"/>
+  </wsdl:message>
+  <wsdl:message name="SharedMessageOut">
+    <wsdl:part name="parameters" element="tns:SharedResponse"/>
+  </wsdl:message>
+
+  <wsdl:portType name="SharedPortType">
+    <wsdl:operation name="Ping">
+      <wsdl:input message="tns:SharedMessageIn"/>
+      <wsdl:output message="tns:SharedMessageOut"/>
+    </wsdl:operation>
+  </wsdl:portType>
+
+  <wsdl:binding name="SharedBinding" type="tns:SharedPortType">
+    <soap:binding style="document" transport="http://schemas.xmlsoap.org/soap/http"/>
+    <wsdl:operation name="Ping">
+      <soap:operation soapAction="urn:b#Ping"/>
+      <wsdl:input>
+        <soap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+  </wsdl:binding>
+</wsdl:definitions>

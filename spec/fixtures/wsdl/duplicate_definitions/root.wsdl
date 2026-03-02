@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<wsdl:definitions targetNamespace="urn:root"
+                  xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
+  <wsdl:import namespace="urn:dup" location="a.wsdl"/>
+  <wsdl:import namespace="urn:dup" location="b.wsdl"/>
+</wsdl:definitions>

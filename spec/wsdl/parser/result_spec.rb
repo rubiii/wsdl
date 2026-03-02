@@ -98,4 +98,69 @@ describe WSDL::Parser::Result do
       end
     end
   end
+
+  describe 'QName resolution across imported documents' do
+    subject(:collision_result) { described_class.new fixture('wsdl/qname_collisions/root'), http_mock }
+
+    it 'keeps same local names from different namespaces as distinct keys' do
+      shared_bindings = collision_result.documents.bindings.keys.select { |qname| qname.local == 'SharedBinding' }
+      shared_messages = collision_result.documents.messages.keys.select { |qname| qname.local == 'SharedMessageIn' }
+
+      expect(shared_bindings.map(&:namespace)).to contain_exactly('urn:a', 'urn:b')
+      expect(shared_messages.map(&:namespace)).to contain_exactly('urn:a', 'urn:b')
+    end
+
+    it 'resolves bindings and messages by fully qualified name' do
+      a_operation = collision_result.operation('CollisionService', 'APort', 'Ping')
+      b_operation = collision_result.operation('CollisionService', 'BPort', 'Ping')
+
+      expect(a_operation.input.body_parts.first.namespace).to eq('urn:a')
+      expect(b_operation.input.body_parts.first.namespace).to eq('urn:b')
+    end
+  end
+
+  describe 'reference errors' do
+    it 'raises UnresolvedReferenceError for missing binding references' do
+      result = described_class.new(fixture('wsdl/unresolved_references/binding'), http_mock)
+
+      expect {
+        result.operations('BadService', 'BadPort')
+      }.to raise_error(WSDL::UnresolvedReferenceError) { |error|
+        expect(error.reference_type).to eq(:binding)
+      }
+    end
+
+    it 'raises UnresolvedReferenceError for missing portType references' do
+      result = described_class.new(fixture('wsdl/unresolved_references/port_type'), http_mock)
+
+      expect {
+        result.operation('BadService', 'BadPort', 'Ping')
+      }.to raise_error(WSDL::UnresolvedReferenceError) { |error|
+        expect(error.reference_type).to eq(:port_type)
+      }
+    end
+
+    it 'raises UnresolvedReferenceError for missing message references' do
+      result = described_class.new(fixture('wsdl/unresolved_references/message'), http_mock)
+
+      expect {
+        result.operation('BadService', 'BadPort', 'Ping').input
+      }.to raise_error(WSDL::UnresolvedReferenceError) { |error|
+        expect(error.reference_type).to eq(:message)
+      }
+    end
+  end
+
+  describe 'duplicate definition detection' do
+    it 'raises DuplicateDefinitionError for duplicate qualified definitions' do
+      result = described_class.new(fixture('wsdl/duplicate_definitions/root'), http_mock)
+
+      expect {
+        result.documents.messages
+      }.to raise_error(WSDL::DuplicateDefinitionError) { |error|
+        expect(error.component_type).to eq(:message)
+        expect(error.definition_key).to eq('{urn:dup}SharedMessage')
+      }
+    end
+  end
 end

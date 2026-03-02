@@ -277,4 +277,65 @@ module WSDL
       super(message)
     end
   end
+
+  # Raised when a WSDL reference cannot be resolved.
+  #
+  # This error is raised when binding, portType, or message references point
+  # to definitions that do not exist in the parsed WSDL document set.
+  #
+  # @example
+  #   begin
+  #     operation = client.operation('Service', 'Port', 'Operation')
+  #     operation.input
+  #   rescue WSDL::UnresolvedReferenceError => e
+  #     puts "#{e.reference_type}: #{e.reference_name}"
+  #   end
+  #
+  class UnresolvedReferenceError < Error
+    # @return [Symbol, nil] reference type (:binding, :port_type, :message)
+    attr_reader :reference_type
+
+    # @return [String, nil] unresolved reference name
+    attr_reader :reference_name
+
+    # @return [String, nil] context where resolution failed
+    attr_reader :context
+
+    # Creates a new UnresolvedReferenceError.
+    #
+    # @param message [String] error message
+    # @param reference_type [Symbol, nil] type of reference
+    # @param reference_name [String, nil] unresolved reference
+    # @param context [String, nil] call-site context
+    def initialize(message = nil, reference_type: nil, reference_name: nil, context: nil)
+      @reference_type = reference_type
+      @reference_name = reference_name
+      @context = context
+      super(message)
+    end
+  end
+
+  # Raised when duplicate WSDL definitions share the same key.
+  #
+  # This error is raised when two imported documents define the same component
+  # (for example, message/binding/portType) with an identical key.
+  #
+  class DuplicateDefinitionError < Error
+    # @return [Symbol, nil] component type (:message, :port_type, :binding, :service)
+    attr_reader :component_type
+
+    # @return [String, nil] duplicate definition key
+    attr_reader :definition_key
+
+    # Creates a new DuplicateDefinitionError.
+    #
+    # @param message [String] error message
+    # @param component_type [Symbol, nil] component type
+    # @param definition_key [String, nil] duplicate key
+    def initialize(message = nil, component_type: nil, definition_key: nil)
+      @component_type = component_type
+      @definition_key = definition_key
+      super(message)
+    end
+  end
 end

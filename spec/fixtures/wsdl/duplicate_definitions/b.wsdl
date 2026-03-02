@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<wsdl:definitions targetNamespace="urn:dup"
+                  xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
+  <wsdl:message name="SharedMessage"/>
+</wsdl:definitions>

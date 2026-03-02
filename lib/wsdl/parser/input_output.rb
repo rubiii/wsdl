@@ -69,14 +69,15 @@ module WSDL
       #
       # @return [Array<Hash>] the body part definitions
       def collect_body_parts
-        find_message(message_name).parts
+        reference = message_reference
+        find_message(reference).parts
       end
 
-      # Returns the message name for the input.
+      # Returns the message reference for the input.
       #
-      # @return [String] the qualified message name
-      def message_name
-        @port_type_operation.input[:message]
+      # @return [MessageReference] parsed message reference
+      def message_reference
+        @port_type_operation.input
       end
 
       # Collects the header parts from explicitly defined header references.
@@ -90,12 +91,12 @@ module WSDL
         parts = []
 
         headers.each do |header|
-          next unless header[:message] && header[:part]
+          next unless header.message && header.part
 
-          message_parts = find_message(header[:message]).parts
+          message_parts = find_message(header).parts
 
           # only add the single header part from the message
-          parts << message_parts.find { |part| part[:name] == header[:part] }
+          parts << message_parts.find { |part| part[:name] == header.part }
         end
 
         parts
@@ -103,21 +104,27 @@ module WSDL
 
       # Returns the header definitions from the binding operation.
       #
-      # @return [Array<Hash>] the header definitions
+      # @return [Array<HeaderReference>] the header definitions
       def headers
         @binding_operation.input_headers
       end
 
-      # Finds a message by its qualified name.
+      # Finds a message by reference metadata.
       #
-      # @param qname [String] the qualified message name (prefix:localName)
+      # @param reference [MessageReference, HeaderReference] message reference
       # @return [MessageInfo] the message object
-      # @raise [RuntimeError] if the message cannot be found
-      def find_message(qname)
-        local = qname.split(':').last
+      # @raise [UnresolvedReferenceError] if the message cannot be found
+      def find_message(reference)
+        message_name = reference.message_name
+        message = @parser_result.documents.messages[message_name]
+        return message if message
 
-        @parser_result.documents.messages[local] or
-          raise "Unable to find message #{qname.inspect}"
+        raise UnresolvedReferenceError.new(
+          "Unable to find message #{reference.message.inspect}",
+          reference_type: :message,
+          reference_name: reference.message.to_s,
+          context: "operation #{@port_type_operation.name.inspect}"
+        )
       end
     end
 
@@ -132,16 +139,16 @@ module WSDL
     class Output < Input
       private
 
-      # Returns the message name for the output.
+      # Returns the message reference for the output.
       #
-      # @return [String] the qualified message name
-      def message_name
-        @port_type_operation.output[:message]
+      # @return [MessageReference] parsed message reference
+      def message_reference
+        @port_type_operation.output
       end
 
       # Returns the header definitions from the binding operation output.
       #
-      # @return [Array<Hash>] the output header definitions
+      # @return [Array<HeaderReference>] the output header definitions
       def headers
         @binding_operation.output_headers
       end

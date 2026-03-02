@@ -16,6 +16,7 @@ module WSDL
       # @param port_node [Nokogiri::XML::Node] the wsdl:port element
       # @param soap_node [Nokogiri::XML::Node] the soap:address or soap12:address element
       def initialize(port_node, soap_node)
+        @port_node = port_node
         @name     = port_node['name']
         @binding  = port_node['binding']
 
@@ -39,12 +40,21 @@ module WSDL
       #
       # @param documents [DocumentCollection] the document collection to search
       # @return [Binding] the binding object
-      # @raise [RuntimeError] if the binding cannot be found
+      # @raise [UnresolvedReferenceError] if the binding cannot be found
       def fetch_binding(documents)
-        binding_local = @binding.split(':').last
+        binding_name = QualifiedName.parse(
+          @binding,
+          namespaces: @port_node.namespaces,
+          default_namespace: QualifiedName.document_namespace(@port_node.document.root)
+        )
 
-        documents.bindings.fetch(binding_local) do
-          raise "Unable to find binding #{binding_local.inspect} for port #{@name.inspect}"
+        documents.bindings.fetch(binding_name) do
+          raise UnresolvedReferenceError.new(
+            "Unable to find binding #{binding_name} for port #{@name.inspect}",
+            reference_type: :binding,
+            reference_name: binding_name.to_s,
+            context: "port #{@name.inspect}"
+          )
         end
       end
 

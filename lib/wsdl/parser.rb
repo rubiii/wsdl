@@ -14,6 +14,9 @@ module WSDL
   # @api private
   #
   module Parser
+    require 'wsdl/parser/qualified_name'
+    require 'wsdl/parser/message_reference'
+    require 'wsdl/parser/header_reference'
     require 'wsdl/parser/binding'
     require 'wsdl/parser/binding_operation'
     require 'wsdl/parser/input_output'

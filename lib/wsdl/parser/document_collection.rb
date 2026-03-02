@@ -44,30 +44,30 @@ module WSDL
 
       # Returns all messages from all documents in the collection.
       #
-      # @return [Hash{String => MessageInfo}] a merged hash of all messages keyed by name
+      # @return [Hash{QualifiedName => MessageInfo}] a merged hash of all messages keyed by qualified name
       def messages
-        @messages ||= collect_sections(&:messages)
+        @messages ||= collect_sections(:message, &:messages)
       end
 
       # Returns all port types from all documents in the collection.
       #
-      # @return [Hash{String => PortType}] a merged hash of all port types keyed by name
+      # @return [Hash{QualifiedName => PortType}] a merged hash of all port types keyed by qualified name
       def port_types
-        @port_types ||= collect_sections(&:port_types)
+        @port_types ||= collect_sections(:port_type, &:port_types)
       end
 
       # Returns all bindings from all documents in the collection.
       #
-      # @return [Hash{String => Binding}] a merged hash of all bindings keyed by name
+      # @return [Hash{QualifiedName => Binding}] a merged hash of all bindings keyed by qualified name
       def bindings
-        @bindings ||= collect_sections(&:bindings)
+        @bindings ||= collect_sections(:binding, &:bindings)
       end
 
       # Returns all services from all documents in the collection.
       #
       # @return [Hash{String => Service}] a merged hash of all services keyed by name
       def services
-        @services ||= collect_sections(&:services)
+        @services ||= collect_sections(:service, &:services)
       end
 
       # Returns a port by service and port name.
@@ -88,15 +88,41 @@ module WSDL
       # @yield [document] yields each document to get its section
       # @yieldparam document [Document] a document in the collection
       # @return [Hash] the merged section data from all documents
-      def collect_sections
+      def collect_sections(component_type)
         result = {}
+        sources = {}
 
         each do |document|
           sections = yield document
-          result.merge! sections
+          sections.each do |key, value|
+            raise_duplicate_definition_error(component_type, key, sources[key], document) if sources.key?(key)
+
+            sources[key] = document
+            result[key] = value
+          end
         end
 
         result
+      end
+
+      # Raises a typed error for duplicate definitions across imported documents.
+      #
+      # @param component_type [Symbol] component type
+      # @param key [Object] duplicate key
+      # @param existing_document [Document] first document containing the key
+      # @param conflicting_document [Document] second document containing the key
+      # @return [void]
+      def raise_duplicate_definition_error(component_type, key, existing_document, conflicting_document)
+        key_value = key.respond_to?(:to_s) ? key.to_s : key.inspect
+        first_source = existing_document.target_namespace.inspect
+        second_source = conflicting_document.target_namespace.inspect
+
+        raise DuplicateDefinitionError.new(
+          "Duplicate #{component_type} definition #{key_value} found in target namespaces " \
+          "#{first_source} and #{second_source}",
+          component_type:,
+          definition_key: key_value
+        )
       end
     end
   end

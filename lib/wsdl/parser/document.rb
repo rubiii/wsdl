@@ -25,20 +25,20 @@ module WSDL
         @services = {}
 
         collect_sections(
-          'message' => { collection: @messages,   container: MessageInfo },
-          'binding' => { collection: @bindings,   container: Binding     },
-          'portType' => { collection: @port_types, container: PortType   },
+          'message' => { collection: @messages, container: MessageInfo, qualified: true },
+          'binding' => { collection: @bindings, container: Binding, qualified: true },
+          'portType' => { collection: @port_types, container: PortType, qualified: true },
           'service' => { collection: @services, container: Service }
         )
       end
 
-      # @return [Hash{String => MessageInfo}] the messages defined in this document
+      # @return [Hash{QualifiedName => MessageInfo}] the messages defined in this document
       attr_reader :messages
 
-      # @return [Hash{String => PortType}] the port types defined in this document
+      # @return [Hash{QualifiedName => PortType}] the port types defined in this document
       attr_reader :port_types
 
-      # @return [Hash{String => Binding}] the bindings defined in this document
+      # @return [Hash{QualifiedName => Binding}] the bindings defined in this document
       attr_reader :bindings
 
       # @return [Hash{String => Service}] the services defined in this document
@@ -55,7 +55,7 @@ module WSDL
       #
       # @return [String] the target namespace URI
       def target_namespace
-        @document.root['targetNamespace']
+        @target_namespace ||= QualifiedName.document_namespace(@document.root)
       end
 
       # Returns the XML Schemas defined within this WSDL document.
@@ -101,8 +101,10 @@ module WSDL
 
           collection = type_mapping[:collection]
           container = type_mapping[:container]
+          qualified = type_mapping[:qualified]
+          key = qualified ? QualifiedName.new(target_namespace, node_name) : node_name
 
-          collection[node_name] = container.new(node)
+          collection[key] = container.new(node)
         end
       end
 

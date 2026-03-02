@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<wsdl:definitions name="CollisionService"
+                  targetNamespace="urn:root"
+                  xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/"
+                  xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
+                  xmlns:a="urn:a"
+                  xmlns:b="urn:b">
+  <wsdl:import namespace="urn:a" location="a.wsdl"/>
+  <wsdl:import namespace="urn:b" location="b.wsdl"/>
+
+  <wsdl:service name="CollisionService">
+    <wsdl:port name="APort" binding="a:SharedBinding">
+      <soap:address location="http://example.com/a"/>
+    </wsdl:port>
+    <wsdl:port name="BPort" binding="b:SharedBinding">
+      <soap:address location="http://example.com/b"/>
+    </wsdl:port>
+  </wsdl:service>
+</wsdl:definitions>

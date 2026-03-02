@@ -48,31 +48,18 @@ module WSDL
       # Returns the input header definitions for this operation.
       #
       # Each header is represented as a Hash with keys:
-      # - `:encoding_style` - the encoding style URI
-      # - `:namespace` - the namespace URI
-      # - `:use` - 'literal' or 'encoded'
-      # - `:message` - the message name (qualified)
-      # - `:part` - the part name within the message
+      # - `encoding_style` - the encoding style URI
+      # - `namespace` - the namespace URI
+      # - `use` - 'literal' or 'encoded'
+      # - `message` - the message name (qualified)
+      # - `part` - the part name within the message
       #
-      # @return [Array<Hash>] the input header definitions
+      # @return [Array<HeaderReference>] the input header references
       def input_headers
         return @input_headers if @input_headers
 
-        input_headers = []
-
-        if (header_nodes = find_input_child_nodes('header'))
-          header_nodes.each do |header_node|
-            input_headers << {
-              encoding_style: header_node['encodingStyle'],
-              namespace: header_node['namespace'],
-              use: header_node['use'],
-              message: header_node['message'],
-              part: header_node['part']
-            }
-          end
-        end
-
-        @input_headers = input_headers
+        header_nodes = find_input_child_nodes('header') || []
+        @input_headers = build_headers(header_nodes)
       end
 
       # Returns the input body definition for this operation.
@@ -102,31 +89,18 @@ module WSDL
       # Returns the output header definitions for this operation.
       #
       # Each header is represented as a Hash with keys:
-      # - `:encoding_style` - the encoding style URI
-      # - `:namespace` - the namespace URI
-      # - `:use` - 'literal' or 'encoded'
-      # - `:message` - the message name (qualified)
-      # - `:part` - the part name within the message
+      # - `encoding_style` - the encoding style URI
+      # - `namespace` - the namespace URI
+      # - `use` - 'literal' or 'encoded'
+      # - `message` - the message name (qualified)
+      # - `part` - the part name within the message
       #
-      # @return [Array<Hash>] the output header definitions
+      # @return [Array<HeaderReference>] the output header references
       def output_headers
         return @output_headers if @output_headers
 
-        output_headers = []
-
-        if (header_nodes = find_output_child_nodes('header'))
-          header_nodes.each do |header_node|
-            output_headers << {
-              encoding_style: header_node['encodingStyle'],
-              namespace: header_node['namespace'],
-              use: header_node['use'],
-              message: header_node['message'],
-              part: header_node['part']
-            }
-          end
-        end
-
-        @output_headers = output_headers
+        header_nodes = find_output_child_nodes('header') || []
+        @output_headers = build_headers(header_nodes)
       end
 
       # Returns the output body definition for this operation.
@@ -175,6 +149,14 @@ module WSDL
         return unless output_node
 
         output_node.element_children.select { |node| node.name == child_name }
+      end
+
+      # Builds normalized header metadata from SOAP header nodes.
+      #
+      # @param header_nodes [Array<Nokogiri::XML::Node>] SOAP header nodes
+      # @return [Array<HeaderReference>] normalized header metadata
+      def build_headers(header_nodes)
+        header_nodes.map { |header_node| HeaderReference.from_node(header_node) }
       end
 
       # Finds the SOAP operation element within this binding operation.

@@ -14,7 +14,7 @@ module WSDL
     # @api private
     #
     class CachedResult
-      CACHE_KEY_VERSION = 1
+      CACHE_KEY_VERSION = 3
       URL_PATTERN = /^https?:/i
       XML_PATTERN = /^</
 

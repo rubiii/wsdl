@@ -7,13 +7,13 @@ describe WSDL::Parser::Document do
     it 'works with single element parts' do
       document = get_documents('wsdl/oracle').first
 
-      expect(document.messages.keys).to include(
+      expect(local_keys(document.messages)).to include(
         'addReportToPageIn', 'addReportToPageOut', 'applyReportDefaultsIn', 'applyReportDefaultsOut'
       )
 
       # message
 
-      message = document.messages['addReportToPageIn']
+      message = fetch_by_local_name(document.messages, 'addReportToPageIn')
       expect(message.name).to eq('addReportToPageIn')
 
       namespaces = {
@@ -35,13 +35,13 @@ describe WSDL::Parser::Document do
     it 'works with multiple type parts' do
       document = get_documents('wsdl/telefonkatalogen').first
 
-      expect(document.messages.keys).to include(
+      expect(local_keys(document.messages)).to include(
         'sendsmsRequest', 'sendsmsResponse'
       )
 
       # message
 
-      message = document.messages['sendsmsRequest']
+      message = fetch_by_local_name(document.messages, 'sendsmsRequest')
       expect(message.name).to eq('sendsmsRequest')
 
       namespaces = {
@@ -69,7 +69,7 @@ describe WSDL::Parser::Document do
     it 'works with multiple bindings' do
       document = get_documents('wsdl/oracle').first
 
-      expect(document.port_types.keys).to match_array(%w[
+      expect(local_keys(document.port_types)).to match_array(%w[
         ConditionServiceSoap HtmlViewServiceSoap IBotServiceSoap
         JobManagementServiceSoap MetadataServiceSoap ReplicationServiceSoap
         ReportEditingServiceSoap SAWSessionServiceSoap SecurityServiceSoap
@@ -78,7 +78,7 @@ describe WSDL::Parser::Document do
 
       # port type
 
-      port_type = document.port_types['IBotServiceSoap']
+      port_type = fetch_by_local_name(document.port_types, 'IBotServiceSoap')
       expect(port_type.name).to eq('IBotServiceSoap')
 
       expect(port_type.operations.keys).to match_array(%w[
@@ -91,8 +91,13 @@ describe WSDL::Parser::Document do
       port_type_operation = port_type.operations['moveIBot']
       expect(port_type_operation.name).to eq('moveIBot')
 
-      expect(port_type_operation.input).to eq(name: nil, message: 'sawsoap:moveIBotIn')
-      expect(port_type_operation.output).to eq(name: nil, message: 'sawsoap:moveIBotOut')
+      expect(port_type_operation.input).to be_a(WSDL::Parser::MessageReference)
+      expect(port_type_operation.input.name).to be_nil
+      expect(port_type_operation.input.message).to eq('sawsoap:moveIBotIn')
+
+      expect(port_type_operation.output).to be_a(WSDL::Parser::MessageReference)
+      expect(port_type_operation.output.name).to be_nil
+      expect(port_type_operation.output.message).to eq('sawsoap:moveIBotOut')
     end
   end
 
@@ -100,7 +105,7 @@ describe WSDL::Parser::Document do
     it 'works with multiple bindings' do
       document = get_documents('wsdl/oracle').first
 
-      expect(document.bindings.keys).to match_array(%w[
+      expect(local_keys(document.bindings)).to match_array(%w[
         ConditionService HtmlViewService IBotService JobManagementService
         MetadataService ReplicationService ReportEditingService SAWSessionService
         SecurityService WebCatalogService XmlViewService
@@ -108,7 +113,7 @@ describe WSDL::Parser::Document do
 
       # binding
 
-      binding = document.bindings['SecurityService']
+      binding = fetch_by_local_name(document.bindings, 'SecurityService')
 
       expect(binding.name).to eq('SecurityService')
       expect(binding.port_type).to eq('sawsoap:SecurityServiceSoap')
@@ -190,5 +195,14 @@ describe WSDL::Parser::Document do
   def get_documents(fixture_path)
     client = WSDL::Client.new fixture(fixture_path)
     client.parser_result.documents
+  end
+
+  def local_keys(collection)
+    collection.keys.map(&:local)
+  end
+
+  def fetch_by_local_name(collection, name)
+    _, value = collection.find { |qname, _| qname.local == name }
+    value
   end
 end

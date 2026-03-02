@@ -28,10 +28,10 @@ module WSDL
 
       # Returns the input message definition for this operation.
       #
-      # @return [Hash] a hash with `:name` and `:message` keys
+      # @return [MessageReference] parsed message reference
       # @example
       #   operation.input
-      #   # => { name: "GetUserRequest", message: "tns:GetUserInput" }
+      #   # => #<data WSDL::Parser::MessageReference ...>
       def input
         return @input if defined? @input
 
@@ -40,10 +40,10 @@ module WSDL
 
       # Returns the output message definition for this operation.
       #
-      # @return [Hash] a hash with `:name` and `:message` keys
+      # @return [MessageReference] parsed message reference
       # @example
       #   operation.output
-      #   # => { name: "GetUserResponse", message: "tns:GetUserOutput" }
+      #   # => #<data WSDL::Parser::MessageReference ...>
       def output
         return @output if defined? @output
 
@@ -60,17 +60,12 @@ module WSDL
         @operation_node.element_children.find { |node| node.name == node_name }
       end
 
-      # Parses an input or output node into a Hash.
+      # Parses an input or output node into a message reference.
       #
       # @param node [Nokogiri::XML::Node] the input or output node
-      # @return [Hash] a hash with `:name` and `:message` keys
+      # @return [MessageReference] parsed message reference
       def parse_node(node)
-        input = {}
-
-        input[:name]    = node['name']
-        input[:message] = node['message']
-
-        input
+        MessageReference.from_node(node)
       end
     end
   end

@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<wsdl:definitions targetNamespace="urn:bad"
+                  xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/"
+                  xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
+                  xmlns:tns="urn:bad">
+  <wsdl:message name="PingIn"/>
+  <wsdl:message name="PingOut"/>
+
+  <wsdl:binding name="ExistingBinding" type="tns:MissingPortType">
+    <soap:binding style="document" transport="http://schemas.xmlsoap.org/soap/http"/>
+    <wsdl:operation name="Ping">
+      <soap:operation soapAction="urn:bad#Ping"/>
+      <wsdl:input>
+        <soap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+  </wsdl:binding>
+
+  <wsdl:service name="BadService">
+    <wsdl:port name="BadPort" binding="tns:ExistingBinding">
+      <soap:address location="http://example.com/bad"/>
+    </wsdl:port>
+  </wsdl:service>
+</wsdl:definitions>

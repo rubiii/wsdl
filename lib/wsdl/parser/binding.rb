@@ -42,12 +42,21 @@ module WSDL
       #
       # @param documents [DocumentCollection] the document collection to search
       # @return [PortType] the port type object
-      # @raise [RuntimeError] if the port type cannot be found
+      # @raise [UnresolvedReferenceError] if the port type cannot be found
       def fetch_port_type(documents)
-        port_type_local = @port_type.split(':').last
+        port_type_name = QualifiedName.parse(
+          @port_type,
+          namespaces: @binding_node.namespaces,
+          default_namespace: QualifiedName.document_namespace(@binding_node.document.root)
+        )
 
-        documents.port_types.fetch(port_type_local) do
-          raise "Unable to find portType #{port_type_local.inspect} for binding #{@name.inspect}"
+        documents.port_types.fetch(port_type_name) do
+          raise UnresolvedReferenceError.new(
+            "Unable to find portType #{port_type_name} for binding #{@name.inspect}",
+            reference_type: :port_type,
+            reference_name: port_type_name.to_s,
+            context: "binding #{@name.inspect}"
+          )
         end
       end
 
