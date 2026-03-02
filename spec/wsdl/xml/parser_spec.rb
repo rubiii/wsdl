@@ -776,8 +776,9 @@ describe WSDL::XML::Parser do
       XML
     end
 
-    it 'inherits from WSDL::Error' do
-      expect(WSDL::XMLSecurityError.superclass).to eq(WSDL::Error)
+    it 'inherits from WSDL::FatalError' do
+      expect(WSDL::XMLSecurityError.superclass).to eq(WSDL::FatalError)
+      expect(WSDL::XMLSecurityError).to be < WSDL::Error
     end
 
     it 'is raised for DOCTYPE declarations by default' do

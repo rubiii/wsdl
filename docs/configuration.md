@@ -220,6 +220,7 @@ When you create a `WSDL::Client`, parser results are cached by a composite parse
 - `sandbox_paths`
 - `limits`
 - `reject_doctype`
+- `schema_imports`
 - HTTP adapter identity
 
 Subsequent clients with the same parse profile return the cached definition:
@@ -233,6 +234,30 @@ client2 = WSDL::Client.new('http://example.com/service?wsdl')
 ```
 
 Inline XML is represented by a SHA256 content hash inside the parse profile key.
+
+### Schema Import Policy
+
+Schema import failures are configurable per client:
+
+``` ruby
+# Default: log and skip non-security schema import failures
+client = WSDL::Client.new('http://example.com/service?wsdl', schema_imports: :best_effort)
+
+# Strict: raise non-security schema import failures
+client = WSDL::Client.new('http://example.com/service?wsdl', schema_imports: :strict)
+```
+
+Why `:best_effort` is the default:
+
+- Many production WSDLs reference optional or environment-specific schemas
+- Skipping recoverable import failures keeps service metadata usable
+- Fatal security/safety failures still raise immediately
+
+Policy behavior:
+
+- `:best_effort` — non-security schema import failures are logged and skipped
+- `:strict` — non-security schema import failures are raised as `WSDL::SchemaImportError`
+- Fatal errors (`WSDL::FatalError` subclasses, such as `WSDL::PathRestrictionError`) are always raised
 
 ### Configuring the Cache
 

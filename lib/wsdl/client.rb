@@ -61,15 +61,20 @@ module WSDL
     #   DOCTYPE declarations (default: true). This is a defense-in-depth measure
     #   since legitimate SOAP/WSDL documents never require DOCTYPE. Set to false
     #   only for legacy systems that include DOCTYPE declarations.
+    # @param schema_imports [Symbol] schema import failure policy:
+    #   - `:best_effort` (default) — log and skip non-security schema import failures
+    #   - `:strict` — raise non-security schema import failures as {SchemaImportError}
+    #   Fatal errors (for example, {PathRestrictionError}) always raise.
     #
     # rubocop:disable Metrics/ParameterLists
     def initialize(wsdl, http: nil, pretty_print: true, cache: :default, sandbox_paths: nil,
-                   limits: nil, reject_doctype: true)
+                   limits: nil, reject_doctype: true, schema_imports: :best_effort)
       # rubocop:enable Metrics/ParameterLists
       @http = http || WSDL.http_adapter.new
       @pretty_print = pretty_print
       @limits = limits || WSDL.limits
       @reject_doctype = reject_doctype
+      @schema_imports = schema_imports
 
       validate_http_adapter!(@http)
 
@@ -181,7 +186,8 @@ module WSDL
         parse_options: {
           sandbox_paths:,
           limits: @limits,
-          reject_doctype: @reject_doctype
+          reject_doctype: @reject_doctype,
+          schema_imports: @schema_imports
         }
       )
     end

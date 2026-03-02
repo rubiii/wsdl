@@ -14,7 +14,7 @@ module WSDL
     # @api private
     #
     class CachedResult
-      CACHE_KEY_VERSION = 3
+      CACHE_KEY_VERSION = 4
       URL_PATTERN = /^https?:/i
       XML_PATTERN = /^</
 
@@ -28,26 +28,29 @@ module WSDL
         # @option parse_options [Array<String>, nil] :sandbox_paths resolved sandbox paths
         # @option parse_options [Limits] :limits resource limits
         # @option parse_options [Boolean] :reject_doctype DOCTYPE policy
+        # @option parse_options [Symbol] :schema_imports schema import failure policy
         # @return [Result] parsed WSDL result
         #
         def load(wsdl:, http:, cache:, parse_options:)
           sandbox_paths = parse_options.fetch(:sandbox_paths)
           limits = parse_options.fetch(:limits)
           reject_doctype = parse_options.fetch(:reject_doctype)
+          schema_imports = parse_options.fetch(:schema_imports)
 
           cache = WSDL.cache if cache == :default
-          return Result.new(wsdl, http, sandbox_paths:, limits:, reject_doctype:) unless cache
+          return Result.new(wsdl, http, sandbox_paths:, limits:, reject_doctype:, schema_imports:) unless cache
 
           key = cache_key(
             wsdl:,
             sandbox_paths:,
             limits:,
             reject_doctype:,
+            schema_imports:,
             http:
           )
 
           cache.fetch(key) do
-            Result.new(wsdl, http, sandbox_paths:, limits:, reject_doctype:)
+            Result.new(wsdl, http, sandbox_paths:, limits:, reject_doctype:, schema_imports:)
           end
         end
 
@@ -59,16 +62,20 @@ module WSDL
         # @param sandbox_paths [Array<String>, nil] resolved sandbox paths
         # @param limits [Limits] resource limits
         # @param reject_doctype [Boolean] DOCTYPE policy
+        # @param schema_imports [Symbol] schema import failure policy
         # @param http [Object] HTTP adapter
         # @return [String] deterministic cache key
         #
-        def cache_key(wsdl:, sandbox_paths:, limits:, reject_doctype:, http:)
+        # rubocop:disable Metrics/ParameterLists
+        def cache_key(wsdl:, sandbox_paths:, limits:, reject_doctype:, schema_imports:, http:)
+          # rubocop:enable Metrics/ParameterLists
           payload = {
             version: CACHE_KEY_VERSION,
             source: normalize_source(wsdl),
             sandbox_paths: normalize_sandbox_paths(sandbox_paths),
             limits: normalize_limits(limits),
             reject_doctype: reject_doctype ? true : false,
+            schema_imports: schema_imports.to_s,
             http_identity: normalize_http_identity(http)
           }
 

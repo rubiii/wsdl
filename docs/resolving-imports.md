@@ -132,6 +132,30 @@ client = WSDL::Client.new('/app/wsdl/service.wsdl',
 # ../common/base.xsd → /app/common/base.xsd (allowed)
 ```
 
+## Schema Import Failure Policy
+
+Use `schema_imports` to control non-security schema import failures:
+
+``` ruby
+# Default: log and skip non-security schema import failures
+client = WSDL::Client.new('/app/wsdl/service.wsdl', schema_imports: :best_effort)
+
+# Strict: raise non-security schema import failures
+client = WSDL::Client.new('/app/wsdl/service.wsdl', schema_imports: :strict)
+```
+
+`schema_imports: :best_effort` is the default because many real-world enterprise
+WSDLs contain optional or vendor-specific schema references that are unreachable
+in normal environments. Best-effort mode keeps parsing resilient while still
+failing closed on fatal security/safety errors.
+
+Security violations are always fatal regardless of this setting:
+
+- `WSDL::PathRestrictionError` (sandbox/file access violations)
+- `WSDL::UnresolvableImportError` (relative imports with inline XML base)
+- `WSDL::XMLSecurityError` (DOCTYPE/entity-related XML security violations)
+- `WSDL::ResourceLimitError` (configured safety limits exceeded)
+
 ### Blocked Patterns
 
 The following are always blocked regardless of settings:
@@ -179,6 +203,8 @@ WSDL::PathRestrictionError: file:// URLs are not allowed for security reasons: "
 Use a local file path instead if you need to load from the filesystem.
 ```
 
+`PathRestrictionError` is always raised and is never downgraded to a warning.
+
 ### UnresolvableImportError
 
 Raised for inline XML with relative imports:
@@ -220,19 +246,23 @@ client = WSDL::Client.new('http://example.com/service?wsdl')
 - Cause: WSDL was loaded from inline XML with relative schema references
 - Fix: Load from file path or use absolute URLs
 
-**Errno::ENOENT (No such file or directory)**
+**SchemaImportError**
 
-The resolved path doesn't exist. Check:
-- The relative path in the WSDL is correct
+A non-fatal schema import failed and was wrapped as `WSDL::SchemaImportError`.
+In `schema_imports: :strict` mode this is raised. In `:best_effort` mode it is
+logged and skipped.
+
+Common root causes:
+- The relative path in the WSDL is incorrect
 - The schema file exists at the expected location
 - File permissions allow reading
 
 **Schema not found for namespace**
 
 The schema was not imported. Possible causes:
-- Import failed silently (check logs)
+- Import failed and was skipped in `schema_imports: :best_effort` mode (check logs)
 - Namespace mismatch between import and schema
-- Path was blocked by security restrictions (check for PathRestrictionError in logs)
+- Path was blocked by security restrictions (`PathRestrictionError` is raised)
 
 ## Security Best Practices
 

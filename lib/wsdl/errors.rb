@@ -18,6 +18,57 @@ module WSDL
   class Error < StandardError
   end
 
+  # Base class for non-recoverable WSDL errors.
+  #
+  # Fatal errors indicate security violations or hard safety constraints
+  # that should never be silently skipped.
+  #
+  # @example
+  #   begin
+  #     client = WSDL::Client.new(wsdl, schema_imports: :best_effort)
+  #   rescue WSDL::FatalError => e
+  #     logger.error("Fatal WSDL error: #{e.message}")
+  #   end
+  #
+  class FatalError < Error
+  end
+
+  # Raised when an imported schema cannot be fetched or parsed.
+  #
+  # This error wraps recoverable schema import failures (for example missing
+  # files, network timeouts, or malformed imported XSD documents).
+  #
+  # In `schema_imports: :best_effort` mode these errors are logged and skipped.
+  # In `schema_imports: :strict` mode they are raised.
+  #
+  class SchemaImportError < Error
+    # @return [String, nil] schema location that failed
+    attr_reader :location
+
+    # @return [String, nil] parent document location used as resolution base
+    attr_reader :base_location
+
+    # @return [String, nil] import action (`import` or `include`)
+    attr_reader :action
+
+    # Creates a new SchemaImportError.
+    #
+    # @param message [String] error message
+    # @param location [String, nil] schema location that failed
+    # @param base_location [String, nil] resolution base location
+    # @param action [String, nil] import action (`import` or `include`)
+    def initialize(message = nil, location: nil, base_location: nil, action: nil)
+      @location = location
+      @base_location = base_location
+      @action = action
+      super(message)
+    end
+  end
+
+  # Raised when an imported schema cannot be parsed as XML.
+  class SchemaImportParseError < SchemaImportError
+  end
+
   # Raised when an operation uses an unsupported SOAP style.
   #
   # Currently, rpc/encoded style operations are not supported.
@@ -47,7 +98,7 @@ module WSDL
   #     puts "Cannot resolve import: #{e.message}"
   #   end
   #
-  class UnresolvableImportError < Error
+  class UnresolvableImportError < FatalError
   end
 
   # Raised when a file path violates sandbox restrictions.
@@ -66,7 +117,7 @@ module WSDL
   #
   # @see https://cheatsheetseries.owasp.org/cheatsheets/Server_Side_Request_Forgery_Prevention_Cheat_Sheet.html
   #
-  class PathRestrictionError < Error
+  class PathRestrictionError < FatalError
   end
 
   # Raised when an HTTP adapter does not satisfy the required interface.
@@ -126,7 +177,7 @@ module WSDL
   #     puts e.cause # => #<Nokogiri::XML::SyntaxError: ...>
   #   end
   #
-  class XMLSecurityError < Error
+  class XMLSecurityError < FatalError
   end
 
   # Raised when certificate validation fails during response verification.
@@ -254,7 +305,7 @@ module WSDL
   #     end
   #   end
   #
-  class ResourceLimitError < Error
+  class ResourceLimitError < FatalError
     # @return [Symbol] the name of the limit that was exceeded
     attr_reader :limit_name
 

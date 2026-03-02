@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'spec_helper'
+require 'tmpdir'
 
 describe WSDL::Parser::Result do
   subject(:parser_result) { described_class.new fixture('wsdl/authentication'), http_mock }
@@ -54,6 +55,17 @@ describe WSDL::Parser::Result do
       result = described_class.new(fixture('wsdl/authentication'), http_mock, limits: custom_limits)
 
       expect(result.limits).to eq(custom_limits)
+    end
+  end
+
+  describe '#schema_imports' do
+    it 'defaults to :best_effort' do
+      expect(parser_result.schema_imports).to eq(:best_effort)
+    end
+
+    it 'accepts :strict' do
+      result = described_class.new(fixture('wsdl/authentication'), http_mock, schema_imports: :strict)
+      expect(result.schema_imports).to eq(:strict)
     end
   end
 
@@ -161,6 +173,74 @@ describe WSDL::Parser::Result do
         expect(error.component_type).to eq(:message)
         expect(error.definition_key).to eq('{urn:dup}SharedMessage')
       }
+    end
+  end
+
+  describe 'schema import failure policy' do
+    let(:wsdl_with_missing_schema_import) { fixture('wsdl/juniper') }
+
+    it 'continues on non-security schema import failures in :best_effort mode' do
+      expect {
+        described_class.new(wsdl_with_missing_schema_import, http_mock, schema_imports: :best_effort)
+      }.not_to raise_error
+    end
+
+    it 'raises non-security schema import failures in :strict mode' do
+      expect {
+        described_class.new(wsdl_with_missing_schema_import, http_mock, schema_imports: :strict)
+      }.to raise_error(WSDL::SchemaImportError) { |error|
+        expect(error.cause).to be_a(Errno::ENOENT)
+        expect(error.location).to eq('SystemService?xsd=xsd0.xsd')
+        expect(error.action).to eq('import')
+      }
+    end
+
+    it 'always raises PathRestrictionError regardless of policy' do
+      malicious_wsdl = fixture('wsdl/malicious/path_traversal')
+
+      expect {
+        described_class.new(malicious_wsdl, http_mock, schema_imports: :best_effort)
+      }.to raise_error(WSDL::PathRestrictionError)
+
+      expect {
+        described_class.new(malicious_wsdl, http_mock, schema_imports: :strict)
+      }.to raise_error(WSDL::PathRestrictionError)
+    end
+
+    it 'always raises XMLSecurityError regardless of policy' do
+      Dir.mktmpdir do |dir|
+        wsdl_path = File.join(dir, 'service.wsdl')
+        schema_path = File.join(dir, 'imported.xsd')
+
+        File.write(wsdl_path, <<~XML)
+          <?xml version="1.0"?>
+          <definitions xmlns="http://schemas.xmlsoap.org/wsdl/"
+                       xmlns:xs="http://www.w3.org/2001/XMLSchema"
+                       targetNamespace="http://example.com/service"
+                       name="TestService">
+            <types>
+              <xs:schema targetNamespace="http://example.com/service">
+                <xs:import namespace="http://example.com/imported" schemaLocation="imported.xsd"/>
+              </xs:schema>
+            </types>
+          </definitions>
+        XML
+
+        File.write(schema_path, <<~XML)
+          <?xml version="1.0"?>
+          <!DOCTYPE schema SYSTEM "http://example.com/schema.dtd">
+          <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+                     targetNamespace="http://example.com/imported"/>
+        XML
+
+        expect {
+          described_class.new(wsdl_path, http_mock, schema_imports: :best_effort)
+        }.to raise_error(WSDL::XMLSecurityError)
+
+        expect {
+          described_class.new(wsdl_path, http_mock, schema_imports: :strict)
+        }.to raise_error(WSDL::XMLSecurityError)
+      end
     end
   end
 end

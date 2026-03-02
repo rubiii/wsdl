@@ -144,6 +144,21 @@ describe WSDL::Client do
         expect(custom_cache.size).to eq(2)
       end
 
+      it 'partitions cache entries by schema_imports policy' do
+        custom_cache = WSDL::Cache.new
+        definition_count = 0
+        allow(WSDL::Parser::Result).to receive(:new) do |_, _|
+          definition_count += 1
+          instance_double(WSDL::Parser::Result, services: {}, operations: [])
+        end
+
+        described_class.new(wsdl, cache: custom_cache, schema_imports: :best_effort)
+        described_class.new(wsdl, cache: custom_cache, schema_imports: :strict)
+
+        expect(definition_count).to eq(2)
+        expect(custom_cache.size).to eq(2)
+      end
+
       it 'raises when explicit HTTP adapter does not implement cache_key' do
         adapter_class = Class.new do
           attr_reader :client
@@ -286,21 +301,62 @@ describe WSDL::Client do
         # which should be blocked by sandbox restrictions
         expect {
           described_class.new(malicious_wsdl, http: http_mock)
-        }.not_to raise_error # Import failures are logged, not raised
+        }.to raise_error(WSDL::PathRestrictionError)
 
         # But if we try to read a file outside the sandbox directly, it should fail
         # This is tested more thoroughly in resolver_spec.rb
       end
 
-      it 'allows legitimate relative imports within sandbox' do
+      it 'requires explicit sandbox paths for sibling relative imports' do
         travelport_wsdl = fixture('wsdl/travelport/system_v32_0/System')
+        system_dir = File.dirname(File.expand_path(travelport_wsdl))
+        common_dir = File.expand_path('../common_v32_0', system_dir)
 
-        # This WSDL uses relative imports like ../common_v32_0/CommonReqRsp.xsd
-        # which should be allowed since they stay within the fixture directory
         expect {
           described_class.new(travelport_wsdl, http: http_mock)
+        }.to raise_error(WSDL::PathRestrictionError)
+
+        expect {
+          described_class.new(travelport_wsdl, http: http_mock, sandbox_paths: [system_dir, common_dir])
         }.not_to raise_error
       end
+    end
+  end
+
+  describe 'schema import policy' do
+    let(:wsdl_with_missing_schema_import) { fixture('wsdl/juniper') }
+
+    it 'defaults to :best_effort and skips non-security schema import failures' do
+      expect {
+        described_class.new(wsdl_with_missing_schema_import, http: http_mock, cache: nil)
+      }.not_to raise_error
+    end
+
+    it 'raises non-security schema import failures when schema_imports: :strict' do
+      expect {
+        described_class.new(wsdl_with_missing_schema_import, http: http_mock, cache: nil, schema_imports: :strict)
+      }.to raise_error(WSDL::SchemaImportError) { |error|
+        expect(error.cause).to be_a(Errno::ENOENT)
+        expect(error.location).to eq('SystemService?xsd=xsd0.xsd')
+        expect(error.action).to eq('import')
+      }
+    end
+
+    it 'passes schema_imports option to parser' do
+      parser_result = instance_double(WSDL::Parser::Result, services: {})
+      allow(WSDL::Parser::Result).to receive(:new).and_return(parser_result)
+
+      described_class.new(wsdl, http: http_mock, schema_imports: :strict)
+
+      expect(WSDL::Parser::Result).to have_received(:new).with(
+        wsdl, anything, hash_including(schema_imports: :strict)
+      )
+    end
+
+    it 'raises ArgumentError for unknown schema_imports value' do
+      expect {
+        described_class.new(wsdl, http: http_mock, cache: nil, schema_imports: :unknown)
+      }.to raise_error(ArgumentError, /Invalid schema_imports policy/)
     end
   end
 

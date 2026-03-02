@@ -47,15 +47,29 @@ module WSDL
       #   If nil, uses {WSDL.limits}.
       # @param reject_doctype [Boolean] whether to reject XML with DOCTYPE declarations
       #   (default: true). This is a defense-in-depth security measure.
+      # @param schema_imports [Symbol] schema import failure policy:
+      #   - `:best_effort` (default) — log and skip non-security schema import failures
+      #   - `:strict` — raise non-security schema import failures as {SchemaImportError}
+      #   Fatal errors (for example, {PathRestrictionError}) always raise.
       #
-      def initialize(wsdl, http, sandbox_paths: :auto, limits: nil, reject_doctype: true)
+      # rubocop:disable Metrics/ParameterLists
+      def initialize(wsdl, http, sandbox_paths: :auto, limits: nil, reject_doctype: true, schema_imports: :best_effort)
+        # rubocop:enable Metrics/ParameterLists
         @documents = DocumentCollection.new
         @schemas = Schema::Collection.new
         @limits = limits || WSDL.limits
+        @schema_imports = schema_imports
 
         resolved_sandbox_paths = resolve_sandbox_paths(wsdl, sandbox_paths)
         resolver = Resolver.new(http, sandbox_paths: resolved_sandbox_paths, limits: @limits)
-        importer = Importer.new(resolver, @documents, @schemas, limits: @limits, reject_doctype:)
+        importer = Importer.new(
+          resolver,
+          @documents,
+          @schemas,
+          limits: @limits,
+          reject_doctype:,
+          schema_imports: @schema_imports
+        )
         importer.import(wsdl)
       end
 
@@ -73,6 +87,11 @@ module WSDL
       #
       # @return [Limits] the limits instance
       attr_reader :limits
+
+      # The schema import failure policy used while parsing.
+      #
+      # @return [Symbol] schema import policy (`:best_effort` or `:strict`)
+      attr_reader :schema_imports
 
       # Returns the name of the primary service.
       #

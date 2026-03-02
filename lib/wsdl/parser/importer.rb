@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require 'timeout'
+require 'uri'
 require 'wsdl/xml/parser'
 
 module WSDL
@@ -14,6 +16,19 @@ module WSDL
     class Importer
       # Safety limit to prevent infinite loops with malformed WSDLs.
       MAX_SCHEMA_IMPORT_ITERATIONS = 100
+      SCHEMA_IMPORT_POLICIES = %i[best_effort strict].freeze
+      RECOVERABLE_SCHEMA_IMPORT_ERRORS = [
+        SystemCallError,
+        IOError,
+        EOFError,
+        SocketError,
+        URI::InvalidURIError,
+        Timeout::Error
+      ].tap { |errors|
+        errors << OpenSSL::SSL::SSLError if defined?(OpenSSL::SSL::SSLError)
+        errors << HTTPClient::BadResponseError if defined?(HTTPClient::BadResponseError)
+        errors << HTTPClient::TimeoutError if defined?(HTTPClient::TimeoutError)
+      }.freeze
 
       # Creates a new Importer instance.
       #
@@ -24,7 +39,13 @@ module WSDL
       #   If nil, uses {WSDL.limits}.
       # @param reject_doctype [Boolean] whether to reject XML with DOCTYPE declarations
       #   (default: true). This is a defense-in-depth security measure.
-      def initialize(resolver, documents, schemas, limits: nil, reject_doctype: true)
+      # @param schema_imports [Symbol] schema import failure policy:
+      #   - `:best_effort` (default) — log and skip non-security schema import failures
+      #   - `:strict` — raise non-security schema import failures as {SchemaImportError}
+      #   Fatal errors (for example, {PathRestrictionError}) always raise.
+      # rubocop:disable Metrics/ParameterLists
+      def initialize(resolver, documents, schemas, limits: nil, reject_doctype: true, schema_imports: :best_effort)
+        # rubocop:enable Metrics/ParameterLists
         @logger = Logging.logger[self]
 
         @resolver = resolver
@@ -32,6 +53,7 @@ module WSDL
         @schemas = schemas
         @limits = limits || WSDL.limits
         @reject_doctype = reject_doctype
+        @schema_imports = validate_schema_imports!(schema_imports)
         @schema_count = 0
       end
 
@@ -163,22 +185,66 @@ module WSDL
         action = include_into ? 'include' : 'import'
         @logger.info("Resolving XML Schema #{action} #{schema_location.inspect} (base: #{base.inspect}).")
 
-        xml = @resolver.resolve(schema_location, base: base)
+        xml = load_schema_xml(schema_location, base, action)
         @import_locations << resolved_location
 
-        parsed = XML::Parser.parse_with_logging(xml, @logger, strict: false, reject_doctype: @reject_doctype)
+        parsed = parse_schema_xml(xml, schema_location, base, action)
         document = Document.new(parsed, @schemas)
         new_schemas = document.schemas(resolved_location)
 
         apply_schemas(new_schemas, include_into)
-      rescue UnresolvableImportError, ResourceLimitError
-        # Re-raise intentional errors - these are limits or user errors that need attention
-        raise
-      rescue StandardError => e
-        # Log and skip other errors (e.g., file not found, network errors)
-        # as schemas may be optional or hosted on unreachable servers
-        action = include_into ? 'include' : 'import'
-        @logger.warn("Failed to resolve XML Schema #{action} #{schema_location.inspect}: #{e.message}")
+      rescue SchemaImportError => e
+        handle_schema_import_error(e)
+      end
+
+      # Resolves schema XML and wraps recoverable fetch failures.
+      #
+      # @param schema_location [String] schema import/include location
+      # @param base [String, nil] parent document location
+      # @param action [String] import action (`import` or `include`)
+      # @return [String] raw schema XML
+      # @raise [SchemaImportError] when schema cannot be resolved
+      def load_schema_xml(schema_location, base, action)
+        @resolver.resolve(schema_location, base: base)
+      rescue *RECOVERABLE_SCHEMA_IMPORT_ERRORS => e
+        raise SchemaImportError.new(
+          "Failed to resolve XML Schema #{action} #{schema_location.inspect} " \
+          "(base: #{base.inspect}): #{e.class}: #{e.message}",
+          location: schema_location,
+          base_location: base,
+          action:
+        ), cause: e
+      end
+
+      # Parses schema XML and wraps malformed XML parse failures.
+      #
+      # @param xml [String] schema XML content
+      # @param schema_location [String] schema import/include location
+      # @param base [String, nil] parent document location
+      # @param action [String] import action (`import` or `include`)
+      # @return [Nokogiri::XML::Document] parsed XML document
+      # @raise [SchemaImportParseError] when XML is malformed
+      def parse_schema_xml(xml, schema_location, base, action)
+        XML::Parser.parse_with_logging(xml, @logger, strict: false, reject_doctype: @reject_doctype)
+      rescue Nokogiri::XML::SyntaxError => e
+        raise SchemaImportParseError.new(
+          "Failed to parse XML Schema #{action} #{schema_location.inspect} " \
+          "(base: #{base.inspect}): #{e.class}: #{e.message}",
+          location: schema_location,
+          base_location: base,
+          action:
+        ), cause: e
+      end
+
+      # Handles recoverable schema import failures according to policy.
+      #
+      # @param error [SchemaImportError] the recoverable import failure
+      # @return [void]
+      # @raise [SchemaImportError] when policy is `:strict`
+      def handle_schema_import_error(error)
+        raise error if @schema_imports == :strict
+
+        @logger.warn(error.message)
       end
 
       # Applies loaded schemas to the collection or merges them into an existing schema.
@@ -216,6 +282,18 @@ module WSDL
           limit_value: @limits.max_schemas,
           actual_value: @schema_count
         )
+      end
+
+      # Validates schema import failure policy.
+      #
+      # @param policy [Symbol]
+      # @return [Symbol] validated policy
+      # @raise [ArgumentError] when policy is unknown
+      def validate_schema_imports!(policy)
+        return policy if SCHEMA_IMPORT_POLICIES.include?(policy)
+
+        raise ArgumentError, "Invalid schema_imports policy #{policy.inspect}. " \
+                             "Expected one of: #{SCHEMA_IMPORT_POLICIES.map(&:inspect).join(', ')}."
       end
     end
   end
