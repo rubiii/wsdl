@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'wsdl/xml/parser'
+require 'wsdl/response/parser'
 require 'wsdl/response/security_context'
 
 module WSDL
@@ -87,7 +88,7 @@ module WSDL
     # - xsd:float, xsd:double → Float
     # - xsd:boolean → true/false
     # - xsd:date → Date
-    # - xsd:dateTime → Time
+    # - xsd:dateTime → Time (only when timezone is explicit)
     # - xsd:base64Binary → decoded String
     #
     # Elements with maxOccurs > 1 are always returned as Arrays,
@@ -123,7 +124,7 @@ module WSDL
     #
     # @return [Hash] the complete parsed envelope
     def envelope_hash
-      @envelope_hash ||= HashConverter.parse(doc)
+      @envelope_hash ||= Parser.parse(doc)
     end
     alias to_envelope_hash envelope_hash
 
@@ -205,7 +206,7 @@ module WSDL
       return {} unless body_node
 
       if @output_body_parts&.any?
-        parse_envelope_part(body_node, @output_body_parts)
+        Parser.parse(body_node, schema: @output_body_parts, unwrap: true)
       else
         parsed_envelope = envelope_hash
         parsed_envelope.dig(:Envelope, :Body) || {}
@@ -221,104 +222,11 @@ module WSDL
       return nil unless header_node
 
       if @output_header_parts&.any?
-        parse_envelope_part(header_node, @output_header_parts)
+        Parser.parse(header_node, schema: @output_header_parts, unwrap: true)
       else
         parsed_envelope = envelope_hash
         parsed_envelope.dig(:Envelope, :Header)
       end
-    end
-
-    # Parses an envelope part (body or header) with schema information.
-    #
-    # @param node [Nokogiri::XML::Element] the envelope part node
-    # @param schema_parts [Array<WSDL::XML::Element>] the schema elements
-    # @return [Hash] the parsed content
-    #
-    def parse_envelope_part(node, schema_parts)
-      xml_children = node.element_children.group_by(&:name)
-      result = {}
-
-      parse_schema_elements(schema_parts, xml_children, result)
-      parse_unknown_elements(xml_children, result)
-
-      result
-    end
-
-    # Parses XML elements that match schema definitions.
-    #
-    # @param schema_parts [Array<WSDL::XML::Element>] schema elements
-    # @param xml_children [Hash{String => Array}] grouped XML children
-    # @param result [Hash] the result hash to populate
-    #
-    def parse_schema_elements(schema_parts, xml_children, result)
-      schema_parts.each do |schema_el|
-        xml_nodes = xml_children.delete(schema_el.name) || []
-        next if xml_nodes.empty?
-
-        key = schema_el.name.to_sym
-        values = xml_nodes.map { |xml_node| convert_schema_element(xml_node, schema_el) }
-
-        result[key] = schema_el.singular? ? values.first : values
-      end
-    end
-
-    # Parses XML elements not defined in the schema.
-    #
-    # @param xml_children [Hash{String => Array}] remaining XML children
-    # @param result [Hash] the result hash to populate
-    #
-    def parse_unknown_elements(xml_children, result)
-      xml_children.each do |name, nodes|
-        key = name.to_sym
-        values = nodes.map { |n| HashConverter.parse(n).values.first }
-        result[key] = values.size == 1 ? values.first : values
-      end
-    end
-
-    # Converts a schema element from XML.
-    #
-    # @param xml_node [Nokogiri::XML::Element] the XML element
-    # @param schema_el [WSDL::XML::Element] the schema element definition
-    # @return [Object] the converted value
-    #
-    def convert_schema_element(xml_node, schema_el)
-      return nil if xsi_nil?(xml_node)
-
-      if schema_el.simple_type?
-        convert_typed_value(xml_node.text, schema_el.base_type)
-      elsif schema_el.complex_type?
-        parse_envelope_part(xml_node, schema_el.children)
-      else
-        xml_node.text
-      end
-    end
-
-    # Checks if an element has xsi:nil="true".
-    #
-    # @param node [Nokogiri::XML::Element] the XML element
-    # @return [Boolean] true if the element is nil
-    #
-    def xsi_nil?(node)
-      nil_attr = node.attribute_with_ns('nil', 'http://www.w3.org/2001/XMLSchema-instance')
-      nil_attr&.value == 'true'
-    end
-
-    # Converts a typed value using XSD type information.
-    #
-    # @param value [String] the string value
-    # @param type [String] the XSD type (e.g., "xsd:int")
-    # @return [Object] the converted value
-    #
-    def convert_typed_value(value, type)
-      return value if value.nil? || value.empty?
-
-      local_type = type&.split(':')&.last
-      converter = HashConverter::TYPE_CONVERTERS[local_type]
-
-      return value if converter.nil? || converter == :to_s
-
-      # Create a temporary converter instance to use conversion methods
-      HashConverter.new.send(:send, converter, value)
     end
 
     # Finds the SOAP Body element in the document.

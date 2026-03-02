@@ -23,14 +23,19 @@ module SchemaElementHelper
   # @param singular [Boolean] whether maxOccurs is 1 (true) or > 1 (false)
   # @param children [Array] child elements for complex types
   # @param nillable [Boolean] whether the element is nillable
+  # @param namespace [String, nil] namespace URI of the element
+  # @param form [String] element form ('qualified' or 'unqualified')
   # @return [RSpec::Mocks::Double] a mock WSDL::XML::Element
-  def schema_element(name, type: nil, singular: true, children: [], nillable: false)
+  # rubocop:disable Metrics/ParameterLists
+  def schema_element(name, type: nil, singular: true, children: [], nillable: false, namespace: nil, form: 'qualified')
     element = instance_double(
       WSDL::XML::Element,
       name: name,
       singular?: singular,
       nillable?: nillable,
-      children: children
+      children: children,
+      namespace: namespace,
+      form: form
     )
 
     if type
@@ -43,6 +48,7 @@ module SchemaElementHelper
 
     element
   end
+  # rubocop:enable Metrics/ParameterLists
 end
 
 RSpec.configure do |config|

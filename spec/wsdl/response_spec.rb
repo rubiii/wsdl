@@ -20,7 +20,7 @@ describe WSDL::Response, type: :unit do
     XML
   end
 
-  describe 'without schema parts (fallback to HashConverter)' do
+  describe 'without schema parts (fallback to parser)' do
     subject(:response) { described_class.new(soap_response) }
 
     describe '#raw' do
@@ -214,6 +214,26 @@ describe WSDL::Response, type: :unit do
         expect(response.body[:Response][:CreatedAt].year).to eq(2024)
       end
 
+      it 'keeps dateTime values without explicit timezone as strings' do
+        xml = <<-XML
+          <env:Envelope xmlns:env="http://schemas.xmlsoap.org/soap/envelope/">
+            <env:Body>
+              <Response>
+                <CreatedAt>2024-01-15T10:30:00</CreatedAt>
+              </Response>
+            </env:Body>
+          </env:Envelope>
+        XML
+
+        datetime_element = schema_element('CreatedAt', type: 'xsd:dateTime')
+        response_element = schema_element('Response', children: [datetime_element])
+        output_body_parts = [response_element]
+
+        response = described_class.new(xml, output_body_parts:)
+
+        expect(response.body[:Response][:CreatedAt]).to eq('2024-01-15T10:30:00')
+      end
+
       context 'array handling based on maxOccurs' do
         it 'returns array when schema says singular: false, even with single element' do
           xml = <<-XML
@@ -349,6 +369,33 @@ describe WSDL::Response, type: :unit do
 
           expect(response.body[:Response][:Known]).to eq('expected')
           expect(response.body[:Response][:Unknown]).to eq('extra')
+        end
+
+        it 'keeps text content for complex schema elements without child schema' do
+          xml = <<-XML
+            <env:Envelope xmlns:env="http://schemas.xmlsoap.org/soap/envelope/">
+              <env:Body>
+                <Response>raw-content</Response>
+              </env:Body>
+            </env:Envelope>
+          XML
+          response_element = instance_double(
+            WSDL::XML::Element,
+            name: 'Response',
+            singular?: true,
+            nillable?: false,
+            children: [],
+            namespace: nil,
+            form: 'qualified',
+            simple_type?: false,
+            complex_type?: true,
+            base_type: nil
+          )
+          output_body_parts = [response_element]
+
+          response = described_class.new(xml, output_body_parts:)
+
+          expect(response.body).to eq({ Response: 'raw-content' })
         end
       end
     end

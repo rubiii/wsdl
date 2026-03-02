@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-describe WSDL::Response::HashConverter do
+describe WSDL::Response::Parser do
   include SchemaElementHelper
 
   describe '.parse without schema' do
@@ -83,6 +83,14 @@ describe WSDL::Response::HashConverter do
       expect(described_class.parse(nil)).to eq({})
     end
 
+    describe 'with unwrap: true' do
+      it 'returns the root value without the root key wrapper' do
+        xml = '<Root><Child>content</Child></Root>'
+
+        expect(described_class.parse(xml, unwrap: true)).to eq({ Child: 'content' })
+      end
+    end
+
     context 'with repeated elements' do
       it 'converts repeated elements into arrays' do
         xml = '<Root><Item>one</Item><Item>two</Item><Item>three</Item></Root>'
@@ -113,6 +121,44 @@ describe WSDL::Response::HashConverter do
               { Name: 'Alice' },
               { Name: 'Bob' }
             ]
+          }
+        })
+      end
+    end
+
+    context 'with local-name collisions across namespaces' do
+      it 'disambiguates unknown elements with Clark notation keys' do
+        xml = <<-XML
+          <Root xmlns:a="urn:a" xmlns:b="urn:b">
+            <a:Value>one</a:Value>
+            <b:Value>two</b:Value>
+          </Root>
+        XML
+
+        result = described_class.parse(xml)
+
+        expect(result).to eq({
+          Root: {
+            '{urn:a}Value': 'one',
+            '{urn:b}Value': 'two'
+          }
+        })
+      end
+
+      it 'keeps local-name key for non-namespaced element when mixed with namespaced one' do
+        xml = <<-XML
+          <Root xmlns:a="urn:a">
+            <Value>local</Value>
+            <a:Value>namespaced</a:Value>
+          </Root>
+        XML
+
+        result = described_class.parse(xml)
+
+        expect(result).to eq({
+          Root: {
+            Value: 'local',
+            '{urn:a}Value': 'namespaced'
           }
         })
       end
@@ -239,6 +285,26 @@ describe WSDL::Response::HashConverter do
       expect(result[:Response][:CreatedAt].day).to eq(15)
     end
 
+    it 'keeps dateTime without timezone as string' do
+      xml = '<Response><CreatedAt>2024-01-15T10:30:00</CreatedAt></Response>'
+      datetime_element = schema_element('CreatedAt', type: 'xsd:dateTime')
+      schema = [datetime_element]
+
+      result = described_class.parse(xml, schema:)
+
+      expect(result[:Response][:CreatedAt]).to eq('2024-01-15T10:30:00')
+    end
+
+    it 'keeps time without timezone as string' do
+      xml = '<Response><TimeOfDay>10:30:00</TimeOfDay></Response>'
+      time_element = schema_element('TimeOfDay', type: 'xsd:time')
+      schema = [time_element]
+
+      result = described_class.parse(xml, schema:)
+
+      expect(result[:Response][:TimeOfDay]).to eq('10:30:00')
+    end
+
     it 'converts base64Binary types to decoded string' do
       xml = '<Response><Data>SGVsbG8gV29ybGQ=</Data></Response>'
       data_element = schema_element('Data', type: 'xsd:base64Binary')
@@ -341,6 +407,26 @@ describe WSDL::Response::HashConverter do
           { Name: 'Bob', Age: 25 }
         ])
       end
+
+      it 'returns text for complex elements with no child schema' do
+        xml = '<Body><Response>raw-content</Response></Body>'
+        response_element = instance_double(
+          WSDL::XML::Element,
+          name: 'Response',
+          singular?: true,
+          nillable?: false,
+          children: [],
+          namespace: nil,
+          form: 'qualified',
+          simple_type?: false,
+          complex_type?: true,
+          base_type: nil
+        )
+
+        result = described_class.parse(xml, schema: [response_element])
+
+        expect(result).to eq({ Body: { Response: 'raw-content' } })
+      end
     end
 
     context 'with xsi:nil' do
@@ -382,6 +468,48 @@ describe WSDL::Response::HashConverter do
         result = described_class.parse(xml, schema:)
 
         expect(result[:Response][:Unknown]).to eq({ Nested: 'value' })
+      end
+
+      it 'disambiguates mixed known/unknown elements with same local name across namespaces' do
+        xml = <<-XML
+          <Response xmlns:a="urn:a" xmlns:b="urn:b">
+            <a:Value>42</a:Value>
+            <b:Value>extra</b:Value>
+          </Response>
+        XML
+        known_element = schema_element('Value', type: 'xsd:int', namespace: 'urn:a')
+        schema = [known_element]
+
+        result = described_class.parse(xml, schema:)
+
+        expect(result).to eq({
+          Response: {
+            '{urn:a}Value': 42,
+            '{urn:b}Value': 'extra'
+          }
+        })
+      end
+    end
+
+    context 'with schema elements that share local names across namespaces' do
+      it 'matches elements by namespace plus local name' do
+        xml = <<-XML
+          <Response xmlns:a="urn:a" xmlns:b="urn:b">
+            <a:Value>1</a:Value>
+            <b:Value>2</b:Value>
+          </Response>
+        XML
+        first = schema_element('Value', type: 'xsd:int', namespace: 'urn:a')
+        second = schema_element('Value', type: 'xsd:int', namespace: 'urn:b')
+
+        result = described_class.parse(xml, schema: [first, second])
+
+        expect(result).to eq({
+          Response: {
+            '{urn:a}Value': 1,
+            '{urn:b}Value': 2
+          }
+        })
       end
     end
 
@@ -427,43 +555,6 @@ describe WSDL::Response::HashConverter do
 
         expect(result[:Response][:Count]).to eq('')
       end
-    end
-  end
-
-  describe 'TYPE_CONVERTERS' do
-    it 'includes all common XSD string types' do
-      string_types = %w[string normalizedString token language Name NCName ID IDREF ENTITY NMTOKEN anyURI QName]
-      string_types.each do |type|
-        expect(described_class::TYPE_CONVERTERS[type]).to eq(:to_s)
-      end
-    end
-
-    it 'includes all common XSD integer types' do
-      integer_types = %w[
-        integer int long short byte
-        nonNegativeInteger positiveInteger nonPositiveInteger negativeInteger
-        unsignedLong unsignedInt unsignedShort unsignedByte
-      ]
-      integer_types.each do |type|
-        expect(described_class::TYPE_CONVERTERS[type]).to eq(:convert_integer)
-      end
-    end
-
-    it 'includes decimal and float types' do
-      expect(described_class::TYPE_CONVERTERS['decimal']).to eq(:convert_decimal)
-      expect(described_class::TYPE_CONVERTERS['float']).to eq(:convert_float)
-      expect(described_class::TYPE_CONVERTERS['double']).to eq(:convert_float)
-    end
-
-    it 'includes date and time types' do
-      expect(described_class::TYPE_CONVERTERS['date']).to eq(:convert_date)
-      expect(described_class::TYPE_CONVERTERS['dateTime']).to eq(:convert_datetime)
-      expect(described_class::TYPE_CONVERTERS['time']).to eq(:convert_time)
-    end
-
-    it 'includes binary types' do
-      expect(described_class::TYPE_CONVERTERS['base64Binary']).to eq(:convert_base64)
-      expect(described_class::TYPE_CONVERTERS['hexBinary']).to eq(:convert_hex_binary)
     end
   end
 end

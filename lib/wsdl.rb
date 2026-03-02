@@ -131,7 +131,8 @@ module WSDL
   require 'wsdl/builder'
 
   # Load response handling
-  require 'wsdl/response/hash_converter'
+  require 'wsdl/response/type_coercer'
+  require 'wsdl/response/parser'
   require 'wsdl/response'
 
   # Load operation (public API)

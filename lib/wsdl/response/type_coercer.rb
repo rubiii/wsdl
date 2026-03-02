@@ -1,0 +1,145 @@
+# frozen_string_literal: true
+
+require 'base64'
+require 'bigdecimal'
+require 'date'
+require 'time'
+
+module WSDL
+  class Response
+    # Coerces XML text values into Ruby values based on XSD types.
+    #
+    # @api private
+    class TypeCoercer
+      STRING_TYPES = %w[
+        string normalizedString token language Name NCName ID IDREF ENTITY NMTOKEN anyURI QName
+      ].freeze
+
+      INTEGER_TYPES = %w[
+        integer int long short byte
+        nonNegativeInteger positiveInteger nonPositiveInteger negativeInteger
+        unsignedLong unsignedInt unsignedShort unsignedByte
+      ].freeze
+
+      TYPE_GROUPS = begin
+        groups = {}
+        STRING_TYPES.each do |type|
+          groups[type] = :string
+        end
+        INTEGER_TYPES.each do |type|
+          groups[type] = :integer
+        end
+        groups['decimal'] = :decimal
+        groups['float'] = :float
+        groups['double'] = :float
+        groups['boolean'] = :boolean
+        groups['date'] = :date
+        groups['dateTime'] = :datetime
+        groups['time'] = :time
+        groups['base64Binary'] = :base64
+        groups['hexBinary'] = :hex_binary
+        groups.freeze
+      end
+
+      GROUP_HANDLERS = {
+        string: ->(value) { convert_string(value) },
+        integer: ->(value) { convert_integer(value) },
+        decimal: ->(value) { convert_decimal(value) },
+        float: ->(value) { convert_float(value) },
+        boolean: ->(value) { convert_boolean(value) },
+        date: ->(value) { convert_date(value) },
+        datetime: ->(value) { convert_datetime(value) },
+        time: ->(value) { convert_time(value) },
+        base64: ->(value) { convert_base64(value) },
+        hex_binary: ->(value) { convert_hex_binary(value) }
+      }.freeze
+
+      TIMEZONE_SUFFIX = /(Z|[+-](?:0[0-9]|1[0-3]):[0-5][0-9]|[+-]14:00)\z/
+
+      class << self
+        # Coerces a text value based on its XSD type.
+        #
+        # @param value [String] the value to coerce
+        # @param type [String, nil] the XSD type name, e.g. 'xsd:int'
+        # @return [Object] the coerced value, or the original string when coercion fails
+        def coerce(value, type)
+          return value if value.nil? || value.empty?
+
+          local_type = type&.split(':')&.last
+          group = TYPE_GROUPS[local_type]
+          handler = GROUP_HANDLERS[group]
+          return value unless handler
+
+          handler.call(value)
+        end
+
+        private
+
+        def convert_string(value)
+          value.to_s
+        end
+
+        def convert_integer(value)
+          Integer(value)
+        rescue ArgumentError
+          value
+        end
+
+        def convert_decimal(value)
+          BigDecimal(value)
+        rescue ArgumentError
+          value
+        end
+
+        def convert_float(value)
+          Float(value)
+        rescue ArgumentError
+          value
+        end
+
+        def convert_boolean(value)
+          return true if %w[true 1].include?(value)
+          return false if %w[false 0].include?(value)
+
+          value
+        end
+
+        def convert_date(value)
+          Date.iso8601(value)
+        rescue ArgumentError
+          value
+        end
+
+        def convert_datetime(value)
+          # Per XSD, timezone is optional; preserve lexical form when absent.
+          return value unless explicit_timezone?(value)
+
+          Time.xmlschema(value)
+        rescue ArgumentError
+          value
+        end
+
+        def convert_time(value)
+          # Per XSD, timezone is optional; preserve lexical form when absent.
+          return value unless explicit_timezone?(value)
+
+          Time.xmlschema("1970-01-01T#{value}")
+        rescue ArgumentError
+          value
+        end
+
+        def convert_base64(value)
+          Base64.decode64(value)
+        end
+
+        def convert_hex_binary(value)
+          [value].pack('H*')
+        end
+
+        def explicit_timezone?(value)
+          TIMEZONE_SUFFIX.match?(value)
+        end
+      end
+    end
+  end
+end
