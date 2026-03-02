@@ -13,12 +13,18 @@ module WSDL
       class << self
         # Returns the effective namespace for top-level WSDL components.
         #
-        # Some real-world WSDLs omit targetNamespace and only provide xmlns:tns.
-        #
         # @param root [Nokogiri::XML::Node] wsdl:definitions root node
         # @return [String, nil] resolved namespace URI
         def document_namespace(root)
-          root['targetNamespace'] || root.namespaces['xmlns:tns'] || root.namespaces['xmlns']
+          namespace = root['targetNamespace']
+          return namespace if namespace && !namespace.empty?
+
+          raise UnresolvedReferenceError.new(
+            'WSDL definitions element is missing required targetNamespace',
+            reference_type: :namespace,
+            reference_name: root.name,
+            context: 'wsdl:definitions'
+          )
         end
 
         # Parses a lexical QName into a fully qualified name.
