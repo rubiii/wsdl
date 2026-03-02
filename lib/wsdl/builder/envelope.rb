@@ -22,12 +22,14 @@ module WSDL
       # @param header [Hash, nil] the SOAP header data
       # @param body [Hash, nil] the SOAP body data
       # @param pretty_print [Boolean] whether to format XML with indentation
-      def initialize(operation_info, header, body, pretty_print: true)
+      # @param soap_version [String, nil] optional SOAP version override ('1.1' or '1.2')
+      def initialize(operation_info, header, body, pretty_print: true, soap_version: nil)
         @logger = Logging.logger[self]
 
         @operation_info = operation_info
         @header = header || {}
         @body = body || {}
+        @soap_version = soap_version || operation_info.soap_version
 
         @nsid_counter = -1
         @namespaces = {}
@@ -163,7 +165,7 @@ module WSDL
         end
 
         # envelope namespace
-        namespaces['xmlns:env'] = case @operation_info.soap_version
+        namespaces['xmlns:env'] = case @soap_version
         when '1.1' then NS::SOAP_1_1
         when '1.2' then NS::SOAP_1_2
         end

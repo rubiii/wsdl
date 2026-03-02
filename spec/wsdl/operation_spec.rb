@@ -103,6 +103,19 @@ describe WSDL::Operation do
 
       expect(operation.http_headers).to eq(headers)
     end
+
+    it 'reflects updated SOAP settings on the next call' do
+      operation.http_headers
+
+      operation.soap_version = '1.1'
+      operation.soap_action = 'ConvertSomething'
+      operation.encoding = 'US-ASCII'
+
+      expect(operation.http_headers).to eq(
+        'SOAPAction' => '"ConvertSomething"',
+        'Content-Type' => 'text/xml;charset=US-ASCII'
+      )
+    end
   end
 
   describe '#example_request' do
@@ -144,6 +157,60 @@ describe WSDL::Operation do
 
       expect(operation.build)
         .to be_equivalent_to(expected).respecting_element_order
+    end
+
+    it 'reflects updated body values on the next call' do
+      operation.body = {
+        ConvertTemp: {
+          Temperature: 30,
+          FromUnit: 'degreeCelsius',
+          ToUnit: 'degreeFahrenheit'
+        }
+      }
+      operation.build
+
+      operation.body = {
+        ConvertTemp: {
+          Temperature: 100,
+          FromUnit: 'degreeCelsius',
+          ToUnit: 'degreeFahrenheit'
+        }
+      }
+
+      expect(operation.build).to include('<lol0:Temperature>100</lol0:Temperature>')
+    end
+
+    it 'reflects SOAP version changes in the next built envelope' do
+      operation.body = {
+        ConvertTemp: {
+          Temperature: 30,
+          FromUnit: 'degreeCelsius',
+          ToUnit: 'degreeFahrenheit'
+        }
+      }
+
+      first_namespace = Nokogiri.XML(operation.build).root.namespace.href
+
+      operation.soap_version = '1.1'
+      second_namespace = Nokogiri.XML(operation.build).root.namespace.href
+
+      expect(first_namespace).to eq(WSDL::NS::SOAP_1_2)
+      expect(second_namespace).to eq(WSDL::NS::SOAP_1_1)
+    end
+
+    it 'reflects security configuration changes on the next call' do
+      operation.body = {
+        ConvertTemp: {
+          Temperature: 30,
+          FromUnit: 'degreeCelsius',
+          ToUnit: 'degreeFahrenheit'
+        }
+      }
+      operation.build
+
+      operation.security.username_token('username', 'secret', digest: true)
+
+      expect(operation.build).to include('UsernameToken')
     end
 
     context 'with pretty_print: false' do

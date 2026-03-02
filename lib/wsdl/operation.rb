@@ -106,7 +106,7 @@ module WSDL
     #
     # @return [Hash{String => String}] the HTTP headers
     def http_headers
-      return @http_headers if @http_headers
+      return @custom_http_headers unless @custom_http_headers.nil?
 
       headers = {}
       content_type = [CONTENT_TYPE[soap_version], "charset=#{encoding}"]
@@ -120,13 +120,15 @@ module WSDL
 
       headers['Content-Type'] = content_type.join(';')
 
-      @http_headers = headers
+      headers
     end
 
     # @!attribute [w] http_headers
     #   Sets custom HTTP headers for the request.
     #   @return [Hash{String => String}] the HTTP headers
-    attr_writer :http_headers
+    def http_headers=(headers)
+      @custom_http_headers = headers
+    end
 
     # @!attribute [rw] header
     #   The SOAP header data.
@@ -210,7 +212,7 @@ module WSDL
     #
     # @return [String] the SOAP envelope XML
     def build
-      @build ||= build_envelope
+      build_envelope
     end
 
     # @!attribute [rw] xml_envelope
@@ -271,7 +273,13 @@ module WSDL
     # @return [String] the complete SOAP envelope XML
     #
     def build_envelope
-      envelope_xml = Builder::Envelope.new(@operation_info, header, body, pretty_print:).to_s
+      envelope_xml = Builder::Envelope.new(
+        @operation_info,
+        header,
+        body,
+        pretty_print:,
+        soap_version:
+      ).to_s
 
       if security.configured?
         security_header = Security::SecurityHeader.new(security)

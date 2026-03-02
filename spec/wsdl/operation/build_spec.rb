@@ -56,13 +56,26 @@ describe WSDL::Operation do
         }
       end
 
-      it 'cached on next call' do
+      it 'reflects new body values on the next call' do
         add_logins.body = body
+        add_logins.build
 
-        first_call  = add_logins.build
-        second_call = add_logins.build
+        add_logins.body = {
+          addLogins: {
+            accounts: [
+              {
+                username: 'second',
+                password: 'new-secret',
+                contactInformation: {
+                  email: 'second@example.com',
+                  _type: 'any'
+                }
+              }
+            ]
+          }
+        }
 
-        expect(first_call).to eq(second_call)
+        expect(add_logins.build).to include('<username>second</username>')
       end
     end
 
