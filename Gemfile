@@ -8,8 +8,8 @@ gemspec
 # gem 'ruby-prof',       require: false  # does not work on jruby!
 
 # coverage
-gem 'coveralls', require: false
-gem 'simplecov', require: false
+# gem 'coveralls', require: false
+gem 'simplecov', '~> 0.22', require: false
 
 if RUBY_VERSION >= '3'
   # net-smtp, net-pop and net-imap were removed from ruby standard gems
@@ -33,10 +33,9 @@ end
 # gem 'debugger',  require: false
 
 group :development do
-  gem 'equivalent-xml', '~> 0.3'
-  gem 'fuubar'
-  gem 'httpclient', '~> 2.3'
-  gem 'rake', '~> 12.3'
+  gem 'equivalent-xml', '~> 0.6'
+  gem 'httpclient', '~> 2.9'
+  gem 'rake', '~> 13.3'
   gem 'redcarpet', require: false
   gem 'rspec', '~> 3'
   gem 'rubocop', require: false

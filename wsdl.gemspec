@@ -18,9 +18,9 @@ Gem::Specification.new do |s|
   s.license = 'MIT'
 
   s.add_dependency 'base64'
-  s.add_dependency 'builder',  '>= 3.0.0'
-  s.add_dependency 'logging',  '~> 1.8'
-  s.add_dependency 'nokogiri', '>= 1.4.0'
+  s.add_dependency 'builder',  '>= 3.3'
+  s.add_dependency 'logging',  '>= 2.4'
+  s.add_dependency 'nokogiri', '>= 1.19'
 
   ignores  = File.readlines('.gitignore').grep(/\S+/).map(&:chomp)
   dotfiles = %w[.gitignore .yardopts]
