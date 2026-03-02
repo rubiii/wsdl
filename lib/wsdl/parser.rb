@@ -28,5 +28,6 @@ module WSDL
     require 'wsdl/parser/resolver'
     require 'wsdl/parser/importer'
     require 'wsdl/parser/result'
+    require 'wsdl/parser/cached_result'
   end
 end

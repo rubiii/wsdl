@@ -71,6 +71,8 @@ module WSDL
       @limits = limits || WSDL.limits
       @reject_doctype = reject_doctype
 
+      validate_http_adapter!(@http)
+
       resolved_sandbox_paths = resolve_sandbox_paths(wsdl, sandbox_paths)
       @parser_result = load_parser_result(wsdl, cache, resolved_sandbox_paths)
     end
@@ -172,17 +174,16 @@ module WSDL
     # @return [Parser::Result] the parsed result
     #
     def load_parser_result(wsdl, cache, sandbox_paths)
-      cache = WSDL.cache if cache == :default
-
-      if cache
-        cache.fetch(wsdl) do
-          Parser::Result.new(wsdl, @http, sandbox_paths:,
-                                          limits: @limits, reject_doctype: @reject_doctype)
-        end
-      else
-        Parser::Result.new(wsdl, @http, sandbox_paths:,
-                                        limits: @limits, reject_doctype: @reject_doctype)
-      end
+      Parser::CachedResult.load(
+        wsdl:,
+        http: @http,
+        cache:,
+        parse_options: {
+          sandbox_paths:,
+          limits: @limits,
+          reject_doctype: @reject_doctype
+        }
+      )
     end
 
     # Raises if the operation style is not supported.
@@ -196,6 +197,24 @@ module WSDL
       raise UnsupportedStyleError,
             "#{operation_info.name.inspect} is an #{operation_info.input_style.inspect} style operation.\n" \
             'Currently this style is not supported.'
+    end
+
+    # Validates that HTTP adapter satisfies required cache contract.
+    #
+    # @param adapter [Object] HTTP adapter instance
+    # @raise [InvalidHTTPAdapterError] if the adapter does not expose a usable cache_key
+    #
+    def validate_http_adapter!(adapter)
+      unless adapter.respond_to?(:cache_key)
+        raise InvalidHTTPAdapterError,
+              "HTTP adapter #{adapter.class.name} must implement #cache_key for parser cache partitioning."
+      end
+
+      cache_key = adapter.cache_key
+      return if cache_key && !cache_key.to_s.empty?
+
+      raise InvalidHTTPAdapterError,
+            "HTTP adapter #{adapter.class.name} must return a non-empty #cache_key."
     end
   end
 end

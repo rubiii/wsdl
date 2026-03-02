@@ -143,6 +143,7 @@ A custom adapter must implement:
 
 - `initialize` - Constructor
 - `client` - Returns the underlying client instance (for user configuration)
+- `cache_key` - Returns a stable String identifying parser-affecting adapter behavior
 - `get(url)` - Performs an HTTP GET request, returns the response body as a String
 - `post(url, headers, body)` - Performs an HTTP POST request, returns the response body as a String
 
@@ -159,6 +160,11 @@ class MyHTTPAdapter
   # Returns the client instance for configuration
   def client
     @client
+  end
+
+  # Stable identity used for parser cache partitioning
+  def cache_key
+    'my-http-adapter:v1'
   end
 
   # GET request - used for fetching WSDL documents
@@ -202,11 +208,21 @@ WSDL.http_adapter = nil
 
 ## Caching
 
-By default, the library caches parsed WSDL definitions in memory. This significantly improves performance in multithreaded environments where multiple threads may need to access the same WSDL, avoiding redundant HTTP requests and XML parsing.
+By default, the library caches parsed WSDL definitions in memory. This significantly improves performance in
+multithreaded environments where multiple threads may need to access the same WSDL, avoiding redundant HTTP
+requests and XML parsing.
 
 ### How It Works
 
-When you create a `WSDL` instance, the parsed definition is cached by its location (URL or file path). Subsequent requests for the same WSDL return the cached definition:
+When you create a `WSDL::Client`, parser results are cached by a composite parse profile key. The key includes:
+
+- WSDL source identity (URL/file path/inline XML content hash)
+- `sandbox_paths`
+- `limits`
+- `reject_doctype`
+- HTTP adapter identity
+
+Subsequent clients with the same parse profile return the cached definition:
 
 ``` ruby
 # First call fetches and parses the WSDL
@@ -216,7 +232,7 @@ client1 = WSDL::Client.new('http://example.com/service?wsdl')
 client2 = WSDL::Client.new('http://example.com/service?wsdl')
 ```
 
-For inline XML (raw WSDL strings), the cache key is a SHA256 hash of the content.
+Inline XML is represented by a SHA256 content hash inside the parse profile key.
 
 ### Configuring the Cache
 
@@ -254,7 +270,8 @@ client = WSDL::Client.new('http://example.com/service?wsdl', cache: my_cache)
 
 ### Custom Cache Implementation
 
-You can provide your own cache implementation (e.g., Redis, Memcached) by implementing the `fetch` method:
+You can provide your own cache implementation (e.g., Redis, Memcached) by implementing the `fetch` method.
+The incoming `key` is already a stable parser-profile key string:
 
 ``` ruby
 class RedisCache
@@ -289,6 +306,39 @@ end
 
 # Use the custom cache
 WSDL.cache = RedisCache.new(Redis.new, ttl: 3600)
+```
+
+### Custom Adapter Cache Identity
+
+When you pass explicit HTTP adapter instances, the cache key includes adapter identity to avoid mixing parser
+results from incompatible adapter behavior.
+
+If equivalent adapter instances should share cache entries, implement `cache_key` on your adapter:
+
+``` ruby
+class MyHTTPAdapter
+  attr_reader :client
+
+  def initialize(timeout: 30)
+    @timeout = timeout
+    @client = Faraday.new do |f|
+      f.options.timeout = timeout
+    end
+  end
+
+  # Should return a stable fingerprint for parser-affecting behavior.
+  def cache_key
+    "my-http-adapter:v1:timeout=#{@timeout}"
+  end
+
+  def get(url)
+    @client.get(url).body
+  end
+
+  def post(url, headers, body)
+    @client.post(url, body, headers).body
+  end
+end
 ```
 
 ### Thread Safety

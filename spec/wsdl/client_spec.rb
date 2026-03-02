@@ -23,7 +23,11 @@ describe WSDL::Client do
     end
 
     it 'also accepts a custom HTTP adapter to replace the default' do
-      http = :my_http_adapter
+      http = Class.new do
+        def cache_key
+          'my-http-adapter'
+        end
+      end.new
       wsdl_directory = File.dirname(File.expand_path(wsdl))
       allow(WSDL::Parser::Result).to receive(:new).with(
         wsdl, http, hash_including(sandbox_paths: [wsdl_directory])
@@ -91,6 +95,109 @@ describe WSDL::Client do
         described_class.new(inline_xml)
 
         expect(definition_count).to eq(1)
+      end
+
+      it 'partitions cache entries by reject_doctype' do
+        custom_cache = WSDL::Cache.new
+        definition_count = 0
+        allow(WSDL::Parser::Result).to receive(:new) do |_, _|
+          definition_count += 1
+          instance_double(WSDL::Parser::Result, services: {}, operations: [])
+        end
+
+        described_class.new(wsdl, cache: custom_cache, reject_doctype: true)
+        described_class.new(wsdl, cache: custom_cache, reject_doctype: false)
+
+        expect(definition_count).to eq(2)
+        expect(custom_cache.size).to eq(2)
+      end
+
+      it 'partitions cache entries by limits' do
+        custom_cache = WSDL::Cache.new
+        strict_limits = WSDL::Limits.new(max_document_size: 5 * 1024 * 1024)
+        relaxed_limits = WSDL::Limits.new(max_document_size: 10 * 1024 * 1024)
+        definition_count = 0
+        allow(WSDL::Parser::Result).to receive(:new) do |_, _|
+          definition_count += 1
+          instance_double(WSDL::Parser::Result, services: {}, operations: [])
+        end
+
+        described_class.new(wsdl, cache: custom_cache, limits: strict_limits)
+        described_class.new(wsdl, cache: custom_cache, limits: relaxed_limits)
+
+        expect(definition_count).to eq(2)
+        expect(custom_cache.size).to eq(2)
+      end
+
+      it 'partitions cache entries by sandbox_paths' do
+        custom_cache = WSDL::Cache.new
+        definition_count = 0
+        allow(WSDL::Parser::Result).to receive(:new) do |_, _|
+          definition_count += 1
+          instance_double(WSDL::Parser::Result, services: {}, operations: [])
+        end
+
+        described_class.new(wsdl, cache: custom_cache, sandbox_paths: [fixture_dir])
+        described_class.new(wsdl, cache: custom_cache, sandbox_paths: [fixture_dir, '/tmp'])
+
+        expect(definition_count).to eq(2)
+        expect(custom_cache.size).to eq(2)
+      end
+
+      it 'raises when explicit HTTP adapter does not implement cache_key' do
+        adapter_class = Class.new do
+          attr_reader :client
+
+          def initialize
+            @client = Object.new
+          end
+        end
+
+        expect {
+          described_class.new(wsdl, http: adapter_class.new)
+        }.to raise_error(WSDL::InvalidHTTPAdapterError, /must implement #cache_key/)
+      end
+
+      it 'raises when explicit HTTP adapter returns empty cache_key' do
+        adapter_class = Class.new do
+          attr_reader :client
+
+          def initialize
+            @client = Object.new
+          end
+
+          def cache_key
+            ''
+          end
+        end
+
+        expect {
+          described_class.new(wsdl, http: adapter_class.new)
+        }.to raise_error(WSDL::InvalidHTTPAdapterError, /must return a non-empty #cache_key/)
+      end
+
+      it 'shares cache entries across explicit HTTP adapters with the same cache_key' do
+        adapter_class = Class.new do
+          attr_reader :cache_key, :client
+
+          def initialize(cache_key)
+            @cache_key = cache_key
+            @client = Object.new
+          end
+        end
+
+        custom_cache = WSDL::Cache.new
+        definition_count = 0
+        allow(WSDL::Parser::Result).to receive(:new) do |_, _|
+          definition_count += 1
+          instance_double(WSDL::Parser::Result, services: {}, operations: [])
+        end
+
+        described_class.new(wsdl, cache: custom_cache, http: adapter_class.new('shared-http'))
+        described_class.new(wsdl, cache: custom_cache, http: adapter_class.new('shared-http'))
+
+        expect(definition_count).to eq(1)
+        expect(custom_cache.size).to eq(1)
       end
     end
   end

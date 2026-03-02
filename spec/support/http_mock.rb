@@ -13,6 +13,10 @@ module SpecSupport
       :mock_client
     end
 
+    def cache_key
+      self.class.name
+    end
+
     def get(url)
       @fakes[url] or raise_mock_error! :get, url
     end

@@ -49,6 +49,10 @@ module WSDL
   #
   #     attr_reader :client
   #
+  #     def cache_key
+  #       'my-http-adapter:v1'
+  #     end
+  #
   #     def get(url)
   #       @client.get(url).body
   #     end
@@ -103,6 +107,13 @@ module WSDL
     #
     # @return [::HTTPClient] the httpclient instance
     attr_reader :client
+
+    # Returns a stable cache fingerprint for parser cache partitioning.
+    #
+    # @return [String] adapter cache identity
+    def cache_key
+      self.class.name
+    end
 
     # Executes an HTTP GET request.
     #

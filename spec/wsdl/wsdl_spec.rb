@@ -15,6 +15,10 @@ describe WSDL do
 
     it 'can be changed to use a custom adapter' do
       adapter_class = Class.new do
+        def cache_key
+          'custom-adapter'
+        end
+
         def client
           'http-client'
         end

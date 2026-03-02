@@ -69,6 +69,21 @@ module WSDL
   class PathRestrictionError < Error
   end
 
+  # Raised when an HTTP adapter does not satisfy the required interface.
+  #
+  # This is raised when custom adapters are missing required methods or return
+  # invalid values for required methods.
+  #
+  # @example
+  #   begin
+  #     client = WSDL::Client.new(wsdl, http: custom_adapter)
+  #   rescue WSDL::InvalidHTTPAdapterError => e
+  #     puts "Invalid adapter: #{e.message}"
+  #   end
+  #
+  class InvalidHTTPAdapterError < Error
+  end
+
   # Raised when signature verification fails on a response.
   #
   # This error is raised when:
