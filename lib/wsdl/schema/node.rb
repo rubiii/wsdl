@@ -382,7 +382,11 @@ module WSDL
       # @return [Node, nil] the resolved type node
       def resolve_type(qname)
         local, ns = expand_qname(qname, @namespaces, @context[:target_namespace])
-        @collection&.find_type(ns, local)
+        @collection&.fetch_type(
+          ns,
+          local,
+          context: "base type reference #{qname.inspect} on schema node #{name.inspect}"
+        )
       end
 
       # Resolves a qualified attribute group name to a Node.
@@ -391,7 +395,11 @@ module WSDL
       # @return [Node, nil] the resolved attribute group node
       def resolve_attribute_group(qname)
         local, ns = expand_qname(qname, @namespaces, @context[:target_namespace])
-        @collection&.find_attribute_group(ns, local)
+        @collection&.fetch_attribute_group(
+          ns,
+          local,
+          context: "attributeGroup reference #{qname.inspect} on schema node #{name.inspect}"
+        )
       end
 
       # Validates element count against limits.

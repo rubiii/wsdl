@@ -139,13 +139,31 @@ RSpec.describe WSDL::Schema::Collection do
       it 'raises error when namespace not found' do
         expect {
           collection.find_element('http://unknown.com', 'User')
-        }.to raise_error(/no schema found for namespace/)
+        }.to raise_error(WSDL::UnresolvedReferenceError, /no schema found for namespace/)
       end
 
       it 'raises descriptive error for nil namespace' do
         expect {
           collection.find_element(nil, 'User')
-        }.to raise_error(/no schema found for namespace nil/)
+        }.to raise_error(WSDL::UnresolvedReferenceError, /no schema found for namespace nil/)
+      end
+    end
+
+    describe '#fetch_element' do
+      it 'returns the element when found' do
+        result = collection.fetch_element('http://example.com/test', 'User')
+        expect(result).to eq(element_node)
+      end
+
+      it 'raises typed error when element is missing in schema' do
+        expect {
+          collection.fetch_element('http://example.com/test', 'NonExistent', context: 'test context')
+        }.to raise_error(WSDL::UnresolvedReferenceError) { |error|
+          expect(error.reference_type).to eq(:element)
+          expect(error.reference_name).to eq('NonExistent')
+          expect(error.namespace).to eq('http://example.com/test')
+          expect(error.context).to eq('test context')
+        }
       end
     end
 
@@ -163,7 +181,23 @@ RSpec.describe WSDL::Schema::Collection do
       it 'raises error when namespace not found' do
         expect {
           collection.find_complex_type('http://unknown.com', 'UserType')
-        }.to raise_error(/no schema found for namespace/)
+        }.to raise_error(WSDL::UnresolvedReferenceError, /no schema found for namespace/)
+      end
+    end
+
+    describe '#fetch_complex_type' do
+      it 'returns the complex type when found' do
+        result = collection.fetch_complex_type('http://example.com/test', 'UserType')
+        expect(result).to eq(complex_type_node)
+      end
+
+      it 'raises typed error when complex type is missing in schema' do
+        expect {
+          collection.fetch_complex_type('http://example.com/test', 'NonExistent')
+        }.to raise_error(WSDL::UnresolvedReferenceError) { |error|
+          expect(error.reference_type).to eq(:complex_type)
+          expect(error.reference_name).to eq('NonExistent')
+        }
       end
     end
 
@@ -181,7 +215,23 @@ RSpec.describe WSDL::Schema::Collection do
       it 'raises error when namespace not found' do
         expect {
           collection.find_simple_type('http://unknown.com', 'StatusType')
-        }.to raise_error(/no schema found for namespace/)
+        }.to raise_error(WSDL::UnresolvedReferenceError, /no schema found for namespace/)
+      end
+    end
+
+    describe '#fetch_simple_type' do
+      it 'returns the simple type when found' do
+        result = collection.fetch_simple_type('http://example.com/test', 'StatusType')
+        expect(result).to eq(simple_type_node)
+      end
+
+      it 'raises typed error when simple type is missing in schema' do
+        expect {
+          collection.fetch_simple_type('http://example.com/test', 'NonExistent')
+        }.to raise_error(WSDL::UnresolvedReferenceError) { |error|
+          expect(error.reference_type).to eq(:simple_type)
+          expect(error.reference_name).to eq('NonExistent')
+        }
       end
     end
 
@@ -204,7 +254,28 @@ RSpec.describe WSDL::Schema::Collection do
       it 'raises error when namespace not found' do
         expect {
           collection.find_type('http://unknown.com', 'UserType')
-        }.to raise_error(/no schema found for namespace/)
+        }.to raise_error(WSDL::UnresolvedReferenceError, /no schema found for namespace/)
+      end
+    end
+
+    describe '#fetch_type' do
+      it 'returns complex type when found' do
+        result = collection.fetch_type('http://example.com/test', 'UserType')
+        expect(result).to eq(complex_type_node)
+      end
+
+      it 'returns simple type when complex type is not found' do
+        result = collection.fetch_type('http://example.com/test', 'StatusType')
+        expect(result).to eq(simple_type_node)
+      end
+
+      it 'raises typed error when type is missing in schema' do
+        expect {
+          collection.fetch_type('http://example.com/test', 'NonExistent')
+        }.to raise_error(WSDL::UnresolvedReferenceError) { |error|
+          expect(error.reference_type).to eq(:type)
+          expect(error.reference_name).to eq('NonExistent')
+        }
       end
     end
 
@@ -222,7 +293,23 @@ RSpec.describe WSDL::Schema::Collection do
       it 'raises error when namespace not found' do
         expect {
           collection.find_attribute('http://unknown.com', 'id')
-        }.to raise_error(/no schema found for namespace/)
+        }.to raise_error(WSDL::UnresolvedReferenceError, /no schema found for namespace/)
+      end
+    end
+
+    describe '#fetch_attribute' do
+      it 'returns the attribute when found' do
+        result = collection.fetch_attribute('http://example.com/test', 'id')
+        expect(result).to eq(attribute_node)
+      end
+
+      it 'raises typed error when attribute is missing in schema' do
+        expect {
+          collection.fetch_attribute('http://example.com/test', 'NonExistent')
+        }.to raise_error(WSDL::UnresolvedReferenceError) { |error|
+          expect(error.reference_type).to eq(:attribute)
+          expect(error.reference_name).to eq('NonExistent')
+        }
       end
     end
 
@@ -240,7 +327,23 @@ RSpec.describe WSDL::Schema::Collection do
       it 'raises error when namespace not found' do
         expect {
           collection.find_attribute_group('http://unknown.com', 'CommonAttrs')
-        }.to raise_error(/no schema found for namespace/)
+        }.to raise_error(WSDL::UnresolvedReferenceError, /no schema found for namespace/)
+      end
+    end
+
+    describe '#fetch_attribute_group' do
+      it 'returns the attribute group when found' do
+        result = collection.fetch_attribute_group('http://example.com/test', 'CommonAttrs')
+        expect(result).to eq(attribute_group_node)
+      end
+
+      it 'raises typed error when attribute group is missing in schema' do
+        expect {
+          collection.fetch_attribute_group('http://example.com/test', 'NonExistent')
+        }.to raise_error(WSDL::UnresolvedReferenceError) { |error|
+          expect(error.reference_type).to eq(:attribute_group)
+          expect(error.reference_name).to eq('NonExistent')
+        }
       end
     end
   end
@@ -255,7 +358,9 @@ RSpec.describe WSDL::Schema::Collection do
 
       expect {
         collection.find_element('http://example.com/unknown', 'Test')
-      }.to raise_error(%r{Available namespaces:.*http://example\.com/known})
+      }.to raise_error(WSDL::UnresolvedReferenceError) { |error|
+        expect(error.message).to match(%r{Available namespaces:.*http://example\.com/known})
+      }
     end
 
     it 'shows (none) when no schemas available' do

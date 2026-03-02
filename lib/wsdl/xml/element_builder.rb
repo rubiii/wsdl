@@ -67,14 +67,14 @@ module WSDL
       #
       # @param part [Hash] the part definition with :element and :namespaces keys
       # @return [Element] the built element
-      # @raise [RuntimeError] if the schema cannot be found
-      # rubocop:disable Metrics/AbcSize -- linear element construction, splitting would hurt readability
+      # @raise [UnresolvedReferenceError] if element references cannot be resolved
       def build_element(part)
         local, namespace = expand_qname(part[:element], part[:namespaces])
-        schema = @schemas.find_by_namespace(namespace)
-        raise "Unable to find schema for #{namespace.inspect}" unless schema
-
-        schema_element = schema.elements.fetch(local)
+        schema_element = @schemas.fetch_element(
+          namespace,
+          local,
+          context: "message part element reference #{part[:element].inspect}"
+        )
         type = find_type_for_element(schema_element)
 
         element = Element.new
@@ -86,7 +86,6 @@ module WSDL
         handle_type(element, type)
         element
       end
-      # rubocop:enable Metrics/AbcSize
 
       # Applies type information to an element.
       #
@@ -152,13 +151,14 @@ module WSDL
           attr = Attribute.new
 
           if schema_attr.ref
-            local, namespace = expand_qname(schema_attr.ref, schema_attr.namespaces)
-            schema = find_schema(namespace)
-
-            if schema
-              schema_attr = schema.attributes[local]
-            else
-              @logger.debug("Unable to find schema for attribute@ref #{schema_attr.ref.inspect}")
+            begin
+              schema_attr = find_attribute(
+                schema_attr.ref,
+                schema_attr.namespaces,
+                context: "attribute@ref #{schema_attr.ref.inspect} on type #{type.name.inspect}"
+              )
+            rescue UnresolvedReferenceError => e
+              @logger.debug("Unable to resolve attribute@ref #{schema_attr.ref.inspect}: #{e.message}")
               next
             end
           end
@@ -283,42 +283,31 @@ module WSDL
         local, namespace = expand_qname(qname, namespaces)
 
         return qname unless namespace
+        return qname if namespace == NS::XSD
 
-        schema = find_schema(namespace)
-
-        if schema
-          schema.complex_types[local] || schema.simple_types[local]
-        else
-          qname
-        end
+        @schemas.fetch_type(namespace, local, context: "type reference #{qname.inspect}")
       end
 
       # Finds a global element by its qualified name.
       #
       # @param qname [String] the qualified element name (prefix:localName)
       # @param namespaces [Hash] namespace declarations in scope
+      # @param context [String, nil] additional context for lookup failures
       # @return [Schema::Node] the resolved element
-      def find_element(qname, namespaces)
+      def find_element(qname, namespaces, context: nil)
         local, namespace = expand_qname(qname, namespaces)
-        @schemas.find_element(namespace, local)
+        @schemas.fetch_element(namespace, local, context: context || "element reference #{qname.inspect}")
       end
 
       # Finds a global attribute by its qualified name.
       #
       # @param qname [String] the qualified attribute name (prefix:localName)
       # @param namespaces [Hash] namespace declarations in scope
+      # @param context [String, nil] additional context for lookup failures
       # @return [Schema::Node] the resolved attribute
-      def find_attribute(qname, namespaces)
+      def find_attribute(qname, namespaces, context: nil)
         local, namespace = expand_qname(qname, namespaces)
-        @schemas.find_attribute(namespace, local)
-      end
-
-      # Finds a schema by its target namespace.
-      #
-      # @param namespace [String] the namespace URI
-      # @return [Schema::Definition, nil] the matching schema, or nil if not found
-      def find_schema(namespace)
-        @schemas.find_by_namespace(namespace)
+        @schemas.fetch_attribute(namespace, local, context: context || "attribute reference #{qname.inspect}")
       end
 
       # Validates nesting depth against limits.

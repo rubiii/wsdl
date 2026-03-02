@@ -218,6 +218,57 @@ RSpec.describe WSDL::XML::ElementBuilder do
       expect(elements.first.name).to eq('TestElement')
     end
 
+    it 'raises typed error when referenced schema namespace is missing' do
+      builder = described_class.new(test_schemas)
+
+      part = {
+        element: 'other:TestElement',
+        namespaces: { 'xmlns:other' => 'http://example.com/other' }
+      }
+
+      expect {
+        builder.build([part])
+      }.to raise_error(WSDL::UnresolvedReferenceError) { |error|
+        expect(error.reference_type).to eq(:schema_namespace)
+        expect(error.namespace).to eq('http://example.com/other')
+      }
+    end
+
+    it 'raises typed error when referenced element is missing in schema' do
+      builder = described_class.new(test_schemas)
+
+      part = {
+        element: 'tns:MissingElement',
+        namespaces: { 'xmlns:tns' => 'http://example.com/test' }
+      }
+
+      expect {
+        builder.build([part])
+      }.to raise_error(WSDL::UnresolvedReferenceError) { |error|
+        expect(error.reference_type).to eq(:element)
+        expect(error.reference_name).to eq('MissingElement')
+        expect(error.namespace).to eq('http://example.com/test')
+      }
+    end
+
+    it 'raises typed error when referenced custom type is missing in schema' do
+      builder = described_class.new(test_schemas)
+
+      part = {
+        name: 'payload',
+        type: 'tns:MissingType',
+        namespaces: { 'xmlns:tns' => 'http://example.com/test' }
+      }
+
+      expect {
+        builder.build([part])
+      }.to raise_error(WSDL::UnresolvedReferenceError) { |error|
+        expect(error.reference_type).to eq(:type)
+        expect(error.reference_name).to eq('MissingType')
+        expect(error.namespace).to eq('http://example.com/test')
+      }
+    end
+
     it 'returns empty array for empty parts' do
       builder = described_class.new(test_schemas)
 

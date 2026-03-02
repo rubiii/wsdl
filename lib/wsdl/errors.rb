@@ -332,7 +332,8 @@ module WSDL
   # Raised when a WSDL reference cannot be resolved.
   #
   # This error is raised when binding, portType, or message references point
-  # to definitions that do not exist in the parsed WSDL document set.
+  # to definitions that do not exist in the parsed WSDL document set, or when
+  # schema namespaces/components cannot be resolved during message building.
   #
   # @example
   #   begin
@@ -349,6 +350,9 @@ module WSDL
     # @return [String, nil] unresolved reference name
     attr_reader :reference_name
 
+    # @return [String, nil] namespace associated with the unresolved reference
+    attr_reader :namespace
+
     # @return [String, nil] context where resolution failed
     attr_reader :context
 
@@ -357,10 +361,12 @@ module WSDL
     # @param message [String] error message
     # @param reference_type [Symbol, nil] type of reference
     # @param reference_name [String, nil] unresolved reference
+    # @param namespace [String, nil] unresolved namespace for schema lookups
     # @param context [String, nil] call-site context
-    def initialize(message = nil, reference_type: nil, reference_name: nil, context: nil)
+    def initialize(message = nil, reference_type: nil, reference_name: nil, namespace: nil, context: nil)
       @reference_type = reference_type
       @reference_name = reference_name
+      @namespace = namespace
       @context = context
       super(message)
     end

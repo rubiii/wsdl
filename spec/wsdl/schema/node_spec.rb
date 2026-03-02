@@ -362,7 +362,9 @@ RSpec.describe WSDL::Schema::Node do
 
       let(:collection) do
         instance_double(WSDL::Schema::Collection).tap do |c|
-          allow(c).to receive(:find_type).with('http://example.com', 'BaseType').and_return(base_type)
+          allow(c).to receive(:fetch_type)
+            .with('http://example.com', 'BaseType', context: anything)
+            .and_return(base_type)
         end
       end
 
@@ -384,6 +386,36 @@ RSpec.describe WSDL::Schema::Node do
         elements = node.elements
         expect(elements.count).to eq(2)
         expect(elements.map(&:name)).to eq(%w[baseField derivedField])
+      end
+
+      it 'raises typed error when base type cannot be resolved' do
+        unresolved_collection = instance_double(WSDL::Schema::Collection)
+        allow(unresolved_collection).to receive(:fetch_type).with('http://example.com', 'MissingType',
+                                                                  context: anything).and_raise(
+                                                                    WSDL::UnresolvedReferenceError.new(
+                                                                      'missing type',
+                                                                      reference_type: :type,
+                                                                      reference_name: 'MissingType'
+                                                                    )
+                                                                  )
+
+        context = { target_namespace: 'http://example.com' }
+        node = new_node('
+          <xs:complexType name="DerivedType" xmlns:xs="http://www.w3.org/2001/XMLSchema"
+                                             xmlns:tns="http://example.com">
+            <xs:complexContent>
+              <xs:extension base="tns:MissingType">
+                <xs:sequence>
+                  <xs:element name="derivedField" type="xs:int"/>
+                </xs:sequence>
+              </xs:extension>
+            </xs:complexContent>
+          </xs:complexType>
+        ', unresolved_collection, context)
+
+        expect {
+          node.elements
+        }.to raise_error(WSDL::UnresolvedReferenceError, /missing type/)
       end
     end
   end
@@ -447,8 +479,9 @@ RSpec.describe WSDL::Schema::Node do
 
       let(:collection) do
         instance_double(WSDL::Schema::Collection).tap do |c|
-          allow(c).to receive(:find_attribute_group).with('http://example.com',
-                                                          'CommonAttrs').and_return(attribute_group)
+          allow(c).to receive(:fetch_attribute_group)
+            .with('http://example.com', 'CommonAttrs', context: anything)
+            .and_return(attribute_group)
         end
       end
 
@@ -462,6 +495,29 @@ RSpec.describe WSDL::Schema::Node do
         attributes = node.attributes
         expect(attributes.count).to eq(2)
         expect(attributes.map(&:name)).to eq(%w[id class])
+      end
+
+      it 'raises typed error when attributeGroup cannot be resolved' do
+        unresolved_collection = instance_double(WSDL::Schema::Collection)
+        allow(unresolved_collection).to receive(:fetch_attribute_group)
+          .with('http://example.com', 'MissingGroup', context: anything)
+          .and_raise(
+            WSDL::UnresolvedReferenceError.new(
+              'missing group',
+              reference_type: :attribute_group,
+              reference_name: 'MissingGroup'
+            )
+          )
+
+        context = { target_namespace: 'http://example.com' }
+        node = new_node('
+          <xs:attributeGroup ref="tns:MissingGroup" xmlns:xs="http://www.w3.org/2001/XMLSchema"
+                                                    xmlns:tns="http://example.com"/>
+        ', unresolved_collection, context)
+
+        expect {
+          node.attributes
+        }.to raise_error(WSDL::UnresolvedReferenceError, /missing group/)
       end
     end
   end
