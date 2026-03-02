@@ -139,7 +139,7 @@ The following XSD types are automatically converted:
 | `xsd:float`, `xsd:double` | `Float` |
 | `xsd:boolean` | `true` / `false` |
 | `xsd:date` | `Date` |
-| `xsd:dateTime`, `xsd:time` | `Time` |
+| `xsd:dateTime`, `xsd:time` | `Time` (when timezone is explicit), otherwise `String` |
 | `xsd:base64Binary`, `xsd:hexBinary` | `String` (decoded) |
 
 Unknown types are returned as strings.
