@@ -16,6 +16,12 @@ describe WSDL::Parser::Result do
     end
   end
 
+  describe '#documents' do
+    it 'returns a sealed document collection after import' do
+      expect(parser_result.documents).to be_sealed
+    end
+  end
+
   describe '#services' do
     it 'returns a map of services and ports' do
       expect(parser_result.services).to eq(

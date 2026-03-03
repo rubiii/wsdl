@@ -16,13 +16,20 @@ module WSDL
       # Creates a new empty DocumentCollection.
       def initialize
         @documents = []
+        @sealed = false
       end
 
       # Adds a document to the collection.
       #
       # @param document [Document] the document to add
       # @return [Array<Document>] the updated documents array
+      # @raise [SealedCollectionError] if the collection has been sealed
       def <<(document)
+        if sealed?
+          raise SealedCollectionError,
+                'Cannot add documents after import has completed and the collection is sealed.'
+        end
+
         @documents << document
       end
 
@@ -79,6 +86,21 @@ module WSDL
       def service_port(service_name, port_name)
         service = services.fetch(service_name)
         service.ports.fetch(port_name)
+      end
+
+      # Seals this collection against further mutation.
+      #
+      # @return [DocumentCollection] self
+      def seal!
+        @sealed = true
+        self
+      end
+
+      # Returns whether this collection is sealed against mutation.
+      #
+      # @return [Boolean] true when sealed
+      def sealed?
+        @sealed
       end
 
       private

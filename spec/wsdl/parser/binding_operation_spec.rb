@@ -44,8 +44,8 @@ describe WSDL::Parser::BindingOperation do
   end
 
   def get_binding_operation(fixture_path, binding_name, operation_name)
-    client = WSDL::Client.new fixture(fixture_path)
-    document = client.parser_result.documents.first
+    parser_result = WSDL::Parser::Result.new(fixture(fixture_path), http_mock)
+    document = parser_result.documents.first
     _, binding = document.bindings.find { |qname, _| qname.local == binding_name }
     binding.operations[operation_name]
   end

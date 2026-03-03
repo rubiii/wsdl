@@ -82,14 +82,6 @@ module WSDL
       @parser_result = load_parser_result(wsdl, cache, resolved_sandbox_paths)
     end
 
-    # Returns the Parser::Result instance containing parsed WSDL data.
-    #
-    # @return [Parser::Result] the parsed WSDL result
-    #
-    # @api private
-    #
-    attr_reader :parser_result
-
     # Returns whether pretty printing is enabled for XML output.
     #
     # @return [Boolean] true if XML will be formatted with indentation
@@ -101,6 +93,11 @@ module WSDL
     # @return [Limits] the limits instance
     #
     attr_reader :limits
+
+    # Returns the schema import failure policy used while parsing.
+    #
+    # @return [Symbol] schema import policy (`:best_effort` or `:strict`)
+    attr_reader :schema_imports
 
     # Returns the HTTP adapter's client instance for configuration.
     #
@@ -120,6 +117,19 @@ module WSDL
     #
     def services
       @parser_result.services
+    end
+
+    # Returns the name of the primary service defined by the WSDL.
+    #
+    # Falls back to the first discovered service key when the root
+    # `definitions` element does not provide a `name` attribute.
+    #
+    # @return [String, nil] the service name, or nil if no service exists
+    def service_name
+      name = @parser_result.service_name
+      return name if name && !name.empty?
+
+      @parser_result.services.keys.first
     end
 
     # Returns an array of operation names for a service and port.

@@ -15,11 +15,12 @@ describe WSDL::Client do
   describe '.new' do
     it 'expects a local or remote WSDL document' do
       wsdl_directory = File.dirname(File.expand_path(wsdl))
+      parser_result = instance_double(WSDL::Parser::Result, services: {})
       allow(WSDL::Parser::Result).to receive(:new).with(
         wsdl, instance_of(WSDL.http_adapter), hash_including(sandbox_paths: [wsdl_directory])
-      ).and_return(:parser_result)
+      ).and_return(parser_result)
       client = described_class.new(wsdl)
-      expect(client.parser_result).to eq(:parser_result)
+      expect(client.services).to eq({})
     end
 
     it 'also accepts a custom HTTP adapter to replace the default' do
@@ -29,12 +30,13 @@ describe WSDL::Client do
         end
       end.new
       wsdl_directory = File.dirname(File.expand_path(wsdl))
+      parser_result = instance_double(WSDL::Parser::Result, services: {})
       allow(WSDL::Parser::Result).to receive(:new).with(
         wsdl, http, hash_including(sandbox_paths: [wsdl_directory])
-      ).and_return(:parser_result)
+      ).and_return(parser_result)
 
       client = described_class.new(wsdl, http: http)
-      expect(client.parser_result).to eq(:parser_result)
+      expect(client.services).to eq({})
     end
 
     context 'with caching enabled' do
@@ -430,9 +432,20 @@ describe WSDL::Client do
     end
   end
 
-  describe '#parser_result' do
-    it 'returns the parser result' do
-      expect(client.parser_result).to be_an_instance_of(WSDL::Parser::Result)
+  describe '#service_name' do
+    it 'returns the name of the primary service' do
+      expect(client.service_name).to eq('AmazonFPS')
+    end
+  end
+
+  describe '#schema_imports' do
+    it 'defaults to :best_effort' do
+      expect(client.schema_imports).to eq(:best_effort)
+    end
+
+    it 'returns the configured schema import policy' do
+      strict_client = described_class.new(wsdl, http: http_mock, cache: nil, schema_imports: :strict)
+      expect(strict_client.schema_imports).to eq(:strict)
     end
   end
 

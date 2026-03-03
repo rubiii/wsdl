@@ -30,6 +30,13 @@ The `type` indicates the SOAP version:
 - `http://schemas.xmlsoap.org/wsdl/soap/` - SOAP 1.1
 - `http://schemas.xmlsoap.org/wsdl/soap12/` - SOAP 1.2
 
+### Primary Service Name
+
+``` ruby
+client.service_name
+# => 'OrderService'
+```
+
 ## Operations
 
 Each port exposes a set of operations. List them using `operations`:

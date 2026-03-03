@@ -74,6 +74,8 @@ module WSDL
 
         # Resolve XML schema imports and includes
         import_schemas
+
+        @documents.seal!
       end
 
       private

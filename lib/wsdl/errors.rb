@@ -395,4 +395,11 @@ module WSDL
       super(message)
     end
   end
+
+  # Raised when a sealed collection is mutated.
+  #
+  # This error indicates internal misuse where a parser collection that has
+  # completed its build phase is modified afterward.
+  class SealedCollectionError < Error
+  end
 end

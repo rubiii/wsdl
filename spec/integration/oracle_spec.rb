@@ -104,6 +104,7 @@ describe 'Integration with Oracle' do
 
   describe 'xsd:any support' do
     let(:namespace) { 'urn://oracle.bi.webservices/v7' }
+    let(:schemas) { WSDL::Parser::Result.new(fixture('wsdl/oracle'), WSDL.http_adapter.new).schemas }
 
     it 'marks the JobInfo/detailedInfo element as allowing arbitrary content' do
       # The JobInfo type has a detailedInfo child with xs:any
@@ -116,7 +117,6 @@ describe 'Integration with Oracle' do
       # </xsd:element>
 
       # Build from the response element which contains JobInfo with detailedInfo
-      schemas = client.parser_result.schemas
       builder = WSDL::XML::ElementBuilder.new(schemas)
 
       part = { element: 'sawsoap:getJobInfoResult', namespaces: { 'xmlns:sawsoap' => namespace } }
@@ -144,7 +144,6 @@ describe 'Integration with Oracle' do
       # But the response getJobInfoResult -> jobInfo -> ... -> detailedInfo
       # Let's check the response structure instead by building from the schema directly
 
-      schemas = client.parser_result.schemas
       builder = WSDL::XML::ElementBuilder.new(schemas)
 
       part = { element: 'sawsoap:getJobInfoResult', namespaces: { 'xmlns:sawsoap' => namespace } }
@@ -158,7 +157,6 @@ describe 'Integration with Oracle' do
     end
 
     it 'serializes arbitrary content in elements with xs:any' do
-      schemas = client.parser_result.schemas
       builder = WSDL::XML::ElementBuilder.new(schemas)
 
       part = { element: 'sawsoap:getJobInfoResult', namespaces: { 'xmlns:sawsoap' => namespace } }

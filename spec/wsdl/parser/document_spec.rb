@@ -193,8 +193,8 @@ describe WSDL::Parser::Document do
   end
 
   def get_documents(fixture_path)
-    client = WSDL::Client.new fixture(fixture_path)
-    client.parser_result.documents
+    parser_result = WSDL::Parser::Result.new(fixture(fixture_path), http_mock)
+    parser_result.documents
   end
 
   def local_keys(collection)
