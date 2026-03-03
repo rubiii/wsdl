@@ -96,8 +96,8 @@ operation.security
     digest_algorithm: :sha256
   )
 
-# Enable response verification
-operation.security.verify_response = true
+# Enable strict response verification
+operation.security.verify_response(mode: :required)
 
 # Make the call
 operation.body = { GetOrder: { orderId: 12345 } }

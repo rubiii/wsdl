@@ -308,5 +308,36 @@ describe WSDL::Operation do
 
       expect(response).to be_a(WSDL::Response)
     end
+
+    context 'with response verification enforcement' do
+      before do
+        http_mock.fake_request('http://www.webservicex.net/ConvertTemperature.asmx', 'security/unsigned_response.xml')
+        operation.body = {
+          ConvertTemp: {
+            Temperature: 30,
+            FromUnit: 'degreeCelsius',
+            ToUnit: 'degreeFahrenheit'
+          }
+        }
+      end
+
+      it 'raises when strict verification is required and response is unsigned' do
+        operation.security.verify_response
+
+        expect { operation.call }.to raise_error(WSDL::SignatureVerificationError, /does not contain a signature/)
+      end
+
+      it 'allows unsigned responses in verify_if_present mode' do
+        operation.security.verify_response(mode: WSDL::Security::ResponsePolicy::MODE_IF_PRESENT)
+
+        expect(operation.call).to be_a(WSDL::Response)
+      end
+
+      it 'allows unsigned responses when verification is disabled' do
+        operation.security.verify_response(mode: WSDL::Security::ResponsePolicy::MODE_DISABLED)
+
+        expect(operation.call).to be_a(WSDL::Response)
+      end
+    end
   end
 end

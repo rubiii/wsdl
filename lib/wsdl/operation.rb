@@ -238,12 +238,15 @@ module WSDL
       message = (xml_envelope.nil? ? build : xml_envelope)
 
       raw_response = @http.post(endpoint, http_headers, message)
-      Response.new(
+      response = Response.new(
         raw_response,
         output_body_parts: @operation_info.output.body_parts,
         output_header_parts: @operation_info.output.header_parts,
-        verification: Security::ResponseVerification::Options.from_config(security)
+        verification: security.response_verification_options
       )
+
+      enforce_response_verification!(response)
+      response
     end
 
     # Returns the input style for this operation.
@@ -287,6 +290,19 @@ module WSDL
       end
 
       envelope_xml
+    end
+
+    def enforce_response_verification!(response)
+      case security.verification_mode
+      when Security::ResponsePolicy::MODE_DISABLED
+        nil
+      when Security::ResponsePolicy::MODE_IF_PRESENT
+        response.security.verify! if response.security.signature_present?
+      when Security::ResponsePolicy::MODE_REQUIRED
+        response.security.verify!
+      else
+        raise ArgumentError, "Unknown response verification mode: #{security.verification_mode.inspect}"
+      end
     end
   end
 end

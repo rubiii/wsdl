@@ -50,6 +50,12 @@ module WSDL
     require 'wsdl/security/algorithm_mapper'
     require 'wsdl/security/reference'
     require 'wsdl/security/signature_options'
+    require 'wsdl/security/request_policy'
+    require 'wsdl/security/response_policy'
+    require 'wsdl/security/policy'
+    require 'wsdl/security/credential_normalizer'
+    require 'wsdl/security/request_context'
+    require 'wsdl/security/request_materializer'
     require 'wsdl/security/xml_builder_helper'
 
     # Load individual security components

@@ -53,16 +53,17 @@ module WSDL
       # @return [String] the SOAP envelope with security header
       #
       def apply(envelope_xml)
+        request_context = @config.request_context
         document = parse_document(envelope_xml)
         header_node = find_or_create_header(document)
         security_node = create_security_element(document, header_node)
 
         # Add elements to security header
-        add_timestamp(document, security_node) if @config.timestamp?
-        add_username_token(document, security_node) if @config.username_token?
+        add_timestamp(document, security_node, request_context) if request_context.timestamp?
+        add_username_token(document, security_node, request_context) if request_context.username_token?
 
         # Apply signature if configured (must be last)
-        apply_signature(document, security_node) if @config.signature?
+        apply_signature(document, security_node, request_context) if request_context.signature?
 
         document.to_xml(save_with: xml_save_options)
       end
@@ -128,9 +129,10 @@ module WSDL
       #
       # @param _document [Nokogiri::XML::Document] the SOAP document (unused)
       # @param security_node [Nokogiri::XML::Node]
+      # @param config [RequestContext]
       #
-      def add_timestamp(_document, security_node)
-        timestamp = @config.timestamp_config
+      def add_timestamp(_document, security_node, config)
+        timestamp = config.timestamp_config
 
         builder = Nokogiri::XML::Builder.new do |xml|
           xml['wsu'].Timestamp('xmlns:wsu' => SecurityNS::WSU, 'wsu:Id' => timestamp.id) do
@@ -146,9 +148,10 @@ module WSDL
       #
       # @param _document [Nokogiri::XML::Document] the SOAP document (unused)
       # @param security_node [Nokogiri::XML::Node]
+      # @param config [RequestContext]
       #
-      def add_username_token(_document, security_node)
-        token = @config.username_token_config
+      def add_username_token(_document, security_node, config)
+        token = config.username_token_config
         builder = build_username_token_xml(token)
         security_node.add_child(builder.doc.root)
       end
@@ -188,27 +191,28 @@ module WSDL
       #
       # @param document [Nokogiri::XML::Document]
       # @param security_node [Nokogiri::XML::Node]
+      # @param config [RequestContext]
       #
-      def apply_signature(document, security_node)
-        signature = @config.signature_config
+      def apply_signature(document, security_node, config)
+        signature = config.signature_config
         signature.clear_references
 
-        sign_timestamp_if_configured(security_node, signature)
-        sign_body_if_configured(document, signature)
-        sign_addressing_headers(document, signature) if @config.sign_addressing?
+        sign_timestamp_if_configured(security_node, signature, config)
+        sign_body_if_configured(document, signature, config)
+        sign_addressing_headers(document, signature) if config.sign_addressing?
 
         signature.apply(document, security_node) if signature.references?
       end
 
-      def sign_timestamp_if_configured(security_node, signature)
-        return unless @config.sign_timestamp? && @config.timestamp?
+      def sign_timestamp_if_configured(security_node, signature, config)
+        return unless config.sign_timestamp? && config.timestamp?
 
         timestamp_node = find_timestamp_node(security_node)
         signature.digest!(timestamp_node) if timestamp_node
       end
 
-      def sign_body_if_configured(document, signature)
-        return unless @config.sign_body?
+      def sign_body_if_configured(document, signature, config)
+        return unless config.sign_body?
 
         body_node = find_body_node(document)
         return unless body_node

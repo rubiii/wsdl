@@ -104,6 +104,8 @@ module WSDL
         # @return [Options] verification options extracted from config
         #
         def self.from_config(config)
+          return config.response_verification_options if config.respond_to?(:response_verification_options)
+
           new(
             certificate: Certificate.new(
               trust_store: config.verification_trust_store,

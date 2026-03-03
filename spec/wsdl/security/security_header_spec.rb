@@ -242,6 +242,34 @@ describe WSDL::Security::SecurityHeader do
 
         expect(created).not_to be_nil
       end
+
+      it 'generates fresh nonce and created values across multiple apply calls' do
+        first = parse_xml(header.apply(basic_envelope))
+        second = parse_xml(header.apply(basic_envelope))
+
+        first_nonce = security_node(first).at_xpath(
+          'wsse:UsernameToken/wsse:Nonce',
+          'wsse' => 'http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd'
+        )&.text
+        first_token_id = security_node(first).at_xpath(
+          'wsse:UsernameToken/@wsu:Id',
+          'wsse' => 'http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd',
+          'wsu' => 'http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd'
+        )&.text
+
+        second_nonce = security_node(second).at_xpath(
+          'wsse:UsernameToken/wsse:Nonce',
+          'wsse' => 'http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd'
+        )&.text
+        second_token_id = security_node(second).at_xpath(
+          'wsse:UsernameToken/@wsu:Id',
+          'wsse' => 'http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd',
+          'wsu' => 'http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd'
+        )&.text
+
+        expect(first_nonce).not_to eq(second_nonce)
+        expect(first_token_id).not_to eq(second_token_id)
+      end
     end
 
     context 'with X.509 signature (binary security token)' do

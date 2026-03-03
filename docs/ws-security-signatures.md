@@ -294,7 +294,7 @@ For high-security scenarios, verify that responses from the server are properly 
 ## Enabling Verification
 
 ```ruby
-# Basic verification (checks validity period by default)
+# Strict verification (signature required, system trust store by default)
 operation.security.verify_response
 
 response = operation.call
@@ -307,10 +307,17 @@ else
 end
 ```
 
-You can also use the setter syntax:
+Verification mode is explicit:
 
 ```ruby
-operation.security.verify_response = true
+# Strict: signature must be present and valid
+operation.security.verify_response(mode: :required)
+
+# Opportunistic: verify only when response contains a signature
+operation.security.verify_response(mode: :if_present)
+
+# Disable enforcement (response still exposes response.security.* checks)
+operation.security.verify_response(mode: :disabled)
 ```
 
 ## Checking Signature Presence
@@ -390,8 +397,8 @@ By default, the library checks that the signing certificate is within its validi
 - Certificates that aren't valid yet (clock skew or future-dated certs)
 
 ```ruby
-# Validity and timestamp freshness are checked by default
-operation.security.verify_response
+# Signature is required by default when verify_response is called
+operation.security.verify_response(mode: :required)
 
 # Explicitly disable validity checking (not recommended)
 operation.security.verify_response(check_validity: false)
@@ -478,7 +485,8 @@ end
 
 | Option | Default | Description |
 |--------|---------|-------------|
-| `trust_store` | `nil` | Trust store for certificate chain validation |
+| `mode` | `:required` | Enforcement mode: `:required`, `:if_present`, `:disabled` |
+| `trust_store` | `:system` in `:required` mode, otherwise `nil` | Trust store for certificate chain validation |
 | `check_validity` | `true` | Check certificate validity period (not_before/not_after) |
 | `validate_timestamp` | `true` | Validate response timestamp freshness |
 | `clock_skew` | `300` | Clock skew tolerance in seconds for timestamp validation |
