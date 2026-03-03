@@ -4,6 +4,7 @@
 --no-private
 --readme README.md
 --title "WSDL Ruby Gem Documentation"
+--plugin markdown-relative-links
 -
 MIT-LICENSE
 lib/**/*.rb

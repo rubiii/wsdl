@@ -43,4 +43,5 @@ group :development do
   gem 'rubocop-rspec', require: false
   gem 'rubocop-yard', require: false
   gem 'yard', require: false
+  gem 'yard-markdown-relative-links', require: false
 end
