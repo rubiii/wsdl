@@ -60,7 +60,7 @@ describe 'Integration with AWSE' do
 
     namespace = 'http://webservices.amazon.com/AWSECommerceService/2011-08-01'
 
-    expect(operation.body_parts).to eq([
+    expect(request_body_paths(operation)).to eq([
       [['CartAdd'],
        { namespace: namespace, form: 'qualified', singular: true }
 ],

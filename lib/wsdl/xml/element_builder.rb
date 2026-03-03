@@ -58,6 +58,8 @@ module WSDL
         element = Element.new
         element.name = part[:name]
         element.form = 'unqualified'
+        element.min_occurs = '1'
+        element.max_occurs = '1'
 
         handle_type(element, type)
         element
@@ -69,21 +71,33 @@ module WSDL
       # @return [Element] the built element
       # @raise [UnresolvedReferenceError] if element references cannot be resolved
       def build_element(part)
+        schema_element, namespace = resolve_part_schema_element(part)
+        type = find_type_for_element(schema_element)
+        element = instantiate_schema_element(schema_element, namespace)
+
+        handle_type(element, type)
+        element
+      end
+
+      def resolve_part_schema_element(part)
         local, namespace = expand_qname(part[:element], part[:namespaces])
         schema_element = @schemas.fetch_element(
           namespace,
           local,
           context: "message part element reference #{part[:element].inspect}"
         )
-        type = find_type_for_element(schema_element)
 
+        [schema_element, namespace]
+      end
+
+      def instantiate_schema_element(schema_element, namespace)
         element = Element.new
         element.name = schema_element.name
         element.form = 'qualified'
         element.namespace = namespace
         element.nillable = schema_element.nillable?
-
-        handle_type(element, type)
+        element.min_occurs = schema_element.min_occurs
+        element.max_occurs = schema_element.max_occurs
         element
       end
 
@@ -185,7 +199,7 @@ module WSDL
       # @param depth [Integer] the current nesting depth (default: 1)
       # @return [Hash] a hash with :elements (Array<Element>) and :has_any (Boolean)
       # @raise [ResourceLimitError] if nesting depth exceeds max_type_nesting_depth
-      # rubocop:disable Metrics/AbcSize, Metrics/MethodLength -- cohesive element-building logic, splitting would hurt readability
+      # rubocop:disable Metrics/AbcSize, Metrics/MethodLength, Metrics/BlockLength -- cohesive element-building logic
       def child_elements(parent, type, depth: 1)
         validate_nesting_depth!(depth, type)
         has_any = false
@@ -202,6 +216,8 @@ module WSDL
 
           max_occurs = child_element['maxOccurs'].to_s
           el.singular = max_occurs.empty? || max_occurs == '1'
+          el.min_occurs = child_element.min_occurs
+          el.max_occurs = child_element.max_occurs
 
           if child_element.ref
             child_element = find_element(child_element.ref, child_element.namespaces)
@@ -226,7 +242,7 @@ module WSDL
 
         { elements: elements, has_any: has_any }
       end
-      # rubocop:enable Metrics/AbcSize, Metrics/MethodLength
+      # rubocop:enable Metrics/AbcSize, Metrics/MethodLength, Metrics/BlockLength
 
       # Checks if an element's type creates a recursive definition.
       #

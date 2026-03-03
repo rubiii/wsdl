@@ -45,6 +45,15 @@ module WSDL
     # Default maximum depth of type inheritance/nesting.
     DEFAULT_MAX_TYPE_NESTING_DEPTH = 50
 
+    # Default maximum total elements in request AST construction.
+    DEFAULT_MAX_REQUEST_ELEMENTS = 10_000
+
+    # Default maximum request AST nesting depth.
+    DEFAULT_MAX_REQUEST_DEPTH = 100
+
+    # Default maximum total attributes in request AST construction.
+    DEFAULT_MAX_REQUEST_ATTRIBUTES = 1_000
+
     # Creates a new Limits instance with the specified resource limits.
     #
     # @param max_document_size [Integer, nil] maximum size in bytes for a single WSDL/schema
@@ -59,6 +68,12 @@ module WSDL
     #   Set to nil to disable. Default: 100.
     # @param max_type_nesting_depth [Integer, nil] maximum depth of type inheritance/nesting.
     #   Set to nil to disable. Default: 50.
+    # @param max_request_elements [Integer, nil] maximum total elements allowed in request AST.
+    #   Set to nil to disable. Default: 10,000.
+    # @param max_request_depth [Integer, nil] maximum request AST nesting depth.
+    #   Set to nil to disable. Default: 100.
+    # @param max_request_attributes [Integer, nil] maximum total attributes in request AST.
+    #   Set to nil to disable. Default: 1,000.
     #
     # rubocop:disable Metrics/ParameterLists
     def initialize(
@@ -67,7 +82,10 @@ module WSDL
       max_schemas: DEFAULT_MAX_SCHEMAS,
       max_elements_per_type: DEFAULT_MAX_ELEMENTS_PER_TYPE,
       max_attributes_per_element: DEFAULT_MAX_ATTRIBUTES_PER_ELEMENT,
-      max_type_nesting_depth: DEFAULT_MAX_TYPE_NESTING_DEPTH
+      max_type_nesting_depth: DEFAULT_MAX_TYPE_NESTING_DEPTH,
+      max_request_elements: DEFAULT_MAX_REQUEST_ELEMENTS,
+      max_request_depth: DEFAULT_MAX_REQUEST_DEPTH,
+      max_request_attributes: DEFAULT_MAX_REQUEST_ATTRIBUTES
     )
       # rubocop:enable Metrics/ParameterLists
       @max_document_size = max_document_size
@@ -76,6 +94,9 @@ module WSDL
       @max_elements_per_type = max_elements_per_type
       @max_attributes_per_element = max_attributes_per_element
       @max_type_nesting_depth = max_type_nesting_depth
+      @max_request_elements = max_request_elements
+      @max_request_depth = max_request_depth
+      @max_request_attributes = max_request_attributes
 
       freeze
     end
@@ -98,6 +119,15 @@ module WSDL
     # @return [Integer, nil] maximum depth of type inheritance/nesting
     attr_reader :max_type_nesting_depth
 
+    # @return [Integer, nil] maximum total elements in request AST
+    attr_reader :max_request_elements
+
+    # @return [Integer, nil] maximum request AST nesting depth
+    attr_reader :max_request_depth
+
+    # @return [Integer, nil] maximum total attributes in request AST
+    attr_reader :max_request_attributes
+
     # Creates a new Limits instance with some values changed.
     #
     # @param options [Hash] the limits to override
@@ -107,6 +137,9 @@ module WSDL
     # @option options [Integer, nil] :max_elements_per_type
     # @option options [Integer, nil] :max_attributes_per_element
     # @option options [Integer, nil] :max_type_nesting_depth
+    # @option options [Integer, nil] :max_request_elements
+    # @option options [Integer, nil] :max_request_depth
+    # @option options [Integer, nil] :max_request_attributes
     # @return [Limits] a new Limits instance with the specified changes
     #
     # @example Increase document size limit
@@ -122,7 +155,10 @@ module WSDL
         max_schemas: options.fetch(:max_schemas, @max_schemas),
         max_elements_per_type: options.fetch(:max_elements_per_type, @max_elements_per_type),
         max_attributes_per_element: options.fetch(:max_attributes_per_element, @max_attributes_per_element),
-        max_type_nesting_depth: options.fetch(:max_type_nesting_depth, @max_type_nesting_depth)
+        max_type_nesting_depth: options.fetch(:max_type_nesting_depth, @max_type_nesting_depth),
+        max_request_elements: options.fetch(:max_request_elements, @max_request_elements),
+        max_request_depth: options.fetch(:max_request_depth, @max_request_depth),
+        max_request_attributes: options.fetch(:max_request_attributes, @max_request_attributes)
       )
     end
 
@@ -137,7 +173,10 @@ module WSDL
         max_schemas: @max_schemas,
         max_elements_per_type: @max_elements_per_type,
         max_attributes_per_element: @max_attributes_per_element,
-        max_type_nesting_depth: @max_type_nesting_depth
+        max_type_nesting_depth: @max_type_nesting_depth,
+        max_request_elements: @max_request_elements,
+        max_request_depth: @max_request_depth,
+        max_request_attributes: @max_request_attributes
       }
     end
 
@@ -146,13 +185,19 @@ module WSDL
     # @return [String] the limits formatted for display
     #
     def inspect
-      "#<#{self.class.name} " \
-        "max_document_size=#{format_bytes(@max_document_size)} " \
-        "max_total_download_size=#{format_bytes(@max_total_download_size)} " \
-        "max_schemas=#{@max_schemas || 'unlimited'} " \
-        "max_elements_per_type=#{@max_elements_per_type || 'unlimited'} " \
-        "max_attributes_per_element=#{@max_attributes_per_element || 'unlimited'} " \
-        "max_type_nesting_depth=#{@max_type_nesting_depth || 'unlimited'}>"
+      parts = {
+        max_document_size: format_bytes(@max_document_size),
+        max_total_download_size: format_bytes(@max_total_download_size),
+        max_schemas: limit_value(@max_schemas),
+        max_elements_per_type: limit_value(@max_elements_per_type),
+        max_attributes_per_element: limit_value(@max_attributes_per_element),
+        max_type_nesting_depth: limit_value(@max_type_nesting_depth),
+        max_request_elements: limit_value(@max_request_elements),
+        max_request_depth: limit_value(@max_request_depth),
+        max_request_attributes: limit_value(@max_request_attributes)
+      }.map { |key, value| "#{key}=#{value}" }.join(' ')
+
+      "#<#{self.class.name} #{parts}>"
     end
 
     # Checks equality with another Limits instance.
@@ -174,6 +219,16 @@ module WSDL
     #
     def hash
       to_h.hash
+    end
+
+    private
+
+    # Formats numeric limits for human-readable output.
+    #
+    # @param value [Integer, nil] configured limit value
+    # @return [Integer, String] numeric value or `'unlimited'` for nil
+    def limit_value(value)
+      value || 'unlimited'
     end
   end
 end

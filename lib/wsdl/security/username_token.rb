@@ -77,6 +77,10 @@ module WSDL
     class UsernameToken
       # Local aliases for token profile constants
       PasswordType = Constants::TokenProfiles::UsernameToken
+
+      # Alias for encoding URI constants used in UsernameToken XML.
+      #
+      # @return [Module]
       Encoding = Constants::Encoding
 
       # Returns the username.

@@ -20,6 +20,9 @@ module WSDL
     # @api private
     #
     class Element
+      # Canonical frozen empty array shared for elements without attributes.
+      #
+      # @return [Array<WSDL::XML::Attribute>]
       EMPTY_ATTRIBUTES = [].freeze
 
       # Creates a new Element with default values.
@@ -28,6 +31,8 @@ module WSDL
         @attributes  = EMPTY_ATTRIBUTES
         @recursive   = false
         @singular    = true
+        @min_occurs  = '1'
+        @max_occurs  = '1'
         @any_content = false
         @nillable    = false
       end
@@ -82,6 +87,26 @@ module WSDL
       #   @return [Boolean] true for singular elements, false for repeating elements
       attr_accessor :singular
       alias singular? singular
+
+      # @!attribute [rw] min_occurs
+      #   Minimum occurrences for this element in schema terms.
+      #   @return [String] minOccurs value (default: '1')
+      attr_accessor :min_occurs
+
+      # @!attribute [rw] max_occurs
+      #   Maximum occurrences for this element in schema terms.
+      #   @return [String] maxOccurs value (default: '1')
+      attr_accessor :max_occurs
+
+      # @return [Boolean] true if the element is optional (minOccurs=0)
+      def optional?
+        min_occurs.to_s == '0'
+      end
+
+      # @return [Boolean] true if the element is required (minOccurs>0)
+      def required?
+        !optional?
+      end
 
       # @!attribute [rw] nillable
       #   Whether this element can have a nil value (xsi:nil="true").
@@ -166,7 +191,13 @@ module WSDL
       # rubocop:disable Metrics/AbcSize, Metrics/PerceivedComplexity, Metrics/CyclomaticComplexity -- straightforward tree traversal, splitting would hurt readability
       def to_a(memo = [], stack = [])
         new_stack = stack + [name]
-        data = { namespace: namespace, form: form, singular: singular? }
+        data = {
+          namespace: namespace,
+          form: form,
+          singular: singular?,
+          min_occurs: min_occurs,
+          max_occurs: max_occurs
+        }
 
         unless attributes.empty?
           data[:attributes] = attributes.to_h { |attribute|

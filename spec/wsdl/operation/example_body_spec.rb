@@ -21,7 +21,7 @@ describe WSDL::Operation do
 
   describe '#example_body' do
     it 'returns an Array with a single Hash for Arrays of complex types' do
-      expect(add_logins.example_body).to eq(
+      expect(request_template(add_logins, section: :body)).to eq(
         addLogins: {
 
           # array of complex types
@@ -66,7 +66,7 @@ describe WSDL::Operation do
     end
 
     it 'returns an Array with a single simple type for Arrays of simple types' do
-      expect(get_mu_bets_lite.example_body).to eq(
+      expect(request_template(get_mu_bets_lite, section: :body)).to eq(
         getMUBetsLite: {
           request: {
             header: {

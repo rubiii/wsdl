@@ -28,7 +28,7 @@ describe 'Integration with namespaced actions example' do
     expect(operation.soap_action).to eq('http://api.example.com/api/Client.Delete')
     expect(operation.endpoint).to eq('https://api.example.com/api/api.asmx')
 
-    expect(operation.body_parts).to eq([
+    expect(request_body_paths(operation)).to eq([
       [['Client.Delete'],
        { namespace: 'http://api.example.com/api/', form: 'qualified',
          singular: true

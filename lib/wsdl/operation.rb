@@ -1,110 +1,79 @@
 # frozen_string_literal: true
 
 module WSDL
-  # Represents a SOAP operation that can be called.
-  #
-  # This class provides the interface for building and executing SOAP requests.
-  # It allows you to set the request header and body, customize HTTP headers,
-  # and execute the operation to receive a response.
-  #
-  # @example Basic operation call
-  #   operation = client.operation('Service', 'Port', 'GetUser')
-  #   operation.body = { user_id: 123 }
-  #   response = operation.call
-  #   puts response.body
-  #
-  # @example Using example messages
-  #   operation = client.operation('Service', 'Port', 'CreateUser')
-  #   operation.body = operation.example_body
-  #   operation.body[:user][:name] = 'John Doe'
-  #   operation.body[:user][:email] = 'john@example.com'
-  #   response = operation.call
-  #
-  # @example Customizing the request
-  #   operation = client.operation('Service', 'Port', 'SecureOperation')
-  #   operation.header = { auth_token: 'secret' }
-  #   operation.soap_action = 'CustomAction'
-  #   operation.endpoint = 'https://other-server.example.com/soap'
-  #   response = operation.call
-  #
-  # @example WS-Security with UsernameToken
-  #   operation = client.operation('Service', 'Port', 'SecureOperation')
-  #   operation.security.username_token('user', 'secret')
-  #   response = operation.call
-  #
-  # @example WS-Security with X.509 signing
-  #   cert = OpenSSL::X509::Certificate.new(File.read('cert.pem'))
-  #   key = OpenSSL::PKey::RSA.new(File.read('key.pem'), 'password')
-  #
-  #   operation = client.operation('Service', 'Port', 'SecureOperation')
-  #   operation.security.timestamp
-  #   operation.security.signature(certificate: cert, private_key: key)
-  #   response = operation.call
-  #
+  # Represents a callable SOAP operation.
   class Operation
-    # Default encoding for SOAP messages.
+    # Default XML encoding used in SOAP request headers.
+    #
+    # @return [String]
     ENCODING = 'UTF-8'
 
-    # Content-Type headers for different SOAP versions.
+    # HTTP Content-Type base values keyed by SOAP version.
+    #
+    # @return [Hash{String => String}]
     CONTENT_TYPE = {
       '1.1' => 'text/xml',
       '1.2' => 'application/soap+xml'
     }.freeze
 
-    # Creates a new Operation instance.
-    #
-    # @param operation_info [Parser::OperationInfo] the parsed operation definition
-    # @param parser_result [Parser::Result] the parser result
-    # @param http [Object] the HTTP adapter instance
-    # @param pretty_print [Boolean] whether to format XML output with indentation
-    #
-    # @api private
-    #
-    def initialize(operation_info, parser_result, http, pretty_print: true)
+    # rubocop:disable Metrics/ParameterLists
+    def initialize(operation_info, parser_result, http, pretty_print: true, strict_schema: true, request_limits: {})
+      # rubocop:enable Metrics/ParameterLists
       @operation_info = operation_info
       @parser_result = parser_result
       @http = http
       @pretty_print = pretty_print
+      @strict_schema = strict_schema
+      @request_limits = request_limits
 
       @endpoint = operation_info.endpoint
       @soap_version = operation_info.soap_version
       @soap_action = operation_info.soap_action
       @encoding = ENCODING
+
+      @request_document = nil
+      @security = Security::Config.new
     end
 
-    # @!attribute [rw] endpoint
-    #   The SOAP endpoint URL.
-    #   @return [String] the endpoint URL
-    attr_accessor :endpoint
+    attr_accessor :endpoint, :soap_version, :soap_action, :encoding, :pretty_print
 
-    # @!attribute [rw] soap_version
-    #   The SOAP version to use ('1.1' or '1.2').
-    #   @return [String] the SOAP version
-    attr_accessor :soap_version
-
-    # @!attribute [rw] soap_action
-    #   The SOAPAction HTTP header value.
-    #   @return [String, nil] the SOAP action
-    attr_accessor :soap_action
-
-    # @!attribute [rw] encoding
-    #   The character encoding for the request.
-    #   @return [String] the encoding (defaults to 'UTF-8')
-    attr_accessor :encoding
-
-    # @!attribute [rw] pretty_print
-    #   Whether to format XML output with indentation and margins.
-    #   Set to `false` for whitespace-sensitive SOAP servers.
-    #   @return [Boolean] true if XML will be formatted (defaults to true)
-    attr_accessor :pretty_print
-
-    # Returns a Hash of HTTP headers to send with the request.
+    # Returns canonical operation contract metadata.
     #
-    # Headers are automatically generated based on the SOAP version and
-    # encoding. For SOAP 1.1, includes a SOAPAction header. For SOAP 1.2,
-    # the action is included in the Content-Type header.
+    # @return [WSDL::Contract::OperationContract]
+    def contract
+      @contract ||= Contract::OperationContract.new(@operation_info)
+    end
+
+    # Builds request AST from DSL and validates it immediately.
     #
-    # @return [Hash{String => String}] the HTTP headers
+    # @yield DSL request block
+    # @return [self]
+    def request(&block)
+      raise RequestDslError, 'operation.request requires a block' unless block
+
+      document = Request::Document.new
+      security = Security::Config.new
+      context = Request::DSLContext.new(document:, security:, request_limits: @request_limits)
+      context.instance_exec(&block)
+
+      validation_contract = request_validation_contract
+
+      Request::Validator.new(
+        contract: validation_contract,
+        strict_schema: @strict_schema,
+        schema_complete: schema_complete_for_validation?
+      ).validate!(document)
+
+      Request::SecurityConflictDetector.new(document:, security:).validate!
+
+      @request_document = document
+      @security = security
+      self
+    end
+
+    # Returns HTTP headers for the current SOAP version/action.
+    #
+    # @return [Hash{String => String}]
     def http_headers
       return @custom_http_headers unless @custom_http_headers.nil?
 
@@ -119,181 +88,134 @@ module WSDL
       end
 
       headers['Content-Type'] = content_type.join(';')
-
       headers
     end
 
-    # @!attribute [w] http_headers
-    #   Sets custom HTTP headers for the request.
-    #   @return [Hash{String => String}] the HTTP headers
+    # Overrides auto-generated HTTP headers for outbound calls.
+    #
+    # @param headers [Hash{String => String}]
+    # @return [void]
     def http_headers=(headers)
       @custom_http_headers = headers
     end
 
-    # @!attribute [rw] header
-    #   The SOAP header data.
-    #   @return [Hash, nil] the header hash
-    attr_accessor :header
-
-    # Generates an example header Hash based on the WSDL definition.
+    # Serializes the current request AST to SOAP envelope XML.
     #
-    # Use this to get a template of the expected header structure,
-    # then fill in the values as needed.
-    #
-    # @return [Hash] an example header hash with placeholder values
-    def example_header
-      Builder::ExampleMessage.build(@operation_info.input.header_parts)
-    end
-
-    # @!attribute [rw] body
-    #   The SOAP body data.
-    #   @return [Hash, nil] the body hash
-    attr_accessor :body
-
-    # Generates an example body Hash based on the WSDL definition.
-    #
-    # Use this to get a template of the expected body structure,
-    # then fill in the values as needed.
-    #
-    # @return [Hash] an example body hash with placeholder values
-    # @example
-    #   body = operation.example_body
-    #   # => { user: { name: "string", age: "int" } }
-    #   body[:user][:name] = "John"
-    #   body[:user][:age] = 30
-    #   operation.body = body
-    def example_body
-      Builder::ExampleMessage.build(@operation_info.input.body_parts)
-    end
-
-    # Returns the input body parts used to build the request body.
-    #
-    # This provides detailed information about the expected structure
-    # of the request body, including element names, types, and nesting.
-    #
-    # @return [Array<Array>] an array of body part definitions
-    def body_parts
-      @operation_info.input.body_parts.inject([]) { |memo, part| memo + part.to_a }
-    end
-
-    # Returns the security configuration for this operation.
-    #
-    # Use this to configure WS-Security features such as UsernameToken
-    # authentication, timestamps, and X.509 certificate signing.
-    #
-    # @return [Security::Config] the security configuration
-    #
-    # @example UsernameToken authentication
-    #   operation.security.username_token('user', 'secret')
-    #
-    # @example Digest authentication
-    #   operation.security.username_token('user', 'secret', digest: true)
-    #
-    # @example Timestamp
-    #   operation.security.timestamp(expires_in: 300)
-    #
-    # @example X.509 signing
-    #   operation.security.signature(
-    #     certificate: cert,
-    #     private_key: key,
-    #     digest_algorithm: :sha256
-    #   )
-    #
-    def security
-      @security ||= Security::Config.new
-    end
-
-    # Builds the SOAP request envelope XML.
-    #
-    # This method constructs the complete SOAP envelope including
-    # the header and body based on the current {#header} and {#body}
-    # values. If security is configured, the WS-Security header is
-    # also applied.
-    #
-    # @return [String] the SOAP envelope XML
+    # @return [String]
     def build
-      build_envelope
+      ensure_request_definition!
+
+      document = build_serializable_document(@request_document || Request::Document.new)
+      xml = Request::Serializer.new(document:, soap_version:, pretty_print:).serialize
+      return xml unless @security.configured?
+
+      Security::SecurityHeader.new(@security).apply(xml)
     end
 
-    # @!attribute [rw] xml_envelope
-    #   A custom XML envelope to use instead of building one.
+    # Executes this SOAP operation.
     #
-    #   Set this to bypass the normal message building and send
-    #   a raw XML envelope directly.
-    #
-    #   @return [String, nil] the custom XML envelope
-    attr_accessor :xml_envelope
-
-    # Executes the SOAP operation and returns the response.
-    #
-    # If {#xml_envelope} is set, it will be sent directly.
-    # Otherwise, the envelope is built from {#header} and {#body}.
-    #
-    # @return [Response] the SOAP response
-    # @example
-    #   operation.body = { user_id: 123 }
-    #   response = operation.call
-    #   puts response.body[:get_user_response][:user][:name]
+    # @return [Response]
     def call
-      message = (xml_envelope.nil? ? build : xml_envelope)
+      ensure_request_definition!
 
-      raw_response = @http.post(endpoint, http_headers, message)
+      raw_response = @http.post(endpoint, http_headers, build)
       response = Response.new(
         raw_response,
         output_body_parts: @operation_info.output.body_parts,
         output_header_parts: @operation_info.output.header_parts,
-        verification: security.response_verification_options
+        verification: @security.response_verification_options
       )
 
       enforce_response_verification!(response)
       response
     end
 
-    # Returns the input style for this operation.
-    #
-    # The style is a combination of the binding style and use,
-    # such as 'document/literal' or 'rpc/literal'.
-    #
-    # @return [String] the input style (e.g., 'document/literal')
+    # @return [String] e.g. `document/literal`
     def input_style
-      @input_style ||= @operation_info.input_style
+      @operation_info.input_style
     end
 
-    # Returns the output style for this operation.
-    #
-    # The style is a combination of the binding style and use,
-    # such as 'document/literal' or 'rpc/literal'.
-    #
-    # @return [String] the output style (e.g., 'document/literal')
+    # @return [String] e.g. `document/literal`
     def output_style
-      @output_style ||= @operation_info.output_style
+      @operation_info.output_style
     end
 
     private
 
-    # Builds the SOAP envelope with optional security header.
-    #
-    # @return [String] the complete SOAP envelope XML
-    #
-    def build_envelope
-      envelope_xml = Builder::Envelope.new(
-        @operation_info,
-        header,
-        body,
-        pretty_print:,
-        soap_version:
-      ).to_s
+    def build_serializable_document(document)
+      return document unless needs_rpc_wrapping?(document)
 
-      if security.configured?
-        security_header = Security::SecurityHeader.new(security)
-        envelope_xml = security_header.apply(envelope_xml)
+      wrap_rpc_document(document)
+    end
+
+    def needs_rpc_wrapping?(document)
+      rpc_literal? && !document.body.empty? && !already_rpc_wrapped?(document.body)
+    end
+
+    def wrap_rpc_document(document)
+      wrapped = Request::Document.new
+      wrapped.namespace_decls.concat(document.namespace_decls)
+      wrapped.header.concat(document.header)
+      wrapped.body << build_rpc_wrapper(document.body)
+      wrapped
+    end
+
+    def build_rpc_wrapper(children)
+      wrapper = Request::Node.new(
+        name: @operation_info.name,
+        prefix: nil,
+        local_name: @operation_info.name,
+        namespace_uri: @operation_info.binding_operation.input_body[:namespace]
+      )
+      wrapper.children.concat(children)
+      wrapper
+    end
+
+    def rpc_literal?
+      input_style == 'rpc/literal'
+    end
+
+    def already_rpc_wrapped?(body_nodes)
+      body_nodes.length == 1 && body_nodes.first.local_name == @operation_info.name
+    end
+
+    def ensure_request_definition!
+      return if @request_document
+      return if contract.request.empty?
+
+      raise RequestDefinitionError,
+            "Operation #{@operation_info.name.inspect} requires a request definition via operation.request { ... }"
+    end
+
+    def request_validation_contract
+      contract
+    rescue UnresolvedReferenceError
+      raise if @strict_schema
+
+      fallback_validation_contract
+    end
+
+    def schema_complete_for_validation?
+      return true unless @strict_schema
+
+      @parser_result.schema_complete_for_operation?(@operation_info)
+    end
+
+    def fallback_validation_contract
+      @fallback_validation_contract ||= begin
+        header = Contract::PartContract.new([], section: :header)
+        body = Contract::PartContract.new([], section: :body)
+        request = Contract::MessageContract.new(header:, body:)
+        validation_contract_type.new(request:, style: input_style)
       end
+    end
 
-      envelope_xml
+    def validation_contract_type
+      @validation_contract_type ||= Data.define(:request, :style)
     end
 
     def enforce_response_verification!(response)
-      case security.verification_mode
+      case @security.verification_mode
       when Security::ResponsePolicy::MODE_DISABLED
         nil
       when Security::ResponsePolicy::MODE_IF_PRESENT
@@ -301,7 +223,7 @@ module WSDL
       when Security::ResponsePolicy::MODE_REQUIRED
         response.security.verify!
       else
-        raise ArgumentError, "Unknown response verification mode: #{security.verification_mode.inspect}"
+        raise ArgumentError, "Unknown response verification mode: #{@security.verification_mode.inspect}"
       end
     end
   end

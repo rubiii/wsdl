@@ -32,7 +32,7 @@ describe 'Integration with Taxcloud' do
 
     namespace = 'http://taxcloud.net'
 
-    expect(operation.body_parts).to eq([
+    expect(request_body_paths(operation)).to eq([
       [['VerifyAddress'],
        { namespace: namespace, form: 'qualified', singular: true }
 ],

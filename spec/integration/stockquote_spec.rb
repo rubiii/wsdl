@@ -11,7 +11,7 @@ describe 'Integration with Stockquote service' do
   it 'creates an example request' do
     operation = client.operation(service_name, port_name, :GetQuote)
 
-    expect(operation.example_body).to eq(
+    expect(request_template(operation, section: :body)).to eq(
       GetQuote: {
         symbol: 'string'
       }
@@ -21,11 +21,11 @@ describe 'Integration with Stockquote service' do
   it 'builds a request' do
     operation = client.operation(service_name, port_name, :GetQuote)
 
-    operation.body = {
+    apply_request(operation, body: {
       GetQuote: {
         symbol: 'AAPL'
       }
-    }
+    })
 
     expected = Nokogiri.XML(%(
       <env:Envelope

@@ -47,18 +47,18 @@ module WSDL
       #   If nil, uses {WSDL.limits}.
       # @param reject_doctype [Boolean] whether to reject XML with DOCTYPE declarations
       #   (default: true). This is a defense-in-depth security measure.
-      # @param schema_imports [Symbol] schema import failure policy:
-      #   - `:best_effort` (default) — log and skip non-security schema import failures
-      #   - `:strict` — raise non-security schema import failures as {SchemaImportError}
+      # @param strict_schema [Boolean] strict schema handling mode:
+      #   - `true` (default) — raise recoverable schema import failures
+      #   - `false` — log and skip recoverable schema import failures
       #   Fatal errors (for example, {PathRestrictionError}) always raise.
       #
       # rubocop:disable Metrics/ParameterLists
-      def initialize(wsdl, http, sandbox_paths: :auto, limits: nil, reject_doctype: true, schema_imports: :best_effort)
+      def initialize(wsdl, http, sandbox_paths: :auto, limits: nil, reject_doctype: true, strict_schema: true)
         # rubocop:enable Metrics/ParameterLists
         @documents = DocumentCollection.new
         @schemas = Schema::Collection.new
         @limits = limits || WSDL.limits
-        @schema_imports = schema_imports
+        @strict_schema = strict_schema ? true : false
 
         resolved_sandbox_paths = resolve_sandbox_paths(wsdl, sandbox_paths)
         resolver = Resolver.new(http, sandbox_paths: resolved_sandbox_paths, limits: @limits)
@@ -68,9 +68,10 @@ module WSDL
           @schemas,
           limits: @limits,
           reject_doctype:,
-          schema_imports: @schema_imports
+          strict_schema: @strict_schema
         )
         importer.import(wsdl)
+        @schema_import_errors = importer.schema_import_errors.freeze
       end
 
       # The collection of parsed WSDL documents.
@@ -88,10 +89,15 @@ module WSDL
       # @return [Limits] the limits instance
       attr_reader :limits
 
-      # The schema import failure policy used while parsing.
+      # Returns whether strict schema mode is enabled.
       #
-      # @return [Symbol] schema import policy (`:best_effort` or `:strict`)
-      attr_reader :schema_imports
+      # @return [Boolean]
+      attr_reader :strict_schema
+
+      # Recoverable schema import errors captured during import.
+      #
+      # @return [Array<SchemaImportError>]
+      attr_reader :schema_import_errors
 
       # Returns the name of the primary service.
       #
@@ -158,7 +164,58 @@ module WSDL
         OperationInfo.new(operation_name, endpoint, binding_operation, port_type_operation, self)
       end
 
+      # Returns whether schema metadata is complete for the given operation.
+      #
+      # In best-effort import mode, failures may be tolerated globally. This
+      # method allows operation-level gating for strict request validation.
+      #
+      # @param operation_info [OperationInfo]
+      # @return [Boolean]
+      def schema_complete_for_operation?(operation_info)
+        return true if @schema_import_errors.empty?
+        return true if input_empty?(operation_info)
+        return false if @schema_import_errors.any? { |error| error.base_location.nil? }
+
+        operation_namespaces = input_namespaces_for(operation_info)
+        return true if operation_namespaces.empty?
+
+        affected_namespaces = namespaces_affected_by_import_errors
+        !operation_namespaces.intersect?(affected_namespaces)
+      end
+
       private
+
+      def input_empty?(operation_info)
+        input = operation_info.input
+        input.header_parts.empty? && input.body_parts.empty?
+      end
+
+      def input_namespaces_for(operation_info)
+        elements = operation_info.input.header_parts + operation_info.input.body_parts
+        namespaces = []
+        elements.each do |element|
+          collect_element_namespaces(element, namespaces)
+        end
+        namespaces.compact.uniq
+      end
+
+      def collect_element_namespaces(element, namespaces)
+        namespaces << element.namespace
+        element.children.each do |child|
+          collect_element_namespaces(child, namespaces)
+        end
+      end
+
+      def namespaces_affected_by_import_errors
+        error_bases = @schema_import_errors.filter_map(&:base_location).uniq
+
+        @schemas.each_with_object([]) do |definition, memo|
+          next unless error_bases.include?(definition.source_location)
+          next unless definition.target_namespace
+
+          memo << definition.target_namespace
+        end.uniq
+      end
 
       # Raises a useful error if the operation does not exist.
       #

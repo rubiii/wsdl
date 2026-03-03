@@ -146,7 +146,7 @@ describe WSDL::Client do
         expect(custom_cache.size).to eq(2)
       end
 
-      it 'partitions cache entries by schema_imports policy' do
+      it 'partitions cache entries by strict_schema policy' do
         custom_cache = WSDL::Cache.new
         definition_count = 0
         allow(WSDL::Parser::Result).to receive(:new) do |_, _|
@@ -154,8 +154,8 @@ describe WSDL::Client do
           instance_double(WSDL::Parser::Result, services: {}, operations: [])
         end
 
-        described_class.new(wsdl, cache: custom_cache, schema_imports: :best_effort)
-        described_class.new(wsdl, cache: custom_cache, schema_imports: :strict)
+        described_class.new(wsdl, cache: custom_cache, strict_schema: false)
+        described_class.new(wsdl, cache: custom_cache, strict_schema: true)
 
         expect(definition_count).to eq(2)
         expect(custom_cache.size).to eq(2)
@@ -325,40 +325,41 @@ describe WSDL::Client do
     end
   end
 
-  describe 'schema import policy' do
+  describe 'strict schema mode' do
     let(:wsdl_with_missing_schema_import) { fixture('wsdl/juniper') }
 
-    it 'defaults to :best_effort and skips non-security schema import failures' do
+    it 'defaults to strict mode and raises on schema import failures' do
       expect {
         described_class.new(wsdl_with_missing_schema_import, http: http_mock, cache: nil)
+      }.to raise_error(WSDL::SchemaImportError)
+    end
+
+    it 'tolerates recoverable schema import failures when strict_schema: false' do
+      expect {
+        described_class.new(wsdl_with_missing_schema_import, http: http_mock, cache: nil, strict_schema: false)
       }.not_to raise_error
     end
 
-    it 'raises non-security schema import failures when schema_imports: :strict' do
-      expect {
-        described_class.new(wsdl_with_missing_schema_import, http: http_mock, cache: nil, schema_imports: :strict)
-      }.to raise_error(WSDL::SchemaImportError) { |error|
-        expect(error.cause).to be_a(Errno::ENOENT)
-        expect(error.location).to eq('SystemService?xsd=xsd0.xsd')
-        expect(error.action).to eq('import')
-      }
-    end
-
-    it 'passes schema_imports option to parser' do
+    it 'passes strict_schema: true to parser' do
       parser_result = instance_double(WSDL::Parser::Result, services: {})
       allow(WSDL::Parser::Result).to receive(:new).and_return(parser_result)
 
-      described_class.new(wsdl, http: http_mock, schema_imports: :strict)
+      described_class.new(wsdl, http: http_mock, strict_schema: true)
 
       expect(WSDL::Parser::Result).to have_received(:new).with(
-        wsdl, anything, hash_including(schema_imports: :strict)
+        wsdl, anything, hash_including(strict_schema: true)
       )
     end
 
-    it 'raises ArgumentError for unknown schema_imports value' do
-      expect {
-        described_class.new(wsdl, http: http_mock, cache: nil, schema_imports: :unknown)
-      }.to raise_error(ArgumentError, /Invalid schema_imports policy/)
+    it 'passes strict_schema: false to parser' do
+      parser_result = instance_double(WSDL::Parser::Result, services: {})
+      allow(WSDL::Parser::Result).to receive(:new).and_return(parser_result)
+
+      described_class.new(wsdl, http: http_mock, strict_schema: false)
+
+      expect(WSDL::Parser::Result).to have_received(:new).with(
+        wsdl, anything, hash_including(strict_schema: false)
+      )
     end
   end
 
@@ -438,14 +439,14 @@ describe WSDL::Client do
     end
   end
 
-  describe '#schema_imports' do
-    it 'defaults to :best_effort' do
-      expect(client.schema_imports).to eq(:best_effort)
+  describe '#strict_schema' do
+    it 'defaults to true' do
+      expect(client.strict_schema).to be(true)
     end
 
-    it 'returns the configured schema import policy' do
-      strict_client = described_class.new(wsdl, http: http_mock, cache: nil, schema_imports: :strict)
-      expect(strict_client.schema_imports).to eq(:strict)
+    it 'returns false when configured with strict_schema: false' do
+      relaxed_client = described_class.new(wsdl, http: http_mock, cache: nil, strict_schema: false)
+      expect(relaxed_client.strict_schema).to be(false)
     end
   end
 

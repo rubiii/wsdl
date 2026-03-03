@@ -12,7 +12,7 @@ describe 'Integration with an RPC/Literal example' do
     op1 = client.operation(service_name, port_name, :op1)
 
     # Check the example request.
-    expect(op1.example_body).to eq(
+    expect(request_template(op1, section: :body)).to eq(
       in: {
         data1: 'int',
         data2: 'int'
@@ -21,12 +21,12 @@ describe 'Integration with an RPC/Literal example' do
 
     # Build the request. It returns a Hash without the RPC wrapper element,
     # because users just don't need to care about it.
-    op1.body = {
+    apply_request(op1, body: {
       in: {
         data1: 24,
         data2: 36
       }
-    }
+    })
 
     # The expected request.
     expected = Nokogiri.XML('
@@ -53,7 +53,7 @@ describe 'Integration with an RPC/Literal example' do
     op3 = client.operation(service_name, port_name, :op3)
 
     # Check the example request.
-    expect(op3.example_body).to eq(
+    expect(request_template(op3, section: :body)).to eq(
       DataElem: {
         data1: 'int',
         data2: 'int'
@@ -63,7 +63,7 @@ describe 'Integration with an RPC/Literal example' do
       }
     )
 
-    op3.body = {
+    apply_request(op3, body: {
       DataElem: {
         data1: 64,
         data2: 128
@@ -71,7 +71,7 @@ describe 'Integration with an RPC/Literal example' do
       in2: {
         RefDataElem: 3
       }
-    }
+    })
 
     # The expected request. Notice how the RPC wrapper element 'op3' is not
     # namespaced because the WSDL does not define a namespace for it.

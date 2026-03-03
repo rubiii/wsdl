@@ -74,7 +74,7 @@ module WSDL
 
       # Builds the XML representation of the Timestamp element.
       #
-      # @param xml [Builder::XmlMarkup, Nokogiri::XML::Builder] the XML builder
+      # @param xml [Nokogiri::XML::Builder] the XML builder
       # @return [void]
       #
       # @example Output XML structure

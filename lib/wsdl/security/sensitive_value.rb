@@ -8,6 +8,9 @@ module WSDL
     # @api private
     #
     class SensitiveValue
+      # Redaction marker used in all string representations.
+      #
+      # @return [String]
       REDACTED = '[REDACTED]'
 
       # @param value [Object] the sensitive value to protect

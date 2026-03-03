@@ -11,16 +11,25 @@ module WSDL
     #
     # @api private
     class TypeCoercer
+      # XSD simple types mapped to string coercion.
+      #
+      # @return [Array<String>]
       STRING_TYPES = %w[
         string normalizedString token language Name NCName ID IDREF ENTITY NMTOKEN anyURI QName
       ].freeze
 
+      # XSD simple types mapped to integer coercion.
+      #
+      # @return [Array<String>]
       INTEGER_TYPES = %w[
         integer int long short byte
         nonNegativeInteger positiveInteger nonPositiveInteger negativeInteger
         unsignedLong unsignedInt unsignedShort unsignedByte
       ].freeze
 
+      # Maps XSD local type names to coercion groups.
+      #
+      # @return [Hash{String => Symbol}]
       TYPE_GROUPS = begin
         groups = {}
         STRING_TYPES.each do |type|
@@ -41,6 +50,9 @@ module WSDL
         groups.freeze
       end
 
+      # Group-to-handler map used by {.coerce}.
+      #
+      # @return [Hash{Symbol => Proc}]
       GROUP_HANDLERS = {
         string: ->(value) { convert_string(value) },
         integer: ->(value) { convert_integer(value) },
@@ -54,6 +66,9 @@ module WSDL
         hex_binary: ->(value) { convert_hex_binary(value) }
       }.freeze
 
+      # Matches ISO8601 timezone suffixes accepted for XSD dateTime/time parsing.
+      #
+      # @return [Regexp]
       TIMEZONE_SUFFIX = /(Z|[+-](?:0[0-9]|1[0-3]):[0-5][0-9]|[+-]14:00)\z/
 
       class << self

@@ -32,6 +32,10 @@ module WSDL
     class XmlBuilderHelper
       # Local aliases for namespace constants
       SecurityNS = Constants::NS::Security
+
+      # Alias for XML Signature namespace constants.
+      #
+      # @return [Module]
       SignatureNS = Constants::NS::Signature
 
       # Namespace prefix to URI mapping

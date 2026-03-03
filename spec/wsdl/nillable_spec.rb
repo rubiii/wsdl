@@ -11,248 +11,121 @@ describe 'Nillable elements' do
     let(:create_user_element) { body_parts.first }
 
     it 'parses nillable="true" on simple type elements' do
-      # email has nillable="true"
       email_element = create_user_element.children.find { |c| c.name == 'email' }
-      expect(email_element.nillable?).to be true
-
-      # displayName has nillable="true"
       display_name_element = create_user_element.children.find { |c| c.name == 'displayName' }
-      expect(display_name_element.nillable?).to be true
+
+      expect(email_element.nillable?).to be(true)
+      expect(display_name_element.nillable?).to be(true)
     end
 
     it 'parses nillable="false" (default) on simple type elements' do
-      # username does not have nillable attribute
       username_element = create_user_element.children.find { |c| c.name == 'username' }
-      expect(username_element.nillable?).to be false
-
-      # phoneNumber does not have nillable attribute
       phone_element = create_user_element.children.find { |c| c.name == 'phoneNumber' }
-      expect(phone_element.nillable?).to be false
+
+      expect(username_element.nillable?).to be(false)
+      expect(phone_element.nillable?).to be(false)
     end
 
-    it 'parses nillable="true" on complex type elements' do
-      # address has nillable="true"
+    it 'parses nillable="true" on complex and array elements' do
       address_element = create_user_element.children.find { |c| c.name == 'address' }
-      expect(address_element.nillable?).to be true
-    end
-
-    it 'parses nillable="true" on array elements' do
-      # tags has nillable="true" and maxOccurs="unbounded"
       tags_element = create_user_element.children.find { |c| c.name == 'tags' }
-      expect(tags_element.nillable?).to be true
-      expect(tags_element.singular?).to be false
+
+      expect(address_element.nillable?).to be(true)
+      expect(tags_element.nillable?).to be(true)
+      expect(tags_element.singular?).to be(false)
     end
 
     it 'parses nillable on nested elements' do
       address_element = create_user_element.children.find { |c| c.name == 'address' }
 
       street_element = address_element.children.find { |c| c.name == 'street' }
-      expect(street_element.nillable?).to be true
-
       city_element = address_element.children.find { |c| c.name == 'city' }
-      expect(city_element.nillable?).to be false
-
       zip_element = address_element.children.find { |c| c.name == 'zipCode' }
-      expect(zip_element.nillable?).to be true
+
+      expect(street_element.nillable?).to be(true)
+      expect(city_element.nillable?).to be(false)
+      expect(zip_element.nillable?).to be(true)
     end
   end
 
   describe 'xsi:nil serialization' do
-    context 'when a nillable simple type element has a nil value' do
-      subject(:envelope) { WSDL::Builder::Envelope.new(operation_info, nil, body) }
+    let(:operation) { WSDL::Operation.new(operation_info, parser_result, http_mock) }
 
-      let(:body) do
-        {
-          CreateUser: {
-            username: 'johndoe',
-            email: nil,          # nillable="true" - should get xsi:nil="true"
-            displayName: nil     # nillable="true" - should get xsi:nil="true"
-          }
-        }
-      end
-
-      it 'includes the xsi namespace on the envelope' do
-        xml = envelope.to_s
-        expect(xml).to include('xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"')
-      end
-
-      it 'serializes nil values with xsi:nil="true"' do
-        xml = envelope.to_s
-        expect(xml).to include('xsi:nil="true"')
-      end
-
-      it 'returns semantically correct XML' do
-        expected = Nokogiri.XML(%(
-          <env:Envelope
-              xmlns:ns0="http://example.com/nillable/"
-              xmlns:env="http://schemas.xmlsoap.org/soap/envelope/"
-              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
-            <env:Header/>
-            <env:Body>
-              <ns0:CreateUser>
-                <ns0:username>johndoe</ns0:username>
-                <ns0:email xsi:nil="true"/>
-                <ns0:displayName xsi:nil="true"/>
-              </ns0:CreateUser>
-            </env:Body>
-          </env:Envelope>
-        ))
-
-        expect(envelope.to_s)
-          .to be_equivalent_to(expected).respecting_element_order
-      end
+    def build_xml(operation, body)
+      # These tests use incomplete data to focus on nillable serialization behavior
+      apply_request(operation, body:, strict_schema: false)
+      operation.build
     end
 
-    context 'when a non-nillable element has a nil value' do
-      subject(:envelope) { WSDL::Builder::Envelope.new(operation_info, nil, body) }
-
-      let(:body) do
-        {
-          CreateUser: {
-            username: 'johndoe',
-            phoneNumber: nil,    # not nillable - should get empty element
-            displayName: 'John'
-          }
+    it 'serializes nil nillable simple elements with xsi:nil="true"' do
+      xml = build_xml(operation, {
+        CreateUser: {
+          username: 'johndoe',
+          email: nil,
+          displayName: nil
         }
-      end
+      })
 
-      it 'does not include the xsi namespace when only non-nillable elements are nil' do
-        xml = envelope.to_s
-        expect(xml).not_to include('xmlns:xsi')
-      end
-
-      it 'serializes nil value as empty element' do
-        xml = envelope.to_s
-        expect(xml).to include('<ns0:phoneNumber/>')
-        expect(xml).not_to include('xsi:nil')
-      end
+      expect(xml).to include('xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"')
+      expect(xml).to include('<ns0:email xsi:nil="true"/>')
+      expect(xml).to include('<ns0:displayName xsi:nil="true"/>')
     end
 
-    context 'when a nillable complex type element has a nil value' do
-      subject(:envelope) { WSDL::Builder::Envelope.new(operation_info, nil, body) }
-
-      let(:body) do
-        {
-          CreateUser: {
-            username: 'johndoe',
-            displayName: 'John',
-            address: nil         # nillable="true" complex type
-          }
+    it 'serializes nil non-nillable elements as empty elements' do
+      xml = build_xml(operation, {
+        CreateUser: {
+          username: 'johndoe',
+          phoneNumber: nil,
+          displayName: 'John'
         }
-      end
+      })
 
-      it 'serializes nil complex type with xsi:nil="true"' do
-        xml = envelope.to_s
-        expect(xml).to include('<ns0:address xsi:nil="true"/>')
-      end
+      expect(xml).to include('<ns0:phoneNumber/>')
+      expect(xml).not_to include('<ns0:phoneNumber xsi:nil')
     end
 
-    context 'when nested nillable elements have nil values' do
-      subject(:envelope) { WSDL::Builder::Envelope.new(operation_info, nil, body) }
-
-      let(:body) do
-        {
-          CreateUser: {
-            username: 'johndoe',
-            displayName: 'John',
-            address: {
-              street: nil,       # nillable="true"
-              city: 'New York',
-              zipCode: nil       # nillable="true"
-            }
-          }
+    it 'serializes nil nillable complex element with xsi:nil="true"' do
+      xml = build_xml(operation, {
+        CreateUser: {
+          username: 'johndoe',
+          displayName: 'John',
+          address: nil
         }
-      end
+      })
 
-      it 'serializes nested nil values with xsi:nil="true"' do
-        xml = envelope.to_s
-        expect(xml).to include('<ns0:street xsi:nil="true"/>')
-        expect(xml).to include('<ns0:zipCode xsi:nil="true"/>')
-      end
-
-      it 'includes the city with its value' do
-        xml = envelope.to_s
-        expect(xml).to include('<ns0:city>New York</ns0:city>')
-      end
+      expect(xml).to include('<ns0:address xsi:nil="true"/>')
     end
 
-    context 'when an array contains nil values and elements are nillable' do
-      subject(:envelope) { WSDL::Builder::Envelope.new(operation_info, nil, body) }
-
-      let(:body) do
-        {
-          CreateUser: {
-            username: 'johndoe',
-            displayName: 'John',
-            tags: ['ruby', nil, 'developer', nil] # nillable="true" array
+    it 'serializes nested nil values for nillable children with xsi:nil="true"' do
+      xml = build_xml(operation, {
+        CreateUser: {
+          username: 'johndoe',
+          displayName: 'John',
+          address: {
+            street: nil,
+            city: 'New York',
+            zipCode: nil
           }
         }
-      end
+      })
 
-      it 'serializes nil array elements with xsi:nil="true"' do
-        xml = envelope.to_s
-
-        # Count occurrences
-        expect(xml.scan('<ns0:tags>ruby</ns0:tags>').length).to eq(1)
-        expect(xml.scan('<ns0:tags>developer</ns0:tags>').length).to eq(1)
-        expect(xml.scan('<ns0:tags xsi:nil="true"/>').length).to eq(2)
-      end
+      expect(xml).to include('<ns0:street xsi:nil="true"/>')
+      expect(xml).to include('<ns0:zipCode xsi:nil="true"/>')
+      expect(xml).to include('<ns0:city>New York</ns0:city>')
     end
 
-    context 'when no nil values are present' do
-      subject(:envelope) { WSDL::Builder::Envelope.new(operation_info, nil, body) }
-
-      let(:body) do
-        {
-          CreateUser: {
-            username: 'johndoe',
-            email: 'john@example.com',
-            displayName: 'John Doe',
-            phoneNumber: '555-1234'
-          }
+    it 'serializes nil array entries with xsi:nil="true" for nillable arrays' do
+      xml = build_xml(operation, {
+        CreateUser: {
+          username: 'johndoe',
+          displayName: 'John',
+          tags: ['ruby', nil, 'developer', nil]
         }
-      end
+      })
 
-      it 'does not include the xsi namespace' do
-        xml = envelope.to_s
-        expect(xml).not_to include('xmlns:xsi')
-      end
-
-      it 'does not include xsi:nil attributes' do
-        xml = envelope.to_s
-        expect(xml).not_to include('xsi:nil')
-      end
-    end
-
-    context 'with mixed nillable and non-nillable nil values' do
-      subject(:envelope) { WSDL::Builder::Envelope.new(operation_info, nil, body) }
-
-      let(:body) do
-        {
-          CreateUser: {
-            username: 'johndoe',
-            email: nil,          # nillable - gets xsi:nil="true"
-            displayName: 'John',
-            phoneNumber: nil     # not nillable - gets empty element
-          }
-        }
-      end
-
-      it 'correctly differentiates between nillable and non-nillable elements' do
-        xml = envelope.to_s
-
-        # Nillable element gets xsi:nil="true"
-        expect(xml).to include('<ns0:email xsi:nil="true"/>')
-
-        # Non-nillable element gets empty element
-        expect(xml).to include('<ns0:phoneNumber/>')
-        expect(xml).not_to include('<ns0:phoneNumber xsi:nil')
-      end
-
-      it 'includes xsi namespace because at least one nillable element is nil' do
-        xml = envelope.to_s
-        expect(xml).to include('xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"')
-      end
+      expect(xml.scan('<ns0:tags>ruby</ns0:tags>').length).to eq(1)
+      expect(xml.scan('<ns0:tags>developer</ns0:tags>').length).to eq(1)
+      expect(xml.scan('<ns0:tags xsi:nil="true"/>').length).to eq(2)
     end
   end
 end

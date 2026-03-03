@@ -25,7 +25,7 @@ module WSDL
   #
   # @example
   #   begin
-  #     client = WSDL::Client.new(wsdl, schema_imports: :best_effort)
+  #     client = WSDL::Client.new(wsdl, strict_schema: false)
   #   rescue WSDL::FatalError => e
   #     logger.error("Fatal WSDL error: #{e.message}")
   #   end
@@ -38,8 +38,8 @@ module WSDL
   # This error wraps recoverable schema import failures (for example missing
   # files, network timeouts, or malformed imported XSD documents).
   #
-  # In `schema_imports: :best_effort` mode these errors are logged and skipped.
-  # In `schema_imports: :strict` mode they are raised.
+  # In `strict_schema: false` mode these errors are logged and skipped.
+  # In `strict_schema: true` mode they are raised.
   #
   class SchemaImportError < Error
     # @return [String, nil] schema location that failed
@@ -394,6 +394,31 @@ module WSDL
       @definition_key = definition_key
       super(message)
     end
+  end
+
+  # Raised when request definition is missing or structurally incomplete.
+  #
+  # This error is raised when calling an operation that expects input but no
+  # request AST has been defined via {WSDL::Operation#request}.
+  class RequestDefinitionError < Error
+  end
+
+  # Raised when a request violates schema or structural constraints.
+  class RequestValidationError < Error
+  end
+
+  # Raised when request DSL usage is invalid.
+  #
+  # Examples include invalid XML names, undeclared QName prefixes,
+  # or overriding reserved namespace prefixes.
+  class RequestDslError < Error
+  end
+
+  # Raised when manual request content conflicts with generated WS-Security.
+  #
+  # This indicates a hard outbound security configuration error and is treated
+  # as non-recoverable.
+  class RequestSecurityConflictError < FatalError
   end
 
   # Raised when a sealed collection is mutated.

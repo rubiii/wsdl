@@ -10,6 +10,12 @@ module WSDL
     #
     # @api private
     class Parser
+      # Qualified XML element name used for namespace-aware grouping.
+      #
+      # @!attribute [r] namespace
+      #   @return [String, nil]
+      # @!attribute [r] local
+      #   @return [String]
       QName = Data.define(:namespace, :local)
 
       class << self

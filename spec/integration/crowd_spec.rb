@@ -30,7 +30,7 @@ describe 'Integration with Atlassian Crowd' do
     ns2 = 'http://authentication.integration.crowd.atlassian.com'
     ns3 = 'http://soap.integration.crowd.atlassian.com'
 
-    expect(operation.body_parts).to eq([
+    expect(request_body_paths(operation)).to eq([
       [['addAttributeToGroup'],
        { namespace: ns1, form: 'qualified', singular: true }
 ],

@@ -19,19 +19,9 @@ require 'logging'
 # @example Calling an operation
 #   client = WSDL::Client.new('http://example.com/service?wsdl')
 #   operation = client.operation('ExampleService', 'ExamplePort', 'GetData')
-#   operation.body = { id: 123 }
-#   response = operation.call
-#
-# @example Using example messages
-#   operation = client.operation('Service', 'Port', 'CreateUser')
-#   operation.body = operation.example_body
-#   operation.body[:user][:name] = 'John Doe'
-#   operation.body[:user][:email] = 'john@example.com'
-#   response = operation.call
-#
-# @example WS-Security with UsernameToken
-#   operation = client.operation('Service', 'Port', 'SecureOperation')
-#   operation.security.username_token('user', 'secret')
+#   operation.request do
+#     tag('GetData') { tag('id', 123) }
+#   end
 #   response = operation.call
 #
 module WSDL
@@ -127,19 +117,20 @@ module WSDL
   # Load parser module (WSDL/XSD parsing)
   require 'wsdl/parser'
 
-  # Load builder module (SOAP envelope building)
-  require 'wsdl/builder'
-
   # Load response handling
   require 'wsdl/response/type_coercer'
   require 'wsdl/response/parser'
   require 'wsdl/response'
 
-  # Load operation (public API)
-  require 'wsdl/operation'
-
   # Load security module
   require 'wsdl/security'
+
+  # Load operation contract and request pipeline
+  require 'wsdl/contract'
+  require 'wsdl/request'
+
+  # Load operation (public API)
+  require 'wsdl/operation'
 
   # Load client (main entry point)
   require 'wsdl/client'

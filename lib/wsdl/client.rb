@@ -14,7 +14,9 @@ module WSDL
   # @example Calling an operation
   #   client = WSDL::Client.new('http://example.com/service?wsdl')
   #   operation = client.operation('ExampleService', 'ExamplePort', 'GetData')
-  #   operation.body = { id: 123 }
+  #   operation.request do
+  #     tag('GetData') { tag('id', 123) }
+  #   end
   #   response = operation.call
   #
   # @example With custom HTTP adapter
@@ -61,20 +63,28 @@ module WSDL
     #   DOCTYPE declarations (default: true). This is a defense-in-depth measure
     #   since legitimate SOAP/WSDL documents never require DOCTYPE. Set to false
     #   only for legacy systems that include DOCTYPE declarations.
-    # @param schema_imports [Symbol] schema import failure policy:
-    #   - `:best_effort` (default) — log and skip non-security schema import failures
-    #   - `:strict` — raise non-security schema import failures as {SchemaImportError}
-    #   Fatal errors (for example, {PathRestrictionError}) always raise.
+    # @param strict_schema [Boolean] strict schema handling and request validation mode.
+    #   - `true` (default) enables strict schema imports and strict request validation
+    #   - `false` enables best-effort schema imports and relaxed request validation
+    # @param max_request_elements [Integer, nil] max request AST elements (default: limits value)
+    # @param max_request_depth [Integer, nil] max request AST nesting depth (default: limits value)
+    # @param max_request_attributes [Integer, nil] max request AST attributes (default: limits value)
     #
     # rubocop:disable Metrics/ParameterLists
     def initialize(wsdl, http: nil, pretty_print: true, cache: :default, sandbox_paths: nil,
-                   limits: nil, reject_doctype: true, schema_imports: :best_effort)
+                   limits: nil, reject_doctype: true, strict_schema: true,
+                   max_request_elements: nil, max_request_depth: nil, max_request_attributes: nil)
       # rubocop:enable Metrics/ParameterLists
       @http = http || WSDL.http_adapter.new
       @pretty_print = pretty_print
       @limits = limits || WSDL.limits
       @reject_doctype = reject_doctype
-      @schema_imports = schema_imports
+      @strict_schema = strict_schema ? true : false
+      @request_limits = {
+        max_request_elements: max_request_elements || @limits.max_request_elements,
+        max_request_depth: max_request_depth || @limits.max_request_depth,
+        max_request_attributes: max_request_attributes || @limits.max_request_attributes
+      }.freeze
 
       validate_http_adapter!(@http)
 
@@ -94,10 +104,10 @@ module WSDL
     #
     attr_reader :limits
 
-    # Returns the schema import failure policy used while parsing.
+    # Returns whether strict schema mode is enabled.
     #
-    # @return [Symbol] schema import policy (`:best_effort` or `:strict`)
-    attr_reader :schema_imports
+    # @return [Boolean] strict schema mode
+    attr_reader :strict_schema
 
     # Returns the HTTP adapter's client instance for configuration.
     #
@@ -156,7 +166,14 @@ module WSDL
       operation_info = @parser_result.operation(service_name.to_s, port_name.to_s, operation_name.to_s)
       verify_operation_style!(operation_info)
 
-      Operation.new(operation_info, @parser_result, @http, pretty_print:)
+      Operation.new(
+        operation_info,
+        @parser_result,
+        @http,
+        pretty_print:,
+        strict_schema: @strict_schema,
+        request_limits: @request_limits
+      )
     end
 
     private
@@ -197,7 +214,7 @@ module WSDL
           sandbox_paths:,
           limits: @limits,
           reject_doctype: @reject_doctype,
-          schema_imports: @schema_imports
+          strict_schema: @strict_schema
         }
       )
     end

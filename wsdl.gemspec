@@ -18,7 +18,6 @@ Gem::Specification.new do |s|
   s.license = 'MIT'
 
   s.add_dependency 'base64'
-  s.add_dependency 'builder',  '>= 3.3'
   s.add_dependency 'logging',  '>= 2.4'
   s.add_dependency 'nokogiri', '>= 1.19'
 

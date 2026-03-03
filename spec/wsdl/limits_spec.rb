@@ -169,7 +169,10 @@ describe WSDL::Limits do
         max_schemas: 50,
         max_elements_per_type: 500,
         max_attributes_per_element: 100,
-        max_type_nesting_depth: 50
+        max_type_nesting_depth: 50,
+        max_request_elements: 10_000,
+        max_request_depth: 100,
+        max_request_attributes: 1_000
       )
     end
 

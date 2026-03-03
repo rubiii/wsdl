@@ -62,6 +62,10 @@ module WSDL
     class Verifier
       # Local aliases for namespace constants
       SecurityNS = Constants::NS::Security
+
+      # Alias for XML Signature namespace constants.
+      #
+      # @return [Module]
       SignatureNS = Constants::NS::Signature
 
       # @return [Array<String>] errors encountered during verification

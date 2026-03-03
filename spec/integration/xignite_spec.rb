@@ -34,7 +34,7 @@ describe 'Integration with Xignite' do
 
     namespace = 'http://www.xignite.com/services/'
 
-    expect(operation.body_parts).to eq([
+    expect(request_body_paths(operation)).to eq([
       [['GetSecurities'],
        { namespace: namespace, form: 'qualified', singular: true }
 ],
@@ -57,7 +57,7 @@ describe 'Integration with Xignite' do
   it 'creates an example header' do
     operation = client.operation(service_name, port_name, :GetSecurities)
 
-    expect(operation.example_header).to eq(
+    expect(request_template(operation, section: :header)).to eq(
       Header: {
         Username: 'string',
         Password: 'string',
@@ -69,7 +69,7 @@ describe 'Integration with Xignite' do
   it 'creates an example body' do
     operation = client.operation(service_name, port_name, :GetSecurities)
 
-    expect(operation.example_body).to eq(
+    expect(request_template(operation, section: :body)).to eq(
       GetSecurities: {
         Identifiers: 'string',
         IdentifierType: 'string',
@@ -81,21 +81,21 @@ describe 'Integration with Xignite' do
   it 'creates a request with a header' do
     operation = client.operation(service_name, port_name, :GetSecurities)
 
-    operation.header = {
-      Header: {
-        Username: 'test',
-        Password: 'secret',
-        Tracer: 'i-dont-know'
-      }
-    }
-
-    operation.body = {
-      GetSecurities: {
-        Identifiers: 'NESN.XVTX,BMW.XETR',
-        IdentifierType: 'Symbol',
-        AsOfDate: '6/4/2013'
-      }
-    }
+    apply_request(operation,
+                  header: {
+                    Header: {
+                      Username: 'test',
+                      Password: 'secret',
+                      Tracer: 'i-dont-know'
+                    }
+                  },
+                  body: {
+                    GetSecurities: {
+                      Identifiers: 'NESN.XVTX,BMW.XETR',
+                      IdentifierType: 'Symbol',
+                      AsOfDate: '6/4/2013'
+                    }
+                  })
 
     expected = Nokogiri.XML('
       <env:Envelope

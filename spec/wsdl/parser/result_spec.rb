@@ -64,14 +64,97 @@ describe WSDL::Parser::Result do
     end
   end
 
-  describe '#schema_imports' do
-    it 'defaults to :best_effort' do
-      expect(parser_result.schema_imports).to eq(:best_effort)
+  describe '#strict_schema' do
+    it 'defaults to true' do
+      expect(parser_result.strict_schema).to be(true)
     end
 
-    it 'accepts :strict' do
-      result = described_class.new(fixture('wsdl/authentication'), http_mock, schema_imports: :strict)
-      expect(result.schema_imports).to eq(:strict)
+    it 'accepts strict_schema: false' do
+      result = described_class.new(fixture('wsdl/authentication'), http_mock, strict_schema: false)
+      expect(result.strict_schema).to be(false)
+    end
+  end
+
+  describe '#schema_complete_for_operation?' do
+    def build_element(namespace:, children: [])
+      WSDL::XML::Element.new.tap do |element|
+        element.name = 'node'
+        element.namespace = namespace
+        element.form = 'qualified'
+        element.children = children
+      end
+    end
+
+    def build_operation_info(header_parts:, body_parts:)
+      input = instance_double(WSDL::Parser::Input, header_parts:, body_parts:)
+      instance_double(WSDL::Parser::OperationInfo, input:)
+    end
+
+    it 'returns true when import failures are unrelated to operation input namespaces' do
+      result = described_class.new(fixture('wsdl/authentication'), http_mock, strict_schema: false)
+      operation_info = build_operation_info(
+        header_parts: [build_element(namespace: 'urn:operation')],
+        body_parts: []
+      )
+
+      result.instance_variable_set(
+        :@schema_import_errors,
+        [WSDL::SchemaImportError.new('missing schema', base_location: 'schemas/other.xsd')]
+      )
+      result.instance_variable_set(
+        :@schemas,
+        [instance_double(WSDL::Schema::Definition, source_location: 'schemas/other.xsd', target_namespace: 'urn:other')]
+      )
+
+      expect(result.schema_complete_for_operation?(operation_info)).to be(true)
+    end
+
+    it 'returns false when import failures affect an operation input namespace' do
+      result = described_class.new(fixture('wsdl/authentication'), http_mock, strict_schema: false)
+      operation_info = build_operation_info(
+        header_parts: [],
+        body_parts: [build_element(namespace: 'urn:operation')]
+      )
+
+      result.instance_variable_set(
+        :@schema_import_errors,
+        [WSDL::SchemaImportError.new('missing schema', base_location: 'schemas/operation.xsd')]
+      )
+      result.instance_variable_set(
+        :@schemas,
+        [instance_double(WSDL::Schema::Definition, source_location: 'schemas/operation.xsd',
+                                                   target_namespace: 'urn:operation')
+]
+      )
+
+      expect(result.schema_complete_for_operation?(operation_info)).to be(false)
+    end
+
+    it 'returns false for non-empty operations when an import error has no base location' do
+      result = described_class.new(fixture('wsdl/authentication'), http_mock, strict_schema: false)
+      operation_info = build_operation_info(
+        header_parts: [],
+        body_parts: [build_element(namespace: 'urn:operation')]
+      )
+
+      result.instance_variable_set(
+        :@schema_import_errors,
+        [WSDL::SchemaImportError.new('missing schema', base_location: nil)]
+      )
+
+      expect(result.schema_complete_for_operation?(operation_info)).to be(false)
+    end
+
+    it 'returns true for empty-input operations even when import errors are present' do
+      result = described_class.new(fixture('wsdl/authentication'), http_mock, strict_schema: false)
+      operation_info = build_operation_info(header_parts: [], body_parts: [])
+
+      result.instance_variable_set(
+        :@schema_import_errors,
+        [WSDL::SchemaImportError.new('missing schema', base_location: 'schemas/operation.xsd')]
+      )
+
+      expect(result.schema_complete_for_operation?(operation_info)).to be(true)
     end
   end
 
@@ -185,15 +268,15 @@ describe WSDL::Parser::Result do
   describe 'schema import failure policy' do
     let(:wsdl_with_missing_schema_import) { fixture('wsdl/juniper') }
 
-    it 'continues on non-security schema import failures in :best_effort mode' do
+    it 'continues on non-security schema import failures when strict_schema is false' do
       expect {
-        described_class.new(wsdl_with_missing_schema_import, http_mock, schema_imports: :best_effort)
+        described_class.new(wsdl_with_missing_schema_import, http_mock, strict_schema: false)
       }.not_to raise_error
     end
 
-    it 'raises non-security schema import failures in :strict mode' do
+    it 'raises non-security schema import failures in strict mode' do
       expect {
-        described_class.new(wsdl_with_missing_schema_import, http_mock, schema_imports: :strict)
+        described_class.new(wsdl_with_missing_schema_import, http_mock, strict_schema: true)
       }.to raise_error(WSDL::SchemaImportError) { |error|
         expect(error.cause).to be_a(Errno::ENOENT)
         expect(error.location).to eq('SystemService?xsd=xsd0.xsd')
@@ -205,11 +288,11 @@ describe WSDL::Parser::Result do
       malicious_wsdl = fixture('wsdl/malicious/path_traversal')
 
       expect {
-        described_class.new(malicious_wsdl, http_mock, schema_imports: :best_effort)
+        described_class.new(malicious_wsdl, http_mock, strict_schema: false)
       }.to raise_error(WSDL::PathRestrictionError)
 
       expect {
-        described_class.new(malicious_wsdl, http_mock, schema_imports: :strict)
+        described_class.new(malicious_wsdl, http_mock, strict_schema: true)
       }.to raise_error(WSDL::PathRestrictionError)
     end
 
@@ -240,11 +323,11 @@ describe WSDL::Parser::Result do
         XML
 
         expect {
-          described_class.new(wsdl_path, http_mock, schema_imports: :best_effort)
+          described_class.new(wsdl_path, http_mock, strict_schema: false)
         }.to raise_error(WSDL::XMLSecurityError)
 
         expect {
-          described_class.new(wsdl_path, http_mock, schema_imports: :strict)
+          described_class.new(wsdl_path, http_mock, strict_schema: true)
         }.to raise_error(WSDL::XMLSecurityError)
       end
     end

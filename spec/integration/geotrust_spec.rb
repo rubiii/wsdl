@@ -31,7 +31,7 @@ describe 'Integration with Geotrust' do
   it 'creates an example body' do
     operation = client.operation('query', 'querySoap', 'GetQuickApproverList')
 
-    expect(operation.example_body).to eq(
+    expect(request_template(operation, section: :body)).to eq(
       GetQuickApproverList: {
         Request: {
           QueryRequestHeader: {

@@ -31,7 +31,7 @@ describe 'Integration with Betfair' do
     ns = 'http://www.betfair.com/publicapi/v5/BFExchangeService/'
     ns2 = 'http://www.betfair.com/publicapi/types/exchange/v5/'
 
-    expect(operation.body_parts).to eq([
+    expect(request_body_paths(operation)).to eq([
       [['getMUBetsLite'],
        { namespace: ns, form: 'qualified', singular: true }
 ],
@@ -103,7 +103,7 @@ describe 'Integration with Betfair' do
   it 'creates a proper example request for messages with Arrays' do
     operation = client.operation(service_name, port_name, :getMUBetsLite)
 
-    expect(operation.example_body).to eq(
+    expect(request_template(operation, section: :body)).to eq(
       getMUBetsLite: {
         request: {
 
@@ -136,7 +136,7 @@ describe 'Integration with Betfair' do
     operation = client.operation(service_name, port_name, :getMUBetsLite)
     datetime_value = (Time.now - 365).xmlschema
 
-    operation.body = {
+    apply_request(operation, body: {
       getMUBetsLite: {
         request: {
           header: {
@@ -156,7 +156,7 @@ describe 'Integration with Betfair' do
           excludeLastSecond: true
         }
       }
-    }
+    })
 
     expected = Nokogiri.XML(%(
       <env:Envelope

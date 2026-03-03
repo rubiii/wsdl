@@ -35,7 +35,7 @@ describe 'Integration with Jetairways\'s SessionCreate Service' do
 
     namespace = 'http://www.vedaleon.com/webservices'
 
-    expect(operation.body_parts).to eq([
+    expect(request_body_paths(operation)).to eq([
       [['Logon'], { namespace: namespace, form: 'qualified', singular: true }]
     ])
   end
@@ -44,7 +44,7 @@ describe 'Integration with Jetairways\'s SessionCreate Service' do
   it 'creates an example header' do
     operation = client.operation(service_name, port_name, :Logon)
 
-    expect(operation.example_header).to eq(
+    expect(request_template(operation, section: :header)).to eq(
       MessageHeader:
         { From: { PartyId: [{ _type: 's:string' }], Role: 'string' },
           To: { PartyId: [{ _type: 's:string' }], Role: 'string' },
@@ -78,7 +78,7 @@ describe 'Integration with Jetairways\'s SessionCreate Service' do
   it 'creates an example body' do
     operation = client.operation(service_name, port_name, :Logon)
 
-    expect(operation.example_body).to eq(
+    expect(request_template(operation, section: :body)).to eq(
       Logon: {}
     )
   end
@@ -86,28 +86,29 @@ describe 'Integration with Jetairways\'s SessionCreate Service' do
   it 'creates a request with multiple headers' do
     operation = client.operation(service_name, port_name, :Logon)
 
-    operation.header =
-      {
+    apply_request(
+      operation,
+      header: {
         MessageHeader:
-        { CPAId: '9W',
-          ConversationId: '1',
-          Service: { Service: 'Create' },
-          Action: 'CreateSession',
-          MessageData:
-          { MessageId: '0',
-            Timestamp: '2014-02-01T12:57:12.000Z'
+          { CPAId: '9W',
+            ConversationId: '1',
+            Service: { Service: 'Create' },
+            Action: 'CreateSession',
+            MessageData:
+              { MessageId: '0',
+                Timestamp: '2014-02-01T12:57:12.000Z'
 }
 },
         Security:
-        { UsernameToken: {
-          Username: 'example_user',
-          Password: 'my_secret',
-          Organization: 'example_organization'
-        }
+          { UsernameToken: {
+            Username: 'example_user',
+            Password: 'my_secret',
+            Organization: 'example_organization'
+          }
 }
-      }
-    operation.body =
-      { Logon: {} }
+      },
+      body: { Logon: {} }
+    )
 
     expected = Nokogiri.XML('
       <env:Envelope

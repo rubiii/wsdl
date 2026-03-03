@@ -27,7 +27,7 @@ describe 'Integration with Telefonkatalogen' do
     # notice how this contains 9 parts with one element each.
     # it does not include the rpc wrapper.
 
-    expect(operation.body_parts).to eq([
+    expect(request_body_paths(operation)).to eq([
       [['sender'],
        { namespace: nil, form: 'unqualified', singular: true, type: 'xsd:string' }
 ],

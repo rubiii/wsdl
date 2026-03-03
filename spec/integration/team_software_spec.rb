@@ -44,7 +44,7 @@ describe 'Integration with TeamSoftware' do
 
     namespace = 'http://tempuri.org/'
 
-    expect(operation.body_parts).to eq([
+    expect(request_body_paths(operation)).to eq([
       [['Login'],
        { namespace: namespace, form: 'qualified', singular: true }
 ],

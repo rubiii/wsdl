@@ -35,7 +35,7 @@ describe 'Integration with EmailVerification service' do
 
     namespace = 'http://ws.cdyne.com/'
 
-    expect(operation.body_parts).to eq([
+    expect(request_body_paths(operation)).to eq([
       [['VerifyEmail'],
        { namespace: namespace, form: 'qualified', singular: true }
 ],
@@ -53,7 +53,7 @@ describe 'Integration with EmailVerification service' do
   it 'creates an example request' do
     operation = client.operation(service_name, port_name, :VerifyEmail)
 
-    expect(operation.example_body).to eq(
+    expect(request_template(operation, section: :body)).to eq(
       VerifyEmail: {
         email: 'string',
         LicenseKey: 'string'
@@ -64,12 +64,12 @@ describe 'Integration with EmailVerification service' do
   it 'builds a request' do
     operation = client.operation(service_name, port_name, :VerifyEmail)
 
-    operation.body = {
+    apply_request(operation, body: {
       VerifyEmail: {
         email: 'soap@example.com',
         LicenseKey: '?'
       }
-    }
+    })
 
     expected = Nokogiri.XML(%(
       <env:Envelope

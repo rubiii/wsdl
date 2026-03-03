@@ -2,6 +2,10 @@
 
 module WSDL
   module Security
+    # Immutable configuration objects for SOAP response security verification.
+    #
+    # This namespace groups certificate and timestamp verification options used
+    # by response signature verification.
     module ResponseVerification
       # Certificate chain and validity verification options.
       #

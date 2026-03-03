@@ -64,7 +64,7 @@ describe 'Integration with Travelport' do
 
     # The operation should be able to resolve the body parts
     # This will fail if includes or relative imports aren't working
-    body_parts = ping_operation.body_parts
+    body_parts = request_body_paths(ping_operation)
 
     expect(body_parts).to be_an(Array)
     expect(body_parts).not_to be_empty
@@ -82,7 +82,7 @@ describe 'Integration with Travelport' do
     ping_operation = client.operation('SystemService', 'SystemPingPort', 'service')
 
     # This should not raise an error about missing types
-    example = ping_operation.example_body
+    example = request_template(ping_operation, section: :body)
 
     expect(example).to be_a(Hash)
     expect(example).to have_key(:PingReq)

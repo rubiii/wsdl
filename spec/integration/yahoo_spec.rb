@@ -31,7 +31,7 @@ describe 'Integration with Yahoo\'s AccountService' do
 
     namespace = 'http://apt.yahooapis.com/V10'
 
-    expect(operation.body_parts).to eq([
+    expect(request_body_paths(operation)).to eq([
       [['updateStatusForManagedPublisher'],
        { namespace: namespace, form: 'qualified', singular: true }
 ],
@@ -52,7 +52,7 @@ describe 'Integration with Yahoo\'s AccountService' do
   it 'creates an example header' do
     operation = client.operation(service_name, port_name, :updateStatusForManagedPublisher)
 
-    expect(operation.example_header).to eq(
+    expect(request_template(operation, section: :header)).to eq(
       Security: {
         UsernameToken: {
           Username: 'string',
@@ -67,7 +67,7 @@ describe 'Integration with Yahoo\'s AccountService' do
   it 'creates an example body' do
     operation = client.operation(service_name, port_name, :updateStatusForManagedPublisher)
 
-    expect(operation.example_body).to eq(
+    expect(request_template(operation, section: :body)).to eq(
       updateStatusForManagedPublisher: {
         accountID: 'string',
         accountStatus: 'string'
@@ -78,23 +78,23 @@ describe 'Integration with Yahoo\'s AccountService' do
   it 'creates a request with multiple headers' do
     operation = client.operation(service_name, port_name, :updateStatusForManagedPublisher)
 
-    operation.header = {
-      Security: {
-        UsernameToken: {
-          Username: 'admin',
-          Password: 'secret'
-        }
-      },
-      license: 'abc-license',
-      accountID: '23'
-    }
-
-    operation.body = {
-      updateStatusForManagedPublisher: {
-        accountID: '23',
-        accountStatus: 'closed'
-      }
-    }
+    apply_request(operation,
+                  header: {
+                    Security: {
+                      UsernameToken: {
+                        Username: 'admin',
+                        Password: 'secret'
+                      }
+                    },
+                    license: 'abc-license',
+                    accountID: '23'
+                  },
+                  body: {
+                    updateStatusForManagedPublisher: {
+                      accountID: '23',
+                      accountStatus: 'closed'
+                    }
+                  })
 
     expected = Nokogiri.XML('
       <env:Envelope

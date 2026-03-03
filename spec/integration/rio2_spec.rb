@@ -41,7 +41,7 @@ describe 'Integration with Rio II' do
 
     expect(operation.input_style).to eq('document/literal')
 
-    expect(operation.example_body).to eq(
+    expect(request_template(operation, section: :body)).to eq(
       GetSessionState: {
         session: {
           ApplicationId: 'string',

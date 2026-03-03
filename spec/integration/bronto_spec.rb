@@ -29,7 +29,7 @@ describe 'Integration with Bronto' do
 
     namespace = 'http://api.bronto.com/v4'
 
-    expect(operation.body_parts).to eq([
+    expect(request_body_paths(operation)).to eq([
       [['addLogins'],
        { namespace: namespace, form: 'qualified', singular: true }
 ],
@@ -196,7 +196,7 @@ describe 'Integration with Bronto' do
   it 'creates an example header' do
     operation = client.operation(service_name, port_name, :addLogins)
 
-    expect(operation.example_header).to eq(
+    expect(request_template(operation, section: :header)).to eq(
       sessionHeader: {
         sessionId: 'string'
       }
@@ -206,7 +206,7 @@ describe 'Integration with Bronto' do
   it 'creates an example body' do
     operation = client.operation(service_name, port_name, :addLogins)
 
-    expect(operation.example_body).to eq(
+    expect(request_template(operation, section: :body)).to eq(
       addLogins: {
         accounts: [
           {
@@ -251,27 +251,27 @@ describe 'Integration with Bronto' do
   it 'creates a request with a header' do
     operation = client.operation(service_name, port_name, :addLogins)
 
-    operation.header = {
-      sessionHeader: {
-        sessionId: '23'
-      }
-    }
-
-    operation.body = {
-      addLogins: {
-        accounts: [
-          {
-            username: 'admin',
-            password: 'secert',
-            contactInformation: {
-              firstName: 'brew',
-              email: 'brew@example.com'
-            },
-            permissionApi: true
-          }
-        ]
-      }
-    }
+    apply_request(operation,
+                  header: {
+                    sessionHeader: {
+                      sessionId: '23'
+                    }
+                  },
+                  body: {
+                    addLogins: {
+                      accounts: [
+                        {
+                          username: 'admin',
+                          password: 'secert',
+                          contactInformation: {
+                            firstName: 'brew',
+                            email: 'brew@example.com'
+                          },
+                          permissionApi: true
+                        }
+                      ]
+                    }
+                  })
 
     expected = Nokogiri.XML('
       <env:Envelope

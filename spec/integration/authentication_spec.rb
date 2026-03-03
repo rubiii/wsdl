@@ -29,7 +29,7 @@ describe 'Integration with Authentication service' do
 
     namespace = 'http://v1_0.ws.auth.order.example.com/'
 
-    expect(operation.body_parts).to eq([
+    expect(request_body_paths(operation)).to eq([
       [['authenticate'],
        { namespace: namespace, form: 'qualified', singular: true }
 ],

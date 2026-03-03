@@ -1,300 +1,135 @@
 # Building Requests
 
-This guide covers how to construct SOAP requests, including handling complex types, arrays, headers, and attributes.
+`operation.request { ... }` is the single structured request interface.
 
-## Basic Request
+## Core DSL
 
-Set the request body using a Hash that mirrors the expected structure:
-
-``` ruby
-operation = client.operation('OrderService', 'OrderServiceSoap', 'GetOrder')
-
-operation.body = {
-  GetOrder: {
-    orderId: 123
-  }
-}
-
-response = operation.call
+```ruby
+operation.request do
+  tag('CreateOrder') do
+    tag('customerId', 'C-123')
+    tag('amount', '42.50')
+  end
+end
 ```
 
-## Using Example Body as a Template
+Reserved DSL methods:
 
-Use `example_body` to see the expected structure, then fill in your values:
+- `tag`
+- `header`
+- `body`
+- `ws_security`
+- `text`
+- `cdata`
+- `comment`
+- `pi`
+- `xmlns`
+- `attribute`
 
-``` ruby
-operation.example_body
-# => { GetOrder: { orderId: 'int' } }
+If an element name matches a reserved method name, use `tag('name')`.
 
-operation.body = {
-  GetOrder: {
-    orderId: 123
-  }
-}
+## Header vs Body
+
+Top-level content defaults to SOAP body.
+
+```ruby
+operation.request do
+  header do
+    tag('AuthToken', 'secret')
+  end
+
+  tag('GetOrder') do
+    tag('orderId', 123)
+  end
+end
 ```
 
-## Complex Types
+`body do ... end` is optional and equivalent for top-level body content.
 
-Nested complex types are represented as nested Hashes:
+## Attributes and Namespaces
 
-``` ruby
-operation.example_body
-# => {
-#   CreateOrder: {
-#     customer: {
-#       name: 'string',
-#       email: 'string'
-#     },
-#     shippingAddress: {
-#       street: 'string',
-#       city: 'string',
-#       zipCode: 'string'
-#     }
-#   }
-# }
+```ruby
+operation.request do
+  xmlns('ord', 'http://example.com/orders')
 
-operation.body = {
-  CreateOrder: {
-    customer: {
-      name: 'John Doe',
-      email: 'john@example.com'
-    },
-    shippingAddress: {
-      street: '123 Main St',
-      city: 'Springfield',
-      zipCode: '12345'
-    }
-  }
-}
+  tag('ord:CreateOrder') do
+    attribute('priority', 'high')
+    tag('customerId', 'C-123')
+  end
+end
 ```
 
-## Arrays
+Rules:
 
-### Arrays of Complex Types
+- Element and attribute names are validated as XML NCName/QName.
+- Prefixed names require a declared namespace.
+- Reserved prefixes cannot be overridden: `wsse`, `wsu`, `ds`, `ec`, `env`, `soap`, `soap12`, `xsi`.
 
-When an element can occur multiple times (arrays), provide an Array of Hashes:
+## Text, CDATA, Comments, PI
 
-``` ruby
-operation.example_body
-# => {
-#   CreateOrder: {
-#     items: [{
-#       productId: 'int',
-#       quantity: 'int'
-#     }]
-#   }
-# }
-
-operation.body = {
-  CreateOrder: {
-    items: [
-      { productId: 1, quantity: 2 },
-      { productId: 2, quantity: 1 },
-      { productId: 3, quantity: 5 }
-    ]
-  }
-}
+```ruby
+operation.request do
+  tag('Submit') do
+    text('normal text <escaped>')
+    cdata('<raw xml="kept as-is"/>')
+    comment('diagnostic marker')
+    pi('xml-stylesheet', 'type="text/xsl" href="style.xsl"')
+  end
+end
 ```
 
-### Arrays of Simple Types
+- Text and attribute values are XML-escaped automatically.
+- CDATA preserves verbatim content.
 
-For arrays of simple values, provide an Array:
+## Contract-Guided Scaffolding
 
-``` ruby
-operation.example_body
-# => {
-#   GetOrders: {
-#     orderIds: {
-#       orderId: ['int']
-#     }
-#   }
-# }
+Use `operation.contract` to generate a starting request:
 
-operation.body = {
-  GetOrders: {
-    orderIds: {
-      orderId: [101, 102, 103, 104]
-    }
-  }
-}
+```ruby
+template = operation.contract.request.body.template(mode: :minimal)
+puts template.to_dsl
 ```
 
-## SOAP Headers
+Modes:
 
-Some operations require SOAP headers for authentication or other purposes:
+- `:minimal`: required elements/attributes only.
+- `:full`: includes optional content and wildcard hints.
 
-``` ruby
-operation.example_header
-# => {
-#   AuthHeader: {
-#     token: 'string'
-#   }
-# }
+## Validation Timing and Strictness
 
-operation.header = {
-  AuthHeader: {
-    token: 'abc123secret'
-  }
-}
+Validation runs immediately when the `request` block finishes.
 
-operation.body = {
-  GetOrder: { orderId: 123 }
-}
+`strict_schema: true` (default):
 
-response = operation.call
+- Enforces operation-relevant schema completeness.
+- Rejects unknown elements/attributes unless wildcard-permitted.
+- Enforces required elements, order, and cardinality where known.
+
+`strict_schema: false`:
+
+- Tolerates recoverable import failures.
+- Validates known structure where available.
+- Allows unknown structure when schema metadata is missing.
+
+## Resource Limits
+
+Request AST construction enforces limits:
+
+- `max_request_elements`
+- `max_request_depth`
+- `max_request_attributes`
+
+Configure on client:
+
+```ruby
+client = WSDL::Client.new(
+  wsdl,
+  max_request_elements: 50_000,
+  max_request_depth: 200,
+  max_request_attributes: 5_000
+)
 ```
 
-## XML Attributes
+## RPC/Literal Behavior
 
-To set XML attributes on an element, prefix the attribute name with an underscore (`_`):
-
-``` ruby
-operation.body = {
-  CreatePayment: {
-    amount: {
-      _currency: 'USD',
-      amount: 99.99
-    }
-  }
-}
-```
-
-Attribute keys cannot be empty (`_`) and namespace declaration attributes
-(`_xmlns` / `_xmlns:prefix`) are rejected.
-
-This produces XML like:
-
-``` xml
-<amount currency="USD">99.99</amount>
-```
-
-### Attributes on Complex Types
-
-``` ruby
-operation.body = {
-  UpdateOrder: {
-    order: {
-      _id: 123,
-      _status: 'processing',
-      items: [
-        { productId: 1, quantity: 2 }
-      ]
-    }
-  }
-}
-```
-
-## Raw XML Envelope
-
-If you need complete control, you can provide a raw XML envelope instead of using the body Hash:
-
-``` ruby
-operation.xml_envelope = <<~XML
-  <?xml version="1.0" encoding="UTF-8"?>
-  <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
-    <soap:Header>
-      <auth:Token xmlns:auth="http://example.com/auth">secret123</auth:Token>
-    </soap:Header>
-    <soap:Body>
-      <GetOrder xmlns="http://example.com/orders">
-        <orderId>123</orderId>
-      </GetOrder>
-    </soap:Body>
-  </soap:Envelope>
-XML
-
-response = operation.call
-```
-
-When `xml_envelope` is set, the `body` and `header` properties are ignored.
-
-## Previewing the Request
-
-To see the XML that will be sent without making the call:
-
-``` ruby
-operation.body = {
-  GetOrder: { orderId: 123 }
-}
-
-puts operation.build
-```
-
-This outputs the complete SOAP envelope XML.
-
-## Customizing the Request
-
-### Endpoint
-
-Override the endpoint from the WSDL:
-
-``` ruby
-operation.endpoint = 'http://staging.example.com/orders'
-```
-
-### SOAP Action
-
-Override the SOAPAction header:
-
-``` ruby
-operation.soap_action = 'http://example.com/custom/GetOrder'
-```
-
-### SOAP Version
-
-Switch between SOAP 1.1 and 1.2:
-
-``` ruby
-operation.soap_version = '1.2'
-```
-
-### Encoding
-
-Change the character encoding (default is UTF-8):
-
-``` ruby
-operation.encoding = 'ISO-8859-1'
-```
-
-### HTTP Headers
-
-Set custom HTTP headers:
-
-``` ruby
-operation.http_headers = {
-  'Content-Type' => 'text/xml;charset=UTF-8',
-  'SOAPAction' => '"http://example.com/GetOrder"',
-  'X-Custom-Header' => 'custom-value'
-}
-```
-
-## Error Handling
-
-The library validates your input against the expected structure:
-
-``` ruby
-# Wrong: Array provided for singular complex type
-operation.body = {
-  GetOrder: [{ orderId: 123 }]
-}
-operation.build
-# => ArgumentError: Expected a Hash for the :GetOrder complex type
-
-# Wrong: Hash provided for array of complex types
-operation.body = {
-  CreateOrder: {
-    items: { productId: 1, quantity: 2 }  # Should be an Array
-  }
-}
-operation.build
-# => ArgumentError: Expected an Array of Hashes for the :items complex type
-
-# Wrong: Array provided for singular simple type
-operation.body = {
-  GetOrder: {
-    orderId: [123, 456]  # Should be a single value
-  }
-}
-operation.build
-# => ArgumentError: Unexpected Array for the :orderId simple type
-```
+For `rpc/literal`, request serialization applies an operation wrapper when needed, using `soap:body@namespace` if present.

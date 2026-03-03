@@ -36,7 +36,7 @@ describe 'Integration with RATP' do
     ns1 = 'http://wsiv.ratp.fr'
     ns2 = 'http://wsiv.ratp.fr/xsd'
 
-    expect(operation.body_parts).to eq([
+    expect(request_body_paths(operation)).to eq([
       [['getStations'],
        { namespace: ns1, form: 'qualified', singular: true }
 ],
@@ -335,14 +335,14 @@ describe 'Integration with RATP' do
   it 'builds a request' do
     operation = client.operation(service_name, port_name, :getStations)
 
-    operation.body = {
+    apply_request(operation, body: {
       getStations: {
         station: {
           id: 1975
         },
         limit: 1
       }
-    }
+    })
 
     expected = Nokogiri.XML(%(
       <env:Envelope

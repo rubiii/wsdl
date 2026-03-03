@@ -11,7 +11,7 @@ describe 'Integration with a Document/Literal example' do
   it 'works with op1' do
     op1 = client.operation(service_name, port_name, :op1)
 
-    expect(op1.example_body).to eq(
+    expect(request_template(op1, section: :body)).to eq(
       op1: {
         in: {
           data1: 'int',
@@ -20,14 +20,14 @@ describe 'Integration with a Document/Literal example' do
       }
     )
 
-    op1.body = {
+    apply_request(op1, body: {
       op1: {
         in: {
           data1: 24,
           data2: 36
         }
       }
-    }
+    })
 
     # The expected request.
     expected = Nokogiri.XML('
@@ -53,7 +53,7 @@ describe 'Integration with a Document/Literal example' do
   it 'works with op3' do
     op3 = client.operation(service_name, port_name, :op3)
 
-    expect(op3.example_body).to eq(
+    expect(request_template(op3, section: :body)).to eq(
       op3: {
         DataElem: {
           data1: 'int',
@@ -65,7 +65,7 @@ describe 'Integration with a Document/Literal example' do
       }
     )
 
-    op3.body = {
+    apply_request(op3, body: {
       op3: {
         DataElem: {
           data1: 64,
@@ -75,7 +75,7 @@ describe 'Integration with a Document/Literal example' do
           RefDataElem: 3
         }
       }
-    }
+    })
 
     expected = Nokogiri.XML('
       <env:Envelope

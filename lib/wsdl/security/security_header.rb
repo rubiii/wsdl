@@ -26,7 +26,15 @@ module WSDL
     class SecurityHeader
       # Local aliases for namespace constants
       NS = Constants::NS
+
+      # Alias for WS-Security namespace constants.
+      #
+      # @return [Module]
       SecurityNS = NS::Security
+
+      # Alias for WS-Addressing namespace constants.
+      #
+      # @return [Module]
       AddressingNS = NS::Addressing
 
       # Returns the security configuration.
@@ -119,10 +127,14 @@ module WSDL
 
         # Add mustUnderstand attribute (required by WS-Security)
         envelope_ns_prefix = document.root.namespace.prefix || 'env'
-        security["#{envelope_ns_prefix}:mustUnderstand"] = '1'
+        security["#{envelope_ns_prefix}:mustUnderstand"] = must_understand_value(document.root.namespace.href)
 
         header_node.add_child(security)
         security
+      end
+
+      def must_understand_value(envelope_namespace)
+        envelope_namespace == NS::SOAP::V1_2 ? 'true' : '1'
       end
 
       # Adds a Timestamp element to the security header.

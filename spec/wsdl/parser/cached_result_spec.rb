@@ -31,13 +31,13 @@ describe WSDL::Parser::CachedResult do
         wsdl:,
         http: adapter_class.new('shared'),
         cache:,
-        parse_options: { sandbox_paths:, limits:, reject_doctype: true, schema_imports: :best_effort }
+        parse_options: { sandbox_paths:, limits:, reject_doctype: true, strict_schema: false }
       )
       described_class.load(
         wsdl:,
         http: adapter_class.new('shared'),
         cache:,
-        parse_options: { sandbox_paths:, limits:, reject_doctype: true, schema_imports: :best_effort }
+        parse_options: { sandbox_paths:, limits:, reject_doctype: true, strict_schema: false }
       )
 
       expect(definition_count).to eq(1)
@@ -57,20 +57,20 @@ describe WSDL::Parser::CachedResult do
         wsdl:,
         http: adapter_class.new('shared'),
         cache:,
-        parse_options: { sandbox_paths:, limits:, reject_doctype: true, schema_imports: :best_effort }
+        parse_options: { sandbox_paths:, limits:, reject_doctype: true, strict_schema: false }
       )
       described_class.load(
         wsdl:,
         http: adapter_class.new('shared'),
         cache:,
-        parse_options: { sandbox_paths:, limits:, reject_doctype: false, schema_imports: :best_effort }
+        parse_options: { sandbox_paths:, limits:, reject_doctype: false, strict_schema: false }
       )
 
       expect(definition_count).to eq(2)
       expect(cache.size).to eq(2)
     end
 
-    it 'partitions cache entries by schema import policy' do
+    it 'partitions cache entries by strict schema mode' do
       cache = WSDL::Cache.new
       parser_result = instance_double(WSDL::Parser::Result)
       definition_count = 0
@@ -83,13 +83,13 @@ describe WSDL::Parser::CachedResult do
         wsdl:,
         http: adapter_class.new('shared'),
         cache:,
-        parse_options: { sandbox_paths:, limits:, reject_doctype: true, schema_imports: :best_effort }
+        parse_options: { sandbox_paths:, limits:, reject_doctype: true, strict_schema: false }
       )
       described_class.load(
         wsdl:,
         http: adapter_class.new('shared'),
         cache:,
-        parse_options: { sandbox_paths:, limits:, reject_doctype: true, schema_imports: :strict }
+        parse_options: { sandbox_paths:, limits:, reject_doctype: true, strict_schema: true }
       )
 
       expect(definition_count).to eq(2)

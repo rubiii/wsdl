@@ -29,7 +29,7 @@ describe 'Integration with Equifax' do
 
     ns1 = 'http://eid.equifax.com/soap/schema/canada/v2'
 
-    expect(operation.body_parts).to eq([
+    expect(request_body_paths(operation)).to eq([
       [['InitialRequest'],
        { namespace: ns1, form: 'qualified', singular: true }
 ],
@@ -166,7 +166,7 @@ describe 'Integration with Equifax' do
   it 'creates an example body with attributes' do
     operation = client.operation(service_name, port_name, :startTransaction)
 
-    expect(operation.example_body).to eq(
+    expect(request_template(operation, section: :body)).to eq(
       InitialRequest: {
         Identity: {
           Name: {
@@ -233,7 +233,8 @@ describe 'Integration with Equifax' do
   it 'creates a request with attributes' do
     operation = client.operation(service_name, port_name, :startTransaction)
 
-    operation.body = {
+    # This test uses incomplete data to focus on attribute serialization
+    apply_request(operation, body: {
       InitialRequest: {
         Identity: {
           Address: [
@@ -255,7 +256,7 @@ describe 'Integration with Equifax' do
           ]
         }
       }
-    }
+    }, strict_schema: false)
 
     expected = Nokogiri.XML('
       <env:Envelope

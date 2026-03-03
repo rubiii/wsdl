@@ -1,116 +1,78 @@
 # Getting Started
 
-## Installation
+## 1. Build a Client
 
-Install the gem from RubyGems:
-
-```
-$ gem install wsdl
-```
-
-Or add it to your Gemfile:
-
-``` ruby
-gem 'wsdl'
-```
-
-Then run `bundle install`.
-
-## Requirements
-
-- Ruby 3.2 or higher
-
-## Loading a WSDL Document
-
-The `WSDL` class accepts WSDL documents from various sources:
-
-### From a URL
-
-``` ruby
+```ruby
 require 'wsdl'
 
 client = WSDL::Client.new('http://example.com/service?wsdl')
 ```
 
-### From a Local File
+`strict_schema` is enabled by default. Set `strict_schema: false` when you need best-effort parsing for incomplete enterprise WSDLs.
 
-``` ruby
-client = WSDL::Client.new('/path/to/service.wsdl')
-```
+## 2. Discover Services and Operations
 
-### From a Raw XML String
-
-``` ruby
-xml = File.read('/path/to/service.wsdl')
-client = WSDL::Client.new(xml)
-```
-
-## Basic Workflow
-
-Once you've loaded a WSDL document, the typical workflow is:
-
-### 1. Discover Services and Ports
-
-``` ruby
+```ruby
 client.services
-# => {
-#   'MyService' => {
-#     ports: {
-#       'MyServicePort' => {
-#         type: 'http://schemas.xmlsoap.org/wsdl/soap/',
-#         location: 'http://example.com/service'
-#       }
-#     }
-#   }
-# }
+# => { "ServiceName" => { ports: { "PortName" => { ... } } } }
+
+client.operations('ServiceName', 'PortName')
+# => ["GetOrder", "CreateOrder"]
 ```
 
-### 2. List Available Operations
+## 3. Pick an Operation and Inspect the Contract
 
-``` ruby
-client.operations('MyService', 'MyServicePort')
-# => ['GetUser', 'CreateUser', 'UpdateUser', 'DeleteUser']
+```ruby
+operation = client.operation('ServiceName', 'PortName', 'GetOrder')
+contract = operation.contract
+
+contract.style            # => "document/literal" or "rpc/literal"
+contract.request.empty?   # => false
+contract.request.body.paths
+contract.request.body.tree
 ```
 
-### 3. Get an Operation
+Generate a request scaffold:
 
-``` ruby
-operation = client.operation('MyService', 'MyServicePort', 'GetUser')
+```ruby
+puts contract.request.body.template(mode: :minimal).to_dsl
+puts contract.request.body.template(mode: :full).to_h
 ```
 
-### 4. Inspect the Expected Request Structure
+## 4. Define the Request
 
-``` ruby
-operation.example_body
-# => { GetUser: { userId: 'int' } }
-
-operation.example_header
-# => { AuthToken: { token: 'string' } }
+```ruby
+operation.request do
+  tag('GetOrder') do
+    tag('orderId', 123)
+  end
+end
 ```
 
-### 5. Set the Request Body and Call
+Validation runs as soon as the block finishes.
 
-``` ruby
-operation.body = {
-  GetUser: {
-    userId: 123
-  }
-}
+## 5. Add Security (Optional)
 
+Security is configured inside the request block via `ws_security`.
+
+```ruby
+operation.request do
+  tag('GetOrder') { tag('orderId', 123) }
+
+  ws_security do
+    timestamp expires_in: 300
+    username_token 'api-user', 'secret', digest: true
+    verify_response mode: :required
+  end
+end
+```
+
+## 6. Call and Read the Response
+
+```ruby
 response = operation.call
+
+response.raw     # raw SOAP XML
+response.body    # parsed SOAP body hash
+response.header  # parsed SOAP header hash
 ```
-
-### 6. Handle the Response
-
-``` ruby
-response.body    # Parsed response as a Hash
-response.raw     # Raw XML string
-response.doc     # Nokogiri XML document
-```
-
-## Next Steps
-
-- [Inspecting Services](inspecting-services.md) - Learn more about exploring WSDL structure
-- [Building Requests](building-requests.md) - Detailed guide on constructing requests
-- [Handling Responses](handling-responses.md) - Working with SOAP responses
-- [Configuration](configuration.md) - Customizing HTTP adapters and other options

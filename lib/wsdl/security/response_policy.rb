@@ -15,6 +15,9 @@ module WSDL
       # Require a valid signature on every response.
       MODE_REQUIRED = :required
 
+      # Allowed response verification modes.
+      #
+      # @return [Array<Symbol>]
       MODES = [MODE_DISABLED, MODE_IF_PRESENT, MODE_REQUIRED].freeze
 
       # Creates the default response policy.

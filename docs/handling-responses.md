@@ -1,235 +1,71 @@
 # Handling Responses
 
-After calling an operation, you receive a `WSDL::Response` object that provides multiple ways to access the response data.
+`operation.call` returns `WSDL::Response`.
 
-``` ruby
-operation = wsdl.operation('OrderService', 'OrderServiceSoap', 'GetOrder')
-operation.body = { GetOrder: { OrderId: 123 } }
+## Basic Access
 
+```ruby
 response = operation.call
-```
 
-## Raw XML Access
-
-The simplest way to inspect a response is to look at the raw XML.
-
-### Raw Response String
-
-``` ruby
-response.raw
-# => '<?xml version="1.0"?><soap:Envelope xmlns:soap="...">...</soap:Envelope>'
-```
-
-### Nokogiri Document
-
-For more control, access the response as a Nokogiri XML document:
-
-``` ruby
-response.doc
-# => #<Nokogiri::XML::Document:...>
-
-response.doc.at_xpath('//Order/Status').text
-# => 'shipped'
-```
-
-## XPath Queries
-
-Query the response document directly using XPath:
-
-``` ruby
-response.xpath('//Order')
-# => [#<Nokogiri::XML::Element:... name="Order">]
-
-response.xpath('//Order/Status').first.text
-# => 'shipped'
-```
-
-### Working with Namespaces
-
-The `xpath` method uses the document's namespaces by default:
-
-``` ruby
-response.xml_namespaces
-# => {
-#   'xmlns:soap' => 'http://schemas.xmlsoap.org/soap/envelope/',
-#   'xmlns:ns1' => 'http://example.com/orders'
-# }
-
-response.xpath('//ns1:Order')
-```
-
-You can also provide custom namespace mappings:
-
-``` ruby
-response.xpath('//o:Order', 'o' => 'http://example.com/orders')
-```
-
-## Parsed Header
-
-Access SOAP headers as a Hash with symbol keys:
-
-``` ruby
-response.header
-# => {
-#   SessionInfo: {
-#     SessionId: 'abc123',
-#     ExpiresAt: '2024-01-15T10:30:00Z'
-#   }
-# }
-```
-
-Returns an empty Hash if no headers are present.
-
-## Parsed Envelope (Raw)
-
-Use `envelope_hash` when you need the full SOAP envelope (header + body) without schema-aware type conversion:
-
-``` ruby
+response.raw          # raw SOAP XML string
+response.body         # parsed SOAP body hash
+response.header       # parsed SOAP header hash (or nil)
 response.envelope_hash
-# => {
-#   Envelope: {
-#     Header: { SessionId: 'abc123' },
-#     Body:   { GetOrderResponse: { ... } }
-#   }
-# }
 ```
 
-`to_envelope_hash` is an alias:
+`response.to_hash` is an alias of `response.body`.
 
-``` ruby
-response.to_envelope_hash == response.envelope_hash
-# => true
+## Schema-Aware Parsing
+
+When output schema metadata is available, response parsing performs type conversion for known XML Schema types (for example integer, boolean, decimal, date/time) and preserves array semantics for repeating elements.
+
+## XPath and XML Inspection
+
+```ruby
+doc = response.doc
+namespaces = response.xml_namespaces
+nodes = response.xpath('//ns:OrderId', 'ns' => 'http://example.com/orders')
 ```
 
-## Parsed Body
+Use this when you need exact XML-level inspection beyond hash parsing.
 
-The `body` method returns the SOAP body as a Hash. Because the response is parsed using schema information from the WSDL, you get two key benefits:
+## Security Verification
 
-1. **Type Conversions** - XSD types are converted to Ruby types
-2. **Consistent Arrays** - Elements with `maxOccurs > 1` are always arrays
+```ruby
+security = response.security
 
-``` ruby
-response.body
-# => {
-#   GetOrderResponse: {
-#     Order: {
-#       Id: 123,                            # Integer
-#       Total: BigDecimal("149.97"),        # BigDecimal
-#       Shipped: true,                      # Boolean
-#       OrderDate: Date.new(2024, 1, 15),   # Date
-#       Items: [                            # Always an array
-#         { Name: 'Widget', Quantity: 3 }
-#       ]
-#     }
-#   }
-# }
+security.signature_present?
+security.valid?
+security.errors
+security.signed_elements
 ```
 
-Element names are converted to symbols, preserving their original casing from the WSDL.
+Strict verification with raised errors:
 
-### Type Conversions
-
-The following XSD types are automatically converted:
-
-| XSD Type | Ruby Type |
-|----------|-----------|
-| `xsd:string`, `xsd:token`, `xsd:anyURI` | `String` |
-| `xsd:int`, `xsd:integer`, `xsd:long`, `xsd:short`, `xsd:byte` | `Integer` |
-| `xsd:decimal` | `BigDecimal` |
-| `xsd:float`, `xsd:double` | `Float` |
-| `xsd:boolean` | `true` / `false` |
-| `xsd:date` | `Date` |
-| `xsd:dateTime`, `xsd:time` | `Time` (when timezone is explicit), otherwise `String` |
-| `xsd:base64Binary`, `xsd:hexBinary` | `String` (decoded) |
-
-Unknown types are returned as strings.
-
-### Consistent Array Handling
-
-When the schema defines an element with `maxOccurs="unbounded"` or `maxOccurs > 1`, that element is always returned as an array—even when only one element is present:
-
-``` ruby
-# Schema: <element name="Item" maxOccurs="unbounded"/>
-
-# One item in response - still an array
-response.body[:Order][:Items]
-# => [{ Name: "Widget", Price: BigDecimal("49.99") }]
-
-# Multiple items - also an array
-response.body[:Order][:Items]
-# => [
-#      { Name: "Widget", Price: BigDecimal("49.99") },
-#      { Name: "Gadget", Price: BigDecimal("29.99") }
-#    ]
-```
-
-### Nil Values
-
-Elements with `xsi:nil="true"` are returned as `nil`:
-
-``` ruby
-response.body[:Value]  # => nil
-```
-
-### Unknown Elements
-
-Elements not defined in the schema are included as strings:
-
-``` ruby
-response.body[:KnownElement]    # => 42 (Integer per schema)
-response.body[:UnknownElement]  # => "42" (String, not in schema)
-```
-
-## Working with Parsed Data
-
-### Navigating Nested Structures
-
-``` ruby
-order = response.body[:GetOrderResponse][:Order]
-
-order[:Id]     # => 123
-order[:Status] # => 'shipped'
-```
-
-### Safe Access with dig
-
-``` ruby
-order = response.body.dig(:GetOrderResponse, :Order)
-if order
-  puts "Order ID: #{order[:Id]}"
+```ruby
+begin
+  response.security.verify!
+rescue WSDL::SignatureVerificationError, WSDL::TimestampValidationError => e
+  warn e.message
 end
 ```
 
-### Iterating Arrays
+## Verification Policy
 
-``` ruby
-items = response.body.dig(:GetOrderResponse, :Order, :Items)
-items.each do |item|
-  puts "#{item[:Name]}: #{item[:Quantity]}"
+Verification behavior is configured in the request DSL:
+
+```ruby
+operation.request do
+  tag('GetOrder') { tag('orderId', 123) }
+
+  ws_security do
+    verify_response mode: :required
+  end
 end
 ```
 
-## SOAP Faults
+Modes:
 
-SOAP faults are returned in the body like any other response:
-
-``` ruby
-if response.body[:Fault]
-  fault = response.body[:Fault]
-  raise "SOAP Fault: #{fault[:faultstring]}"
-end
-```
-
-## Debugging
-
-``` ruby
-# Print raw XML
-puts response.raw
-
-# Pretty print parsed body
-require 'pp'
-pp response.body
-
-# Inspect XML structure
-puts response.doc.to_xml(indent: 2)
-```
+- `:required` (default): signature must be present and valid.
+- `:if_present`: verify when signature exists.
+- `:disabled`: skip verification.

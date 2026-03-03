@@ -28,7 +28,7 @@ describe 'Integration with Amazon' do
 
     namespace = 'http://fps.amazonaws.com/doc/2008-09-17/'
 
-    expect(operation.body_parts).to eq([
+    expect(request_body_paths(operation)).to eq([
       [['Pay'],
        { namespace: namespace, form: 'qualified', singular: true }
 ],
@@ -163,7 +163,7 @@ describe 'Integration with Amazon' do
       part = { element: 'tns:Error', namespaces: { 'xmlns:tns' => namespace } }
       elements = builder.build([part])
 
-      example = WSDL::Builder::ExampleMessage.build(elements)
+      example = WSDL::Contract::PartContract.new(elements, section: :body).template(mode: :full).to_h
 
       # The Detail element should have the any content placeholder
       detail = example.dig(:Error, :Detail)
@@ -176,14 +176,14 @@ describe 'Integration with Amazon' do
       part = { element: 'tns:Error', namespaces: { 'xmlns:tns' => namespace } }
       elements = builder.build([part])
 
-      # Create a mock envelope for the Message builder
-      envelope = instance_double(WSDL::Builder::Envelope)
-      allow(envelope).to receive(:register_namespace).and_return('ns1')
+      document = WSDL::Request::Document.new
+      context = WSDL::Request::DSLContext.new(
+        document:,
+        security: WSDL::Security::Config.new,
+        request_limits: WSDL.limits.to_h
+      )
 
-      message = WSDL::Builder::Message.new(envelope, elements)
-
-      # Build with both defined and arbitrary content in Detail
-      result = message.build({
+      SpecSupport::RequestDSLHelper.emit_hash_section(context, :body, {
         Error: {
           Type: 'Sender',
           Code: 'InvalidParameterValue',
@@ -195,15 +195,17 @@ describe 'Integration with Amazon' do
             ReceivedValue: 'not-a-number'
           }
         }
-      })
+      }, elements)
+
+      result = WSDL::Request::Serializer.new(document:, soap_version: '1.1', pretty_print: false).serialize
 
       # Verify defined elements are serialized
-      expect(result).to include('<ns1:Type>Sender</ns1:Type>')
-      expect(result).to include('<ns1:Code>InvalidParameterValue</ns1:Code>')
-      expect(result).to include('<ns1:Message>Value for parameter is invalid.</ns1:Message>')
+      expect(result).to include('<Type>Sender</Type>')
+      expect(result).to include('<Code>InvalidParameterValue</Code>')
+      expect(result).to include('<Message>Value for parameter is invalid.</Message>')
 
       # Verify arbitrary content is serialized
-      expect(result).to include('<ns1:Detail>')
+      expect(result).to include('<Detail>')
       expect(result).to include('<Parameter>Amount</Parameter>')
       expect(result).to include('<ExpectedType>Decimal</ExpectedType>')
       expect(result).to include('<ReceivedValue>not-a-number</ReceivedValue>')

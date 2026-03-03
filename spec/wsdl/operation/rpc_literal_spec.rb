@@ -12,7 +12,7 @@ describe WSDL::Operation do
       op1 = client.operation('SampleService', 'Sample', 'op1')
       expect(op1.input_style).to eq('rpc/literal')
 
-      expect(op1.body_parts).to eq([
+      expect(request_body_paths(op1)).to eq([
         [['in'],
          { namespace: nil,                        form: 'unqualified', singular: true }
 ],
@@ -35,7 +35,7 @@ describe WSDL::Operation do
       op2 = client.operation('SampleService', 'Sample', 'op2')
       expect(op2.input_style).to eq('rpc/literal')
 
-      expect(op2.body_parts).to eq([
+      expect(request_body_paths(op2)).to eq([
         [['in'],
          { namespace: nil,                        form: 'unqualified', singular: true }
 ],
@@ -58,7 +58,7 @@ describe WSDL::Operation do
       op3 = client.operation('SampleService', 'Sample', 'op3')
       expect(op3.input_style).to eq('rpc/literal')
 
-      expect(op3.body_parts).to eq([
+      expect(request_body_paths(op3)).to eq([
         [['DataElem'],
          { namespace: 'http://dataNamespace.com', form: 'qualified', singular: true }
 ],

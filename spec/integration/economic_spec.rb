@@ -35,7 +35,7 @@ describe 'Integration with Economic' do
 
     namespace = 'http://e-conomic.com'
 
-    expect(operation.body_parts).to eq([
+    expect(request_body_paths(operation)).to eq([
       [['Account_GetDataArray'],
        { namespace: namespace, form: 'qualified', singular: true }
 ],

@@ -10,13 +10,13 @@ describe 'Integration with Temperature service' do
 
   it 'returns an empty Hash if there are no header parts' do
     operation = client.operation(service_name, port_name, :ConvertTemp)
-    expect(operation.example_header).to eq({})
+    expect(request_template(operation, section: :header)).to eq({})
   end
 
   it 'creates an example body' do
     operation = client.operation(service_name, port_name, :ConvertTemp)
 
-    expect(operation.example_body).to eq(
+    expect(request_template(operation, section: :body)).to eq(
       ConvertTemp: {
         Temperature: 'double',
         FromUnit: 'string',
@@ -42,13 +42,13 @@ describe 'Integration with Temperature service' do
     # </s:simpleType>
     #
     # TODO: somehow expose the enumeration options through the example request.
-    operation.body = {
+    apply_request(operation, body: {
       ConvertTemp: {
         Temperature: 30,
         FromUnit: 'degreeCelsius',
         ToUnit: 'degreeFahrenheit'
       }
-    }
+    })
 
     expected = Nokogiri.XML(%(
       <env:Envelope

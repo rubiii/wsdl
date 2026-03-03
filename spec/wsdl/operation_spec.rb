@@ -120,7 +120,7 @@ describe WSDL::Operation do
 
   describe '#example_request' do
     it 'returns an example request Hash following WSDL\'s conventions' do
-      expect(operation.example_body).to eq(
+      expect(request_template(operation, section: :body)).to eq(
         ConvertTemp: {
           Temperature: 'double',
           FromUnit: 'string',
@@ -132,13 +132,13 @@ describe WSDL::Operation do
 
   describe '#build' do
     it 'returns an example request Hash following WSDL\'s conventions' do
-      operation.body = {
+      apply_request(operation, body: {
         ConvertTemp: {
           Temperature: 30,
           FromUnit: 'degreeCelsius',
           ToUnit: 'degreeFahrenheit'
         }
-      }
+      })
 
       expected = Nokogiri.XML(%(
         <env:Envelope
@@ -159,35 +159,54 @@ describe WSDL::Operation do
         .to be_equivalent_to(expected).respecting_element_order
     end
 
+    it 'raises in strict mode when top-level elements exceed maxOccurs' do
+      expect {
+        apply_request(operation, strict_schema: true, body: {
+          ConvertTemp: [
+            {
+              Temperature: 30,
+              FromUnit: 'degreeCelsius',
+              ToUnit: 'degreeFahrenheit'
+            },
+            {
+              Temperature: 31,
+              FromUnit: 'degreeCelsius',
+              ToUnit: 'degreeFahrenheit'
+            }
+          ]
+        })
+      }.to raise_error(WSDL::RequestValidationError, /exceeds maxOccurs=1/)
+    end
+
     it 'reflects updated body values on the next call' do
-      operation.body = {
+      apply_request(operation, body: {
         ConvertTemp: {
           Temperature: 30,
           FromUnit: 'degreeCelsius',
           ToUnit: 'degreeFahrenheit'
         }
-      }
+      })
       operation.build
 
-      operation.body = {
+      apply_request(operation, body: {
         ConvertTemp: {
           Temperature: 100,
           FromUnit: 'degreeCelsius',
           ToUnit: 'degreeFahrenheit'
         }
-      }
+      })
 
       expect(operation.build).to include('<ns0:Temperature>100</ns0:Temperature>')
     end
 
     it 'reflects SOAP version changes in the next built envelope' do
-      operation.body = {
+      apply_request(operation, body: {
         ConvertTemp: {
           Temperature: 30,
           FromUnit: 'degreeCelsius',
           ToUnit: 'degreeFahrenheit'
         }
-      }
+      })
 
       first_namespace = Nokogiri.XML(operation.build).root.namespace.href
 
@@ -199,16 +218,24 @@ describe WSDL::Operation do
     end
 
     it 'reflects security configuration changes on the next call' do
-      operation.body = {
+      apply_request(operation, body: {
         ConvertTemp: {
           Temperature: 30,
           FromUnit: 'degreeCelsius',
           ToUnit: 'degreeFahrenheit'
         }
-      }
+      })
       operation.build
 
-      operation.security.username_token('username', 'secret', digest: true)
+      apply_request(operation, body: {
+        ConvertTemp: {
+          Temperature: 30,
+          FromUnit: 'degreeCelsius',
+          ToUnit: 'degreeFahrenheit'
+        }
+      }) do
+        username_token('username', 'secret', digest: true)
+      end
 
       expect(operation.build).to include('UsernameToken')
     end
@@ -217,13 +244,13 @@ describe WSDL::Operation do
       let(:compact_operation) { described_class.new(operation_info, parser_result, http_mock, pretty_print: false) }
 
       it 'returns compact XML without indentation' do
-        compact_operation.body = {
+        apply_request(compact_operation, body: {
           ConvertTemp: {
             Temperature: 30,
             FromUnit: 'degreeCelsius',
             ToUnit: 'degreeFahrenheit'
           }
-        }
+        })
 
         xml = compact_operation.build
 
@@ -234,13 +261,13 @@ describe WSDL::Operation do
       end
 
       it 'returns semantically equivalent XML' do
-        compact_operation.body = {
+        apply_request(compact_operation, body: {
           ConvertTemp: {
             Temperature: 30,
             FromUnit: 'degreeCelsius',
             ToUnit: 'degreeFahrenheit'
           }
-        }
+        })
 
         expected = Nokogiri.XML(%(
           <env:Envelope
@@ -263,46 +290,17 @@ describe WSDL::Operation do
     end
   end
 
-  describe '#xml_envelope' do
-    let(:xml) do
-      '<?xml version="1.0" encoding="UTF-8"?>
-    <Envelope>
-      <Body>
-        <VerifySignature>
-          <UrlEndPoint></UrlEndPoint>
-          <HttpParameters></HttpParameters>
-        </VerifySignature>
-      </Body>
-    </Envelope>'
-    end
-
-    it 'returns the xml request' do
-      http_mock.fake_request('http://www.webservicex.net/ConvertTemperature.asmx')
-      operation.xml_envelope = xml
-
-      expect(operation.xml_envelope).to eq(xml)
-    end
-
-    it 'returns a WSDL response object' do
-      http_mock.fake_request('http://www.webservicex.net/ConvertTemperature.asmx')
-      operation.xml_envelope = xml
-
-      response = operation.call
-      expect(response).to be_a(WSDL::Response)
-    end
-  end
-
   describe '#call' do
     it 'calls the operation with a Hash of options and returns a Response' do
       http_mock.fake_request('http://www.webservicex.net/ConvertTemperature.asmx')
 
-      operation.body = {
+      apply_request(operation, body: {
         ConvertTemp: {
           Temperature: 30,
           FromUnit: 'degreeCelsius',
           ToUnit: 'degreeFahrenheit'
         }
-      }
+      })
 
       response = operation.call
 
@@ -310,9 +308,8 @@ describe WSDL::Operation do
     end
 
     context 'with response verification enforcement' do
-      before do
-        http_mock.fake_request('http://www.webservicex.net/ConvertTemperature.asmx', 'security/unsigned_response.xml')
-        operation.body = {
+      let(:request_body) do
+        {
           ConvertTemp: {
             Temperature: 30,
             FromUnit: 'degreeCelsius',
@@ -321,20 +318,30 @@ describe WSDL::Operation do
         }
       end
 
+      before do
+        http_mock.fake_request('http://www.webservicex.net/ConvertTemperature.asmx', 'security/unsigned_response.xml')
+      end
+
       it 'raises when strict verification is required and response is unsigned' do
-        operation.security.verify_response
+        apply_request(operation, body: request_body) do
+          verify_response
+        end
 
         expect { operation.call }.to raise_error(WSDL::SignatureVerificationError, /does not contain a signature/)
       end
 
       it 'allows unsigned responses in verify_if_present mode' do
-        operation.security.verify_response(mode: WSDL::Security::ResponsePolicy::MODE_IF_PRESENT)
+        apply_request(operation, body: request_body) do
+          verify_response(mode: WSDL::Security::ResponsePolicy::MODE_IF_PRESENT)
+        end
 
         expect(operation.call).to be_a(WSDL::Response)
       end
 
       it 'allows unsigned responses when verification is disabled' do
-        operation.security.verify_response(mode: WSDL::Security::ResponsePolicy::MODE_DISABLED)
+        apply_request(operation, body: request_body) do
+          verify_response(mode: WSDL::Security::ResponsePolicy::MODE_DISABLED)
+        end
 
         expect(operation.call).to be_a(WSDL::Response)
       end

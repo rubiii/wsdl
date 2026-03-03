@@ -1,163 +1,89 @@
 # Inspecting Services
 
-Once you've loaded a WSDL document, you can inspect its structure to understand what services, ports, and operations are available.
+Use `WSDL::Client` for service/port discovery and `operation.contract` for request/response introspection.
 
 ## Services and Ports
 
-A WSDL document defines one or more **services**, each containing one or more **ports**. A port specifies a binding and a network address (endpoint).
-
-``` ruby
+```ruby
 client = WSDL::Client.new('http://example.com/service?wsdl')
 
 client.services
 # => {
-#   'OrderService' => {
-#     ports: {
-#       'OrderServiceSoap' => {
-#         type: 'http://schemas.xmlsoap.org/wsdl/soap/',
-#         location: 'http://example.com/orders'
-#       },
-#       'OrderServiceSoap12' => {
-#         type: 'http://schemas.xmlsoap.org/wsdl/soap12/',
-#         location: 'http://example.com/orders'
-#       }
-#     }
-#   }
-# }
-```
-
-The `type` indicates the SOAP version:
-- `http://schemas.xmlsoap.org/wsdl/soap/` - SOAP 1.1
-- `http://schemas.xmlsoap.org/wsdl/soap12/` - SOAP 1.2
-
-### Primary Service Name
-
-``` ruby
-client.service_name
-# => 'OrderService'
+#      "OrderService" => {
+#        ports: {
+#          "OrderPort" => {
+#            type: "http://schemas.xmlsoap.org/wsdl/soap/",
+#            location: "https://api.example.com/orders"
+#          }
+#        }
+#      }
+#    }
 ```
 
 ## Operations
 
-Each port exposes a set of operations. List them using `operations`:
-
-``` ruby
-client.operations('OrderService', 'OrderServiceSoap')
-# => ['CreateOrder', 'GetOrder', 'UpdateOrder', 'CancelOrder']
+```ruby
+client.operations('OrderService', 'OrderPort')
+# => ["GetOrder", "CreateOrder", "CancelOrder"]
 ```
 
-Service and port names can be passed as strings or symbols:
+## Operation Contract
 
-``` ruby
-client.operations(:OrderService, :OrderServiceSoap)
+```ruby
+operation = client.operation('OrderService', 'OrderPort', 'CreateOrder')
+contract = operation.contract
+
+contract.style          # => "document/literal" or "rpc/literal"
+contract.request.empty? # => true/false
 ```
 
-## Getting an Operation
+### Request and Response Sections
 
-To inspect or call a specific operation:
-
-``` ruby
-operation = client.operation('OrderService', 'OrderServiceSoap', 'CreateOrder')
+```ruby
+contract.request.header
+contract.request.body
+contract.response.header
+contract.response.body
 ```
 
-## Operation Details
+Each section is a `PartContract`.
 
-Once you have an operation, you can inspect its properties:
+### Flat Paths
 
-### SOAP Version
-
-``` ruby
-operation.soap_version
-# => '1.1' or '1.2'
-```
-
-### SOAP Action
-
-``` ruby
-operation.soap_action
-# => 'http://example.com/CreateOrder'
-```
-
-### Endpoint
-
-``` ruby
-operation.endpoint
-# => 'http://example.com/orders'
-```
-
-### Operation Style
-
-``` ruby
-operation.input_style
-# => 'document/literal'
-
-operation.output_style
-# => 'document/literal'
-```
-
-## Example Request Structure
-
-To see what structure the operation expects:
-
-### Body
-
-``` ruby
-operation.example_body
-# => {
-#   CreateOrder: {
-#     customerId: 'int',
-#     items: [{
-#       productId: 'int',
-#       quantity: 'int',
-#       price: 'decimal'
-#     }],
-#     shippingAddress: {
-#       street: 'string',
-#       city: 'string',
-#       zipCode: 'string'
-#     }
-#   }
-# }
-```
-
-### Header
-
-Some operations require SOAP headers:
-
-``` ruby
-operation.example_header
-# => {
-#   AuthHeader: {
-#     username: 'string',
-#     password: 'string'
-#   }
-# }
-```
-
-An empty hash indicates no headers are required.
-
-## Body Parts
-
-For more detailed type information, use `body_parts`:
-
-``` ruby
-operation.body_parts
+```ruby
+contract.request.body.paths
 # => [
-#   [['CreateOrder'], { namespace: 'http://example.com/', form: 'qualified', singular: true }],
-#   [['CreateOrder', 'customerId'], { namespace: 'http://example.com/', form: 'unqualified', singular: true, type: 'int' }],
-#   ...
-# ]
+#      {
+#        path: ["CreateOrder", "customerId"],
+#        namespace: "http://example.com/orders",
+#        singular: true,
+#        min_occurs: "1",
+#        max_occurs: "1",
+#        type: "xsd:string"
+#      }
+#    ]
 ```
 
-This returns an array of paths and their metadata, useful for understanding namespaces and element qualifications.
+### Tree Shape
 
-## Error Handling
-
-If you request an unknown service, port, or operation, an `ArgumentError` is raised with helpful information:
-
-``` ruby
-client.operation('UnknownService', 'UnknownPort', 'UnknownOp')
-# ArgumentError: Unknown service "UnknownService" or port "UnknownPort".
-# Here is a list of known services and port:
-# {"OrderService"=>{:ports=>{"OrderServiceSoap"=>...}}}
+```ruby
+contract.request.body.tree
+# => [{ name: "CreateOrder", children: [...], attributes: [...], wildcard: false, ... }]
 ```
+
+### Request Templates
+
+```ruby
+minimal = contract.request.body.template(mode: :minimal)
+full = contract.request.body.template(mode: :full)
+
+puts minimal.to_dsl
+puts full.to_dsl
+pp minimal.to_h
+```
+
+`to_dsl` is the recommended starting point for implementation.
+
+## Empty Input Operations
+
+If both request header and body are empty (`contract.request.empty? == true`), the operation can be called without defining `operation.request`.

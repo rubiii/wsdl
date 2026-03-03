@@ -27,7 +27,7 @@ describe 'Integration with a Spyne.io service' do
     expect(operation.soap_action).to eq('say_hello')
     expect(operation.endpoint).to eq('http://localhost:8000/')
 
-    expect(operation.body_parts).to eq([
+    expect(request_body_paths(operation)).to eq([
       [['say_hello'],
        { namespace: 'spyne.examples.hello', form: 'qualified', singular: true }
 ]
@@ -36,13 +36,13 @@ describe 'Integration with a Spyne.io service' do
 
   it 'creates an example body with attributes' do
     operation = client.operation(service_name, port_name, :say_hello)
-    expect(operation.example_body).to eq(say_hello: {})
+    expect(request_template(operation, section: :body)).to eq(say_hello: {})
   end
 
   it 'creates a request with attributes' do
     operation = client.operation(service_name, port_name, :say_hello)
 
-    operation.body = { say_hello: {} }
+    apply_request(operation, body: { say_hello: {} })
 
     expected = Nokogiri.XML('
       <env:Envelope

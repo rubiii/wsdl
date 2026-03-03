@@ -44,7 +44,7 @@ describe 'Integration with Oracle' do
 
     namespace = 'urn://oracle.bi.webservices/v7'
 
-    expect(operation.body_parts).to eq([
+    expect(request_body_paths(operation)).to eq([
       [['joinGroups'],
        { namespace: namespace, form: 'qualified', singular: true }
 ],
@@ -137,7 +137,7 @@ describe 'Integration with Oracle' do
       port = 'JobManagementServiceSoap'
       operation = client.operation(service, port, 'getJobInfo')
 
-      operation.example_body
+      request_template(operation, section: :body)
 
       # Navigate to the detailedInfo in the example
       # The structure is: getJobInfo -> jobID (string), returnOptions (optional), sessionID
@@ -149,7 +149,7 @@ describe 'Integration with Oracle' do
       part = { element: 'sawsoap:getJobInfoResult', namespaces: { 'xmlns:sawsoap' => namespace } }
       elements = builder.build([part])
 
-      example = WSDL::Builder::ExampleMessage.build(elements)
+      example = WSDL::Contract::PartContract.new(elements, section: :body).template(mode: :full).to_h
 
       # The detailedInfo element should have the any content placeholder
       detailed_info = example.dig(:getJobInfoResult, :jobInfo, :detailedInfo)
@@ -162,14 +162,14 @@ describe 'Integration with Oracle' do
       part = { element: 'sawsoap:getJobInfoResult', namespaces: { 'xmlns:sawsoap' => namespace } }
       elements = builder.build([part])
 
-      # Create a mock envelope for the Message builder
-      envelope = instance_double(WSDL::Builder::Envelope)
-      allow(envelope).to receive(:register_namespace).and_return('ns1')
+      document = WSDL::Request::Document.new
+      context = WSDL::Request::DSLContext.new(
+        document:,
+        security: WSDL::Security::Config.new,
+        request_limits: WSDL.limits.to_h
+      )
 
-      message = WSDL::Builder::Message.new(envelope, elements)
-
-      # Build with arbitrary content in detailedInfo
-      result = message.build({
+      SpecSupport::RequestDSLHelper.emit_hash_section(context, :body, {
         getJobInfoResult: {
           jobInfo: {
             jobStats: {
@@ -193,15 +193,17 @@ describe 'Integration with Oracle' do
             }
           }
         }
-      })
+      }, elements)
+
+      result = WSDL::Request::Serializer.new(document:, soap_version: '1.1', pretty_print: false).serialize
 
       # Verify defined elements are serialized
-      expect(result).to include('<ns1:jobID>12345</ns1:jobID>')
-      expect(result).to include('<ns1:jobType>Report</ns1:jobType>')
-      expect(result).to include('<ns1:jobState>Finished</ns1:jobState>')
+      expect(result).to include('<jobID>12345</jobID>')
+      expect(result).to include('<jobType>Report</jobType>')
+      expect(result).to include('<jobState>Finished</jobState>')
 
       # Verify arbitrary content in detailedInfo is serialized
-      expect(result).to include('<ns1:detailedInfo>')
+      expect(result).to include('<detailedInfo>')
       expect(result).to include('<ReportName>Sales Summary</ReportName>')
       expect(result).to include('<ExecutionTime>1.5s</ExecutionTime>')
       expect(result).to include('<RowCount>150</RowCount>')

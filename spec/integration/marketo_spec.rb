@@ -10,7 +10,7 @@ describe 'Integration with Marketo Marketo Automation Software' do
 
   it 'returns header parts' do
     operation = client.operation(service_name, port_name, :getLead)
-    expect(operation.example_header).to eq({
+    expect(request_template(operation, section: :header)).to eq({
       AuthenticationHeader: {
         mktowsUserId: 'string',
         requestSignature: 'string',
@@ -24,7 +24,7 @@ describe 'Integration with Marketo Marketo Automation Software' do
   it 'creates an example body' do
     operation = client.operation(service_name, port_name, :getLead)
 
-    expect(operation.example_body).to eq({
+    expect(request_template(operation, section: :body)).to eq({
       paramsGetLead: {
         leadKey: {
           keyType: 'string',
@@ -37,22 +37,22 @@ describe 'Integration with Marketo Marketo Automation Software' do
   it 'builds a request' do
     operation = client.operation(service_name, port_name, :getLead)
 
-    operation.header = {
-      AuthenticationHeader: {
-        mktowsUserId: 'bigcorp1_461839624B16E06BA2D663',
-        requestSignature: 'ffbff4d4bef354807481e66dc7540f7890523a87',
-        requestTimestamp: '2013-07-30T14:15:06-07:00'
-      }
-    }
-
-    operation.body = {
-      paramsGetLead: {
-        leadKey: {
-          keyType: 'EMAIL',
-          keyValue: 'rufus@marketo.com'
-        }
-      }
-    }
+    apply_request(operation,
+                  header: {
+                    AuthenticationHeader: {
+                      mktowsUserId: 'bigcorp1_461839624B16E06BA2D663',
+                      requestSignature: 'ffbff4d4bef354807481e66dc7540f7890523a87',
+                      requestTimestamp: '2013-07-30T14:15:06-07:00'
+                    }
+                  },
+                  body: {
+                    paramsGetLead: {
+                      leadKey: {
+                        keyType: 'EMAIL',
+                        keyValue: 'rufus@marketo.com'
+                      }
+                    }
+                  })
 
     expected = Nokogiri.XML(%(
      <SOAP-ENV:Envelope

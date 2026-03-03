@@ -3,7 +3,7 @@
 require 'spec_helper'
 
 describe 'Integration with Juniper' do
-  subject(:client) { WSDL::Client.new fixture('wsdl/juniper') }
+  subject(:client) { WSDL::Client.new fixture('wsdl/juniper'), strict_schema: false }
 
   it 'skips the relative schema import to still show other information' do
     expect(client.services).to eq(
@@ -16,5 +16,19 @@ describe 'Integration with Juniper' do
         }
       }
     )
+  end
+
+  it 'allows request DSL usage in relaxed mode for operations with unresolved imported types' do
+    operation = client.operation('SystemService', 'System', 'LoginRequest')
+
+    expect {
+      operation.request do
+        tag('LoginRequest') do
+          tag('username', 'john')
+        end
+      end
+    }.not_to raise_error
+
+    expect { operation.build }.not_to raise_error
   end
 end

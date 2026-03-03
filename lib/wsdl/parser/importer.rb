@@ -16,7 +16,13 @@ module WSDL
     class Importer
       # Safety limit to prevent infinite loops with malformed WSDLs.
       MAX_SCHEMA_IMPORT_ITERATIONS = 100
-      SCHEMA_IMPORT_POLICIES = %i[best_effort strict].freeze
+
+      # Exceptions that are treated as recoverable schema import failures.
+      #
+      # These are wrapped into {SchemaImportError} and either raised or collected
+      # depending on strict schema mode.
+      #
+      # @return [Array<Class>]
       RECOVERABLE_SCHEMA_IMPORT_ERRORS = [
         SystemCallError,
         IOError,
@@ -39,12 +45,12 @@ module WSDL
       #   If nil, uses {WSDL.limits}.
       # @param reject_doctype [Boolean] whether to reject XML with DOCTYPE declarations
       #   (default: true). This is a defense-in-depth security measure.
-      # @param schema_imports [Symbol] schema import failure policy:
-      #   - `:best_effort` (default) — log and skip non-security schema import failures
-      #   - `:strict` — raise non-security schema import failures as {SchemaImportError}
+      # @param strict_schema [Boolean] strict schema handling mode:
+      #   - `true` (default) — raise recoverable schema import failures
+      #   - `false` — log and skip recoverable schema import failures
       #   Fatal errors (for example, {PathRestrictionError}) always raise.
       # rubocop:disable Metrics/ParameterLists
-      def initialize(resolver, documents, schemas, limits: nil, reject_doctype: true, schema_imports: :best_effort)
+      def initialize(resolver, documents, schemas, limits: nil, reject_doctype: true, strict_schema: true)
         # rubocop:enable Metrics/ParameterLists
         @logger = Logging.logger[self]
 
@@ -53,9 +59,15 @@ module WSDL
         @schemas = schemas
         @limits = limits || WSDL.limits
         @reject_doctype = reject_doctype
-        @schema_imports = validate_schema_imports!(schema_imports)
+        @strict_schema = strict_schema ? true : false
         @schema_count = 0
+        @schema_import_errors = []
       end
+
+      # Recoverable schema import errors captured during import.
+      #
+      # @return [Array<SchemaImportError>]
+      attr_reader :schema_import_errors
 
       # Imports a WSDL document and all its dependencies.
       #
@@ -242,9 +254,10 @@ module WSDL
       #
       # @param error [SchemaImportError] the recoverable import failure
       # @return [void]
-      # @raise [SchemaImportError] when policy is `:strict`
+      # @raise [SchemaImportError] when strict schema mode is enabled
       def handle_schema_import_error(error)
-        raise error if @schema_imports == :strict
+        @schema_import_errors << error
+        raise error if @strict_schema
 
         @logger.warn(error.message)
       end
@@ -284,18 +297,6 @@ module WSDL
           limit_value: @limits.max_schemas,
           actual_value: @schema_count
         )
-      end
-
-      # Validates schema import failure policy.
-      #
-      # @param policy [Symbol]
-      # @return [Symbol] validated policy
-      # @raise [ArgumentError] when policy is unknown
-      def validate_schema_imports!(policy)
-        return policy if SCHEMA_IMPORT_POLICIES.include?(policy)
-
-        raise ArgumentError, "Invalid schema_imports policy #{policy.inspect}. " \
-                             "Expected one of: #{SCHEMA_IMPORT_POLICIES.map(&:inspect).join(', ')}."
       end
     end
   end

@@ -42,10 +42,30 @@ module WSDL
     class Signature
       # Local aliases for constants
       SigAlg = Constants::Algorithms::Signature
+
+      # Alias for WS-Security namespace constants.
+      #
+      # @return [Module]
       SecurityNS = Constants::NS::Security
+
+      # Alias for XML Signature namespace constants.
+      #
+      # @return [Module]
       SignatureNS = Constants::NS::Signature
+
+      # Alias for X.509 token profile constants.
+      #
+      # @return [Module]
       X509 = Constants::TokenProfiles::X509
+
+      # Alias for XML encoding URI constants.
+      #
+      # @return [Module]
       Encoding = Constants::Encoding
+
+      # Alias for supported key reference strategies.
+      #
+      # @return [Module]
       KeyRef = Constants::KeyReference
 
       # Signature algorithm configurations

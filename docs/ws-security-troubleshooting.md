@@ -1,216 +1,74 @@
-# Troubleshooting & Limitations
+# WS-Security Troubleshooting
 
-This guide covers common issues, limitations, and how to report security problems.
+## `RequestSecurityConflictError`
 
-> **Quick Links:** [Main WS-Security Guide](ws-security.md) | [UsernameToken](ws-security-username-token.md) | [X.509 Signatures](ws-security-signatures.md) | [XML Safety](ws-security-xml-safety.md)
+Cause: manual request XML conflicts with generated WS-Security structures.
 
-## Common Issues
+Fix:
 
-### Certificate/Key Mismatch
+1. Remove manual `wsse:*`, `wsu:*`, or signature-specific elements/attributes from request DSL.
+2. Keep security configuration only in `ws_security`.
 
-If you get an OpenSSL error about mismatched keys, ensure your private key corresponds to your certificate:
+## `SignatureVerificationError` on response
+
+Cause: response signature missing/invalid under current verification policy.
+
+Fix:
+
+1. Confirm policy mode (`:required`, `:if_present`, `:disabled`).
+2. Configure `trust_store` appropriately.
+3. Confirm certificate chain and message integrity.
+
+Example:
 
 ```ruby
-cert = OpenSSL::X509::Certificate.new(File.read('cert.pem'))
-key = OpenSSL::PKey::RSA.new(File.read('key.pem'))
+operation.request do
+  tag('GetOrder') { tag('orderId', 123) }
 
-# Verify they match
-cert.check_private_key(key)  # Should return true
-```
-
-### Subject Key Identifier Not Found
-
-If you get an error about missing SKI extension when using `:subject_key_identifier`:
-
-```ruby
-# Check if certificate has SKI extension
-cert = OpenSSL::X509::Certificate.new(File.read('cert.pem'))
-ski = cert.extensions.find { |e| e.oid == 'subjectKeyIdentifier' }
-if ski
-  puts "SKI: #{ski.value}"
-else
-  puts "Certificate does not have SKI extension, use :issuer_serial instead"
+  ws_security do
+    verify_response mode: :if_present, trust_store: :system
+  end
 end
 ```
 
-### Invalid Signature Errors
+## `TimestampValidationError`
 
-If the server rejects signatures:
+Cause: response timestamp outside allowed window.
 
-1. Verify the server expects the digest algorithm you're using
-2. Check that timestamps are within acceptable clock skew
-3. Ensure the certificate is trusted by the server
-4. Verify you're signing the elements the server expects
-5. Try enabling `explicit_namespace_prefixes: true`
+Fix:
 
-### Response Verification Failures
-
-If response verification fails:
-
-1. Check `response.security.errors` for details
-2. Ensure you have the correct server certificate
-3. Verify the response actually contains a signature (`response.security.signature_present?`)
-4. Check which elements are signed (`response.security.signed_elements`)
-
-### Unsupported Algorithm Errors
-
-If you receive an `UnsupportedAlgorithmError`, the response contains an algorithm URI that the library doesn't recognize:
+1. Increase `clock_skew` if clocks differ.
+2. Ensure system clocks are synchronized.
+3. Disable timestamp validation only in controlled environments.
 
 ```ruby
-begin
-  response.security.verify_signature!
-rescue WSDL::UnsupportedAlgorithmError => e
-  puts "Algorithm URI: #{e.algorithm_uri}"
-  puts "Algorithm type: #{e.algorithm_type}"  # :digest, :signature, or :canonicalization
+ws_security do
+  verify_response clock_skew: 600
 end
 ```
 
-**Supported Algorithms:**
+## `UnsupportedAlgorithmError`
 
-| Type | Supported |
-|------|-----------|
-| **Digest** | SHA-1, SHA-224, SHA-256, SHA-384, SHA-512 |
-| **Signature** | RSA-SHA*, ECDSA-SHA*, DSA-SHA1, DSA-SHA256 |
-| **Canonicalization** | Exclusive C14N 1.0, Inclusive C14N 1.0/1.1 (with/without comments) |
+Cause: peer uses an unsupported signature or digest algorithm URI.
 
-If the server uses an algorithm not in this list, please open an issue with the algorithm URI.
+Fix:
 
-**Security Note:** The library intentionally rejects unknown algorithms to prevent algorithm confusion attacks. It never silently falls back to a default algorithm.
+1. Align server/client algorithm suite.
+2. Confirm SHA-256 or compatible policy where possible.
 
-### Namespace Issues
+## UsernameToken authentication fails
 
-Some servers are sensitive to namespace prefixes. If you encounter issues:
+Cause: server expects digest or specific timestamp behavior.
 
-1. Try `explicit_namespace_prefixes: true`
-2. Build the request and inspect the XML output with `operation.build`
-3. Compare with working examples from the service documentation
+Fix:
 
-### Clock Skew Problems
-
-If you're getting timestamp-related errors:
-
-1. Ensure your system clock is synchronized (use NTP)
-2. Try increasing the timestamp expiration: `timestamp(expires_in: 600)`
-3. Check if the server has a different clock skew tolerance
-
-### SSL Certificate Verification
-
-If you're having SSL issues connecting to the WSDL endpoint:
-
-```ruby
-# DANGEROUS - Never do this in production!
-# client.http.ssl_config.verify_mode = OpenSSL::SSL::VERIFY_NONE
-
-# Instead, configure proper CA certificates:
-client.http.ssl_config.add_trust_ca('/path/to/ca-bundle.crt')
-```
-
----
-
-## Limitations
-
-### Not Supported
-
-The current implementation does not support:
-
-| Feature | Description | Workaround |
-|---------|-------------|------------|
-| **XML Encryption** | Message-level content encryption | Use HTTPS for confidentiality |
-| **SAML tokens** | SAML-based authentication | Use UsernameToken or X.509 |
-| **Kerberos tokens** | Kerberos authentication | Use UsernameToken or X.509 |
-| **Derived keys** | Key derivation for encryption | Not available |
-| **Signature confirmation** | Confirming which elements were signed | Check `signed_elements` manually |
-
-### Known Limitations
-
-#### UsernameToken Uses SHA-1
-
-The WS-Security specification mandates SHA-1 for password digests. This cannot be changed without breaking compatibility with compliant servers.
-
-**Mitigation:** Use strong passwords (the real security factor) or switch to X.509 signatures for configurable algorithms.
-
-#### No Certificate Chain Validation
-
-The library verifies that signatures are valid for the provided certificate, but does not:
-
-- Validate the certificate chain against a trust store
-- Check certificate revocation (CRL/OCSP)
-
-**Mitigation:** Applications requiring this should implement additional validation:
-
-```ruby
-# Example: Manual certificate validation
-def validate_certificate(cert)
-  store = OpenSSL::X509::Store.new
-  store.add_file('/path/to/ca-bundle.crt')
-  store.verify(cert)
-end
-```
-
----
+1. Switch to `digest: true`.
+2. Add `timestamp` if required by server policy.
+3. Inspect outbound SOAP XML (`operation.build`) for final header content.
 
 ## Debugging Tips
 
-### Preview the Request
-
-Use `build` to see the complete SOAP envelope with security headers:
-
-```ruby
-operation.security.username_token('user', 'secret', digest: true)
-operation.body = { GetOrder: { orderId: 123 } }
-
-puts operation.build
-```
-
-### Check Configuration State
-
-Inspect the current security configuration:
-
-```ruby
-operation.security.configured?                   # Any security configured?
-operation.security.username_token?               # UsernameToken configured?
-operation.security.timestamp?                    # Timestamp configured?
-operation.security.signature?                    # X.509 signing configured?
-operation.security.sign_addressing?              # WS-Addressing signing enabled?
-operation.security.explicit_namespace_prefixes?  # Explicit prefixes enabled?
-operation.security.verify_response?              # Response verification enabled?
-operation.security.key_reference                 # => :binary_security_token
-```
-
-### Clear and Retry
-
-To remove all security configuration and start fresh:
-
-```ruby
-operation.security.clear
-```
-
-### Enable HTTP Debugging
-
-To see the raw HTTP request/response:
-
-```ruby
-client.http.debug_dev = $stderr
-```
-
----
-
-## Reporting Security Issues
-
-If you discover a security vulnerability in this library:
-
-1. **Do not** open a public GitHub issue for security vulnerabilities
-2. Email the maintainers directly with details of the vulnerability
-3. Include steps to reproduce the issue
-4. Allow reasonable time for a fix before public disclosure
-
-We take security seriously and will respond promptly to valid reports.
-
----
-
-## Related Documentation
-
-- [Main WS-Security Guide](ws-security.md) — Overview and choosing authentication methods
-- [UsernameToken Authentication](ws-security-username-token.md) — Password-based authentication
-- [X.509 Certificate Signatures](ws-security-signatures.md) — Digital signatures
-- [XML Parsing Security](ws-security-xml-safety.md) — Protection against XML attacks
+- Log outbound XML from `operation.build` in non-production.
+- Inspect `response.raw` for returned security headers.
+- Check `response.security.errors` and `response.security.signed_elements`.
+- Start with `verify_response mode: :if_present` while integrating, then harden to `:required`.

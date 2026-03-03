@@ -33,7 +33,7 @@ describe 'Integration with Interhome' do
 
     namespace = 'http://www.interhome.com/webservice'
 
-    expect(operation.body_parts).to eq([
+    expect(request_body_paths(operation)).to eq([
       [['ClientBooking'],
        { namespace: namespace, form: 'qualified', singular: true }
 ],
@@ -220,7 +220,7 @@ describe 'Integration with Interhome' do
   it 'creates an example header' do
     operation = client.operation(service_name, port_name, :Availability)
 
-    expect(operation.example_header).to eq(
+    expect(request_template(operation, section: :header)).to eq(
       ServiceAuthHeader: {
         Username: 'string',
         Password: 'string'
@@ -231,7 +231,7 @@ describe 'Integration with Interhome' do
   it 'creates an example body including optional elements' do
     operation = client.operation(service_name, port_name, :Availability)
 
-    expect(operation.example_body).to eq(
+    expect(request_template(operation, section: :body)).to eq(
       Availability: {
 
         # These are optional.
@@ -248,21 +248,21 @@ describe 'Integration with Interhome' do
   it 'skips optional elements in the request' do
     operation = client.operation(service_name, port_name, :Availability)
 
-    operation.header = {
-      ServiceAuthHeader: {
-        Username: 'test',
-        Password: 'secret'
-      }
-    }
-
-    operation.body = {
-      Availability: {
-        inputValue: {
-          # Leaving out two optional elements on purpose.
-          AccommodationCode: 'secret'
-        }
-      }
-    }
+    apply_request(operation,
+                  header: {
+                    ServiceAuthHeader: {
+                      Username: 'test',
+                      Password: 'secret'
+                    }
+                  },
+                  body: {
+                    Availability: {
+                      inputValue: {
+                        # Leaving out two optional elements on purpose.
+                        AccommodationCode: 'secret'
+                      }
+                    }
+                  })
 
     expected = Nokogiri.XML('
       <env:Envelope
