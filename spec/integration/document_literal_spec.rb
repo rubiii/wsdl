@@ -32,16 +32,16 @@ describe 'Integration with a Document/Literal example' do
     # The expected request.
     expected = Nokogiri.XML('
       <env:Envelope
-          xmlns:lol0="http://apiNamespace.com"
+          xmlns:ns0="http://apiNamespace.com"
           xmlns:env="http://schemas.xmlsoap.org/soap/envelope/">
         <env:Header/>
         <env:Body>
-          <lol0:op1>
+          <ns0:op1>
             <in>
               <data1>24</data1>
               <data2>36</data2>
             </in>
-          </lol0:op1>
+          </ns0:op1>
         </env:Body>
       </env:Envelope>
     ')
@@ -79,21 +79,21 @@ describe 'Integration with a Document/Literal example' do
 
     expected = Nokogiri.XML('
       <env:Envelope
-          xmlns:lol0="http://apiNamespace.com"
-          xmlns:lol1="http://dataNamespace.com"
-          xmlns:lol2="http://refNamespace.com"
+          xmlns:ns0="http://apiNamespace.com"
+          xmlns:ns1="http://dataNamespace.com"
+          xmlns:ns2="http://refNamespace.com"
           xmlns:env="http://schemas.xmlsoap.org/soap/envelope/">
         <env:Header/>
         <env:Body>
-          <lol0:op3>
-            <lol1:DataElem>
+          <ns0:op3>
+            <ns1:DataElem>
               <data1>64</data1>
               <data2>128</data2>
-            </lol1:DataElem>
+            </ns1:DataElem>
             <in2>
-              <lol2:RefDataElem>3</lol2:RefDataElem>
+              <ns2:RefDataElem>3</ns2:RefDataElem>
             </in2>
-          </lol0:op3>
+          </ns0:op3>
         </env:Body>
       </env:Envelope>
     ')

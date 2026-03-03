@@ -31,16 +31,16 @@ describe 'Integration with an RPC/Literal example' do
     # The expected request.
     expected = Nokogiri.XML('
       <env:Envelope
-          xmlns:lol0="http://apiNamespace.com"
+          xmlns:ns0="http://apiNamespace.com"
           xmlns:env="http://schemas.xmlsoap.org/soap/envelope/">
         <env:Header/>
         <env:Body>
-          <lol0:op1>
+          <ns0:op1>
             <in>
               <data1>24</data1>
               <data2>36</data2>
             </in>
-          </lol0:op1>
+          </ns0:op1>
         </env:Body>
       </env:Envelope>
     ')
@@ -77,18 +77,18 @@ describe 'Integration with an RPC/Literal example' do
     # namespaced because the WSDL does not define a namespace for it.
     expected = Nokogiri.XML('
       <env:Envelope
-          xmlns:lol0="http://dataNamespace.com"
-          xmlns:lol1="http://refNamespace.com"
+          xmlns:ns0="http://dataNamespace.com"
+          xmlns:ns1="http://refNamespace.com"
           xmlns:env="http://schemas.xmlsoap.org/soap/envelope/">
         <env:Header/>
         <env:Body>
           <op3>
-            <lol0:DataElem>
+            <ns0:DataElem>
               <data1>64</data1>
               <data2>128</data2>
-            </lol0:DataElem>
+            </ns0:DataElem>
             <in2>
-              <lol1:RefDataElem>3</lol1:RefDataElem>
+              <ns1:RefDataElem>3</ns1:RefDataElem>
             </in2>
           </op3>
         </env:Body>

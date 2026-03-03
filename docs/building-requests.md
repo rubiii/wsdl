@@ -159,6 +159,9 @@ operation.body = {
 }
 ```
 
+Attribute keys cannot be empty (`_`) and namespace declaration attributes
+(`_xmlns` / `_xmlns:prefix`) are rejected.
+
 This produces XML like:
 
 ``` xml

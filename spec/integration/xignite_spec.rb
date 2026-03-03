@@ -99,21 +99,21 @@ describe 'Integration with Xignite' do
 
     expected = Nokogiri.XML('
       <env:Envelope
-          xmlns:lol0="http://www.xignite.com/services/"
+          xmlns:ns0="http://www.xignite.com/services/"
           xmlns:env="http://www.w3.org/2003/05/soap-envelope">
         <env:Header>
-          <lol0:Header>
-            <lol0:Username>test</lol0:Username>
-            <lol0:Password>secret</lol0:Password>
-            <lol0:Tracer>i-dont-know</lol0:Tracer>
-          </lol0:Header>
+          <ns0:Header>
+            <ns0:Username>test</ns0:Username>
+            <ns0:Password>secret</ns0:Password>
+            <ns0:Tracer>i-dont-know</ns0:Tracer>
+          </ns0:Header>
         </env:Header>
         <env:Body>
-          <lol0:GetSecurities>
-            <lol0:Identifiers>NESN.XVTX,BMW.XETR</lol0:Identifiers>
-            <lol0:IdentifierType>Symbol</lol0:IdentifierType>
-            <lol0:AsOfDate>6/4/2013</lol0:AsOfDate>
-          </lol0:GetSecurities>
+          <ns0:GetSecurities>
+            <ns0:Identifiers>NESN.XVTX,BMW.XETR</ns0:Identifiers>
+            <ns0:IdentifierType>Symbol</ns0:IdentifierType>
+            <ns0:AsOfDate>6/4/2013</ns0:AsOfDate>
+          </ns0:GetSecurities>
         </env:Body>
       </env:Envelope>
     ')

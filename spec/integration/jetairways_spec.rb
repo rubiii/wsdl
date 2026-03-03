@@ -111,31 +111,31 @@ describe 'Integration with Jetairways\'s SessionCreate Service' do
 
     expected = Nokogiri.XML('
       <env:Envelope
-       xmlns:lol0="http://www.ebxml.org/namespaces/messageHeader"
-       xmlns:lol1="http://schemas.xmlsoap.org/ws/2002/12/secext"
-       xmlns:lol2="http://www.vedaleon.com/webservices"
+       xmlns:ns0="http://www.ebxml.org/namespaces/messageHeader"
+       xmlns:ns1="http://schemas.xmlsoap.org/ws/2002/12/secext"
+       xmlns:ns2="http://www.vedaleon.com/webservices"
        xmlns:env="http://schemas.xmlsoap.org/soap/envelope/">
         <env:Header>
-          <lol0:MessageHeader>
-            <lol0:CPAId>9W</lol0:CPAId>
-            <lol0:ConversationId>1</lol0:ConversationId>
-            <lol0:Service>Create</lol0:Service>
-            <lol0:Action>CreateSession</lol0:Action>
-            <lol0:MessageData>
-              <lol0:MessageId>0</lol0:MessageId>
-              <lol0:Timestamp>2014-02-01T12:57:12.000Z</lol0:Timestamp>
-            </lol0:MessageData>
-          </lol0:MessageHeader>
-          <lol1:Security>
-            <lol1:UsernameToken>
-              <lol1:Username>example_user</lol1:Username>
-              <lol1:Password>my_secret</lol1:Password>
+          <ns0:MessageHeader>
+            <ns0:CPAId>9W</ns0:CPAId>
+            <ns0:ConversationId>1</ns0:ConversationId>
+            <ns0:Service>Create</ns0:Service>
+            <ns0:Action>CreateSession</ns0:Action>
+            <ns0:MessageData>
+              <ns0:MessageId>0</ns0:MessageId>
+              <ns0:Timestamp>2014-02-01T12:57:12.000Z</ns0:Timestamp>
+            </ns0:MessageData>
+          </ns0:MessageHeader>
+          <ns1:Security>
+            <ns1:UsernameToken>
+              <ns1:Username>example_user</ns1:Username>
+              <ns1:Password>my_secret</ns1:Password>
               <Organization>example_organization</Organization>
-            </lol1:UsernameToken>
-          </lol1:Security>
+            </ns1:UsernameToken>
+          </ns1:Security>
         </env:Header>
         <env:Body>
-          <lol2:Logon/>
+          <ns2:Logon/>
         </env:Body>
     ')
 

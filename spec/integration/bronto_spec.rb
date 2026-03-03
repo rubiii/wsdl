@@ -275,15 +275,15 @@ describe 'Integration with Bronto' do
 
     expected = Nokogiri.XML('
       <env:Envelope
-          xmlns:lol0="http://api.bronto.com/v4"
+          xmlns:ns0="http://api.bronto.com/v4"
           xmlns:env="http://schemas.xmlsoap.org/soap/envelope/">
         <env:Header>
-          <lol0:sessionHeader>
+          <ns0:sessionHeader>
             <sessionId>23</sessionId>
-          </lol0:sessionHeader>
+          </ns0:sessionHeader>
         </env:Header>
         <env:Body>
-          <lol0:addLogins>
+          <ns0:addLogins>
             <accounts>
               <username>admin</username>
               <password>secert</password>
@@ -293,7 +293,7 @@ describe 'Integration with Bronto' do
               </contactInformation>
               <permissionApi>true</permissionApi>
             </accounts>
-          </lol0:addLogins>
+          </ns0:addLogins>
         </env:Body>
       </env:Envelope>
     ')

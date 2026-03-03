@@ -14,7 +14,7 @@ module WSDL
     #
     class Envelope
       # Namespace ID prefix used for registered namespaces.
-      NSID = 'lol'
+      NS_PREFIX = 'ns'
 
       # Creates a new Envelope instance.
       #
@@ -48,7 +48,7 @@ module WSDL
       # existing namespace ID. Otherwise, creates a new one.
       #
       # @param namespace [String] the namespace URI to register
-      # @return [String] the namespace ID (e.g., 'lol0', 'lol1')
+      # @return [String] the namespace ID (e.g., 'ns0', 'ns1')
       def register_namespace(namespace)
         @namespaces[namespace] ||= create_nsid
       end
@@ -84,7 +84,7 @@ module WSDL
       # @return [String] a new namespace ID
       def create_nsid
         @nsid_counter += 1
-        "#{NSID}#{@nsid_counter}"
+        "#{NS_PREFIX}#{@nsid_counter}"
       end
 
       # Builds the SOAP header XML.

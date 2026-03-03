@@ -32,15 +32,15 @@ describe WSDL::Builder::Envelope do
       it 'returns semantically correct XML' do
         expected = Nokogiri.XML(%(
           <env:Envelope
-              xmlns:lol0="http://www.webserviceX.NET/"
+              xmlns:ns0="http://www.webserviceX.NET/"
               xmlns:env="http://www.w3.org/2003/05/soap-envelope">
             <env:Header/>
             <env:Body>
-              <lol0:ConvertTemp>
-                <lol0:Temperature>30</lol0:Temperature>
-                <lol0:FromUnit>degreeCelsius</lol0:FromUnit>
-                <lol0:ToUnit>degreeFahrenheit</lol0:ToUnit>
-              </lol0:ConvertTemp>
+              <ns0:ConvertTemp>
+                <ns0:Temperature>30</ns0:Temperature>
+                <ns0:FromUnit>degreeCelsius</ns0:FromUnit>
+                <ns0:ToUnit>degreeFahrenheit</ns0:ToUnit>
+              </ns0:ConvertTemp>
             </env:Body>
           </env:Envelope>
         ))
@@ -72,15 +72,15 @@ describe WSDL::Builder::Envelope do
       it 'returns semantically correct XML' do
         expected = Nokogiri.XML(%(
           <env:Envelope
-              xmlns:lol0="http://www.webserviceX.NET/"
+              xmlns:ns0="http://www.webserviceX.NET/"
               xmlns:env="http://www.w3.org/2003/05/soap-envelope">
             <env:Header/>
             <env:Body>
-              <lol0:ConvertTemp>
-                <lol0:Temperature>30</lol0:Temperature>
-                <lol0:FromUnit>degreeCelsius</lol0:FromUnit>
-                <lol0:ToUnit>degreeFahrenheit</lol0:ToUnit>
-              </lol0:ConvertTemp>
+              <ns0:ConvertTemp>
+                <ns0:Temperature>30</ns0:Temperature>
+                <ns0:FromUnit>degreeCelsius</ns0:FromUnit>
+                <ns0:ToUnit>degreeFahrenheit</ns0:ToUnit>
+              </ns0:ConvertTemp>
             </env:Body>
           </env:Envelope>
         ))
@@ -110,8 +110,8 @@ describe WSDL::Builder::Envelope do
       nsid1 = envelope.register_namespace('http://example.com/ns1')
       nsid2 = envelope.register_namespace('http://example.com/ns2')
 
-      expect(nsid1).to start_with('lol')
-      expect(nsid2).to start_with('lol')
+      expect(nsid1).to start_with('ns')
+      expect(nsid2).to start_with('ns')
       expect(nsid1).not_to eq(nsid2)
     end
 

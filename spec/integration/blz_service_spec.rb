@@ -29,13 +29,13 @@ describe 'Integration with BLZService' do
 
     expected = Nokogiri.XML(%(
       <env:Envelope
-          xmlns:lol0="http://thomas-bayer.com/blz/"
+          xmlns:ns0="http://thomas-bayer.com/blz/"
           xmlns:env="http://schemas.xmlsoap.org/soap/envelope/">
         <env:Header/>
         <env:Body>
-          <lol0:getBank>
-            <lol0:blz>70070010</lol0:blz>
-          </lol0:getBank>
+          <ns0:getBank>
+            <ns0:blz>70070010</ns0:blz>
+          </ns0:getBank>
         </env:Body>
       </env:Envelope>
     ))

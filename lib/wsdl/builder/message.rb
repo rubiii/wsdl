@@ -288,6 +288,7 @@ module WSDL
       #
       # @param hash [Hash] the value hash to extract attributes from
       # @return [Array<Hash, Hash>] a tuple of [attributes, remaining_hash]
+      # @raise [ArgumentError] if an attribute key is empty or tries to declare namespaces
       # @example
       #   extract_attributes({ _id: "123", name: "test" })
       #   # => [{ "id" => "123" }, { name: "test" }]
@@ -295,13 +296,31 @@ module WSDL
         attributes = {}
 
         hash.dup.each do |k, v|
-          next unless k.to_s[0, 1] == ATTRIBUTE_PREFIX
+          key = k.to_s
+          next unless key.start_with?(ATTRIBUTE_PREFIX)
 
-          attributes[k.to_s[1..]] = v
+          attribute_name = key.delete_prefix(ATTRIBUTE_PREFIX)
+          validate_attribute_name!(attribute_name, key:)
+          attributes[attribute_name] = v
           hash.delete(k)
         end
 
         [attributes, hash]
+      end
+
+      # Validates an attribute name derived from a user input key.
+      #
+      # @param name [String] the extracted attribute name without prefix
+      # @param key [String] the original user-provided hash key
+      # @raise [ArgumentError] if the name is empty or tries to declare namespaces
+      # @return [void]
+      def validate_attribute_name!(name, key:)
+        raise ArgumentError, "Invalid XML attribute key #{key.inspect}: attribute name cannot be empty" if name.empty?
+
+        namespace_declaration = name == 'xmlns' || name.start_with?('xmlns:')
+        return unless namespace_declaration
+
+        raise ArgumentError, "Invalid XML attribute key #{key.inspect}: namespace declarations are not allowed"
       end
     end
   end

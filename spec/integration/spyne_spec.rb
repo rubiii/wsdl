@@ -46,12 +46,12 @@ describe 'Integration with a Spyne.io service' do
 
     expected = Nokogiri.XML('
       <env:Envelope
-          xmlns:lol0="spyne.examples.hello"
+          xmlns:ns0="spyne.examples.hello"
           xmlns:env="http://schemas.xmlsoap.org/soap/envelope/">
         <env:Header>
         </env:Header>
         <env:Body>
-          <lol0:say_hello/>
+          <ns0:say_hello/>
         </env:Body>
       </env:Envelope>
     ')

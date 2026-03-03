@@ -142,15 +142,15 @@ describe WSDL::Operation do
 
       expected = Nokogiri.XML(%(
         <env:Envelope
-            xmlns:lol0="http://www.webserviceX.NET/"
+            xmlns:ns0="http://www.webserviceX.NET/"
             xmlns:env="http://www.w3.org/2003/05/soap-envelope">
           <env:Header/>
           <env:Body>
-            <lol0:ConvertTemp>
-              <lol0:Temperature>30</lol0:Temperature>
-              <lol0:FromUnit>degreeCelsius</lol0:FromUnit>
-              <lol0:ToUnit>degreeFahrenheit</lol0:ToUnit>
-            </lol0:ConvertTemp>
+            <ns0:ConvertTemp>
+              <ns0:Temperature>30</ns0:Temperature>
+              <ns0:FromUnit>degreeCelsius</ns0:FromUnit>
+              <ns0:ToUnit>degreeFahrenheit</ns0:ToUnit>
+            </ns0:ConvertTemp>
           </env:Body>
         </env:Envelope>
       ))
@@ -177,7 +177,7 @@ describe WSDL::Operation do
         }
       }
 
-      expect(operation.build).to include('<lol0:Temperature>100</lol0:Temperature>')
+      expect(operation.build).to include('<ns0:Temperature>100</ns0:Temperature>')
     end
 
     it 'reflects SOAP version changes in the next built envelope' do
@@ -244,15 +244,15 @@ describe WSDL::Operation do
 
         expected = Nokogiri.XML(%(
           <env:Envelope
-              xmlns:lol0="http://www.webserviceX.NET/"
+              xmlns:ns0="http://www.webserviceX.NET/"
               xmlns:env="http://www.w3.org/2003/05/soap-envelope">
             <env:Header/>
             <env:Body>
-              <lol0:ConvertTemp>
-                <lol0:Temperature>30</lol0:Temperature>
-                <lol0:FromUnit>degreeCelsius</lol0:FromUnit>
-                <lol0:ToUnit>degreeFahrenheit</lol0:ToUnit>
-              </lol0:ConvertTemp>
+              <ns0:ConvertTemp>
+                <ns0:Temperature>30</ns0:Temperature>
+                <ns0:FromUnit>degreeCelsius</ns0:FromUnit>
+                <ns0:ToUnit>degreeFahrenheit</ns0:ToUnit>
+              </ns0:ConvertTemp>
             </env:Body>
           </env:Envelope>
         ))

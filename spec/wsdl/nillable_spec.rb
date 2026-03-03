@@ -84,16 +84,16 @@ describe 'Nillable elements' do
       it 'returns semantically correct XML' do
         expected = Nokogiri.XML(%(
           <env:Envelope
-              xmlns:lol0="http://example.com/nillable/"
+              xmlns:ns0="http://example.com/nillable/"
               xmlns:env="http://schemas.xmlsoap.org/soap/envelope/"
               xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
             <env:Header/>
             <env:Body>
-              <lol0:CreateUser>
-                <lol0:username>johndoe</lol0:username>
-                <lol0:email xsi:nil="true"/>
-                <lol0:displayName xsi:nil="true"/>
-              </lol0:CreateUser>
+              <ns0:CreateUser>
+                <ns0:username>johndoe</ns0:username>
+                <ns0:email xsi:nil="true"/>
+                <ns0:displayName xsi:nil="true"/>
+              </ns0:CreateUser>
             </env:Body>
           </env:Envelope>
         ))
@@ -123,7 +123,7 @@ describe 'Nillable elements' do
 
       it 'serializes nil value as empty element' do
         xml = envelope.to_s
-        expect(xml).to include('<lol0:phoneNumber/>')
+        expect(xml).to include('<ns0:phoneNumber/>')
         expect(xml).not_to include('xsi:nil')
       end
     end
@@ -143,7 +143,7 @@ describe 'Nillable elements' do
 
       it 'serializes nil complex type with xsi:nil="true"' do
         xml = envelope.to_s
-        expect(xml).to include('<lol0:address xsi:nil="true"/>')
+        expect(xml).to include('<ns0:address xsi:nil="true"/>')
       end
     end
 
@@ -166,13 +166,13 @@ describe 'Nillable elements' do
 
       it 'serializes nested nil values with xsi:nil="true"' do
         xml = envelope.to_s
-        expect(xml).to include('<lol0:street xsi:nil="true"/>')
-        expect(xml).to include('<lol0:zipCode xsi:nil="true"/>')
+        expect(xml).to include('<ns0:street xsi:nil="true"/>')
+        expect(xml).to include('<ns0:zipCode xsi:nil="true"/>')
       end
 
       it 'includes the city with its value' do
         xml = envelope.to_s
-        expect(xml).to include('<lol0:city>New York</lol0:city>')
+        expect(xml).to include('<ns0:city>New York</ns0:city>')
       end
     end
 
@@ -193,9 +193,9 @@ describe 'Nillable elements' do
         xml = envelope.to_s
 
         # Count occurrences
-        expect(xml.scan('<lol0:tags>ruby</lol0:tags>').length).to eq(1)
-        expect(xml.scan('<lol0:tags>developer</lol0:tags>').length).to eq(1)
-        expect(xml.scan('<lol0:tags xsi:nil="true"/>').length).to eq(2)
+        expect(xml.scan('<ns0:tags>ruby</ns0:tags>').length).to eq(1)
+        expect(xml.scan('<ns0:tags>developer</ns0:tags>').length).to eq(1)
+        expect(xml.scan('<ns0:tags xsi:nil="true"/>').length).to eq(2)
       end
     end
 
@@ -242,11 +242,11 @@ describe 'Nillable elements' do
         xml = envelope.to_s
 
         # Nillable element gets xsi:nil="true"
-        expect(xml).to include('<lol0:email xsi:nil="true"/>')
+        expect(xml).to include('<ns0:email xsi:nil="true"/>')
 
         # Non-nillable element gets empty element
-        expect(xml).to include('<lol0:phoneNumber/>')
-        expect(xml).not_to include('<lol0:phoneNumber xsi:nil')
+        expect(xml).to include('<ns0:phoneNumber/>')
+        expect(xml).not_to include('<ns0:phoneNumber xsi:nil')
       end
 
       it 'includes xsi namespace because at least one nillable element is nil' do

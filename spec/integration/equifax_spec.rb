@@ -259,28 +259,28 @@ describe 'Integration with Equifax' do
 
     expected = Nokogiri.XML('
       <env:Envelope
-          xmlns:lol0="http://eid.equifax.com/soap/schema/canada/v2"
+          xmlns:ns0="http://eid.equifax.com/soap/schema/canada/v2"
           xmlns:env="http://schemas.xmlsoap.org/soap/envelope/">
         <env:Header>
         </env:Header>
         <env:Body>
-          <lol0:InitialRequest>
-            <lol0:Identity>
-              <lol0:Address timeAtAddress="3" addressType="public">
-                <lol0:FreeFormAddress>
-                  <lol0:AddressLine>The original</lol0:AddressLine>
-                  <lol0:AddressLine>Abbey Road, London</lol0:AddressLine>
-                </lol0:FreeFormAddress>
-                <lol0:HybridAddress>
-                  <lol0:AddressLine>The original</lol0:AddressLine>
-                  <lol0:AddressLine>Abbey Road</lol0:AddressLine>
-                  <lol0:City>London</lol0:City>
-                  <lol0:Province>Camden</lol0:Province>
-                  <lol0:PostalCode>NW8 9BS</lol0:PostalCode>
-                </lol0:HybridAddress>
-              </lol0:Address>
-            </lol0:Identity>
-          </lol0:InitialRequest>
+          <ns0:InitialRequest>
+            <ns0:Identity>
+              <ns0:Address timeAtAddress="3" addressType="public">
+                <ns0:FreeFormAddress>
+                  <ns0:AddressLine>The original</ns0:AddressLine>
+                  <ns0:AddressLine>Abbey Road, London</ns0:AddressLine>
+                </ns0:FreeFormAddress>
+                <ns0:HybridAddress>
+                  <ns0:AddressLine>The original</ns0:AddressLine>
+                  <ns0:AddressLine>Abbey Road</ns0:AddressLine>
+                  <ns0:City>London</ns0:City>
+                  <ns0:Province>Camden</ns0:Province>
+                  <ns0:PostalCode>NW8 9BS</ns0:PostalCode>
+                </ns0:HybridAddress>
+              </ns0:Address>
+            </ns0:Identity>
+          </ns0:InitialRequest>
         </env:Body>
       </env:Envelope>
     ')

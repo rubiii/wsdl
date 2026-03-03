@@ -266,20 +266,20 @@ describe 'Integration with Interhome' do
 
     expected = Nokogiri.XML('
       <env:Envelope
-          xmlns:lol0="http://www.interhome.com/webservice"
+          xmlns:ns0="http://www.interhome.com/webservice"
           xmlns:env="http://schemas.xmlsoap.org/soap/envelope/">
         <env:Header>
-          <lol0:ServiceAuthHeader>
-            <lol0:Username>test</lol0:Username>
-            <lol0:Password>secret</lol0:Password>
-          </lol0:ServiceAuthHeader>
+          <ns0:ServiceAuthHeader>
+            <ns0:Username>test</ns0:Username>
+            <ns0:Password>secret</ns0:Password>
+          </ns0:ServiceAuthHeader>
         </env:Header>
         <env:Body>
-          <lol0:Availability>
-            <lol0:inputValue>
-              <lol0:AccommodationCode>secret</lol0:AccommodationCode>
-            </lol0:inputValue>
-          </lol0:Availability>
+          <ns0:Availability>
+            <ns0:inputValue>
+              <ns0:AccommodationCode>secret</ns0:AccommodationCode>
+            </ns0:inputValue>
+          </ns0:Availability>
         </env:Body>
       </env:Envelope>
     ')

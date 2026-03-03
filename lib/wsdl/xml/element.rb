@@ -20,10 +20,12 @@ module WSDL
     # @api private
     #
     class Element
+      EMPTY_ATTRIBUTES = [].freeze
+
       # Creates a new Element with default values.
       def initialize
         @children    = []
-        @attributes  = {}
+        @attributes  = EMPTY_ATTRIBUTES
         @recursive   = false
         @singular    = true
         @any_content = false
@@ -127,7 +129,22 @@ module WSDL
       # @!attribute [rw] attributes
       #   The XML attributes defined on this element.
       #   @return [Array<Attribute>] the attribute definitions
-      attr_accessor :attributes
+      attr_reader :attributes
+
+      # @!attribute [w] attributes
+      #   Sets attribute definitions for this element.
+      #   @param value [Array<Attribute>, nil] attribute definitions
+      #   @raise [TypeError] if value is not an array of {Attribute}
+      #   @return [void]
+      def attributes=(value)
+        normalized = value.nil? ? EMPTY_ATTRIBUTES : value
+
+        unless normalized.is_a?(Array) && normalized.all?(Attribute)
+          raise TypeError, "attributes must be an Array<WSDL::XML::Attribute>, got #{value.class}"
+        end
+
+        @attributes = normalized.empty? ? EMPTY_ATTRIBUTES : normalized.dup.freeze
+      end
 
       # Converts this element and its children to an Array representation for inspection.
       #

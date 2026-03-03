@@ -35,11 +35,11 @@ describe WSDL::Builder::Message do
 
         # Message builds XML fragments (without namespace declarations)
         # that will be inserted into an Envelope
-        expect(xml).to include('<lol0:ConvertTemp>')
-        expect(xml).to include('<lol0:Temperature>30</lol0:Temperature>')
-        expect(xml).to include('<lol0:FromUnit>degreeCelsius</lol0:FromUnit>')
-        expect(xml).to include('<lol0:ToUnit>degreeFahrenheit</lol0:ToUnit>')
-        expect(xml).to include('</lol0:ConvertTemp>')
+        expect(xml).to include('<ns0:ConvertTemp>')
+        expect(xml).to include('<ns0:Temperature>30</ns0:Temperature>')
+        expect(xml).to include('<ns0:FromUnit>degreeCelsius</ns0:FromUnit>')
+        expect(xml).to include('<ns0:ToUnit>degreeFahrenheit</ns0:ToUnit>')
+        expect(xml).to include('</ns0:ConvertTemp>')
       end
     end
 
@@ -67,11 +67,11 @@ describe WSDL::Builder::Message do
 
         # Message builds XML fragments (without namespace declarations)
         # that will be inserted into an Envelope
-        expect(xml).to include('<lol0:ConvertTemp>')
-        expect(xml).to include('<lol0:Temperature>30</lol0:Temperature>')
-        expect(xml).to include('<lol0:FromUnit>degreeCelsius</lol0:FromUnit>')
-        expect(xml).to include('<lol0:ToUnit>degreeFahrenheit</lol0:ToUnit>')
-        expect(xml).to include('</lol0:ConvertTemp>')
+        expect(xml).to include('<ns0:ConvertTemp>')
+        expect(xml).to include('<ns0:Temperature>30</ns0:Temperature>')
+        expect(xml).to include('<ns0:FromUnit>degreeCelsius</ns0:FromUnit>')
+        expect(xml).to include('<ns0:ToUnit>degreeFahrenheit</ns0:ToUnit>')
+        expect(xml).to include('</ns0:ConvertTemp>')
       end
     end
 
@@ -84,6 +84,40 @@ describe WSDL::Builder::Message do
         # Should have indentation by default
         expect(xml).to include("\n")
         expect(xml).to match(/^\s{4,}/)
+      end
+    end
+
+    context 'with invalid attribute keys' do
+      subject(:message) { described_class.new(envelope, parts, pretty_print: false) }
+
+      it 'rejects empty attribute names' do
+        invalid = {
+          ConvertTemp: {
+            '_' => 'oops',
+            Temperature: 30,
+            FromUnit: 'degreeCelsius',
+            ToUnit: 'degreeFahrenheit'
+          }
+        }
+
+        expect {
+          message.build(invalid)
+        }.to raise_error(ArgumentError, /attribute name cannot be empty/)
+      end
+
+      it 'rejects namespace declaration attributes' do
+        invalid = {
+          ConvertTemp: {
+            _xmlns: 'http://evil.example',
+            Temperature: 30,
+            FromUnit: 'degreeCelsius',
+            ToUnit: 'degreeFahrenheit'
+          }
+        }
+
+        expect {
+          message.build(invalid)
+        }.to raise_error(ArgumentError, /namespace declarations are not allowed/)
       end
     end
   end

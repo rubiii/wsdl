@@ -98,24 +98,24 @@ describe 'Integration with Yahoo\'s AccountService' do
 
     expected = Nokogiri.XML('
       <env:Envelope
-          xmlns:lol0="http://schemas.xmlsoap.org/ws/2002/07/secext"
-          xmlns:lol1="http://apt.yahooapis.com/V10"
+          xmlns:ns0="http://schemas.xmlsoap.org/ws/2002/07/secext"
+          xmlns:ns1="http://apt.yahooapis.com/V10"
           xmlns:env="http://schemas.xmlsoap.org/soap/envelope/">
         <env:Header>
-          <lol0:Security>
+          <ns0:Security>
             <UsernameToken>
               <Username>admin</Username>
               <Password>secret</Password>
             </UsernameToken>
-          </lol0:Security>
-          <lol1:license>abc-license</lol1:license>
-          <lol1:accountID>23</lol1:accountID>
+          </ns0:Security>
+          <ns1:license>abc-license</ns1:license>
+          <ns1:accountID>23</ns1:accountID>
         </env:Header>
         <env:Body>
-          <lol1:updateStatusForManagedPublisher>
-            <lol1:accountID>23</lol1:accountID>
-            <lol1:accountStatus>closed</lol1:accountStatus>
-          </lol1:updateStatusForManagedPublisher>
+          <ns1:updateStatusForManagedPublisher>
+            <ns1:accountID>23</ns1:accountID>
+            <ns1:accountStatus>closed</ns1:accountStatus>
+          </ns1:updateStatusForManagedPublisher>
         </env:Body>
       </env:Envelope>
     ')

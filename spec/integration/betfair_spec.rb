@@ -160,13 +160,13 @@ describe 'Integration with Betfair' do
 
     expected = Nokogiri.XML(%(
       <env:Envelope
-          xmlns:lol0="http://www.betfair.com/publicapi/v5/BFExchangeService/"
-          xmlns:lol1="http://www.betfair.com/publicapi/types/exchange/v5/"
+          xmlns:ns0="http://www.betfair.com/publicapi/v5/BFExchangeService/"
+          xmlns:ns1="http://www.betfair.com/publicapi/types/exchange/v5/"
           xmlns:env="http://schemas.xmlsoap.org/soap/envelope/">
         <env:Header/>
         <env:Body>
-          <lol0:getMUBetsLite>
-            <lol0:request>
+          <ns0:getMUBetsLite>
+            <ns0:request>
               <header>
                 <clientStamp>test</clientStamp>
                 <sessionToken>token</sessionToken>
@@ -174,9 +174,9 @@ describe 'Integration with Betfair' do
               <betStatus>U</betStatus>
               <marketId>1</marketId>
               <betIds>
-                <lol1:betId>1</lol1:betId>
-                <lol1:betId>2</lol1:betId>
-                <lol1:betId>3</lol1:betId>
+                <ns1:betId>1</ns1:betId>
+                <ns1:betId>2</ns1:betId>
+                <ns1:betId>3</ns1:betId>
               </betIds>
               <orderBy>NONE</orderBy>
               <sortOrder>DESC</sortOrder>
@@ -184,8 +184,8 @@ describe 'Integration with Betfair' do
               <startRecord>1</startRecord>
               <matchedSince>#{datetime_value}</matchedSince>
               <excludeLastSecond>true</excludeLastSecond>
-            </lol0:request>
-          </lol0:getMUBetsLite>
+            </ns0:request>
+          </ns0:getMUBetsLite>
         </env:Body>
       </env:Envelope>
     ))

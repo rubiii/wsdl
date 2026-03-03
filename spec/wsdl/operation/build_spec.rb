@@ -106,12 +106,12 @@ describe WSDL::Operation do
 
       expected = Nokogiri.XML('
         <env:Envelope
-            xmlns:lol0="http://api.bronto.com/v4"
+            xmlns:ns0="http://api.bronto.com/v4"
             xmlns:env="http://schemas.xmlsoap.org/soap/envelope/">
           <env:Header>
           </env:Header>
           <env:Body>
-            <lol0:addLogins>
+            <ns0:addLogins>
               <accounts>
                 <username>first</username>
                 <password>secret</password>
@@ -126,7 +126,7 @@ describe WSDL::Operation do
                   <email>second@example.com</email>
                 </contactInformation>
               </accounts>
-            </lol0:addLogins>
+            </ns0:addLogins>
           </env:Body>
         </env:Envelope>
       ')
@@ -194,20 +194,20 @@ describe WSDL::Operation do
 
       expected = Nokogiri.XML(%(
         <env:Envelope
-            xmlns:lol0="http://www.betfair.com/publicapi/v5/BFExchangeService/"
-            xmlns:lol1="http://www.betfair.com/publicapi/types/exchange/v5/"
+            xmlns:ns0="http://www.betfair.com/publicapi/v5/BFExchangeService/"
+            xmlns:ns1="http://www.betfair.com/publicapi/types/exchange/v5/"
             xmlns:env="http://schemas.xmlsoap.org/soap/envelope/">
           <env:Header/>
           <env:Body>
-            <lol0:getMUBetsLite>
-              <lol0:request>
+            <ns0:getMUBetsLite>
+              <ns0:request>
                 <betIds>
-                  <lol1:betId>1</lol1:betId>
-                  <lol1:betId>2</lol1:betId>
-                  <lol1:betId>3</lol1:betId>
+                  <ns1:betId>1</ns1:betId>
+                  <ns1:betId>2</ns1:betId>
+                  <ns1:betId>3</ns1:betId>
                 </betIds>
-              </lol0:request>
-            </lol0:getMUBetsLite>
+              </ns0:request>
+            </ns0:getMUBetsLite>
           </env:Body>
         </env:Envelope>
       ))
@@ -252,23 +252,23 @@ describe WSDL::Operation do
       }
 
       expected = Nokogiri.XML(%(
-        <env:Envelope xmlns:lol0="http://services.zanox.com/erp"
-                      xmlns:lol1="http://services.zanox.com/erp/Export"
+        <env:Envelope xmlns:ns0="http://services.zanox.com/erp"
+                      xmlns:ns1="http://services.zanox.com/erp/Export"
                       xmlns:env="http://schemas.xmlsoap.org/soap/envelope/">
           <env:Header>
-            <lol0:zanox>
-              <lol0:ticket>EFB745D691DBFF2DFA9F8B10A4D7A7B1AEA850CD</lol0:ticket>
-            </lol0:zanox>
+            <ns0:zanox>
+              <ns0:ticket>EFB745D691DBFF2DFA9F8B10A4D7A7B1AEA850CD</ns0:ticket>
+            </ns0:zanox>
           </env:Header>
           <env:Body>
-            <lol0:GetPps>
-              <lol0:programid>5574</lol0:programid>
-              <lol1:ppsfilter>
-                <lol1:period from="2013-10-01T00:00:00+02:00" to="2013-11-12T00:00:00+02:00"/>
-                <lol1:reviewstate negate='1'>0</lol1:reviewstate>
-                <lol1:categoryid/>
-              </lol1:ppsfilter>
-            </lol0:GetPps>
+            <ns0:GetPps>
+              <ns0:programid>5574</ns0:programid>
+              <ns1:ppsfilter>
+                <ns1:period from="2013-10-01T00:00:00+02:00" to="2013-11-12T00:00:00+02:00"/>
+                <ns1:reviewstate negate='1'>0</ns1:reviewstate>
+                <ns1:categoryid/>
+              </ns1:ppsfilter>
+            </ns0:GetPps>
           </env:Body>
         </env:Envelope>))
 
@@ -305,44 +305,44 @@ describe WSDL::Operation do
       }
 
       expected = Nokogiri.XML(%(
-        <env:Envelope xmlns:lol0="http://e-conomic.com" xmlns:env="http://schemas.xmlsoap.org/soap/envelope/">
+        <env:Envelope xmlns:ns0="http://e-conomic.com" xmlns:env="http://schemas.xmlsoap.org/soap/envelope/">
           <env:Header>
           </env:Header>
           <env:Body>
-            <lol0:VatAccount_UpdateFromDataArray>
-              <lol0:dataArray>
-                <lol0:VatAccountData Thaco="Testing 1234">
-                  <lol0:Handle>
-                    <lol0:VatCode>VAT123</lol0:VatCode>
-                  </lol0:Handle>
-                  <lol0:VatCode attribute='test' foo='11'>VAT123</lol0:VatCode>
-                  <lol0:Name>ITS</lol0:Name>
-                  <lol0:Type>Ltd</lol0:Type>
-                  <lol0:RateAsPercent>17.5</lol0:RateAsPercent>
-                  <lol0:AccountHandle>
-                    <lol0:Number>123</lol0:Number>
-                  </lol0:AccountHandle>
-                  <lol0:ContraAccountHandle>
-                    <lol0:Number>456</lol0:Number>
-                  </lol0:ContraAccountHandle>
-                </lol0:VatAccountData>
-                <lol0:VatAccountData Thaco="Testing 5678">
-                  <lol0:Handle>
-                    <lol0:VatCode>VAT987</lol0:VatCode>
-                  </lol0:Handle>
-                  <lol0:VatCode>VAT987</lol0:VatCode>
-                  <lol0:Name>Banana</lol0:Name>
-                  <lol0:Type>PLC</lol0:Type>
-                  <lol0:RateAsPercent>21.12</lol0:RateAsPercent>
-                  <lol0:AccountHandle>
-                    <lol0:Number>876</lol0:Number>
-                  </lol0:AccountHandle>
-                  <lol0:ContraAccountHandle>
-                    <lol0:Number>8756</lol0:Number>
-                  </lol0:ContraAccountHandle>
-                </lol0:VatAccountData>
-              </lol0:dataArray>
-            </lol0:VatAccount_UpdateFromDataArray>
+            <ns0:VatAccount_UpdateFromDataArray>
+              <ns0:dataArray>
+                <ns0:VatAccountData Thaco="Testing 1234">
+                  <ns0:Handle>
+                    <ns0:VatCode>VAT123</ns0:VatCode>
+                  </ns0:Handle>
+                  <ns0:VatCode attribute='test' foo='11'>VAT123</ns0:VatCode>
+                  <ns0:Name>ITS</ns0:Name>
+                  <ns0:Type>Ltd</ns0:Type>
+                  <ns0:RateAsPercent>17.5</ns0:RateAsPercent>
+                  <ns0:AccountHandle>
+                    <ns0:Number>123</ns0:Number>
+                  </ns0:AccountHandle>
+                  <ns0:ContraAccountHandle>
+                    <ns0:Number>456</ns0:Number>
+                  </ns0:ContraAccountHandle>
+                </ns0:VatAccountData>
+                <ns0:VatAccountData Thaco="Testing 5678">
+                  <ns0:Handle>
+                    <ns0:VatCode>VAT987</ns0:VatCode>
+                  </ns0:Handle>
+                  <ns0:VatCode>VAT987</ns0:VatCode>
+                  <ns0:Name>Banana</ns0:Name>
+                  <ns0:Type>PLC</ns0:Type>
+                  <ns0:RateAsPercent>21.12</ns0:RateAsPercent>
+                  <ns0:AccountHandle>
+                    <ns0:Number>876</ns0:Number>
+                  </ns0:AccountHandle>
+                  <ns0:ContraAccountHandle>
+                    <ns0:Number>8756</ns0:Number>
+                  </ns0:ContraAccountHandle>
+                </ns0:VatAccountData>
+              </ns0:dataArray>
+            </ns0:VatAccount_UpdateFromDataArray>
           </env:Body>
         </env:Envelope>))
 

@@ -29,13 +29,13 @@ describe 'Integration with Stockquote service' do
 
     expected = Nokogiri.XML(%(
       <env:Envelope
-          xmlns:lol0="http://www.webserviceX.NET/"
+          xmlns:ns0="http://www.webserviceX.NET/"
           xmlns:env="http://schemas.xmlsoap.org/soap/envelope/">
         <env:Header/>
         <env:Body>
-          <lol0:GetQuote>
-            <lol0:symbol>AAPL</lol0:symbol>
-          </lol0:GetQuote>
+          <ns0:GetQuote>
+            <ns0:symbol>AAPL</ns0:symbol>
+          </ns0:GetQuote>
         </env:Body>
       </env:Envelope>
     ))

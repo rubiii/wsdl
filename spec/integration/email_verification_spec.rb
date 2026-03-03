@@ -73,14 +73,14 @@ describe 'Integration with EmailVerification service' do
 
     expected = Nokogiri.XML(%(
       <env:Envelope
-          xmlns:lol0="http://ws.cdyne.com/"
+          xmlns:ns0="http://ws.cdyne.com/"
           xmlns:env="http://www.w3.org/2003/05/soap-envelope">
         <env:Header/>
         <env:Body>
-          <lol0:VerifyEmail>
-            <lol0:email>soap@example.com</lol0:email>
-            <lol0:LicenseKey>?</lol0:LicenseKey>
-          </lol0:VerifyEmail>
+          <ns0:VerifyEmail>
+            <ns0:email>soap@example.com</ns0:email>
+            <ns0:LicenseKey>?</ns0:LicenseKey>
+          </ns0:VerifyEmail>
         </env:Body>
       </env:Envelope>
     ))

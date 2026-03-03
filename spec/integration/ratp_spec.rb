@@ -346,17 +346,17 @@ describe 'Integration with RATP' do
 
     expected = Nokogiri.XML(%(
       <env:Envelope
-          xmlns:lol0="http://wsiv.ratp.fr"
-          xmlns:lol1="http://wsiv.ratp.fr/xsd"
+          xmlns:ns0="http://wsiv.ratp.fr"
+          xmlns:ns1="http://wsiv.ratp.fr/xsd"
           xmlns:env="http://schemas.xmlsoap.org/soap/envelope/">
         <env:Header/>
         <env:Body>
-          <lol0:getStations>
-            <lol0:station>
-              <lol1:id>1975</lol1:id>
-            </lol0:station>
-            <lol0:limit>1</lol0:limit>
-          </lol0:getStations>
+          <ns0:getStations>
+            <ns0:station>
+              <ns1:id>1975</ns1:id>
+            </ns0:station>
+            <ns0:limit>1</ns0:limit>
+          </ns0:getStations>
         </env:Body>
       </env:Envelope>
     ))
