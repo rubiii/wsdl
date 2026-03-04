@@ -51,6 +51,12 @@ module WSDL
     def prepare(&block)
       raise RequestDslError, 'operation.prepare requires a block' unless block
 
+      if @request_document
+        raise RequestDslError,
+              'operation.prepare was already called. ' \
+              'Use operation.reset! to clear the previous request before preparing a new one'
+      end
+
       document = Request::Document.new
       security = Security::Config.new
       context = Request::DSLContext.new(document:, security:, request_limits: @request_limits)
@@ -68,6 +74,15 @@ module WSDL
 
       @request_document = document
       @security = security
+      self
+    end
+
+    # Clears the prepared request, allowing {#prepare} to be called again.
+    #
+    # @return [self]
+    def reset!
+      @request_document = nil
+      @security = Security::Config.new
       self
     end
 

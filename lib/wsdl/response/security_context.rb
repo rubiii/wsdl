@@ -241,9 +241,7 @@ module WSDL
       def errors
         all_errors = verifier.errors.dup
 
-        if @verification.timestamp.validate && !verifier.timestamp_valid?
-          all_errors.concat(verifier.timestamp_errors)
-        end
+        all_errors.concat(verifier.timestamp_errors) if @verification.timestamp.validate && !verifier.timestamp_valid?
 
         all_errors.uniq
       end

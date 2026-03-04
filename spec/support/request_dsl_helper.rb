@@ -101,6 +101,7 @@ module SpecSupport
       body_elements = operation.contract.request.body.elements
 
       with_strict_schema(operation, strict_schema) do
+        operation.reset!
         operation.prepare do
           SpecSupport::RequestDSLEmitter.emit_hash_section(self, :header, header, header_elements) if header
           SpecSupport::RequestDSLEmitter.emit_hash_section(self, :body, body, body_elements) if body

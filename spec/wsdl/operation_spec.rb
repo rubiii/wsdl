@@ -136,6 +136,40 @@ describe WSDL::Operation do
     end
   end
 
+  describe '#prepare' do
+    it 'raises when called twice without reset!' do
+      apply_request(operation, body: {
+        ConvertTemp: { Temperature: 30, FromUnit: 'degreeCelsius', ToUnit: 'degreeFahrenheit' }
+      })
+
+      expect {
+        operation.prepare do
+          body do
+            tag('ConvertTemp') do
+              tag('Temperature', 100)
+              tag('FromUnit', 'degreeCelsius')
+              tag('ToUnit', 'degreeFahrenheit')
+            end
+          end
+        end
+      }.to raise_error(WSDL::RequestDslError, /already called/)
+    end
+
+    it 'succeeds after reset!' do
+      apply_request(operation, body: {
+        ConvertTemp: { Temperature: 30, FromUnit: 'degreeCelsius', ToUnit: 'degreeFahrenheit' }
+      })
+
+      operation.reset!
+
+      apply_request(operation, body: {
+        ConvertTemp: { Temperature: 100, FromUnit: 'degreeCelsius', ToUnit: 'degreeFahrenheit' }
+      })
+
+      expect(operation.to_xml).to include('<ns0:Temperature>100</ns0:Temperature>')
+    end
+  end
+
   describe '#to_xml' do
     it 'returns an example request Hash following WSDL\'s conventions' do
       apply_request(operation, body: {

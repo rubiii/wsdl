@@ -15,9 +15,7 @@ module WSDL
           message = normalize_required_attribute(header_node['message'])
           part = normalize_required_attribute(header_node['part'])
           default_namespace = QName.document_namespace(header_node.document.root)
-          message_name = if message
-            QName.parse(message, namespaces: header_node.namespaces, default_namespace:)
-          end
+          message_name = (QName.parse(message, namespaces: header_node.namespaces, default_namespace:) if message)
 
           new(
             encoding_style: header_node['encodingStyle'],

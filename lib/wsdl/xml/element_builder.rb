@@ -309,7 +309,8 @@ module WSDL
       # @return [Schema::Node] the resolved element
       def find_element(qname, namespaces, context: nil)
         resolved = QName.parse(qname, namespaces: namespaces)
-        @schemas.fetch_element(resolved.namespace, resolved.local, context: context || "element reference #{qname.inspect}")
+        @schemas.fetch_element(resolved.namespace, resolved.local,
+                               context: context || "element reference #{qname.inspect}")
       end
 
       # Finds a global attribute by its qualified name.
@@ -320,7 +321,8 @@ module WSDL
       # @return [Schema::Node] the resolved attribute
       def find_attribute(qname, namespaces, context: nil)
         resolved = QName.parse(qname, namespaces: namespaces)
-        @schemas.fetch_attribute(resolved.namespace, resolved.local, context: context || "attribute reference #{qname.inspect}")
+        @schemas.fetch_attribute(resolved.namespace, resolved.local,
+                                 context: context || "attribute reference #{qname.inspect}")
       end
 
       # Validates nesting depth against limits.
