@@ -116,7 +116,7 @@ describe 'Integration with Amazon' do
 
   describe 'xsd:any support' do
     let(:namespace) { 'http://fps.amazonaws.com/doc/2008-09-17/' }
-    let(:schemas) { WSDL::Parser::Result.new(fixture('wsdl/amazon'), WSDL.http_adapter.new).schemas }
+    let(:schemas) { WSDL::Parser::Result.parse(fixture('wsdl/amazon'), WSDL.http_adapter.new).schemas }
 
     it 'marks the Error/Detail element as allowing arbitrary content' do
       # The Error element has a Detail child with xs:any

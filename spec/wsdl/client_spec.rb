@@ -17,7 +17,7 @@ describe WSDL::Client do
     it 'expects a local or remote WSDL document' do
       wsdl_directory = File.dirname(File.expand_path(wsdl))
       parser_result = instance_double(WSDL::Parser::Result, services: {})
-      allow(WSDL::Parser::Result).to receive(:new).with(
+      allow(WSDL::Parser::Result).to receive(:parse).with(
         wsdl, instance_of(WSDL.http_adapter), hash_including(sandbox_paths: [wsdl_directory])
       ).and_return(parser_result)
       client = described_class.new(wsdl)
@@ -32,7 +32,7 @@ describe WSDL::Client do
       end.new
       wsdl_directory = File.dirname(File.expand_path(wsdl))
       parser_result = instance_double(WSDL::Parser::Result, services: {})
-      allow(WSDL::Parser::Result).to receive(:new).with(
+      allow(WSDL::Parser::Result).to receive(:parse).with(
         wsdl, http, hash_including(sandbox_paths: [wsdl_directory])
       ).and_return(parser_result)
 
@@ -47,7 +47,7 @@ describe WSDL::Client do
 
       it 'caches parsed definitions by default' do
         definition_count = 0
-        allow(WSDL::Parser::Result).to receive(:new) do |_, _|
+        allow(WSDL::Parser::Result).to receive(:parse) do |_, _|
           definition_count += 1
           instance_double(WSDL::Parser::Result, services: {}, operations: [])
         end
@@ -60,7 +60,7 @@ describe WSDL::Client do
 
       it 'allows disabling cache with cache: nil' do
         definition_count = 0
-        allow(WSDL::Parser::Result).to receive(:new) do |_, _|
+        allow(WSDL::Parser::Result).to receive(:parse) do |_, _|
           definition_count += 1
           instance_double(WSDL::Parser::Result, services: {}, operations: [])
         end
@@ -74,7 +74,7 @@ describe WSDL::Client do
       it 'allows using a custom cache instance' do
         custom_cache = WSDL::Cache.new
         definition_count = 0
-        allow(WSDL::Parser::Result).to receive(:new) do |_, _|
+        allow(WSDL::Parser::Result).to receive(:parse) do |_, _|
           definition_count += 1
           instance_double(WSDL::Parser::Result, services: {}, operations: [])
         end
@@ -117,7 +117,7 @@ describe WSDL::Client do
       it 'partitions cache entries by reject_doctype' do
         custom_cache = WSDL::Cache.new
         definition_count = 0
-        allow(WSDL::Parser::Result).to receive(:new) do |_, _|
+        allow(WSDL::Parser::Result).to receive(:parse) do |_, _|
           definition_count += 1
           instance_double(WSDL::Parser::Result, services: {}, operations: [])
         end
@@ -134,7 +134,7 @@ describe WSDL::Client do
         strict_limits = WSDL::Limits.new(max_document_size: 5 * 1024 * 1024)
         relaxed_limits = WSDL::Limits.new(max_document_size: 10 * 1024 * 1024)
         definition_count = 0
-        allow(WSDL::Parser::Result).to receive(:new) do |_, _|
+        allow(WSDL::Parser::Result).to receive(:parse) do |_, _|
           definition_count += 1
           instance_double(WSDL::Parser::Result, services: {}, operations: [])
         end
@@ -149,7 +149,7 @@ describe WSDL::Client do
       it 'partitions cache entries by sandbox_paths' do
         custom_cache = WSDL::Cache.new
         definition_count = 0
-        allow(WSDL::Parser::Result).to receive(:new) do |_, _|
+        allow(WSDL::Parser::Result).to receive(:parse) do |_, _|
           definition_count += 1
           instance_double(WSDL::Parser::Result, services: {}, operations: [])
         end
@@ -164,7 +164,7 @@ describe WSDL::Client do
       it 'partitions cache entries by strict_schema policy' do
         custom_cache = WSDL::Cache.new
         definition_count = 0
-        allow(WSDL::Parser::Result).to receive(:new) do |_, _|
+        allow(WSDL::Parser::Result).to receive(:parse) do |_, _|
           definition_count += 1
           instance_double(WSDL::Parser::Result, services: {}, operations: [])
         end
@@ -220,7 +220,7 @@ describe WSDL::Client do
 
         custom_cache = WSDL::Cache.new
         definition_count = 0
-        allow(WSDL::Parser::Result).to receive(:new) do |_, _|
+        allow(WSDL::Parser::Result).to receive(:parse) do |_, _|
           definition_count += 1
           instance_double(WSDL::Parser::Result, services: {}, operations: [])
         end
@@ -240,11 +240,11 @@ describe WSDL::Client do
         it 'sandboxes to WSDL parent directory' do
           wsdl_directory = File.dirname(File.expand_path(wsdl))
           parser_result = instance_double(WSDL::Parser::Result, services: {})
-          allow(WSDL::Parser::Result).to receive(:new).and_return(parser_result)
+          allow(WSDL::Parser::Result).to receive(:parse).and_return(parser_result)
 
           described_class.new(wsdl)
 
-          expect(WSDL::Parser::Result).to have_received(:new).with(
+          expect(WSDL::Parser::Result).to have_received(:parse).with(
             wsdl, anything, hash_including(sandbox_paths: [wsdl_directory])
           )
         end
@@ -255,11 +255,11 @@ describe WSDL::Client do
           travelport_wsdl = fixture('wsdl/travelport/system_v32_0/System')
           travelport_directory = File.dirname(File.expand_path(travelport_wsdl))
           parser_result = instance_double(WSDL::Parser::Result, services: {})
-          allow(WSDL::Parser::Result).to receive(:new).and_return(parser_result)
+          allow(WSDL::Parser::Result).to receive(:parse).and_return(parser_result)
 
           described_class.new(travelport_wsdl)
 
-          expect(WSDL::Parser::Result).to have_received(:new).with(
+          expect(WSDL::Parser::Result).to have_received(:parse).with(
             travelport_wsdl, anything, hash_including(sandbox_paths: [travelport_directory])
           )
         end
@@ -270,11 +270,11 @@ describe WSDL::Client do
 
         it 'disables file access' do
           parser_result = instance_double(WSDL::Parser::Result, services: {})
-          allow(WSDL::Parser::Result).to receive(:new).and_return(parser_result)
+          allow(WSDL::Parser::Result).to receive(:parse).and_return(parser_result)
 
           described_class.new(url_wsdl)
 
-          expect(WSDL::Parser::Result).to have_received(:new).with(
+          expect(WSDL::Parser::Result).to have_received(:parse).with(
             url_wsdl, anything, hash_including(sandbox_paths: nil)
           )
         end
@@ -295,11 +295,11 @@ describe WSDL::Client do
       it 'overrides automatic sandbox with custom paths' do
         custom_paths = ['/app/wsdl', '/app/schemas']
         parser_result = instance_double(WSDL::Parser::Result, services: {})
-        allow(WSDL::Parser::Result).to receive(:new).and_return(parser_result)
+        allow(WSDL::Parser::Result).to receive(:parse).and_return(parser_result)
 
         described_class.new(wsdl, sandbox_paths: custom_paths)
 
-        expect(WSDL::Parser::Result).to have_received(:new).with(
+        expect(WSDL::Parser::Result).to have_received(:parse).with(
           wsdl, anything, hash_including(sandbox_paths: custom_paths)
         )
       end
@@ -352,22 +352,22 @@ describe WSDL::Client do
 
     it 'passes strict_schema: true to parser' do
       parser_result = instance_double(WSDL::Parser::Result, services: {})
-      allow(WSDL::Parser::Result).to receive(:new).and_return(parser_result)
+      allow(WSDL::Parser::Result).to receive(:parse).and_return(parser_result)
 
       described_class.new(wsdl, http: http_mock, strict_schema: true)
 
-      expect(WSDL::Parser::Result).to have_received(:new).with(
+      expect(WSDL::Parser::Result).to have_received(:parse).with(
         wsdl, anything, hash_including(strict_schema: true)
       )
     end
 
     it 'passes strict_schema: false to parser' do
       parser_result = instance_double(WSDL::Parser::Result, services: {})
-      allow(WSDL::Parser::Result).to receive(:new).and_return(parser_result)
+      allow(WSDL::Parser::Result).to receive(:parse).and_return(parser_result)
 
       described_class.new(wsdl, http: http_mock, strict_schema: false)
 
-      expect(WSDL::Parser::Result).to have_received(:new).with(
+      expect(WSDL::Parser::Result).to have_received(:parse).with(
         wsdl, anything, hash_including(strict_schema: false)
       )
     end
@@ -414,22 +414,22 @@ describe WSDL::Client do
 
     it 'passes reject_doctype option to parser' do
       parser_result = instance_double(WSDL::Parser::Result, services: {})
-      allow(WSDL::Parser::Result).to receive(:new).and_return(parser_result)
+      allow(WSDL::Parser::Result).to receive(:parse).and_return(parser_result)
 
       described_class.new(wsdl, http: http_mock, reject_doctype: false)
 
-      expect(WSDL::Parser::Result).to have_received(:new).with(
+      expect(WSDL::Parser::Result).to have_received(:parse).with(
         wsdl, anything, hash_including(reject_doctype: false)
       )
     end
 
     it 'defaults reject_doctype to true' do
       parser_result = instance_double(WSDL::Parser::Result, services: {})
-      allow(WSDL::Parser::Result).to receive(:new).and_return(parser_result)
+      allow(WSDL::Parser::Result).to receive(:parse).and_return(parser_result)
 
       described_class.new(wsdl, http: http_mock)
 
-      expect(WSDL::Parser::Result).to have_received(:new).with(
+      expect(WSDL::Parser::Result).to have_received(:parse).with(
         wsdl, anything, hash_including(reject_doctype: true)
       )
     end
@@ -507,11 +507,11 @@ describe WSDL::Client do
     it 'passes limits to the parser result' do
       custom_limits = WSDL::Limits.new(max_document_size: 5 * 1024 * 1024)
       parser_result = instance_double(WSDL::Parser::Result, services: {}, limits: custom_limits)
-      allow(WSDL::Parser::Result).to receive(:new).and_return(parser_result)
+      allow(WSDL::Parser::Result).to receive(:parse).and_return(parser_result)
 
       described_class.new(wsdl, http: http_mock, limits: custom_limits, cache: nil)
 
-      expect(WSDL::Parser::Result).to have_received(:new).with(
+      expect(WSDL::Parser::Result).to have_received(:parse).with(
         wsdl, anything, hash_including(limits: custom_limits)
       )
     end

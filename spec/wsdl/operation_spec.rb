@@ -6,7 +6,7 @@ require 'tempfile'
 describe WSDL::Operation do
   subject(:operation)  { described_class.new(operation_info, parser_result, http_mock) }
 
-  let(:parser_result)  { WSDL::Parser::Result.new fixture('wsdl/temperature'), http_mock }
+  let(:parser_result)  { WSDL::Parser::Result.parse fixture('wsdl/temperature'), http_mock }
   let(:operation_info) { parser_result.operation('ConvertTemperature', 'ConvertTemperatureSoap12', 'ConvertTemp') }
   let(:tempfiles) { [] }
 
@@ -503,7 +503,7 @@ describe WSDL::Operation do
   end
 
   def parse_result(wsdl_xml)
-    WSDL::Parser::Result.new(write_wsdl_file(wsdl_xml), http_mock)
+    WSDL::Parser::Result.parse(write_wsdl_file(wsdl_xml), http_mock)
   end
 
   def write_wsdl_file(wsdl_xml)

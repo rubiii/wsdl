@@ -104,7 +104,7 @@ describe 'Integration with Oracle' do
 
   describe 'xsd:any support' do
     let(:namespace) { 'urn://oracle.bi.webservices/v7' }
-    let(:schemas) { WSDL::Parser::Result.new(fixture('wsdl/oracle'), WSDL.http_adapter.new).schemas }
+    let(:schemas) { WSDL::Parser::Result.parse(fixture('wsdl/oracle'), WSDL.http_adapter.new).schemas }
 
     it 'marks the JobInfo/detailedInfo element as allowing arbitrary content' do
       # The JobInfo type has a detailedInfo child with xs:any

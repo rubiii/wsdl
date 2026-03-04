@@ -92,7 +92,7 @@ module WSDL
   # @example
   #   begin
   #     # Relative imports require a resolvable base file/URL location
-  #     parser_result = WSDL::Parser::Result.new('<definitions>...</definitions>', http_adapter)
+  #     parser_result = WSDL::Parser::Result.parse('<definitions>...</definitions>', http_adapter)
   #   rescue WSDL::UnresolvableImportError => e
   #     puts "Cannot resolve import: #{e.message}"
   #   end

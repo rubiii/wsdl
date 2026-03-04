@@ -29,7 +29,7 @@ describe WSDL::Parser::CachedResult do
     )
   end
 
-  # Stubs Result.new, yields a counter proc, and returns the cache.
+  # Stubs Result.parse, yields a counter proc, and returns the cache.
   # Usage:
   #   cache, count = stub_result
   #   load_cached(cache:)
@@ -38,7 +38,7 @@ describe WSDL::Parser::CachedResult do
     parser_result = instance_double(WSDL::Parser::Result)
     definition_count = 0
 
-    allow(WSDL::Parser::Result).to receive(:new) do
+    allow(WSDL::Parser::Result).to receive(:parse) do
       definition_count += 1
       parser_result
     end
@@ -88,7 +88,7 @@ describe WSDL::Parser::CachedResult do
     context 'without cache' do
       it 'bypasses the cache when cache is nil' do
         parser_result = instance_double(WSDL::Parser::Result)
-        allow(WSDL::Parser::Result).to receive(:new).and_return(parser_result)
+        allow(WSDL::Parser::Result).to receive(:parse).and_return(parser_result)
 
         result = load_cached(cache: nil)
 
@@ -118,17 +118,17 @@ describe WSDL::Parser::CachedResult do
         expect(cache.size).to eq(1)
       end
 
-      it 'passes all inputs to Result.new' do
+      it 'passes all inputs to Result.parse' do
         http = adapter_class.new('adapter-1')
         parser_result = instance_double(WSDL::Parser::Result)
 
-        allow(WSDL::Parser::Result).to receive(:new).and_return(parser_result)
+        allow(WSDL::Parser::Result).to receive(:parse).and_return(parser_result)
 
-        # Use cache: nil to force Result.new every time (no caching)
+        # Use cache: nil to force Result.parse every time (no caching)
         result = load_cached(cache: nil, http:, reject_doctype: false, strict_schema: true)
 
         expect(result).to eq(parser_result)
-        expect(WSDL::Parser::Result).to have_received(:new).with(
+        expect(WSDL::Parser::Result).to have_received(:parse).with(
           wsdl,
           http,
           sandbox_paths:,

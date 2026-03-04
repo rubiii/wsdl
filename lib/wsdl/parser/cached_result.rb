@@ -9,7 +9,7 @@ module WSDL
     #
     # Cache key correctness is enforced by {ParseInputs}, a frozen Data class
     # that captures **every** input affecting parse output. Both the cache key
-    # and the {Result} constructor receive the same {ParseInputs} instance, so
+    # and {Result.parse} receive the same {ParseInputs} instance, so
     # they can never diverge.
     #
     # Adding a new parse-affecting parameter requires three steps — all in
@@ -86,7 +86,7 @@ module WSDL
         # @return [Result]
         #
         def build_result(inputs)
-          Result.new(
+          Result.parse(
             inputs.wsdl,
             inputs.http,
             sandbox_paths: inputs.sandbox_paths,

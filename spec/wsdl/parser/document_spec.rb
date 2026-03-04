@@ -193,7 +193,7 @@ describe WSDL::Parser::Document do
   end
 
   def get_documents(fixture_path)
-    parser_result = WSDL::Parser::Result.new(fixture(fixture_path), http_mock)
+    parser_result = WSDL::Parser::Result.parse(fixture(fixture_path), http_mock)
     parser_result.documents
   end
 

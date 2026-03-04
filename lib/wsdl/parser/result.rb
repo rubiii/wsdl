@@ -12,13 +12,13 @@ module WSDL
     # is used internally by {WSDL::Client} to access WSDL information.
     #
     # @example Accessing services (URL-loaded, no file access)
-    #   result = Parser::Result.new('http://example.com/service?wsdl', http)
+    #   result = Parser::Result.parse('http://example.com/service?wsdl', http)
     #   result.services
     #   # => {"ServiceName" => {ports: {"PortName" => {type: "...", location: "..."}}}}
     #
     # @example Loading from file with sandbox
-    #   result = Parser::Result.new('/app/wsdl/service.wsdl', http,
-    #                               sandbox_paths: ['/app/wsdl'])
+    #   result = Parser::Result.parse('/app/wsdl/service.wsdl', http,
+    #                                 sandbox_paths: ['/app/wsdl'])
     #
     # @example Getting operation names
     #   operations = result.operations('ServiceName', 'PortName')
@@ -27,7 +27,11 @@ module WSDL
     # @api private
     #
     class Result
-      # Creates a new Result by importing and parsing a WSDL document.
+      # Imports and parses a WSDL document, returning a fully-populated Result.
+      #
+      # This factory method performs source validation, sandbox resolution,
+      # and the full import/parse cycle. Use {#initialize} directly only
+      # when you already have pre-computed results (e.g. in tests).
       #
       # @param wsdl [String] a URL or local file path to the WSDL document
       # @param http [Object] an HTTP adapter instance for fetching remote documents
@@ -46,27 +50,69 @@ module WSDL
       #   - `false` — log and skip recoverable schema import failures
       #   Fatal errors (for example, {PathRestrictionError}) always raise.
       #
+      # @return [Result] the parsed result
+      #
       # rubocop:disable Metrics/ParameterLists
-      def initialize(wsdl, http, sandbox_paths: :auto, limits: nil, reject_doctype: true, strict_schema: true)
+      def self.parse(wsdl, http, sandbox_paths: :auto, limits: nil, reject_doctype: true, strict_schema: true)
         # rubocop:enable Metrics/ParameterLists
-        @documents = DocumentCollection.new
-        @schemas = Schema::Collection.new
-        @limits = limits || WSDL.limits
-        @strict_schema = strict_schema ? true : false
+        documents = DocumentCollection.new
+        schemas = Schema::Collection.new
+        resolved_limits = limits || WSDL.limits
+        resolved_strict_schema = strict_schema ? true : false
 
         source = Source.validate_wsdl!(wsdl)
         resolved_sandbox_paths = resolve_sandbox_paths(source, sandbox_paths)
-        resolver = Resolver.new(http, sandbox_paths: resolved_sandbox_paths, limits: @limits)
+        resolver = Resolver.new(http, sandbox_paths: resolved_sandbox_paths, limits: resolved_limits)
         importer = Importer.new(
           resolver,
-          @documents,
-          @schemas,
-          limits: @limits,
+          documents,
+          schemas,
+          limits: resolved_limits,
           reject_doctype:,
-          strict_schema: @strict_schema
+          strict_schema: resolved_strict_schema
         )
         importer.import(source.value)
-        @schema_import_errors = importer.schema_import_errors.freeze
+
+        new(
+          documents:,
+          schemas:,
+          limits: resolved_limits,
+          strict_schema: resolved_strict_schema,
+          schema_import_errors: importer.schema_import_errors.freeze
+        )
+      end
+
+      # Resolves sandbox paths based on the WSDL source type.
+      #
+      # @param source [Source] the WSDL source
+      # @param sandbox_paths [Symbol, Array<String>, nil] explicit sandbox paths or :auto
+      # @return [Array<String>, nil] resolved sandbox paths, or nil if file access is disabled
+      #
+      def self.resolve_sandbox_paths(source, sandbox_paths)
+        return sandbox_paths unless sandbox_paths == :auto
+        return nil if source.url?
+
+        source.default_sandbox_paths
+      end
+      private_class_method :resolve_sandbox_paths
+
+      # Creates a new Result with pre-computed data.
+      #
+      # This constructor performs no I/O. Use {.parse} to import and parse
+      # a WSDL document from a URL or file path.
+      #
+      # @param documents [DocumentCollection] the parsed document collection
+      # @param schemas [Schema::Collection] the parsed schema collection
+      # @param limits [Limits] the resource limits used during parsing
+      # @param strict_schema [Boolean] whether strict schema mode was enabled
+      # @param schema_import_errors [Array<SchemaImportError>] recoverable errors from import
+      #
+      def initialize(documents:, schemas:, limits:, strict_schema:, schema_import_errors:)
+        @documents = documents
+        @schemas = schemas
+        @limits = limits
+        @strict_schema = strict_schema
+        @schema_import_errors = schema_import_errors
       end
 
       # The collection of parsed WSDL documents.
@@ -241,23 +287,6 @@ module WSDL
 
         raise ArgumentError, "Unknown service #{service_name.inspect} or port #{port_name.inspect}.\n" \
                              "Here is a list of known services and port:\n" + services.inspect
-      end
-
-      # Resolves sandbox paths based on the WSDL source type.
-      #
-      # @param source [Source] the WSDL source
-      # @param sandbox_paths [Symbol, Array<String>, nil] explicit sandbox paths or :auto
-      # @return [Array<String>, nil] resolved sandbox paths, or nil if file access is disabled
-      #
-      def resolve_sandbox_paths(source, sandbox_paths)
-        # If explicit sandbox_paths provided (not :auto), use them as-is
-        return sandbox_paths unless sandbox_paths == :auto
-
-        # URL-loaded WSDLs: disable file access entirely
-        return nil if source.url?
-
-        # File path: sandbox to the WSDL's parent directory
-        source.default_sandbox_paths
       end
     end
   end

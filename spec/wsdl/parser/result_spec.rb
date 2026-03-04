@@ -4,7 +4,7 @@ require 'spec_helper'
 require 'tmpdir'
 
 describe WSDL::Parser::Result do
-  subject(:parser_result) { described_class.new fixture('wsdl/authentication'), http_mock }
+  subject(:parser_result) { described_class.parse fixture('wsdl/authentication'), http_mock }
 
   let(:operation_name) { 'authenticate' }
   let(:service_name)   { 'AuthenticationWebServiceImplService' }
@@ -58,7 +58,7 @@ describe WSDL::Parser::Result do
 
     it 'accepts custom limits' do
       custom_limits = WSDL::Limits.new(max_schemas: 200)
-      result = described_class.new(fixture('wsdl/authentication'), http_mock, limits: custom_limits)
+      result = described_class.parse(fixture('wsdl/authentication'), http_mock, limits: custom_limits)
 
       expect(result.limits).to eq(custom_limits)
     end
@@ -70,7 +70,7 @@ describe WSDL::Parser::Result do
     end
 
     it 'accepts strict_schema: false' do
-      result = described_class.new(fixture('wsdl/authentication'), http_mock, strict_schema: false)
+      result = described_class.parse(fixture('wsdl/authentication'), http_mock, strict_schema: false)
       expect(result.strict_schema).to be(false)
     end
   end
@@ -91,7 +91,7 @@ describe WSDL::Parser::Result do
     end
 
     it 'returns true when import failures are unrelated to operation input namespaces' do
-      result = described_class.new(fixture('wsdl/authentication'), http_mock, strict_schema: false)
+      result = described_class.parse(fixture('wsdl/authentication'), http_mock, strict_schema: false)
       operation_info = build_operation_info(
         header_parts: [build_element(namespace: 'urn:operation')],
         body_parts: []
@@ -110,7 +110,7 @@ describe WSDL::Parser::Result do
     end
 
     it 'returns false when import failures affect an operation input namespace' do
-      result = described_class.new(fixture('wsdl/authentication'), http_mock, strict_schema: false)
+      result = described_class.parse(fixture('wsdl/authentication'), http_mock, strict_schema: false)
       operation_info = build_operation_info(
         header_parts: [],
         body_parts: [build_element(namespace: 'urn:operation')]
@@ -131,7 +131,7 @@ describe WSDL::Parser::Result do
     end
 
     it 'returns false for non-empty operations when an import error has no base location' do
-      result = described_class.new(fixture('wsdl/authentication'), http_mock, strict_schema: false)
+      result = described_class.parse(fixture('wsdl/authentication'), http_mock, strict_schema: false)
       operation_info = build_operation_info(
         header_parts: [],
         body_parts: [build_element(namespace: 'urn:operation')]
@@ -146,7 +146,7 @@ describe WSDL::Parser::Result do
     end
 
     it 'returns true for empty-input operations even when import errors are present' do
-      result = described_class.new(fixture('wsdl/authentication'), http_mock, strict_schema: false)
+      result = described_class.parse(fixture('wsdl/authentication'), http_mock, strict_schema: false)
       operation_info = build_operation_info(header_parts: [], body_parts: [])
 
       result.instance_variable_set(
@@ -166,7 +166,7 @@ describe WSDL::Parser::Result do
         very_low_limit = WSDL::Limits.new(max_schemas: 5)
 
         expect {
-          described_class.new(edialog_wsdl, http_mock, limits: very_low_limit)
+          described_class.parse(edialog_wsdl, http_mock, limits: very_low_limit)
         }.to raise_error(WSDL::ResourceLimitError, /Schema count.*exceeds limit/)
       end
 
@@ -175,7 +175,7 @@ describe WSDL::Parser::Result do
         very_low_limit = WSDL::Limits.new(max_schemas: 5)
 
         expect {
-          described_class.new(edialog_wsdl, http_mock, limits: very_low_limit)
+          described_class.parse(edialog_wsdl, http_mock, limits: very_low_limit)
         }.to raise_error(WSDL::ResourceLimitError) { |e|
           expect(e.limit_name).to eq(:max_schemas)
           expect(e.limit_value).to eq(5)
@@ -185,7 +185,7 @@ describe WSDL::Parser::Result do
       it 'allows parsing when schema count is within limit' do
         # Default limits should be sufficient for normal WSDLs
         expect {
-          described_class.new(fixture('wsdl/authentication'), http_mock)
+          described_class.parse(fixture('wsdl/authentication'), http_mock)
         }.not_to raise_error
       end
 
@@ -194,14 +194,14 @@ describe WSDL::Parser::Result do
         edialog_wsdl = fixture('wsdl/edialog')
 
         expect {
-          described_class.new(edialog_wsdl, http_mock, limits: unlimited)
+          described_class.parse(edialog_wsdl, http_mock, limits: unlimited)
         }.not_to raise_error
       end
     end
   end
 
   describe 'QName resolution across imported documents' do
-    subject(:collision_result) { described_class.new fixture('wsdl/qname_collisions/root'), http_mock }
+    subject(:collision_result) { described_class.parse fixture('wsdl/qname_collisions/root'), http_mock }
 
     it 'keeps same local names from different namespaces as distinct keys' do
       shared_bindings = collision_result.documents.bindings.keys.select { |qname| qname.local == 'SharedBinding' }
@@ -222,7 +222,7 @@ describe WSDL::Parser::Result do
 
   describe 'reference errors' do
     it 'raises UnresolvedReferenceError for missing binding references' do
-      result = described_class.new(fixture('wsdl/unresolved_references/binding'), http_mock)
+      result = described_class.parse(fixture('wsdl/unresolved_references/binding'), http_mock)
 
       expect {
         result.operations('BadService', 'BadPort')
@@ -232,7 +232,7 @@ describe WSDL::Parser::Result do
     end
 
     it 'raises UnresolvedReferenceError for missing portType references' do
-      result = described_class.new(fixture('wsdl/unresolved_references/port_type'), http_mock)
+      result = described_class.parse(fixture('wsdl/unresolved_references/port_type'), http_mock)
 
       expect {
         result.operation('BadService', 'BadPort', 'Ping')
@@ -242,7 +242,7 @@ describe WSDL::Parser::Result do
     end
 
     it 'raises UnresolvedReferenceError for missing message references' do
-      result = described_class.new(fixture('wsdl/unresolved_references/message'), http_mock)
+      result = described_class.parse(fixture('wsdl/unresolved_references/message'), http_mock)
 
       expect {
         result.operation('BadService', 'BadPort', 'Ping').input
@@ -254,7 +254,7 @@ describe WSDL::Parser::Result do
 
   describe 'duplicate definition detection' do
     it 'raises DuplicateDefinitionError for duplicate qualified definitions' do
-      result = described_class.new(fixture('wsdl/duplicate_definitions/root'), http_mock)
+      result = described_class.parse(fixture('wsdl/duplicate_definitions/root'), http_mock)
 
       expect {
         result.documents.messages
@@ -268,19 +268,19 @@ describe WSDL::Parser::Result do
   describe 'source validation' do
     it 'rejects inline XML content' do
       expect {
-        described_class.new('<definitions/>', http_mock)
+        described_class.parse('<definitions/>', http_mock)
       }.to raise_error(ArgumentError, /Inline XML WSDL is not supported/)
     end
 
     it 'rejects file:// URLs' do
       expect {
-        described_class.new('file:///tmp/service.wsdl', http_mock)
+        described_class.parse('file:///tmp/service.wsdl', http_mock)
       }.to raise_error(ArgumentError, %r{file:// URLs are not supported})
     end
 
     it 'rejects unsupported URL schemes' do
       expect {
-        described_class.new('ftp://example.com/service.wsdl', http_mock)
+        described_class.parse('ftp://example.com/service.wsdl', http_mock)
       }.to raise_error(ArgumentError, /Unsupported URL scheme/)
     end
   end
@@ -290,13 +290,13 @@ describe WSDL::Parser::Result do
 
     it 'continues on non-security schema import failures when strict_schema is false' do
       expect {
-        described_class.new(wsdl_with_missing_schema_import, http_mock, strict_schema: false)
+        described_class.parse(wsdl_with_missing_schema_import, http_mock, strict_schema: false)
       }.not_to raise_error
     end
 
     it 'raises non-security schema import failures in strict mode' do
       expect {
-        described_class.new(wsdl_with_missing_schema_import, http_mock, strict_schema: true)
+        described_class.parse(wsdl_with_missing_schema_import, http_mock, strict_schema: true)
       }.to raise_error(WSDL::SchemaImportError) { |error|
         expect(error.cause).to be_a(Errno::ENOENT)
         expect(error.location).to eq('SystemService?xsd=xsd0.xsd')
@@ -308,11 +308,11 @@ describe WSDL::Parser::Result do
       malicious_wsdl = fixture('wsdl/malicious/path_traversal')
 
       expect {
-        described_class.new(malicious_wsdl, http_mock, strict_schema: false)
+        described_class.parse(malicious_wsdl, http_mock, strict_schema: false)
       }.to raise_error(WSDL::PathRestrictionError)
 
       expect {
-        described_class.new(malicious_wsdl, http_mock, strict_schema: true)
+        described_class.parse(malicious_wsdl, http_mock, strict_schema: true)
       }.to raise_error(WSDL::PathRestrictionError)
     end
 
@@ -343,11 +343,11 @@ describe WSDL::Parser::Result do
         XML
 
         expect {
-          described_class.new(wsdl_path, http_mock, strict_schema: false)
+          described_class.parse(wsdl_path, http_mock, strict_schema: false)
         }.to raise_error(WSDL::XMLSecurityError)
 
         expect {
-          described_class.new(wsdl_path, http_mock, strict_schema: true)
+          described_class.parse(wsdl_path, http_mock, strict_schema: true)
         }.to raise_error(WSDL::XMLSecurityError)
       end
     end

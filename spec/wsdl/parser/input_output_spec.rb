@@ -73,7 +73,7 @@ describe WSDL::Parser::Input do
   end
 
   def parse_result(wsdl_xml)
-    WSDL::Parser::Result.new(write_wsdl_file(wsdl_xml), http_mock)
+    WSDL::Parser::Result.parse(write_wsdl_file(wsdl_xml), http_mock)
   end
 
   def write_wsdl_file(wsdl_xml)
