@@ -99,6 +99,81 @@ describe WSDL::Security::SecurityHeader do
   end
 
   describe '#apply' do
+    context 'with Nokogiri document input' do
+      subject(:header) { described_class.new(config) }
+
+      let(:config) do
+        WSDL::Security::Config.new.tap do |c|
+          c.timestamp(expires_in: 300)
+        end
+      end
+
+      it 'accepts and signs a prebuilt Nokogiri document' do
+        document = WSDL::Request::Serializer.new(
+          document: WSDL::Request::Document.new,
+          soap_version: '1.1',
+          pretty_print: true
+        ).to_document
+
+        result = header.apply(document)
+        parsed = parse_xml(result)
+
+        expect(security_node(parsed)).not_to be_nil
+      end
+
+      it 'normalizes blank text nodes like the string input path' do
+        document = parse_xml(<<~XML)
+          <env:Envelope xmlns:env="http://schemas.xmlsoap.org/soap/envelope/">
+            <env:Header/>
+            <env:Body>
+              <GetUser xmlns="http://example.com/users">
+                <userId>123</userId>
+              </GetUser>
+            </env:Body>
+          </env:Envelope>
+        XML
+
+        result = header.apply(document)
+        parsed = parse_xml(result)
+        blank_text_nodes = parsed.xpath('//text()').count { |node| node.content.strip.empty? }
+
+        expect(blank_text_nodes).to eq(0)
+      end
+
+      it 'does not mutate the original Nokogiri document' do
+        document = parse_xml(<<~XML)
+          <env:Envelope xmlns:env="http://schemas.xmlsoap.org/soap/envelope/">
+            <env:Header/>
+            <env:Body>
+              <GetUser xmlns="http://example.com/users">
+                <userId>123</userId>
+              </GetUser>
+            </env:Body>
+          </env:Envelope>
+        XML
+        original_blank_text_nodes = document.xpath('//text()').count { |node| node.content.strip.empty? }
+
+        header.apply(document)
+
+        current_blank_text_nodes = document.xpath('//text()').count { |node| node.content.strip.empty? }
+        expect(current_blank_text_nodes).to eq(original_blank_text_nodes)
+      end
+
+      it 'rejects document input containing DOCTYPE' do
+        document = parse_xml(<<~XML)
+          <!DOCTYPE env:Envelope [
+            <!ELEMENT env:Envelope ANY>
+          ]>
+          <env:Envelope xmlns:env="http://schemas.xmlsoap.org/soap/envelope/">
+            <env:Header/>
+            <env:Body/>
+          </env:Envelope>
+        XML
+
+        expect { header.apply(document) }.to raise_error(WSDL::XMLSecurityError, /DOCTYPE declarations are not allowed/)
+      end
+    end
+
     context 'with timestamp only' do
       subject(:header) { described_class.new(config) }
 

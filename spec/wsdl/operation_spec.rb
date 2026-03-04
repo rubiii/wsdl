@@ -352,6 +352,32 @@ describe WSDL::Operation do
       expect(operation.to_xml).to include('UsernameToken')
     end
 
+    it 'passes a serialized document directly to SecurityHeader when outbound security is configured' do
+      apply_request(operation, body: {
+        ConvertTemp: {
+          Temperature: 30,
+          FromUnit: 'degreeCelsius',
+          ToUnit: 'degreeFahrenheit'
+        }
+      }) do
+        username_token('username', 'secret')
+      end
+
+      security_header = instance_spy(WSDL::Security::SecurityHeader)
+      serialized_document = nil
+      allow(WSDL::Security::SecurityHeader).to receive(:new).and_return(security_header)
+      allow(security_header).to receive(:apply) do |xml|
+        serialized_document = xml
+        '<signed/>'
+      end
+
+      operation.to_xml
+
+      expect(WSDL::Security::SecurityHeader).to have_received(:new).with(instance_of(WSDL::Security::Config))
+      expect(security_header).to have_received(:apply)
+      expect(serialized_document).to be_a(Nokogiri::XML::Document)
+    end
+
     context 'with pretty_print: false' do
       let(:compact_operation) { described_class.new(operation_info, parser_result, http_mock, pretty_print: false) }
 

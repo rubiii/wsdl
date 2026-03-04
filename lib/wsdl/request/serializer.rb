@@ -10,24 +10,36 @@ module WSDL
         @document = document
         @soap_version = soap_version
         @pretty_print = pretty_print
+      end
+
+      # @return [Nokogiri::XML::Document]
+      def to_document
+        reset_state!
+        envelope = build_envelope
+        header, body = build_standard_sections(envelope)
+        append_section_nodes!(header, @document.header, envelope)
+        append_section_nodes!(body, @document.body, envelope)
+        @doc
+      end
+
+      # @return [String]
+      def serialize
+        to_document.root.to_xml(save_with: xml_save_options)
+      end
+
+      private
+
+      def reset_state!
         @doc = Nokogiri::XML::Document.new
         @generated_prefix_counter = 0
         @uri_prefix = {}
       end
 
-      # @return [String]
-      def serialize
-        envelope = build_envelope
-        header, body = build_standard_sections(envelope)
-        append_section_nodes!(header, @document.header, envelope)
-        append_section_nodes!(body, @document.body, envelope)
-
+      def xml_save_options
         save_options = Nokogiri::XML::Node::SaveOptions::AS_XML | Nokogiri::XML::Node::SaveOptions::NO_DECLARATION
         save_options |= Nokogiri::XML::Node::SaveOptions::FORMAT if @pretty_print
-        @doc.root.to_xml(save_with: save_options)
+        save_options
       end
-
-      private
 
       def build_standard_sections(envelope)
         header = soap_section_node('Header', envelope)

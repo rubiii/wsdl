@@ -57,7 +57,8 @@ module WSDL
       # 3. Adds configured security elements (Timestamp, UsernameToken)
       # 4. If signing is configured, computes digests and adds signature
       #
-      # @param envelope_xml [String] the SOAP envelope XML
+      # @param envelope_xml [String, Nokogiri::XML::Document] the SOAP envelope
+      #   as an XML string or prebuilt document
       # @return [String] the SOAP envelope with security header
       #
       def apply(envelope_xml)
@@ -80,11 +81,35 @@ module WSDL
 
       # Parses the XML document with whitespace handling for signatures.
       #
-      # @param xml [String] the XML string
+      # @param xml [String, Nokogiri::XML::Document] the XML input
       # @return [Nokogiri::XML::Document]
       #
       def parse_document(xml)
+        return normalize_document(xml) if xml.is_a?(Nokogiri::XML::Document)
+
         XML::Parser.parse(xml, noblanks: true)
+      end
+
+      def normalize_document(document)
+        normalized = document.dup
+        reject_doctype!(normalized)
+        remove_blank_text_nodes!(normalized)
+        normalized
+      end
+
+      def reject_doctype!(document)
+        return unless document.internal_subset
+
+        raise WSDL::XMLSecurityError,
+              'DOCTYPE declarations are not allowed. ' \
+              'Legitimate SOAP/WSDL documents do not require DOCTYPE. ' \
+              'This restriction prevents XXE and entity expansion attacks.'
+      end
+
+      def remove_blank_text_nodes!(document)
+        document.xpath('//text()').each do |text|
+          text.remove if text.content.strip.empty?
+        end
       end
 
       # Returns XML save options.

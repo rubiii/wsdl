@@ -106,10 +106,10 @@ module WSDL
       ensure_request_definition!
 
       document = build_serializable_document(@request_document || Request::Document.new)
-      xml = Request::Serializer.new(document:, soap_version:, pretty_print:).serialize
-      return xml unless @security.configured?
+      serializer = Request::Serializer.new(document:, soap_version:, pretty_print:)
+      return serializer.serialize unless @security.configured?
 
-      Security::SecurityHeader.new(@security).apply(xml)
+      Security::SecurityHeader.new(@security).apply(serializer.to_document)
     end
 
     # Invokes this SOAP operation.
