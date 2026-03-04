@@ -48,7 +48,6 @@ module WSDL
         @raw_xml = raw_xml
         @verification = verification
         @certificate = certificate
-        @verifier = nil
       end
 
       # ============================================================
@@ -66,7 +65,7 @@ module WSDL
       def valid?
         return false unless signature_present?
 
-        verifier.valid?
+        verifier.valid? && timestamp_valid?
       end
 
       # Verifies the response and raises an error if any check fails.
@@ -112,9 +111,7 @@ module WSDL
       def signature_valid?
         return false unless signature_present?
 
-        # Run verification but only check signature-related phases
-        # (timestamp validation is separate)
-        verifier_without_timestamp.valid?
+        verifier.valid?
       end
 
       # Verifies the signature and raises an error if invalid.
@@ -128,7 +125,7 @@ module WSDL
         raise SignatureVerificationError, 'Response does not contain a signature' unless signature_present?
 
         unless signature_valid?
-          sig_errors = verifier_without_timestamp.errors.join('; ')
+          sig_errors = verifier.errors.join('; ')
           raise SignatureVerificationError, "Signature verification failed: #{sig_errors}"
         end
 
@@ -236,24 +233,28 @@ module WSDL
 
       # Returns all errors from security verification.
       #
-      # This includes errors from both full verification runs and
-      # signature-only verification runs.
+      # Includes signature verification errors and, when timestamp
+      # validation is enabled, any timestamp errors.
       #
       # @return [Array<String>] error messages
       #
       def errors
-        combined_errors = verifier.errors.dup
+        all_errors = verifier.errors.dup
 
-        if defined?(@verifier_without_timestamp) && @verifier_without_timestamp
-          combined_errors.concat(@verifier_without_timestamp.errors)
+        if @verification.timestamp.validate && !verifier.timestamp_valid?
+          all_errors.concat(verifier.timestamp_errors)
         end
 
-        combined_errors.uniq
+        all_errors.uniq
       end
 
       private
 
-      # Returns the main verifier instance (with timestamp validation).
+      # Returns the verifier instance (without timestamp validation).
+      #
+      # Timestamp validation is composed at the SecurityContext level
+      # using verifier.timestamp_valid? and verifier.timestamp_errors,
+      # avoiding the need for a second verifier instance.
       #
       # @return [Security::Verifier]
       #
@@ -263,24 +264,8 @@ module WSDL
           certificate: @certificate,
           trust_store: @verification.certificate.trust_store,
           check_validity: @verification.certificate.verify_not_expired,
-          validate_timestamp: @verification.timestamp.validate,
+          validate_timestamp: false,
           clock_skew: @verification.timestamp.tolerance_seconds
-        )
-      end
-
-      # Returns a verifier instance without timestamp validation.
-      #
-      # Used for signature-only validation.
-      #
-      # @return [Security::Verifier]
-      #
-      def verifier_without_timestamp
-        @verifier_without_timestamp ||= Security::Verifier.new(
-          @raw_xml,
-          certificate: @certificate,
-          trust_store: @verification.certificate.trust_store,
-          check_validity: @verification.certificate.verify_not_expired,
-          validate_timestamp: false
         )
       end
     end
