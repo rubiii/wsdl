@@ -178,6 +178,112 @@ describe WSDL::Operation do
       }.to raise_error(WSDL::RequestValidationError, /exceeds maxOccurs=1/)
     end
 
+    context 'with unqualified schema elements' do
+      it 'rejects namespaced child elements when schema expects unqualified form' do
+        op = WSDL::Client.new(fixture('wsdl/document_literal_wrapped'))
+          .operation('SampleService', 'Sample', 'op1')
+
+        expect {
+          op.prepare do
+            xmlns('api', 'http://apiNamespace.com')
+            body do
+              tag('op1') do
+                tag('api:in') do
+                  tag('data1', 1)
+                  tag('data2', 2)
+                end
+              end
+            end
+          end
+        }.to raise_error(
+          WSDL::RequestValidationError,
+          /Element "api:in" must be unqualified \(no namespace\) for element "in" under "op1"/
+        )
+      end
+
+      it 'rejects namespaced nested elements when schema expects unqualified form' do
+        op = WSDL::Client.new(fixture('wsdl/document_literal_wrapped'))
+          .operation('SampleService', 'Sample', 'op1')
+
+        expect {
+          op.prepare do
+            xmlns('api', 'http://apiNamespace.com')
+            body do
+              tag('op1') do
+                tag('in') do
+                  tag('api:data1', 1)
+                  tag('data2', 2)
+                end
+              end
+            end
+          end
+        }.to raise_error(
+          WSDL::RequestValidationError,
+          /Element "api:data1" must be unqualified \(no namespace\) for element "data1" under "in"/
+        )
+      end
+
+      it 'accepts unqualified elements where schema expects unqualified form' do
+        op = WSDL::Client.new(fixture('wsdl/document_literal_wrapped'))
+          .operation('SampleService', 'Sample', 'op1')
+
+        op.prepare do
+          body do
+            tag('op1') do
+              tag('in') do
+                tag('data1', 1)
+                tag('data2', 2)
+              end
+            end
+          end
+        end
+
+        expect(op.to_xml).to include('<in>')
+        expect(op.to_xml).to include('<data1>1</data1>')
+      end
+
+      it 'rejects namespaced top-level body elements when schema expects unqualified form' do
+        op = WSDL::Client.new(fixture('wsdl/rpc_literal'))
+          .operation('SampleService', 'Sample', 'op1')
+
+        expect {
+          op.prepare do
+            xmlns('api', 'http://apiNamespace.com')
+            body do
+              tag('api:in') do
+                tag('data1', 1)
+                tag('data2', 2)
+              end
+            end
+          end
+        }.to raise_error(
+          WSDL::RequestValidationError,
+          /Element "api:in" must be unqualified \(no namespace\) for element "in" in body/
+        )
+      end
+
+      it 'allows namespaced unqualified elements in relaxed mode' do
+        op = WSDL::Client.new(fixture('wsdl/document_literal_wrapped'), strict_schema: false)
+          .operation('SampleService', 'Sample', 'op1')
+
+        op.prepare do
+          xmlns('api', 'http://apiNamespace.com')
+          body do
+            tag('op1') do
+              tag('api:in') do
+                tag('api:data1', 1)
+                tag('data2', 2)
+              end
+            end
+          end
+        end
+
+        xml = op.to_xml
+        expect(xml).to include('<api:in>')
+        expect(xml).to include('<api:data1>1</api:data1>')
+      end
+    end
+
     it 'reflects updated body values on the next call' do
       apply_request(operation, body: {
         ConvertTemp: {

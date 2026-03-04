@@ -45,7 +45,10 @@ module WSDL
             next
           end
 
-          raise_unknown_section_element!(node, section:) if @strict_schema
+          next unless @strict_schema
+
+          raise_namespace_mismatch_if_known_name!(node, expected_elements, context: "in #{section}")
+          raise_unknown_section_element!(node, section:)
         end
 
         counts
@@ -85,10 +88,10 @@ module WSDL
         expected_elements.find do |expected|
           next false unless expected.name == node.local_name
 
-          if node.namespace_uri
-            expected.namespace == node.namespace_uri || expected.form != 'qualified'
+          if expected.form == 'qualified'
+            node.namespace_uri.nil? || node.namespace_uri == expected.namespace
           else
-            true
+            node.namespace_uri.nil?
           end
         end
       end
@@ -136,7 +139,10 @@ module WSDL
             next
           end
 
-          raise_unknown_child!(child, node) if @strict_schema && !wildcard
+          next unless @strict_schema && !wildcard
+
+          raise_namespace_mismatch_if_known_name!(child, expected_children, context: "under #{node.name.inspect}")
+          raise_unknown_child!(child, node)
         end
 
         validate_expected_child_counts!(expected_children, state[:counts], node)
@@ -188,6 +194,43 @@ module WSDL
       def raise_unknown_child!(child, node)
         raise RequestValidationError,
               "Unknown child element #{child.name.inspect} under #{node.name.inspect}"
+      end
+
+      def raise_namespace_mismatch_if_known_name!(node, expected_elements, context:)
+        return unless node.namespace_uri
+
+        candidates = candidates_for_local_name(node, expected_elements)
+        return if candidates.empty?
+
+        raise_qualified_namespace_mismatch!(node, candidates, context:)
+        raise_unqualified_namespace_mismatch!(node, context:)
+      end
+
+      def candidates_for_local_name(node, expected_elements)
+        expected_elements.select { |expected| expected.name == node.local_name }
+      end
+
+      def raise_qualified_namespace_mismatch!(node, candidates, context:)
+        expected_namespaces = qualified_expected_namespaces(candidates)
+        return if expected_namespaces.empty?
+
+        expected_ns = expected_namespaces.one? ? expected_namespaces.first.inspect : expected_namespaces.inspect
+        raise RequestValidationError,
+              "Element #{node.name.inspect} namespace #{node.namespace_uri.inspect} does not match expected " \
+              "namespace #{expected_ns} for element #{node.local_name.inspect} #{context}"
+      end
+
+      def qualified_expected_namespaces(candidates)
+        candidates
+          .select { |expected| expected.form == 'qualified' }
+          .map(&:namespace)
+          .uniq
+      end
+
+      def raise_unqualified_namespace_mismatch!(node, context:)
+        raise RequestValidationError,
+              "Element #{node.name.inspect} must be unqualified (no namespace) for element " \
+              "#{node.local_name.inspect} #{context}"
       end
 
       def validate_expected_child_counts!(expected_children, counts, node)
