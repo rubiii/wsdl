@@ -14,9 +14,6 @@ module WSDL
     # @api private
     #
     class Importer
-      # Safety limit to prevent infinite loops with malformed WSDLs.
-      MAX_SCHEMA_IMPORT_ITERATIONS = 100
-
       # Exceptions that are treated as recoverable schema import failures.
       #
       # These are wrapped into {SchemaImportError} and either raised or collected
@@ -130,14 +127,24 @@ module WSDL
         # (schemas can import/include other schemas)
         @processed_locations = Set.new
 
-        MAX_SCHEMA_IMPORT_ITERATIONS.times do |iteration|
+        max_iterations = @limits.max_schema_import_iterations
+        return import_schemas_unlimited unless max_iterations
+
+        max_iterations.times do |iteration|
           break unless process_pending_schema_references
 
-          next unless iteration == MAX_SCHEMA_IMPORT_ITERATIONS - 1
+          next unless iteration == max_iterations - 1
 
-          @logger.warn("Reached maximum schema import iterations (#{MAX_SCHEMA_IMPORT_ITERATIONS}). " \
+          @logger.warn("Reached maximum schema import iterations (#{max_iterations}). " \
                        'Some schemas may not have been imported.')
         end
+      end
+
+      # Processes schema references without an iteration cap.
+      #
+      # @return [void]
+      def import_schemas_unlimited
+        loop { break unless process_pending_schema_references }
       end
 
       # Processes pending schema import and include references.

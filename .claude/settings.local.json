@@ -2,7 +2,8 @@
   "permissions": {
     "allow": [
       "Bash(bundle exec:*)",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "Bash(rake ci:*)"
     ]
   }
 }

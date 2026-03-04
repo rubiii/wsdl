@@ -54,6 +54,9 @@ module WSDL
     # Default maximum total attributes in request AST construction.
     DEFAULT_MAX_REQUEST_ATTRIBUTES = 1_000
 
+    # Default maximum iterations for resolving schema imports and includes.
+    DEFAULT_MAX_SCHEMA_IMPORT_ITERATIONS = 100
+
     # Creates a new Limits instance with the specified resource limits.
     #
     # @param max_document_size [Integer, nil] maximum size in bytes for a single WSDL/schema
@@ -74,6 +77,8 @@ module WSDL
     #   Set to nil to disable. Default: 100.
     # @param max_request_attributes [Integer, nil] maximum total attributes in request AST.
     #   Set to nil to disable. Default: 1,000.
+    # @param max_schema_import_iterations [Integer, nil] maximum iterations for resolving
+    #   schema imports and includes. Set to nil to disable. Default: 100.
     #
     # rubocop:disable Metrics/ParameterLists
     def initialize(
@@ -85,7 +90,8 @@ module WSDL
       max_type_nesting_depth: DEFAULT_MAX_TYPE_NESTING_DEPTH,
       max_request_elements: DEFAULT_MAX_REQUEST_ELEMENTS,
       max_request_depth: DEFAULT_MAX_REQUEST_DEPTH,
-      max_request_attributes: DEFAULT_MAX_REQUEST_ATTRIBUTES
+      max_request_attributes: DEFAULT_MAX_REQUEST_ATTRIBUTES,
+      max_schema_import_iterations: DEFAULT_MAX_SCHEMA_IMPORT_ITERATIONS
     )
       # rubocop:enable Metrics/ParameterLists
       @max_document_size = max_document_size
@@ -97,6 +103,7 @@ module WSDL
       @max_request_elements = max_request_elements
       @max_request_depth = max_request_depth
       @max_request_attributes = max_request_attributes
+      @max_schema_import_iterations = max_schema_import_iterations
 
       freeze
     end
@@ -128,6 +135,9 @@ module WSDL
     # @return [Integer, nil] maximum total attributes in request AST
     attr_reader :max_request_attributes
 
+    # @return [Integer, nil] maximum iterations for resolving schema imports and includes
+    attr_reader :max_schema_import_iterations
+
     # Creates a new Limits instance with some values changed.
     #
     # @param options [Hash] the limits to override
@@ -140,6 +150,7 @@ module WSDL
     # @option options [Integer, nil] :max_request_elements
     # @option options [Integer, nil] :max_request_depth
     # @option options [Integer, nil] :max_request_attributes
+    # @option options [Integer, nil] :max_schema_import_iterations
     # @return [Limits] a new Limits instance with the specified changes
     #
     # @example Increase document size limit
@@ -158,7 +169,8 @@ module WSDL
         max_type_nesting_depth: options.fetch(:max_type_nesting_depth, @max_type_nesting_depth),
         max_request_elements: options.fetch(:max_request_elements, @max_request_elements),
         max_request_depth: options.fetch(:max_request_depth, @max_request_depth),
-        max_request_attributes: options.fetch(:max_request_attributes, @max_request_attributes)
+        max_request_attributes: options.fetch(:max_request_attributes, @max_request_attributes),
+        max_schema_import_iterations: options.fetch(:max_schema_import_iterations, @max_schema_import_iterations)
       )
     end
 
@@ -176,7 +188,8 @@ module WSDL
         max_type_nesting_depth: @max_type_nesting_depth,
         max_request_elements: @max_request_elements,
         max_request_depth: @max_request_depth,
-        max_request_attributes: @max_request_attributes
+        max_request_attributes: @max_request_attributes,
+        max_schema_import_iterations: @max_schema_import_iterations
       }
     end
 
@@ -194,7 +207,8 @@ module WSDL
         max_type_nesting_depth: limit_value(@max_type_nesting_depth),
         max_request_elements: limit_value(@max_request_elements),
         max_request_depth: limit_value(@max_request_depth),
-        max_request_attributes: limit_value(@max_request_attributes)
+        max_request_attributes: limit_value(@max_request_attributes),
+        max_schema_import_iterations: limit_value(@max_schema_import_iterations)
       }.map { |key, value| "#{key}=#{value}" }.join(' ')
 
       "#<#{self.class.name} #{parts}>"

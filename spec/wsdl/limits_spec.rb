@@ -34,6 +34,10 @@ describe WSDL::Limits do
       it 'sets max_type_nesting_depth to 50' do
         expect(limits.max_type_nesting_depth).to eq(50)
       end
+
+      it 'sets max_schema_import_iterations to 100' do
+        expect(limits.max_schema_import_iterations).to eq(100)
+      end
     end
 
     context 'with custom values' do
@@ -44,7 +48,8 @@ describe WSDL::Limits do
           max_schemas: 100,
           max_elements_per_type: 1000,
           max_attributes_per_element: 200,
-          max_type_nesting_depth: 100
+          max_type_nesting_depth: 100,
+          max_schema_import_iterations: 200
         )
       end
 
@@ -71,6 +76,10 @@ describe WSDL::Limits do
       it 'uses the custom max_type_nesting_depth' do
         expect(limits.max_type_nesting_depth).to eq(100)
       end
+
+      it 'uses the custom max_schema_import_iterations' do
+        expect(limits.max_schema_import_iterations).to eq(200)
+      end
     end
 
     context 'with nil values (disabled limits)' do
@@ -81,7 +90,8 @@ describe WSDL::Limits do
           max_schemas: nil,
           max_elements_per_type: nil,
           max_attributes_per_element: nil,
-          max_type_nesting_depth: nil
+          max_type_nesting_depth: nil,
+          max_schema_import_iterations: nil
         )
       end
 
@@ -107,6 +117,10 @@ describe WSDL::Limits do
 
       it 'allows nil for max_type_nesting_depth' do
         expect(limits.max_type_nesting_depth).to be_nil
+      end
+
+      it 'allows nil for max_schema_import_iterations' do
+        expect(limits.max_schema_import_iterations).to be_nil
       end
     end
   end
@@ -172,7 +186,8 @@ describe WSDL::Limits do
         max_type_nesting_depth: 50,
         max_request_elements: 10_000,
         max_request_depth: 100,
-        max_request_attributes: 1_000
+        max_request_attributes: 1_000,
+        max_schema_import_iterations: 100
       )
     end
 
@@ -323,6 +338,10 @@ describe WSDL::Limits do
 
     it 'defines DEFAULT_MAX_TYPE_NESTING_DEPTH as 50' do
       expect(described_class::DEFAULT_MAX_TYPE_NESTING_DEPTH).to eq(50)
+    end
+
+    it 'defines DEFAULT_MAX_SCHEMA_IMPORT_ITERATIONS as 100' do
+      expect(described_class::DEFAULT_MAX_SCHEMA_IMPORT_ITERATIONS).to eq(100)
     end
   end
 end
