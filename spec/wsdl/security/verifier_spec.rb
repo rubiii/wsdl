@@ -10,10 +10,9 @@ describe WSDL::Security::Verifier, :verifier_helpers do
       expect(verifier).to be_a(described_class)
     end
 
-    it 'accepts a Nokogiri document' do
+    it 'rejects a Nokogiri document' do
       doc = Nokogiri::XML(unsigned_soap_response)
-      verifier = described_class.new(doc)
-      expect(verifier).to be_a(described_class)
+      expect { described_class.new(doc) }.to raise_error(ArgumentError, /Expected String/)
     end
 
     it 'accepts an optional certificate' do
@@ -37,7 +36,7 @@ describe WSDL::Security::Verifier, :verifier_helpers do
     end
 
     it 'raises for invalid XML type' do
-      expect { described_class.new(12_345) }.to raise_error(ArgumentError, /Expected String or Nokogiri/)
+      expect { described_class.new(12_345) }.to raise_error(ArgumentError, /Expected String/)
     end
 
     it 'raises for invalid certificate type' do
@@ -96,6 +95,17 @@ describe WSDL::Security::Verifier, :verifier_helpers do
 
     context 'with explicit namespace prefixes' do
       let(:verifier) { described_class.new(signed_response_with_explicit_prefixes) }
+
+      it 'returns true for valid signature' do
+        expect(verifier.valid?).to be true
+      end
+    end
+
+    context 'with pretty-printed signed response' do
+      let(:verifier) do
+        pretty_xml = Nokogiri::XML(signed_soap_response).to_xml(indent: 2)
+        described_class.new(pretty_xml)
+      end
 
       it 'returns true for valid signature' do
         expect(verifier.valid?).to be true
@@ -235,6 +245,48 @@ describe WSDL::Security::Verifier, :verifier_helpers do
         verifier = described_class.new(signed_soap_response)
         expect(verifier.digest_algorithm).to eq('http://www.w3.org/2001/04/xmlenc#sha256')
       end
+    end
+  end
+
+  describe '#timestamp_errors' do
+    let(:expired_timestamp_response) do
+      past_time = Time.now.utc - 7200
+
+      <<~XML
+        <?xml version="1.0" encoding="UTF-8"?>
+        <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"
+                       xmlns:wsse="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd"
+                       xmlns:wsu="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd">
+          <soap:Header>
+            <wsse:Security soap:mustUnderstand="1">
+              <wsu:Timestamp wsu:Id="Timestamp-123">
+                <wsu:Created>#{(past_time - 300).xmlschema}</wsu:Created>
+                <wsu:Expires>#{past_time.xmlschema}</wsu:Expires>
+              </wsu:Timestamp>
+            </wsse:Security>
+          </soap:Header>
+          <soap:Body>
+            <Response>OK</Response>
+          </soap:Body>
+        </soap:Envelope>
+      XML
+    end
+
+    it 'returns timestamp validation errors after timestamp checks run' do
+      verifier = described_class.new(expired_timestamp_response)
+
+      expect(verifier.timestamp_valid?).to be false
+      expect(verifier.timestamp_errors).to include(match(/Timestamp has expired/))
+    end
+
+    it 'does not append duplicate errors across repeated calls' do
+      verifier = described_class.new(expired_timestamp_response)
+      verifier.timestamp_valid?
+
+      first_errors = verifier.timestamp_errors
+      second_errors = verifier.timestamp_errors
+
+      expect(second_errors).to eq(first_errors)
     end
   end
 

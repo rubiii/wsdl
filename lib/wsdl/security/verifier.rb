@@ -76,7 +76,7 @@ module WSDL
 
       # Creates a new Verifier instance.
       #
-      # @param xml [String, Nokogiri::XML::Document] the SOAP response XML
+      # @param xml [String] the SOAP response XML
       # @param certificate [OpenSSL::X509::Certificate, String, nil] optional certificate
       #   to use for verification instead of extracting from the message
       # @param trust_store [OpenSSL::X509::Store, Symbol, String, Array, nil] trust store
@@ -188,6 +188,18 @@ module WSDL
         timestamp_validator.timestamp
       end
 
+      # Returns timestamp validation errors.
+      #
+      # This exposes timestamp-specific diagnostics from the memoized
+      # timestamp validator without rerunning a full verification pipeline.
+      #
+      # @return [Array<String>] timestamp validation errors
+      def timestamp_errors
+        validator = timestamp_validator
+        validator.valid? if validator.errors.empty?
+        validator.errors.dup
+      end
+
       private
 
       # ============================================================
@@ -196,9 +208,8 @@ module WSDL
 
       def parse_document(xml)
         case xml
-        when Nokogiri::XML::Document then xml
         when String then XML::Parser.parse(xml, noblanks: true)
-        else raise ArgumentError, "Expected String or Nokogiri::XML::Document, got #{xml.class}"
+        else raise ArgumentError, "Expected String, got #{xml.class}"
         end
       end
 

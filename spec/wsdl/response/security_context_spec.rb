@@ -6,10 +6,9 @@ require_relative '../../wsdl/security/verifier/shared_context'
 RSpec.describe WSDL::Response::SecurityContext, :verifier_helpers do
   include_context 'verifier test helpers'
 
-  let(:document) { Nokogiri::XML(xml) }
   let(:verification) { WSDL::Security::ResponseVerification::Options.default }
   let(:certificate_option) { nil }
-  let(:context) { described_class.new(document, verification, certificate: certificate_option) }
+  let(:context) { described_class.new(xml, verification, certificate: certificate_option) }
 
   # Helper to build a minimal SOAP response without security
   def unsigned_response_xml
@@ -73,6 +72,13 @@ RSpec.describe WSDL::Response::SecurityContext, :verifier_helpers do
         tolerance_seconds:
       )
     )
+  end
+
+  describe '#initialize' do
+    it 'requires raw XML string input' do
+      doc = Nokogiri::XML(unsigned_response_xml)
+      expect { described_class.new(doc) }.to raise_error(ArgumentError, /Expected String/)
+    end
   end
 
   describe '#valid?' do
@@ -147,6 +153,14 @@ RSpec.describe WSDL::Response::SecurityContext, :verifier_helpers do
       let(:xml) { signed_soap_response }
 
       it 'returns true' do
+        expect(context.signature_valid?).to be true
+      end
+    end
+
+    context 'when signed response is pretty-printed' do
+      let(:xml) { Nokogiri::XML(signed_soap_response).to_xml(indent: 2) }
+
+      it 'still returns true' do
         expect(context.signature_valid?).to be true
       end
     end
@@ -271,6 +285,14 @@ RSpec.describe WSDL::Response::SecurityContext, :verifier_helpers do
       it 'raises TimestampValidationError' do
         expect { context.verify_timestamp! }
           .to raise_error(WSDL::TimestampValidationError, /Timestamp validation failed/)
+      end
+
+      it 'uses a single timestamp validator instance for failure details' do
+        allow(WSDL::Security::Verifier::TimestampValidator).to receive(:new).and_call_original
+
+        expect { context.verify_timestamp! }
+          .to raise_error(WSDL::TimestampValidationError, /Timestamp has expired/)
+        expect(WSDL::Security::Verifier::TimestampValidator).to have_received(:new).once
       end
     end
 

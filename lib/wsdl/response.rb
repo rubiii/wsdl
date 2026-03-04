@@ -192,7 +192,7 @@ module WSDL
     #   response.security.errors           # => ["Digest mismatch..."]
     #
     def security
-      @security ||= SecurityContext.new(doc, @verification)
+      @security ||= SecurityContext.new(raw, @verification)
     end
 
     private

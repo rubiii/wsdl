@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'spec_helper'
+require_relative 'security/verifier/shared_context'
 
 describe WSDL::Response, type: :unit do
   include SchemaElementHelper
@@ -102,6 +103,16 @@ describe WSDL::Response, type: :unit do
         result = response.xpath('//NonExistent')
         expect(result).to be_empty
       end
+    end
+  end
+
+  describe '#security', :verifier_helpers do
+    subject(:response) { described_class.new(pretty_signed_response) }
+
+    let(:pretty_signed_response) { Nokogiri::XML(signed_soap_response).to_xml(indent: 2) }
+
+    it 'verifies pretty-printed signed responses' do
+      expect(response.security.signature_valid?).to be true
     end
   end
 

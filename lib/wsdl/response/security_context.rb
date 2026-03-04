@@ -36,14 +36,16 @@ module WSDL
     class SecurityContext
       # Creates a new SecurityContext instance.
       #
-      # @param document [Nokogiri::XML::Document] the parsed SOAP response
+      # @param raw_xml [String] the raw SOAP response XML
       # @param verification [Security::ResponseVerification] verification options
       #   for certificate and timestamp validation
       # @param certificate [OpenSSL::X509::Certificate, nil] optional certificate
       #   to use for verification instead of extracting from message
       #
-      def initialize(document, verification = Security::ResponseVerification::Options.default, certificate: nil)
-        @document = document
+      def initialize(raw_xml, verification = Security::ResponseVerification::Options.default, certificate: nil)
+        raise ArgumentError, "Expected String, got #{raw_xml.class}" unless raw_xml.is_a?(String)
+
+        @raw_xml = raw_xml
         @verification = verification
         @certificate = certificate
         @verifier = nil
@@ -209,13 +211,7 @@ module WSDL
         return true unless timestamp_present?
 
         unless verifier.timestamp_valid?
-          # Get timestamp-specific errors
-          ts_validator = Security::Verifier::TimestampValidator.new(
-            @document,
-            clock_skew: @verification.timestamp.tolerance_seconds
-          )
-          ts_validator.valid?
-          ts_errors = ts_validator.errors.join('; ')
+          ts_errors = verifier.timestamp_errors.join('; ')
           raise TimestampValidationError, "Timestamp validation failed: #{ts_errors}"
         end
 
@@ -253,7 +249,7 @@ module WSDL
       #
       def verifier
         @verifier ||= Security::Verifier.new(
-          @document,
+          @raw_xml,
           certificate: @certificate,
           trust_store: @verification.certificate.trust_store,
           check_validity: @verification.certificate.verify_not_expired,
@@ -270,7 +266,7 @@ module WSDL
       #
       def verifier_without_timestamp
         @verifier_without_timestamp ||= Security::Verifier.new(
-          @document,
+          @raw_xml,
           certificate: @certificate,
           trust_store: @verification.certificate.trust_store,
           check_validity: @verification.certificate.verify_not_expired,
