@@ -4,6 +4,8 @@
 
 `WSDL::Client.new(wsdl, **options)` supports:
 
+- `wsdl` must be an HTTP(S) URL or local file path (inline XML strings are not supported).
+
 - `http:` custom HTTP adapter instance.
 - `pretty_print:` format generated request XML (`true` default).
 - `cache:` parser cache (`:default`, custom cache instance, or `nil`).
@@ -80,7 +82,7 @@ Useful request-side limits:
 
 When `sandbox_paths` is omitted:
 
-- URL WSDL or inline XML: local file access disabled.
+- URL WSDL: local file access disabled.
 - File path WSDL: sandbox defaults to WSDL parent directory.
 
 Provide explicit paths for sibling import trees:

@@ -16,7 +16,7 @@ By default:
 Relative file imports are constrained by sandbox paths.
 
 - File-based WSDL defaults to sandbox = WSDL parent directory.
-- URL or inline XML WSDL disables local file access by default.
+- URL-based WSDL disables local file access by default.
 
 Violations raise `WSDL::PathRestrictionError`.
 

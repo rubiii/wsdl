@@ -36,12 +36,12 @@ module WSDL
     # Pattern for matching HTTP/HTTPS URLs.
     URL_PATTERN = /^https?:/i
 
-    # Pattern for matching raw XML content (starts with '<').
-    XML_PATTERN = /^</
+    # Pattern for matching inline XML content.
+    INLINE_XML_PATTERN = /\A\s*</
 
     # Creates a new Client instance.
     #
-    # @param wsdl [String] a URL, file path, or raw XML string of the WSDL document
+    # @param wsdl [String] a URL or file path to the WSDL document
     # @param http [Object, nil] an optional HTTP adapter instance
     #   (defaults to a new instance of {WSDL.http_adapter})
     # @param pretty_print [Boolean] whether to format XML output with indentation
@@ -53,7 +53,6 @@ module WSDL
     # @param sandbox_paths [Array<String>, nil] directories where file access is allowed.
     #   When nil (default), sandbox is determined automatically based on WSDL source:
     #   - URL source → file access disabled (all imports must use URLs)
-    #   - Inline XML → file access disabled (all imports must use URLs)
     #   - File source → sandboxed to the WSDL's parent directory
     #   When provided, overrides the automatic sandbox with the specified directories.
     # @param limits [Limits, nil] resource limits for DoS protection.
@@ -75,6 +74,7 @@ module WSDL
                    limits: nil, reject_doctype: true, strict_schema: true,
                    max_request_elements: nil, max_request_depth: nil, max_request_attributes: nil)
       # rubocop:enable Metrics/ParameterLists
+      validate_wsdl_source!(wsdl)
       @http = http || WSDL.http_adapter.new
       @pretty_print = pretty_print
       @limits = limits || WSDL.limits
@@ -180,7 +180,7 @@ module WSDL
 
     # Resolves sandbox paths based on the WSDL source type.
     #
-    # @param wsdl [String] the WSDL location or content
+    # @param wsdl [String] the WSDL location
     # @param sandbox_paths [Array<String>, nil] explicit sandbox paths (overrides automatic detection)
     # @return [Array<String>, nil] resolved sandbox paths, or nil if file access is disabled
     #
@@ -188,9 +188,9 @@ module WSDL
       # If explicit sandbox_paths provided, use them
       return sandbox_paths if sandbox_paths
 
-      # URL-loaded WSDLs and inline XML: disable file access entirely
+      # URL-loaded WSDLs: disable file access entirely
       # All schema imports must use HTTP/HTTPS URLs
-      return nil if wsdl.match?(URL_PATTERN) || wsdl.match?(XML_PATTERN)
+      return nil if wsdl.match?(URL_PATTERN)
 
       # File path: sandbox to the WSDL's parent directory
       # This prevents path traversal attacks while allowing imports within the same directory
@@ -200,7 +200,7 @@ module WSDL
 
     # Loads the parser result, using cache if available.
     #
-    # @param wsdl [String] the WSDL location or content
+    # @param wsdl [String] the WSDL location
     # @param cache [Cache, nil, Symbol] the cache to use (`:default` uses {WSDL.cache})
     # @param sandbox_paths [Array<String>, nil] the sandbox paths
     # @return [Parser::Result] the parsed result
@@ -217,6 +217,24 @@ module WSDL
           strict_schema: @strict_schema
         }
       )
+    end
+
+    # Validates that WSDL source is a URL or file path.
+    #
+    # Inline XML is intentionally not supported at the client API level.
+    #
+    # @param wsdl [Object]
+    # @return [void]
+    # @raise [ArgumentError] when source is invalid
+    def validate_wsdl_source!(wsdl)
+      unless wsdl.is_a?(String) && !wsdl.empty?
+        raise ArgumentError, 'WSDL source must be a non-empty String URL or file path'
+      end
+
+      return unless wsdl.match?(INLINE_XML_PATTERN)
+
+      raise ArgumentError,
+            'Inline XML WSDL is not supported by WSDL::Client. Provide an HTTP(S) URL or a local file path.'
     end
 
     # Raises if the operation style is not supported.

@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'spec_helper'
+require 'tempfile'
 
 describe WSDL::Client do
   subject(:client) { described_class.new(wsdl, http: http_mock) }
@@ -85,18 +86,20 @@ describe WSDL::Client do
         expect(custom_cache.size).to eq(1)
       end
 
-      it 'caches inline XML using content hash' do
+      it 'rejects inline XML content' do
         inline_xml = File.read(wsdl)
-        definition_count = 0
-        allow(WSDL::Parser::Result).to receive(:new) do |_, _|
-          definition_count += 1
-          instance_double(WSDL::Parser::Result, services: {}, operations: [])
-        end
 
-        described_class.new(inline_xml)
-        described_class.new(inline_xml)
+        expect {
+          described_class.new(inline_xml)
+        }.to raise_error(ArgumentError, /Inline XML WSDL is not supported/)
+      end
 
-        expect(definition_count).to eq(1)
+      it 'rejects inline XML content with leading whitespace' do
+        inline_xml = "   \n\t<definitions/>"
+
+        expect {
+          described_class.new(inline_xml)
+        }.to raise_error(ArgumentError, /Inline XML WSDL is not supported/)
       end
 
       it 'partitions cache entries by reject_doctype' do
@@ -268,15 +271,10 @@ describe WSDL::Client do
       context 'when loading from inline XML' do
         let(:inline_xml) { '<definitions/>' }
 
-        it 'disables file access' do
-          parser_result = instance_double(WSDL::Parser::Result, services: {})
-          allow(WSDL::Parser::Result).to receive(:new).and_return(parser_result)
-
-          described_class.new(inline_xml)
-
-          expect(WSDL::Parser::Result).to have_received(:new).with(
-            inline_xml, anything, hash_including(sandbox_paths: nil)
-          )
+        it 'raises an ArgumentError' do
+          expect {
+            described_class.new(inline_xml)
+          }.to raise_error(ArgumentError, /Inline XML WSDL is not supported/)
         end
       end
     end
@@ -379,16 +377,26 @@ describe WSDL::Client do
         </definitions>
       XML
     end
+    let(:wsdl_with_doctype_file) do
+      file = Tempfile.new(%w[wsdl-doctype .wsdl])
+      file.write(wsdl_with_doctype)
+      file.flush
+      file
+    end
+
+    after do
+      wsdl_with_doctype_file.close!
+    end
 
     it 'rejects WSDL with DOCTYPE by default' do
       expect {
-        described_class.new(wsdl_with_doctype, http: http_mock)
+        described_class.new(wsdl_with_doctype_file.path, http: http_mock)
       }.to raise_error(WSDL::XMLSecurityError, /DOCTYPE declarations are not allowed/)
     end
 
     it 'allows WSDL with DOCTYPE when reject_doctype: false' do
       expect {
-        described_class.new(wsdl_with_doctype, http: http_mock, reject_doctype: false)
+        described_class.new(wsdl_with_doctype_file.path, http: http_mock, reject_doctype: false)
       }.not_to raise_error
     end
 

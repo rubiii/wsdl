@@ -86,14 +86,13 @@ module WSDL
 
   # Raised when a relative schema import/include cannot be resolved.
   #
-  # This typically occurs when loading a WSDL from inline XML that contains
-  # relative schemaLocation references. Relative paths require a base location
-  # (file path or URL) to resolve against.
+  # This occurs when a relative schemaLocation cannot be resolved because the
+  # current import context has no resolvable base location (file path or URL).
   #
   # @example
   #   begin
-  #     # This will fail if the inline XML has relative imports
-  #     client = WSDL::Client.new('<definitions>...</definitions>')
+  #     # Relative imports require a resolvable base file/URL location
+  #     parser_result = WSDL::Parser::Result.new('<definitions>...</definitions>', http_adapter)
   #   rescue WSDL::UnresolvableImportError => e
   #     puts "Cannot resolve import: #{e.message}"
   #   end
