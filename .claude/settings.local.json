@@ -1,7 +1,8 @@
 {
   "permissions": {
     "allow": [
-      "Bash(bundle exec:*)"
+      "Bash(bundle exec:*)",
+      "Bash(grep:*)"
     ]
   }
 }

@@ -171,6 +171,17 @@ module WSDL
         @attributes = normalized.empty? ? EMPTY_ATTRIBUTES : normalized.dup.freeze
       end
 
+      # Deep-freezes this element by also freezing the mutable +@children+ array.
+      #
+      # The +@attributes+ array is already frozen by the custom setter,
+      # so only +@children+ needs explicit freezing here.
+      #
+      # @return [self]
+      def freeze
+        @children.freeze
+        super
+      end
+
       # Converts this element and its children to an Array representation for inspection.
       #
       # Each element is represented as a tuple of [path, data], where path is an

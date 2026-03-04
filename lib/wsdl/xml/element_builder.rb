@@ -62,7 +62,7 @@ module WSDL
         element.max_occurs = '1'
 
         handle_type(element, type)
-        element
+        element.freeze
       end
 
       # Builds an Element from a part with an @element attribute.
@@ -76,7 +76,7 @@ module WSDL
         element = instantiate_schema_element(schema_element, namespace)
 
         handle_type(element, type)
-        element
+        element.freeze
       end
 
       def resolve_part_schema_element(part)
@@ -183,7 +183,7 @@ module WSDL
           attr.name = schema_attr.name
           attr.use = schema_attr.use
 
-          attr
+          attr.freeze
         }
       end
       # rubocop:enable Metrics/AbcSize
@@ -237,7 +237,7 @@ module WSDL
             handle_type(el, child_type, depth: depth + 1)
           end
 
-          elements << el
+          elements << el.freeze
         end
 
         { elements: elements, has_any: has_any }
