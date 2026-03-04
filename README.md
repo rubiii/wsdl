@@ -1,5 +1,7 @@
 # WSDL
 
+[![CI](https://github.com/rubiii/wsdl/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/rubiii/wsdl/actions/workflows/ci.yml)
+
 WSDL toolkit for Ruby. Parse WSDL documents, inspect operation contracts, and execute SOAP calls.
 
 ## Features

@@ -23,5 +23,7 @@ task :graph do
   BASH
 end
 
-# CI task
-task ci: %i[rubocop spec]
+desc 'Run linting'
+task lint: :rubocop
+
+task ci: %i[lint spec]
