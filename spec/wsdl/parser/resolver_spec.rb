@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 require 'spec_helper'
+require 'tmpdir'
+require 'fileutils'
 
 describe WSDL::Parser::Resolver do
   subject(:resolver) { described_class.new(http_test_client, **options) }
@@ -276,6 +278,53 @@ describe WSDL::Parser::Resolver do
         allow(File).to receive(:read).with('/app/wsdl').and_return('<xml/>')
 
         expect { resolver.resolve('/app/wsdl') }.not_to raise_error
+      end
+    end
+  end
+
+  describe 'symlink handling in sandbox restrictions' do
+    it 'blocks symlinked files that resolve outside sandbox paths' do
+      Dir.mktmpdir do |root|
+        sandbox_dir = File.join(root, 'sandbox')
+        FileUtils.mkdir_p(sandbox_dir)
+
+        outside_file = File.join(root, 'outside.xsd')
+        File.write(outside_file, '<schema id="outside"/>')
+
+        symlink_path = File.join(sandbox_dir, 'evil.xsd')
+        begin
+          File.symlink(outside_file, symlink_path)
+        rescue NotImplementedError, Errno::EPERM
+          skip 'Symlink creation is not supported in this environment'
+        end
+
+        symlink_resolver = described_class.new(http_test_client, sandbox_paths: [sandbox_dir])
+
+        expect {
+          symlink_resolver.resolve(symlink_path)
+        }.to raise_error(WSDL::PathRestrictionError, /outside the allowed directories/)
+      end
+    end
+
+    it 'allows symlinked files that resolve within sandbox paths' do
+      Dir.mktmpdir do |root|
+        sandbox_dir = File.join(root, 'sandbox')
+        target_dir = File.join(sandbox_dir, 'schemas')
+        FileUtils.mkdir_p(target_dir)
+
+        target_file = File.join(target_dir, 'types.xsd')
+        expected_content = '<schema id="inside"/>'
+        File.write(target_file, expected_content)
+
+        symlink_path = File.join(sandbox_dir, 'types-link.xsd')
+        begin
+          File.symlink(target_file, symlink_path)
+        rescue NotImplementedError, Errno::EPERM
+          skip 'Symlink creation is not supported in this environment'
+        end
+
+        symlink_resolver = described_class.new(http_test_client, sandbox_paths: [sandbox_dir])
+        expect(symlink_resolver.resolve(symlink_path)).to eq(expected_content)
       end
     end
   end

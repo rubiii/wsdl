@@ -161,7 +161,7 @@ module WSDL
       def normalize_sandbox_paths(paths)
         return nil if paths.nil?
 
-        paths.map { |p| File.expand_path(p) }
+        paths.map { |path| canonicalize_path(path) }
       end
 
       # Validates that a location is not a file:// URL.
@@ -219,10 +219,10 @@ module WSDL
       # @raise [ResourceLimitError] if file size exceeds limits
       #
       def fetch_file(path)
-        validate_file_access!(path)
-        validate_file_size!(path)
+        validated_path = validate_file_access!(path)
+        validate_file_size!(validated_path)
 
-        content = File.read(path)
+        content = File.read(validated_path)
         track_download(content.bytesize)
         content
       end
@@ -329,12 +329,13 @@ module WSDL
       # Validates that a path is within the allowed sandbox directories.
       #
       # @param path [String] the path to validate
+      # @return [String] canonicalized path for safe file operations
       # @raise [PathRestrictionError] if the path is outside all sandbox directories
       #
       def validate_path_in_sandbox!(path)
-        normalized_path = File.expand_path(path)
+        normalized_path = canonicalize_path(path)
 
-        return if @sandbox_paths.any? { |sandbox| path_within_directory?(normalized_path, sandbox) }
+        return normalized_path if @sandbox_paths.any? { |sandbox| path_within_directory?(normalized_path, sandbox) }
 
         raise PathRestrictionError,
               "Path #{path.inspect} is outside the allowed directories. " \
@@ -342,7 +343,7 @@ module WSDL
               'This may indicate a path traversal attack in a schemaLocation attribute.'
       end
 
-      # Checks if a path is within a directory (handles symlinks safely).
+      # Checks if a canonical path is within a canonical directory.
       #
       # @param path [String] the path to check
       # @param directory [String] the directory that should contain the path
@@ -356,6 +357,62 @@ module WSDL
         # Check if path starts with directory (is a child)
         # Also allow exact match (the directory itself)
         path == directory || normalized_path.start_with?(normalized_dir)
+      end
+
+      # Canonicalizes a path for sandbox validation.
+      #
+      # Existing paths are canonicalized with realpath to resolve symlinks.
+      # Non-existing paths are expanded and canonicalized relative to the
+      # nearest existing parent to resolve symlinked parent directories.
+      #
+      # @param path [String] the path to canonicalize
+      # @return [String] the canonicalized absolute path
+      #
+      def canonicalize_path(path)
+        expanded_path = File.expand_path(path)
+
+        existing_realpath = realpath_if_exists(expanded_path)
+        return existing_realpath if existing_realpath
+
+        nearest_parent = nearest_existing_parent(expanded_path)
+        return expanded_path unless nearest_parent
+
+        canonical_parent = realpath_if_exists(nearest_parent) || nearest_parent
+        suffix = expanded_path.delete_prefix(nearest_parent).sub(%r{\A/}, '')
+        return canonical_parent if suffix.empty?
+
+        File.join(canonical_parent, suffix)
+      end
+
+      # Returns realpath for existing paths, or nil when unavailable.
+      #
+      # @param path [String] path to resolve
+      # @return [String, nil] resolved realpath or nil
+      #
+      def realpath_if_exists(path)
+        return nil unless File.exist?(path)
+
+        File.realpath(path)
+      rescue Errno::ENOENT
+        nil
+      end
+
+      # Finds the nearest existing parent for a path.
+      #
+      # @param path [String] path to inspect
+      # @return [String, nil] nearest existing parent or nil
+      #
+      def nearest_existing_parent(path)
+        current = path
+
+        loop do
+          return current if File.exist?(current)
+
+          parent = File.dirname(current)
+          return nil if parent == current
+
+          current = parent
+        end
       end
 
       # Resolves a relative location against a base location.
