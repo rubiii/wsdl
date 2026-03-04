@@ -54,7 +54,7 @@ describe 'Nillable elements' do
     def build_xml(operation, body)
       # These tests use incomplete data to focus on nillable serialization behavior
       apply_request(operation, body:, strict_schema: false)
-      operation.build
+      operation.to_xml
     end
 
     it 'serializes nil nillable simple elements with xsi:nil="true"' do

@@ -44,12 +44,12 @@ module WSDL
       @contract ||= Contract::OperationContract.new(@operation_info)
     end
 
-    # Builds request AST from DSL and validates it immediately.
+    # Prepares request AST from DSL and validates it immediately.
     #
-    # @yield DSL request block
+    # @yield DSL prepare block
     # @return [self]
-    def request(&block)
-      raise RequestDslError, 'operation.request requires a block' unless block
+    def prepare(&block)
+      raise RequestDslError, 'operation.prepare requires a block' unless block
 
       document = Request::Document.new
       security = Security::Config.new
@@ -99,10 +99,10 @@ module WSDL
       @custom_http_headers = headers
     end
 
-    # Serializes the current request AST to SOAP envelope XML.
+    # Serializes the prepared request AST to SOAP envelope XML.
     #
     # @return [String]
-    def build
+    def to_xml
       ensure_request_definition!
 
       document = build_serializable_document(@request_document || Request::Document.new)
@@ -112,13 +112,13 @@ module WSDL
       Security::SecurityHeader.new(@security).apply(xml)
     end
 
-    # Executes this SOAP operation.
+    # Invokes this SOAP operation.
     #
     # @return [Response]
-    def call
+    def invoke
       ensure_request_definition!
 
-      raw_response = @http.post(endpoint, http_headers, build)
+      raw_response = @http.post(endpoint, http_headers, to_xml)
       response = Response.new(
         raw_response,
         output_body_parts: @operation_info.output.body_parts,
@@ -184,7 +184,7 @@ module WSDL
       return if contract.request.empty?
 
       raise RequestDefinitionError,
-            "Operation #{@operation_info.name.inspect} requires a request definition via operation.request { ... }"
+            "Operation #{@operation_info.name.inspect} requires a request definition via operation.prepare { ... }"
     end
 
     def request_validation_contract

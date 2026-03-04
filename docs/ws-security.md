@@ -1,9 +1,9 @@
 # WS-Security
 
-WS-Security is configured inside `operation.request` using `ws_security`.
+WS-Security is configured inside `operation.prepare` using `ws_security`.
 
 ```ruby
-operation.request do
+operation.prepare do
   tag('GetOrder') { tag('orderId', 123) }
 
   ws_security do

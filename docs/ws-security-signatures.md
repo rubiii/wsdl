@@ -8,7 +8,7 @@ Configure X.509 signing inside `ws_security`.
 certificate_pem = File.read('cert.pem')
 private_key_pem = File.read('key.pem')
 
-operation.request do
+operation.prepare do
   tag('GetOrder') { tag('orderId', 123) }
 
   ws_security do
@@ -32,7 +32,7 @@ Defaults:
 ## Signature Options
 
 ```ruby
-operation.request do
+operation.prepare do
   tag('SubmitOrder') { tag('orderId', 123) }
 
   ws_security do
@@ -61,7 +61,7 @@ Accepted `key_reference` values:
 ## Encrypted Private Keys
 
 ```ruby
-operation.request do
+operation.prepare do
   tag('GetOrder') { tag('orderId', 123) }
 
   ws_security do
@@ -77,7 +77,7 @@ end
 ## Response Verification Policy
 
 ```ruby
-operation.request do
+operation.prepare do
   tag('GetOrder') { tag('orderId', 123) }
 
   ws_security do

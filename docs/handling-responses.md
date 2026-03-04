@@ -1,11 +1,11 @@
 # Handling Responses
 
-`operation.call` returns `WSDL::Response`.
+`operation.invoke` returns `WSDL::Response`.
 
 ## Basic Access
 
 ```ruby
-response = operation.call
+response = operation.invoke
 
 response.raw          # raw SOAP XML string
 response.body         # parsed SOAP body hash
@@ -55,7 +55,7 @@ end
 Verification behavior is configured in the request DSL:
 
 ```ruby
-operation.request do
+operation.prepare do
   tag('GetOrder') { tag('orderId', 123) }
 
   ws_security do

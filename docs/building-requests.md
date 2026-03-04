@@ -1,11 +1,11 @@
 # Building Requests
 
-`operation.request { ... }` is the single structured request interface.
+`operation.prepare { ... }` is the single structured request interface.
 
 ## Core DSL
 
 ```ruby
-operation.request do
+operation.prepare do
   tag('CreateOrder') do
     tag('customerId', 'C-123')
     tag('amount', '42.50')
@@ -33,7 +33,7 @@ If an element name matches a reserved method name, use `tag('name')`.
 Top-level content defaults to SOAP body.
 
 ```ruby
-operation.request do
+operation.prepare do
   header do
     tag('AuthToken', 'secret')
   end
@@ -49,7 +49,7 @@ end
 ## Attributes and Namespaces
 
 ```ruby
-operation.request do
+operation.prepare do
   xmlns('ord', 'http://example.com/orders')
 
   tag('ord:CreateOrder') do
@@ -68,7 +68,7 @@ Rules:
 ## Text, CDATA, Comments, PI
 
 ```ruby
-operation.request do
+operation.prepare do
   tag('Submit') do
     text('normal text <escaped>')
     cdata('<raw xml="kept as-is"/>')
@@ -97,7 +97,7 @@ Modes:
 
 ## Validation Timing and Strictness
 
-Validation runs immediately when the `request` block finishes.
+Validation runs immediately when the `prepare` block finishes.
 
 `strict_schema: true` (default):
 

@@ -101,7 +101,7 @@ module SpecSupport
       body_elements = operation.contract.request.body.elements
 
       with_strict_schema(operation, strict_schema) do
-        operation.request do
+        operation.prepare do
           SpecSupport::RequestDSLEmitter.emit_hash_section(self, :header, header, header_elements) if header
           SpecSupport::RequestDSLEmitter.emit_hash_section(self, :body, body, body_elements) if body
           ws_security { instance_exec(&security_block) } if security_block

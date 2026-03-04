@@ -130,7 +130,7 @@ describe WSDL::Operation do
     end
   end
 
-  describe '#build' do
+  describe '#to_xml' do
     it 'returns an example request Hash following WSDL\'s conventions' do
       apply_request(operation, body: {
         ConvertTemp: {
@@ -155,7 +155,7 @@ describe WSDL::Operation do
         </env:Envelope>
       ))
 
-      expect(operation.build)
+      expect(operation.to_xml)
         .to be_equivalent_to(expected).respecting_element_order
     end
 
@@ -186,7 +186,7 @@ describe WSDL::Operation do
           ToUnit: 'degreeFahrenheit'
         }
       })
-      operation.build
+      operation.to_xml
 
       apply_request(operation, body: {
         ConvertTemp: {
@@ -196,7 +196,7 @@ describe WSDL::Operation do
         }
       })
 
-      expect(operation.build).to include('<ns0:Temperature>100</ns0:Temperature>')
+      expect(operation.to_xml).to include('<ns0:Temperature>100</ns0:Temperature>')
     end
 
     it 'reflects SOAP version changes in the next built envelope' do
@@ -208,10 +208,10 @@ describe WSDL::Operation do
         }
       })
 
-      first_namespace = Nokogiri.XML(operation.build).root.namespace.href
+      first_namespace = Nokogiri.XML(operation.to_xml).root.namespace.href
 
       operation.soap_version = '1.1'
-      second_namespace = Nokogiri.XML(operation.build).root.namespace.href
+      second_namespace = Nokogiri.XML(operation.to_xml).root.namespace.href
 
       expect(first_namespace).to eq(WSDL::NS::SOAP_1_2)
       expect(second_namespace).to eq(WSDL::NS::SOAP_1_1)
@@ -225,7 +225,7 @@ describe WSDL::Operation do
           ToUnit: 'degreeFahrenheit'
         }
       })
-      operation.build
+      operation.to_xml
 
       apply_request(operation, body: {
         ConvertTemp: {
@@ -237,7 +237,7 @@ describe WSDL::Operation do
         username_token('username', 'secret', digest: true)
       end
 
-      expect(operation.build).to include('UsernameToken')
+      expect(operation.to_xml).to include('UsernameToken')
     end
 
     context 'with pretty_print: false' do
@@ -252,7 +252,7 @@ describe WSDL::Operation do
           }
         })
 
-        xml = compact_operation.build
+        xml = compact_operation.to_xml
 
         # Compact XML should not have leading whitespace on lines
         expect(xml).not_to match(/^\s+</)
@@ -284,13 +284,13 @@ describe WSDL::Operation do
           </env:Envelope>
         ))
 
-        expect(compact_operation.build)
+        expect(compact_operation.to_xml)
           .to be_equivalent_to(expected).respecting_element_order
       end
     end
   end
 
-  describe '#call' do
+  describe '#invoke' do
     it 'calls the operation with a Hash of options and returns a Response' do
       http_mock.fake_request('http://www.webservicex.net/ConvertTemperature.asmx')
 
@@ -302,7 +302,7 @@ describe WSDL::Operation do
         }
       })
 
-      response = operation.call
+      response = operation.invoke
 
       expect(response).to be_a(WSDL::Response)
     end
@@ -327,7 +327,7 @@ describe WSDL::Operation do
           verify_response
         end
 
-        expect { operation.call }.to raise_error(WSDL::SignatureVerificationError, /does not contain a signature/)
+        expect { operation.invoke }.to raise_error(WSDL::SignatureVerificationError, /does not contain a signature/)
       end
 
       it 'allows unsigned responses in verify_if_present mode' do
@@ -335,7 +335,7 @@ describe WSDL::Operation do
           verify_response(mode: WSDL::Security::ResponsePolicy::MODE_IF_PRESENT)
         end
 
-        expect(operation.call).to be_a(WSDL::Response)
+        expect(operation.invoke).to be_a(WSDL::Response)
       end
 
       it 'allows unsigned responses when verification is disabled' do
@@ -343,7 +343,7 @@ describe WSDL::Operation do
           verify_response(mode: WSDL::Security::ResponsePolicy::MODE_DISABLED)
         end
 
-        expect(operation.call).to be_a(WSDL::Response)
+        expect(operation.invoke).to be_a(WSDL::Response)
       end
     end
   end

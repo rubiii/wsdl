@@ -14,10 +14,10 @@ module WSDL
   # @example Calling an operation
   #   client = WSDL::Client.new('http://example.com/service?wsdl')
   #   operation = client.operation('ExampleService', 'ExamplePort', 'GetData')
-  #   operation.request do
+  #   operation.prepare do
   #     tag('GetData') { tag('id', 123) }
   #   end
-  #   response = operation.call
+  #   response = operation.invoke
   #
   # @example With custom HTTP adapter
   #   client = WSDL::Client.new('http://example.com/service?wsdl', http: my_adapter)

@@ -21,7 +21,7 @@ bundle exec yard        # Generate YARD documentation
 - **Client** — Main entry point (`lib/wsdl/client.rb`)
 - **Operation** — Callable SOAP operation with body, headers, and security
 - **Parser** — Parses WSDL and XSD documents
-- **Request DSL + Serializer** — `operation.request { ... }` builds AST and `WSDL::Request::Serializer` / `Operation#build` produce SOAP envelopes
+- **Request DSL + Serializer** — `operation.prepare { ... }` builds AST and `WSDL::Request::Serializer` / `Operation#to_xml` produce SOAP envelopes
 - **Response** — Wraps SOAP responses with parsing and verification
 - **Security** — WS-Security implementation (see `docs/ws-security.md`)
 

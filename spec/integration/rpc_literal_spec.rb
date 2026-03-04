@@ -45,7 +45,7 @@ describe 'Integration with an RPC/Literal example' do
       </env:Envelope>
     ')
 
-    expect(Nokogiri.XML(op1.build))
+    expect(Nokogiri.XML(op1.to_xml))
       .to be_equivalent_to(expected).respecting_element_order
   end
 
@@ -95,7 +95,7 @@ describe 'Integration with an RPC/Literal example' do
       </env:Envelope>
     ')
 
-    expect(Nokogiri.XML(op3.build))
+    expect(Nokogiri.XML(op3.to_xml))
       .to be_equivalent_to(expected).respecting_element_order
   end
 end

@@ -42,7 +42,7 @@ describe WSDL::Operation do
       )
 
       dsl = template.to_dsl
-      expect(dsl).to include('operation.request do')
+      expect(dsl).to include('operation.prepare do')
       expect(dsl).to include("tag('ConvertTemp')")
       # Body content should not be wrapped in explicit `body do` block
       expect(dsl).not_to include('body do')
@@ -54,7 +54,7 @@ describe WSDL::Operation do
       template = operation.contract.request.header.template(mode: :minimal)
 
       dsl = template.to_dsl
-      expect(dsl).to include('operation.request do')
+      expect(dsl).to include('operation.prepare do')
       # Header content SHOULD be wrapped in explicit `header do` block
       expect(dsl).to include('header do')
     end

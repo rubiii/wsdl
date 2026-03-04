@@ -128,12 +128,12 @@ module WSDL
         add_attribute(current_node!, name, value)
       end
 
-      # Internal document accessor used by Operation#request.
+      # Internal document accessor used by Operation#prepare.
       def __document__
         @document
       end
 
-      # Internal security accessor used by Operation#request.
+      # Internal security accessor used by Operation#prepare.
       def __security__
         @security
       end

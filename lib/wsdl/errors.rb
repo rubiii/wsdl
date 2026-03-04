@@ -10,7 +10,7 @@ module WSDL
   #   begin
   #     client = WSDL::Client.new('http://example.com/service?wsdl')
   #     operation = client.operation('Service', 'Port', 'Operation')
-  #     operation.call
+  #     operation.invoke
   #   rescue WSDL::Error => e
   #     puts "WSDL error: #{e.message}"
   #   end
@@ -399,7 +399,7 @@ module WSDL
   # Raised when request definition is missing or structurally incomplete.
   #
   # This error is raised when calling an operation that expects input but no
-  # request AST has been defined via {WSDL::Operation#request}.
+  # request AST has been defined via {WSDL::Operation#prepare}.
   class RequestDefinitionError < Error
   end
 

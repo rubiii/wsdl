@@ -22,7 +22,7 @@ Fix:
 Example:
 
 ```ruby
-operation.request do
+operation.prepare do
   tag('GetOrder') { tag('orderId', 123) }
 
   ws_security do
@@ -64,11 +64,11 @@ Fix:
 
 1. Switch to `digest: true`.
 2. Add `timestamp` if required by server policy.
-3. Inspect outbound SOAP XML (`operation.build`) for final header content.
+3. Inspect outbound SOAP XML (`operation.to_xml`) for final header content.
 
 ## Debugging Tips
 
-- Log outbound XML from `operation.build` in non-production.
+- Log outbound XML from `operation.to_xml` in non-production.
 - Inspect `response.raw` for returned security headers.
 - Check `response.security.errors` and `response.security.signed_elements`.
 - Start with `verify_response mode: :if_present` while integrating, then harden to `:required`.

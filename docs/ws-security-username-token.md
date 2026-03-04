@@ -5,7 +5,7 @@ Configure UsernameToken inside `ws_security`.
 ## Plaintext Password
 
 ```ruby
-operation.request do
+operation.prepare do
   tag('GetOrder') { tag('orderId', 123) }
 
   ws_security do
@@ -17,7 +17,7 @@ end
 ## Password Digest
 
 ```ruby
-operation.request do
+operation.prepare do
   tag('GetOrder') { tag('orderId', 123) }
 
   ws_security do
@@ -31,7 +31,7 @@ Digest mode uses the UsernameToken profile algorithm (SHA-1 as spec-mandated beh
 ## Fixed Creation Time
 
 ```ruby
-operation.request do
+operation.prepare do
   tag('GetOrder') { tag('orderId', 123) }
 
   ws_security do
@@ -43,7 +43,7 @@ end
 ## Combine with Timestamp
 
 ```ruby
-operation.request do
+operation.prepare do
   tag('GetOrder') { tag('orderId', 123) }
 
   ws_security do
@@ -58,7 +58,7 @@ end
 UsernameToken itself does not verify response signatures. Add explicit policy:
 
 ```ruby
-operation.request do
+operation.prepare do
   tag('GetOrder') { tag('orderId', 123) }
 
   ws_security do

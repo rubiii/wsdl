@@ -42,7 +42,7 @@ puts contract.request.body.template(mode: :full).to_h
 ## 4. Define the Request
 
 ```ruby
-operation.request do
+operation.prepare do
   tag('GetOrder') do
     tag('orderId', 123)
   end
@@ -53,10 +53,10 @@ Validation runs as soon as the block finishes.
 
 ## 5. Add Security (Optional)
 
-Security is configured inside the request block via `ws_security`.
+Security is configured inside the prepare block via `ws_security`.
 
 ```ruby
-operation.request do
+operation.prepare do
   tag('GetOrder') { tag('orderId', 123) }
 
   ws_security do
@@ -67,10 +67,10 @@ operation.request do
 end
 ```
 
-## 6. Call and Read the Response
+## 6. Invoke and Read the Response
 
 ```ruby
-response = operation.call
+response = operation.invoke
 
 response.raw     # raw SOAP XML
 response.body    # parsed SOAP body hash

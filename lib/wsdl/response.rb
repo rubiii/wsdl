@@ -14,27 +14,27 @@ module WSDL
   # consistently based on the schema's maxOccurs definitions.
   #
   # @example Accessing the response body
-  #   response = operation.call
+  #   response = operation.invoke
   #   puts response.body[:get_user_response][:user][:name]
   #
   # @example Working with the raw response
-  #   response = operation.call
+  #   response = operation.invoke
   #   puts response.raw  # Raw XML string
   #
   # @example Using XPath queries
-  #   response = operation.call
+  #   response = operation.invoke
   #   users = response.xpath('//ns:User', 'ns' => 'http://example.com/users')
   #   users.each { |user| puts user.text }
   #
   # @example Type conversions (with schema)
-  #   response = operation.call
+  #   response = operation.invoke
   #   response.body[:order][:id]       # => 123 (Integer, not "123")
   #   response.body[:order][:total]    # => BigDecimal("99.99")
   #   response.body[:order][:shipped]  # => true (Boolean, not "true")
   #   response.body[:order][:items]    # => [{ name: "Widget" }] (always Array)
   #
   # @example Verifying signature
-  #   response = operation.call
+  #   response = operation.invoke
   #   if response.security.signature_present?
   #     if response.security.valid?
   #       puts "Response is signed and valid"

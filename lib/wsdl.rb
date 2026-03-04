@@ -19,10 +19,10 @@ require 'logging'
 # @example Calling an operation
 #   client = WSDL::Client.new('http://example.com/service?wsdl')
 #   operation = client.operation('ExampleService', 'ExamplePort', 'GetData')
-#   operation.request do
+#   operation.prepare do
 #     tag('GetData') { tag('id', 123) }
 #   end
-#   response = operation.call
+#   response = operation.invoke
 #
 module WSDL
   # Returns the HTTP adapter class to use for requests.

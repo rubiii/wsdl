@@ -9,7 +9,7 @@ module WSDL
     # a clean API for verifying that a SOAP response is authentic and fresh.
     #
     # @example Basic signature verification
-    #   response = operation.call
+    #   response = operation.invoke
     #   if response.security.signature_valid?
     #     puts "Response is signed and valid"
     #   else
@@ -17,7 +17,7 @@ module WSDL
     #   end
     #
     # @example Combined verification (signature + timestamp)
-    #   response = operation.call
+    #   response = operation.invoke
     #   if response.security.valid?
     #     puts "Response is secure"
     #   end

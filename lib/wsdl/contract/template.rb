@@ -38,7 +38,7 @@ module WSDL
       #
       # @return [String]
       def to_dsl
-        lines = ['operation.request do']
+        lines = ['operation.prepare do']
 
         if @section == :header
           lines << '  header do'

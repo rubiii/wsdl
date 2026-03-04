@@ -69,7 +69,7 @@ puts operation.contract.request.body.template(mode: :minimal).to_dsl
 # end
 
 # Build and execute the request
-operation.request do
+operation.prepare do
   tag('GetOrder') do
     tag('orderId', 123)
   end
@@ -80,7 +80,7 @@ operation.request do
   end
 end
 
-response = operation.call
+response = operation.invoke
 response.body   # => { "GetOrderResponse" => { "order" => { ... } } }
 ```
 

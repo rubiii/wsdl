@@ -22,13 +22,13 @@ describe 'Integration with Juniper' do
     operation = client.operation('SystemService', 'System', 'LoginRequest')
 
     expect {
-      operation.request do
+      operation.prepare do
         tag('LoginRequest') do
           tag('username', 'john')
         end
       end
     }.not_to raise_error
 
-    expect { operation.build }.not_to raise_error
+    expect { operation.to_xml }.not_to raise_error
   end
 end

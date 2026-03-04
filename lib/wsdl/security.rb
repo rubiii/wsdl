@@ -14,7 +14,7 @@ module WSDL
   # @example UsernameToken authentication
   #   operation = wsdl.operation('Service', 'Port', 'Operation')
   #   operation.security.username_token('user', 'secret')
-  #   response = operation.call
+  #   response = operation.invoke
   #
   # @example Digest authentication
   #   operation.security.username_token('user', 'secret', digest: true)
@@ -25,7 +25,7 @@ module WSDL
   #
   #   operation.security.timestamp
   #   operation.security.signature(certificate: cert, private_key: key)
-  #   response = operation.call
+  #   response = operation.invoke
   #
   # @example Combined authentication and signing
   #   operation.security.username_token('user', 'secret')

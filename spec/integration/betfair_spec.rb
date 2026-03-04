@@ -190,7 +190,7 @@ describe 'Integration with Betfair' do
       </env:Envelope>
     ))
 
-    expect(Nokogiri.XML(operation.build))
+    expect(Nokogiri.XML(operation.to_xml))
       .to be_equivalent_to(expected).respecting_element_order
   end
 end

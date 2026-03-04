@@ -7,7 +7,7 @@ describe 'Request DSL' do
   let(:operation) { client.operation('ConvertTemperature', 'ConvertTemperatureSoap12', 'ConvertTemp') }
 
   it 'defaults top-level content to SOAP Body' do
-    operation.request do
+    operation.prepare do
       tag('ConvertTemp') do
         tag('Temperature', 30)
         tag('FromUnit', 'degreeCelsius')
@@ -15,13 +15,13 @@ describe 'Request DSL' do
       end
     end
 
-    xml = operation.build
+    xml = operation.to_xml
     expect(xml).to include('<env:Body>')
     expect(xml).to include('ConvertTemp')
   end
 
   it 'supports explicit header section' do
-    operation.request do
+    operation.prepare do
       header do
         tag('AuthToken', 'secret')
       end
@@ -33,12 +33,12 @@ describe 'Request DSL' do
       end
     end
 
-    xml = operation.build
+    xml = operation.to_xml
     expect(xml).to include('<AuthToken>secret</AuthToken>')
   end
 
   it 'supports cdata, comments and processing instructions' do
-    operation.request do
+    operation.prepare do
       tag('ConvertTemp') do
         comment('note')
         tag('Temperature') do
@@ -50,14 +50,14 @@ describe 'Request DSL' do
       end
     end
 
-    xml = operation.build
+    xml = operation.to_xml
     expect(xml).to include('<!--note-->')
     expect(xml).to include('<![CDATA[<raw>30</raw>]]>')
     expect(xml).to include('<?test value="x"?>')
   end
 
   it 'escapes text and attribute values' do
-    operation.request do
+    operation.prepare do
       tag('ConvertTemp') do
         tag('Temperature', '30')
         tag('FromUnit') do
@@ -69,14 +69,14 @@ describe 'Request DSL' do
       end
     end
 
-    xml = operation.build
+    xml = operation.to_xml
     expect(xml).to include('name="A&amp;B&lt;&quot;\'"')
     expect(xml).to include('A&amp;B&lt;"\'')
   end
 
   it 'raises RequestDslError for invalid XML names' do
     expect {
-      operation.request do
+      operation.prepare do
         tag('1bad')
       end
     }.to raise_error(WSDL::RequestDslError, /Invalid XML local name/)
@@ -84,7 +84,7 @@ describe 'Request DSL' do
 
   it 'raises RequestDslError for undeclared QName prefixes' do
     expect {
-      operation.request do
+      operation.prepare do
         tag('ord:ConvertTemp')
       end
     }.to raise_error(WSDL::RequestDslError, /Undeclared namespace prefix/)
@@ -92,7 +92,7 @@ describe 'Request DSL' do
 
   it 'rejects overriding reserved prefixes' do
     expect {
-      operation.request do
+      operation.prepare do
         xmlns('wsse', 'http://example.com/custom')
       end
     }.to raise_error(WSDL::RequestDslError, /reserved and cannot be overridden/)
@@ -107,7 +107,7 @@ describe 'Request DSL' do
     limited_operation = limited_client.operation('ConvertTemperature', 'ConvertTemperatureSoap12', 'ConvertTemp')
 
     expect {
-      limited_operation.request do
+      limited_operation.prepare do
         tag('ConvertTemp') do
           tag('Temperature', 30)
           tag('FromUnit', 'degreeCelsius')
@@ -118,7 +118,7 @@ describe 'Request DSL' do
   end
 
   it 'supports ws_security block with implicit receiver' do
-    operation.request do
+    operation.prepare do
       ws_security do
         timestamp
       end
@@ -130,14 +130,14 @@ describe 'Request DSL' do
       end
     end
 
-    xml = operation.build
+    xml = operation.to_xml
     expect(xml).to include('wsse:Security')
     expect(xml).to include('mustUnderstand="true"')
   end
 
   it 'rejects nested section blocks (body inside header)' do
     expect {
-      operation.request do
+      operation.prepare do
         header do
           body do
             tag('Foo')
@@ -149,7 +149,7 @@ describe 'Request DSL' do
 
   it 'rejects nested section blocks (header inside body)' do
     expect {
-      operation.request do
+      operation.prepare do
         body do
           header do
             tag('Foo')
@@ -163,7 +163,7 @@ describe 'Request DSL' do
     # Configure only response verification (no outbound security)
     # Then add manual header content that would conflict if outbound security was configured
     expect {
-      operation.request do
+      operation.prepare do
         header do
           # This would conflict with generated wsse:Security if outbound security was configured
           xmlns('custom_wsse', WSDL::Security::Constants::NS::Security::WSSE)
@@ -184,7 +184,7 @@ describe 'Request DSL' do
       end
     }.not_to raise_error
 
-    xml = operation.build
+    xml = operation.to_xml
     # Should have manual Security header but no generated wsse:Security
     expect(xml).to include('<custom_wsse:Security>')
     expect(xml).to include('<custom_wsse:CustomToken>value</custom_wsse:CustomToken>')
@@ -193,7 +193,7 @@ describe 'Request DSL' do
   it 'raises RequestDslError with helpful message for unknown methods' do
     raised_error = nil
     expect {
-      operation.request do
+      operation.prepare do
         unknown_method('value')
       end
     }.to raise_error(WSDL::RequestDslError) { |e| raised_error = e }
@@ -213,7 +213,7 @@ describe 'Request DSL' do
   end
 
   it 'supports the attribute method for setting attributes on elements' do
-    operation.request do
+    operation.prepare do
       tag('ConvertTemp') do
         attribute('version', '1.0')
         tag('Temperature', 30)
@@ -222,7 +222,7 @@ describe 'Request DSL' do
       end
     end
 
-    xml = operation.build
+    xml = operation.to_xml
     expect(xml).to include('version="1.0"')
   end
 end
