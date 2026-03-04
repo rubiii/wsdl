@@ -203,12 +203,10 @@ module WSDL
         wsdl:,
         http: @http,
         cache:,
-        parse_options: {
-          sandbox_paths:,
-          limits: @limits,
-          reject_doctype: @reject_doctype,
-          strict_schema: @strict_schema
-        }
+        sandbox_paths:,
+        limits: @limits,
+        reject_doctype: @reject_doctype,
+        strict_schema: @strict_schema
       )
     end
 

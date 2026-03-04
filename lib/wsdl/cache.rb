@@ -6,6 +6,12 @@ module WSDL
   # This cache is designed to avoid redundant HTTP requests and parsing
   # when working with WSDL documents, especially in multithreaded environments.
   #
+  # Uses double-checked locking so the global mutex is never held while the
+  # block executes. Concurrent requests for *different* keys compute in
+  # parallel. Under contention for the *same* uncached key, duplicate
+  # computation may occur but only the first result is stored — the block
+  # must be idempotent.
+  #
   # @example Basic usage with default settings
   #   cache = WSDL::Cache.new
   #   value = cache.fetch('http://example.com/service?wsdl') { expensive_operation }
@@ -50,23 +56,33 @@ module WSDL
     # Fetches a value from the cache, or computes and stores it if not present.
     #
     # If the key exists and hasn't expired, returns the cached value.
-    # Otherwise, yields to the block, stores the result, and returns it.
+    # Otherwise, yields to the block **outside the lock**, stores the result,
+    # and returns it. A second lock acquisition double-checks that another
+    # thread hasn't populated the entry in the meantime.
     #
     # @param key [String] the cache key (typically a URL or file path)
     # @yield computes the value if not cached
     # @yieldreturn [Object] the value to cache
     # @return [Object] the cached or computed value
     def fetch(key)
+      # Fast path — return a cached, non-expired entry.
       @mutex.synchronize do
         entry = @store[key]
+        return entry[:value] if entry && !expired?(entry)
+      end
 
-        if entry && !expired?(entry)
-          entry[:value]
-        else
-          value = yield
-          @store[key] = { value:, timestamp: Time.now }
-          value
-        end
+      # Compute outside the lock so concurrent misses for different keys
+      # are not serialized against each other.
+      value = yield
+
+      # Store the result.  Double-check: if another thread populated
+      # the entry while we were computing, keep the earlier value.
+      @mutex.synchronize do
+        entry = @store[key]
+        return entry[:value] if entry && !expired?(entry)
+
+        @store[key] = { value:, timestamp: Time.now }
+        value
       end
     end
 
