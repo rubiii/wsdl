@@ -121,6 +121,23 @@ describe WSDL::Security::Verifier, :verifier_helpers do
       end
     end
 
+    context 'with SignedInfo containing no references' do
+      let(:verifier) do
+        doc = Nokogiri::XML(signed_soap_response)
+        doc.xpath('//ds:SignedInfo/ds:Reference', ns).remove
+        described_class.new(doc.to_xml)
+      end
+
+      it 'returns false' do
+        expect(verifier.valid?).to be false
+      end
+
+      it 'reports missing reference error' do
+        verifier.valid?
+        expect(verifier.errors).to include('SignedInfo must contain at least one ds:Reference')
+      end
+    end
+
     context 'with provided certificate' do
       it 'uses the provided certificate for verification' do
         verifier = described_class.new(signed_soap_response, certificate: certificate)

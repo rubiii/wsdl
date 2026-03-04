@@ -51,6 +51,8 @@ module WSDL
         #
         # @return [Boolean] true if all references are valid
         def valid?
+          return add_failure('SignedInfo must contain at least one ds:Reference') if references.empty?
+
           references.all? { |ref| validate_single_reference(ref) }
         end
 

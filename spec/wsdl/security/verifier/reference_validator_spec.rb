@@ -215,8 +215,48 @@ describe WSDL::Security::Verifier::ReferenceValidator, :verifier_helpers do
       let(:xml) { unsigned_soap_response }
       let(:signed_info_node) { nil }
 
-      it 'returns true (no references to validate)' do
-        expect(validator.valid?).to be true
+      it 'returns false' do
+        expect(validator.valid?).to be false
+      end
+
+      it 'reports missing reference error' do
+        validator.valid?
+        expect(validator.errors).to include('SignedInfo must contain at least one ds:Reference')
+      end
+    end
+
+    context 'with SignedInfo but no references' do
+      let(:xml) do
+        <<~XML
+          <?xml version="1.0" encoding="UTF-8"?>
+          <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"
+                         xmlns:wsse="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd"
+                         xmlns:ds="http://www.w3.org/2000/09/xmldsig#">
+            <soap:Header>
+              <wsse:Security>
+                <ds:Signature>
+                  <ds:SignedInfo>
+                    <ds:CanonicalizationMethod Algorithm="http://www.w3.org/2001/10/xml-exc-c14n#"/>
+                    <ds:SignatureMethod Algorithm="http://www.w3.org/2001/04/xmldsig-more#rsa-sha256"/>
+                  </ds:SignedInfo>
+                  <ds:SignatureValue>fakesig==</ds:SignatureValue>
+                </ds:Signature>
+              </wsse:Security>
+            </soap:Header>
+            <soap:Body>
+              <Data>Test</Data>
+            </soap:Body>
+          </soap:Envelope>
+        XML
+      end
+
+      it 'returns false' do
+        expect(validator.valid?).to be false
+      end
+
+      it 'reports missing reference error' do
+        validator.valid?
+        expect(validator.errors).to include('SignedInfo must contain at least one ds:Reference')
       end
     end
 
