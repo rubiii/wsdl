@@ -9,5 +9,6 @@ module WSDL
     require 'wsdl/request/validator'
     require 'wsdl/request/security_conflict_detector'
     require 'wsdl/request/serializer'
+    require 'wsdl/request/rpc_wrapper'
   end
 end

@@ -46,4 +46,54 @@ RSpec.describe WSDL::Security::ResponsePolicy do
       expect(updated.options.timestamp.tolerance_seconds).to eq(60)
     end
   end
+
+  describe '#enforce!' do
+    let(:security_context) { instance_double(WSDL::Response::SecurityContext) }
+    let(:response) { instance_double(WSDL::Response, security: security_context) }
+    let(:default_options) { WSDL::Security::ResponseVerification::Options.default }
+
+    context 'when disabled' do
+      let(:policy) { described_class.new(mode: described_class::MODE_DISABLED, options: default_options) }
+
+      it 'does not call verify' do
+        allow(security_context).to receive(:verify!)
+
+        policy.enforce!(response)
+
+        expect(security_context).not_to have_received(:verify!)
+      end
+    end
+
+    context 'when mode is if_present' do
+      let(:policy) { described_class.new(mode: described_class::MODE_IF_PRESENT, options: default_options) }
+
+      it 'verifies when a signature is present' do
+        allow(security_context).to receive_messages(signature_present?: true, verify!: nil)
+
+        policy.enforce!(response)
+
+        expect(security_context).to have_received(:verify!)
+      end
+
+      it 'skips verification when no signature is present' do
+        allow(security_context).to receive_messages(signature_present?: false, verify!: nil)
+
+        policy.enforce!(response)
+
+        expect(security_context).not_to have_received(:verify!)
+      end
+    end
+
+    context 'when required' do
+      let(:policy) { described_class.new(mode: described_class::MODE_REQUIRED, options: default_options) }
+
+      it 'always calls verify' do
+        allow(security_context).to receive(:verify!)
+
+        policy.enforce!(response)
+
+        expect(security_context).to have_received(:verify!)
+      end
+    end
+  end
 end

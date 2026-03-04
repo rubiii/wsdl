@@ -71,6 +71,23 @@ module WSDL
         @mode == MODE_REQUIRED
       end
 
+      # Enforces response verification according to this policy's mode.
+      #
+      # @param response [WSDL::Response]
+      # @return [void]
+      # @raise [WSDL::SignatureVerificationError] when verification fails or
+      #   is required but no signature is present
+      def enforce!(response)
+        case @mode
+        when MODE_DISABLED
+          nil
+        when MODE_IF_PRESENT
+          response.security.verify! if response.security.signature_present?
+        when MODE_REQUIRED
+          response.security.verify!
+        end
+      end
+
       private
 
       def validate_mode!(mode)

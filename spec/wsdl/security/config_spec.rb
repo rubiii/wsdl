@@ -235,6 +235,19 @@ RSpec.describe WSDL::Security::Config do
     end
   end
 
+  describe '#response_policy' do
+    it 'returns the response policy' do
+      expect(config.response_policy).to be_a(WSDL::Security::ResponsePolicy)
+      expect(config.response_policy.mode).to eq(WSDL::Security::ResponsePolicy::MODE_DISABLED)
+    end
+
+    it 'reflects verify_response configuration' do
+      config.verify_response(mode: WSDL::Security::ResponsePolicy::MODE_REQUIRED)
+
+      expect(config.response_policy.mode).to eq(WSDL::Security::ResponsePolicy::MODE_REQUIRED)
+    end
+  end
+
   describe '#clear' do
     it 'resets request and response policies' do
       config

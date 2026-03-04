@@ -205,6 +205,13 @@ module WSDL
         @policy.response.options
       end
 
+      # Returns the response policy for verification enforcement.
+      #
+      # @return [ResponsePolicy]
+      def response_policy
+        @policy.response
+      end
+
       # Builds per-request runtime security context.
       #
       # @param now [Time]

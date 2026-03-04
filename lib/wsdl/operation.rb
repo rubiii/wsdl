@@ -105,7 +105,7 @@ module WSDL
     def to_xml
       ensure_request_definition!
 
-      document = build_serializable_document(@request_document || Request::Document.new)
+      document = prepare_serializable_document(@request_document || Request::Document.new)
       serializer = Request::Serializer.new(document:, soap_version:, pretty_print:)
       return serializer.serialize unless @security.configured?
 
@@ -126,7 +126,7 @@ module WSDL
         verification: @security.response_verification_options
       )
 
-      enforce_response_verification!(response)
+      @security.response_policy.enforce!(response)
       response
     end
 
@@ -142,41 +142,21 @@ module WSDL
 
     private
 
-    def build_serializable_document(document)
-      return document unless needs_rpc_wrapping?(document)
+    def prepare_serializable_document(document)
+      return document unless rpc_literal?
 
-      wrap_rpc_document(document)
+      rpc_wrapper.wrap(document)
     end
 
-    def needs_rpc_wrapping?(document)
-      rpc_literal? && !document.body.empty? && !already_rpc_wrapped?(document.body)
-    end
-
-    def wrap_rpc_document(document)
-      wrapped = Request::Document.new
-      wrapped.namespace_decls.concat(document.namespace_decls)
-      wrapped.header.concat(document.header)
-      wrapped.body << build_rpc_wrapper(document.body)
-      wrapped
-    end
-
-    def build_rpc_wrapper(children)
-      wrapper = Request::Node.new(
-        name: @operation_info.name,
-        prefix: nil,
-        local_name: @operation_info.name,
+    def rpc_wrapper
+      @rpc_wrapper ||= Request::RPCWrapper.new(
+        operation_name: @operation_info.name,
         namespace_uri: @operation_info.binding_operation.input_body[:namespace]
       )
-      wrapper.children.concat(children)
-      wrapper
     end
 
     def rpc_literal?
       input_style == 'rpc/literal'
-    end
-
-    def already_rpc_wrapped?(body_nodes)
-      body_nodes.length == 1 && body_nodes.first.local_name == @operation_info.name
     end
 
     def ensure_request_definition!
@@ -226,19 +206,6 @@ module WSDL
         attribute_group
       ]
       schema_reference_types.include?(error.reference_type)
-    end
-
-    def enforce_response_verification!(response)
-      case @security.verification_mode
-      when Security::ResponsePolicy::MODE_DISABLED
-        nil
-      when Security::ResponsePolicy::MODE_IF_PRESENT
-        response.security.verify! if response.security.signature_present?
-      when Security::ResponsePolicy::MODE_REQUIRED
-        response.security.verify!
-      else
-        raise ArgumentError, "Unknown response verification mode: #{@security.verification_mode.inspect}"
-      end
     end
   end
 end
