@@ -32,13 +32,13 @@ module WSDL
         )
       end
 
-      # @return [Hash{QualifiedName => MessageInfo}] the messages defined in this document
+      # @return [Hash{QName => MessageInfo}] the messages defined in this document
       attr_reader :messages
 
-      # @return [Hash{QualifiedName => PortType}] the port types defined in this document
+      # @return [Hash{QName => PortType}] the port types defined in this document
       attr_reader :port_types
 
-      # @return [Hash{QualifiedName => Binding}] the bindings defined in this document
+      # @return [Hash{QName => Binding}] the bindings defined in this document
       attr_reader :bindings
 
       # @return [Hash{String => Service}] the services defined in this document
@@ -55,7 +55,7 @@ module WSDL
       #
       # @return [String] the target namespace URI
       def target_namespace
-        @target_namespace ||= QualifiedName.document_namespace(@document.root)
+        @target_namespace ||= QName.document_namespace(@document.root)
       end
 
       # Returns the XML Schemas defined within this WSDL document.
@@ -102,7 +102,7 @@ module WSDL
           collection = type_mapping[:collection]
           container = type_mapping[:container]
           qualified = type_mapping[:qualified]
-          key = qualified ? QualifiedName.new(target_namespace, node_name) : node_name
+          key = qualified ? QName.new(target_namespace, node_name) : node_name
 
           collection[key] = container.new(node)
         end

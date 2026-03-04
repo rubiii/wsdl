@@ -27,8 +27,6 @@ module WSDL
     #   end
     #
     class Node
-      include QName
-
       # Node kinds that terminate element collection (contain no child elements).
       ELEMENT_TERMINATORS = Set[
         :attribute,
@@ -381,10 +379,10 @@ module WSDL
       # @param qname [String] qualified name (prefix:localName)
       # @return [Node, nil] the resolved type node
       def resolve_type(qname)
-        local, ns = expand_qname(qname, @namespaces, @context[:target_namespace])
+        resolved = QName.parse(qname, namespaces: @namespaces, default_namespace: @context[:target_namespace])
         @collection&.fetch_type(
-          ns,
-          local,
+          resolved.namespace,
+          resolved.local,
           context: "base type reference #{qname.inspect} on schema node #{name.inspect}"
         )
       end
@@ -394,10 +392,10 @@ module WSDL
       # @param qname [String] qualified name (prefix:localName)
       # @return [Node, nil] the resolved attribute group node
       def resolve_attribute_group(qname)
-        local, ns = expand_qname(qname, @namespaces, @context[:target_namespace])
+        resolved = QName.parse(qname, namespaces: @namespaces, default_namespace: @context[:target_namespace])
         @collection&.fetch_attribute_group(
-          ns,
-          local,
+          resolved.namespace,
+          resolved.local,
           context: "attributeGroup reference #{qname.inspect} on schema node #{name.inspect}"
         )
       end

@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-require 'wsdl/schema/qname'
 require 'wsdl/xml/element'
 require 'wsdl/xml/attribute'
 
@@ -14,8 +13,6 @@ module WSDL
     # to prevent infinite loops during element building.
     #
     class ElementBuilder
-      include Schema::QName
-
       # Creates a new ElementBuilder instance.
       #
       # @param schemas [Schema::Collection] the schema collection for resolving types
@@ -80,14 +77,14 @@ module WSDL
       end
 
       def resolve_part_schema_element(part)
-        local, namespace = expand_qname(part[:element], part[:namespaces])
+        resolved = QName.parse(part[:element], namespaces: part[:namespaces])
         schema_element = @schemas.fetch_element(
-          namespace,
-          local,
+          resolved.namespace,
+          resolved.local,
           context: "message part element reference #{part[:element].inspect}"
         )
 
-        [schema_element, namespace]
+        [schema_element, resolved.namespace]
       end
 
       def instantiate_schema_element(schema_element, namespace)
@@ -256,8 +253,8 @@ module WSDL
       def recursive_child_definition?(parent, element)
         return false unless element.type
 
-        local, namespace = expand_qname(element.type, element.namespaces)
-        id = "#{namespace}:#{local}"
+        resolved = QName.parse(element.type, namespaces: element.namespaces)
+        id = "#{resolved.namespace}:#{resolved.local}"
 
         current_parent = parent
 
@@ -296,12 +293,12 @@ module WSDL
       # @param namespaces [Hash] namespace declarations in scope
       # @return [Schema::Node, String] the resolved type
       def find_type(qname, namespaces)
-        local, namespace = expand_qname(qname, namespaces)
+        resolved = QName.parse(qname, namespaces: namespaces)
 
-        return qname unless namespace
-        return qname if namespace == NS::XSD
+        return qname unless resolved.namespace
+        return qname if resolved.namespace == NS::XSD
 
-        @schemas.fetch_type(namespace, local, context: "type reference #{qname.inspect}")
+        @schemas.fetch_type(resolved.namespace, resolved.local, context: "type reference #{qname.inspect}")
       end
 
       # Finds a global element by its qualified name.
@@ -311,8 +308,8 @@ module WSDL
       # @param context [String, nil] additional context for lookup failures
       # @return [Schema::Node] the resolved element
       def find_element(qname, namespaces, context: nil)
-        local, namespace = expand_qname(qname, namespaces)
-        @schemas.fetch_element(namespace, local, context: context || "element reference #{qname.inspect}")
+        resolved = QName.parse(qname, namespaces: namespaces)
+        @schemas.fetch_element(resolved.namespace, resolved.local, context: context || "element reference #{qname.inspect}")
       end
 
       # Finds a global attribute by its qualified name.
@@ -322,8 +319,8 @@ module WSDL
       # @param context [String, nil] additional context for lookup failures
       # @return [Schema::Node] the resolved attribute
       def find_attribute(qname, namespaces, context: nil)
-        local, namespace = expand_qname(qname, namespaces)
-        @schemas.fetch_attribute(namespace, local, context: context || "attribute reference #{qname.inspect}")
+        resolved = QName.parse(qname, namespaces: namespaces)
+        @schemas.fetch_attribute(resolved.namespace, resolved.local, context: context || "attribute reference #{qname.inspect}")
       end
 
       # Validates nesting depth against limits.

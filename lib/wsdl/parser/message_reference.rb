@@ -13,8 +13,8 @@ module WSDL
         # @return [MessageReference] parsed reference
         def from_node(node)
           message = node['message']
-          default_namespace = QualifiedName.document_namespace(node.document.root)
-          message_name = message ? QualifiedName.parse(message, namespaces: node.namespaces, default_namespace:) : nil
+          default_namespace = QName.document_namespace(node.document.root)
+          message_name = message ? QName.parse(message, namespaces: node.namespaces, default_namespace:) : nil
 
           new(name: node['name'], message:, message_name:)
         end

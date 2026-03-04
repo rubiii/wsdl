@@ -51,21 +51,21 @@ module WSDL
 
       # Returns all messages from all documents in the collection.
       #
-      # @return [Hash{QualifiedName => MessageInfo}] a merged hash of all messages keyed by qualified name
+      # @return [Hash{QName => MessageInfo}] a merged hash of all messages keyed by qualified name
       def messages
         @messages ||= collect_sections(:message, &:messages)
       end
 
       # Returns all port types from all documents in the collection.
       #
-      # @return [Hash{QualifiedName => PortType}] a merged hash of all port types keyed by qualified name
+      # @return [Hash{QName => PortType}] a merged hash of all port types keyed by qualified name
       def port_types
         @port_types ||= collect_sections(:port_type, &:port_types)
       end
 
       # Returns all bindings from all documents in the collection.
       #
-      # @return [Hash{QualifiedName => Binding}] a merged hash of all bindings keyed by qualified name
+      # @return [Hash{QName => Binding}] a merged hash of all bindings keyed by qualified name
       def bindings
         @bindings ||= collect_sections(:binding, &:bindings)
       end

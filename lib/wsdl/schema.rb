@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-require 'wsdl/schema/qname'
 require 'wsdl/schema/node'
 require 'wsdl/schema/collection'
 require 'wsdl/schema/definition'

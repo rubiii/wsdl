@@ -44,10 +44,10 @@ module WSDL
       # @return [PortType] the port type object
       # @raise [UnresolvedReferenceError] if the port type cannot be found
       def fetch_port_type(documents)
-        port_type_name = QualifiedName.parse(
+        port_type_name = QName.parse(
           @port_type,
           namespaces: @binding_node.namespaces,
-          default_namespace: QualifiedName.document_namespace(@binding_node.document.root)
+          default_namespace: QName.document_namespace(@binding_node.document.root)
         )
 
         documents.port_types.fetch(port_type_name) do

@@ -101,6 +101,7 @@ module WSDL
   require 'wsdl/version'
   require 'wsdl/ns'
   require 'wsdl/errors'
+  require 'wsdl/qname'
   require 'wsdl/formatting'
   require 'wsdl/limits'
   require 'wsdl/source'

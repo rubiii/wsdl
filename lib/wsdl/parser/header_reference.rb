@@ -14,9 +14,9 @@ module WSDL
         def from_node(header_node)
           message = normalize_required_attribute(header_node['message'])
           part = normalize_required_attribute(header_node['part'])
-          default_namespace = QualifiedName.document_namespace(header_node.document.root)
+          default_namespace = QName.document_namespace(header_node.document.root)
           message_name = if message
-            QualifiedName.parse(message, namespaces: header_node.namespaces, default_namespace:)
+            QName.parse(message, namespaces: header_node.namespaces, default_namespace:)
           end
 
           new(

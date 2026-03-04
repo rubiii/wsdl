@@ -42,10 +42,10 @@ module WSDL
       # @return [Binding] the binding object
       # @raise [UnresolvedReferenceError] if the binding cannot be found
       def fetch_binding(documents)
-        binding_name = QualifiedName.parse(
+        binding_name = QName.parse(
           @binding,
           namespaces: @port_node.namespaces,
-          default_namespace: QualifiedName.document_namespace(@port_node.document.root)
+          default_namespace: QName.document_namespace(@port_node.document.root)
         )
 
         documents.bindings.fetch(binding_name) do
