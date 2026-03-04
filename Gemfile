@@ -3,34 +3,11 @@
 source 'https://rubygems.org'
 gemspec
 
-# profiling
-# gem 'method_profiler', require: false
-# gem 'ruby-prof',       require: false  # does not work on jruby!
+# syslog was removed from default gems in Ruby 3.4
+gem 'syslog' if RUBY_VERSION >= '3.4'
 
-# coverage
-# gem 'coveralls', require: false
-gem 'simplecov', '~> 0.22', require: false
-
-if RUBY_VERSION >= '3'
-  # net-smtp, net-pop and net-imap were removed from ruby standard gems
-  gem 'net-imap', require: false
-  gem 'net-pop', require: false
-  gem 'net-smtp', require: false
-  gem 'rexml'
-end
-
-if RUBY_VERSION >= '3.4'
-  # syslog was removed from default gems in Ruby 3.4 (used by logging gem)
-  gem 'syslog'
-  # benchmark will be removed from default gems in Ruby 3.5
-  gem 'benchmark'
-end
-
-# dependencies
-# gem 'rubydeps',  require: false  # uses c extensions
-
-# debugging
-# gem 'debugger',  require: false
+# benchmark was removed from default gems in Ruby 4.0 (silence warning on 3.4+)
+gem 'benchmark' if RUBY_VERSION >= '3.4'
 
 group :development do
   gem 'equivalent-xml', '~> 0.6'
@@ -42,6 +19,7 @@ group :development do
   gem 'rubocop-rake', require: false
   gem 'rubocop-rspec', require: false
   gem 'rubocop-yard', require: false
+  gem 'simplecov', '~> 0.22', require: false
   gem 'yard', require: false
   gem 'yard-markdown-relative-links', require: false
 end
