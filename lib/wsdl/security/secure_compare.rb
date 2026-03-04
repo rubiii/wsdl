@@ -20,7 +20,7 @@ module WSDL
     #     puts "Digest verified!"
     #   end
     #
-    # @see https://codahale.com/a-lesson-in-timing-attacks/
+    # @see https://cheatsheetseries.owasp.org/cheatsheets/Authentication_Cheat_Sheet.html#compare-password-hashes-using-safe-functions
     # @see https://ruby-doc.org/3.2.0/exts/openssl/OpenSSL.html#method-c-secure_compare
     #
     module SecureCompare
