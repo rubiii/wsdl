@@ -29,7 +29,7 @@ bundle exec yard        # Generate YARD documentation
 
 1. **Always make a plan first.** Propose a plan and wait for explicit confirmation before making changes.
 
-2. **Run quality checks after every change.** Run `bundle exec rake ci` to ensure both RuboCop and RSpec pass. Never consider a task complete until CI is green.
+2. **Run quality checks after every code change.** Run `bundle exec rake ci` to ensure both RuboCop and RSpec pass. Never consider a task complete until CI is green.
 
 3. **Follow the official specifications.** Code must conform to the W3C and OASIS specifications in `docs/reference/specifications.md`.
 
@@ -45,7 +45,7 @@ bundle exec yard        # Generate YARD documentation
 
 ## Testing
 
-- Every public method must be tested, we aim for 100% coverage
+- Every public method must be tested, 100% coverage is a must
 - Use existing fixtures in `spec/fixtures/` (45+ real-world WSDLs)
 - Unit tests in `spec/wsdl/` mirror `lib/wsdl/` structure
 - Integration tests in `spec/integration/`
