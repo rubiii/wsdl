@@ -18,14 +18,18 @@ describe WSDL::Parser::CachedResult do
   end
 
   def load_cached(**overrides)
-    described_class.load(
-      wsdl: overrides.fetch(:wsdl, wsdl),
-      http: overrides.fetch(:http, adapter_class.new('shared')),
-      cache: overrides.fetch(:cache, WSDL::Cache.new),
+    parse_options = WSDL::ParseOptions.new(
       sandbox_paths: overrides.fetch(:sandbox_paths, sandbox_paths),
       limits: overrides.fetch(:limits, limits),
       reject_doctype: overrides.fetch(:reject_doctype, true),
       strict_schema: overrides.fetch(:strict_schema, false)
+    )
+
+    described_class.load(
+      wsdl: overrides.fetch(:wsdl, wsdl),
+      http: overrides.fetch(:http, adapter_class.new('shared')),
+      cache: overrides.fetch(:cache, WSDL::Cache.new),
+      parse_options: parse_options
     )
   end
 
@@ -51,17 +55,14 @@ describe WSDL::Parser::CachedResult do
     subject(:parse_inputs) { described_class::ParseInputs }
 
     it 'is a Data class with the expected members' do
-      expect(parse_inputs.members).to contain_exactly(:wsdl, :http, :sandbox_paths, :limits, :reject_doctype,
-                                                      :strict_schema)
+      expect(parse_inputs.members).to contain_exactly(:wsdl, :http, :parse_options)
     end
 
-    it 'has exactly 6 members (bump this when adding a new parse-affecting parameter)' do
-      # If this fails, you added a member to ParseInputs. Great! Now also:
-      # 1. Add its normalization to CachedResult.cache_key
-      # 2. Pass it through in CachedResult.build_result
-      # 3. Add a "partitions by <member>" test below
-      # 4. Update this count
-      expect(parse_inputs.members.size).to eq(6)
+    it 'has exactly 3 members (wsdl, http, parse_options)' do
+      # Parse-affecting options live in ParseOptions (lib/wsdl/parse_options.rb).
+      # If you need to add a new non-parse input (e.g. a new adapter), add it
+      # here and update this count.
+      expect(parse_inputs.members.size).to eq(3)
     end
 
     it 'requires all members at construction time' do
@@ -71,13 +72,17 @@ describe WSDL::Parser::CachedResult do
     end
 
     it 'is frozen after construction' do
-      inputs = parse_inputs.new(
-        wsdl:,
-        http: adapter_class.new('x'),
+      parse_options = WSDL::ParseOptions.new(
         sandbox_paths:,
         limits:,
         reject_doctype: true,
         strict_schema: false
+      )
+
+      inputs = parse_inputs.new(
+        wsdl:,
+        http: adapter_class.new('x'),
+        parse_options: parse_options
       )
 
       expect(inputs).to be_frozen
@@ -128,13 +133,16 @@ describe WSDL::Parser::CachedResult do
         result = load_cached(cache: nil, http:, reject_doctype: false, strict_schema: true)
 
         expect(result).to eq(parser_result)
-        expect(WSDL::Parser::Result).to have_received(:parse).with(
-          wsdl,
-          http,
+        expected_options = WSDL::ParseOptions.new(
           sandbox_paths:,
           limits:,
           reject_doctype: false,
           strict_schema: true
+        )
+        expect(WSDL::Parser::Result).to have_received(:parse).with(
+          wsdl,
+          http,
+          expected_options
         )
       end
     end

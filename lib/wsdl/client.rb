@@ -83,7 +83,17 @@ module WSDL
       validate_http_adapter!(@http)
 
       resolved_sandbox_paths = resolve_sandbox_paths(source, sandbox_paths)
-      @parser_result = load_parser_result(wsdl, cache, resolved_sandbox_paths)
+      @parser_result = Parser::CachedResult.load(
+        wsdl:,
+        http: @http,
+        cache:,
+        parse_options: ParseOptions.new(
+          sandbox_paths: resolved_sandbox_paths,
+          limits: @limits,
+          reject_doctype: @reject_doctype,
+          strict_schema: @strict_schema
+        )
+      )
     end
 
     # Returns whether pretty printing is enabled for XML output.
@@ -189,25 +199,6 @@ module WSDL
       # File path: sandbox to the WSDL's parent directory
       # This prevents path traversal attacks while allowing imports within the same directory
       source.default_sandbox_paths
-    end
-
-    # Loads the parser result, using cache if available.
-    #
-    # @param wsdl [String] the WSDL location
-    # @param cache [Cache, nil, Symbol] the cache to use (`:default` uses {WSDL.cache})
-    # @param sandbox_paths [Array<String>, nil] the sandbox paths
-    # @return [Parser::Result] the parsed result
-    #
-    def load_parser_result(wsdl, cache, sandbox_paths)
-      Parser::CachedResult.load(
-        wsdl:,
-        http: @http,
-        cache:,
-        sandbox_paths:,
-        limits: @limits,
-        reject_doctype: @reject_doctype,
-        strict_schema: @strict_schema
-      )
     end
 
     # Raises if the operation style is not supported.

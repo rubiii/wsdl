@@ -35,49 +35,27 @@ module WSDL
       #
       # @param wsdl [String] a URL or local file path to the WSDL document
       # @param http [Object] an HTTP adapter instance for fetching remote documents
-      # @param sandbox_paths [Array<String>, nil, Symbol] directories where file access is allowed.
-      #   - `:auto` (default) — Automatically determine based on WSDL source:
-      #     - URL → file access disabled
-      #     - File path → sandboxed to WSDL's parent directory
-      #   - `Array<String>` — Use the specified directories as the sandbox
-      #   - `nil` — Disable file access entirely
-      # @param limits [Limits, nil] resource limits for DoS protection.
-      #   If nil, uses {WSDL.limits}.
-      # @param reject_doctype [Boolean] whether to reject XML with DOCTYPE declarations
-      #   (default: true). This is a defense-in-depth security measure.
-      # @param strict_schema [Boolean] strict schema handling mode:
-      #   - `true` (default) — raise recoverable schema import failures
-      #   - `false` — log and skip recoverable schema import failures
-      #   Fatal errors (for example, {PathRestrictionError}) always raise.
-      #
+      # @param parse_options [ParseOptions] parse configuration options.
+      #   When omitted, {ParseOptions.default} is used.
       # @return [Result] the parsed result
       #
-      # rubocop:disable Metrics/ParameterLists
-      def self.parse(wsdl, http, sandbox_paths: :auto, limits: nil, reject_doctype: true, strict_schema: true)
-        # rubocop:enable Metrics/ParameterLists
+      def self.parse(wsdl, http, parse_options = nil, **)
+        parse_options ||= ParseOptions.default(**)
+
         documents = DocumentCollection.new
         schemas = Schema::Collection.new
-        resolved_limits = limits || WSDL.limits
-        resolved_strict_schema = strict_schema ? true : false
 
         source = Source.validate_wsdl!(wsdl)
-        resolved_sandbox_paths = resolve_sandbox_paths(source, sandbox_paths)
-        resolver = Resolver.new(http, sandbox_paths: resolved_sandbox_paths, limits: resolved_limits)
-        importer = Importer.new(
-          resolver,
-          documents,
-          schemas,
-          limits: resolved_limits,
-          reject_doctype:,
-          strict_schema: resolved_strict_schema
-        )
+        resolved_sandbox_paths = resolve_sandbox_paths(source, parse_options.sandbox_paths)
+        resolver = Resolver.new(http, sandbox_paths: resolved_sandbox_paths, limits: parse_options.limits)
+        importer = Importer.new(resolver, documents, schemas, parse_options)
         importer.import(source.value)
 
         new(
           documents:,
           schemas:,
-          limits: resolved_limits,
-          strict_schema: resolved_strict_schema,
+          limits: parse_options.limits,
+          strict_schema: parse_options.strict_schema,
           schema_import_errors: importer.schema_import_errors.freeze
         )
       end

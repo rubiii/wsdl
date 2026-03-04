@@ -38,25 +38,17 @@ module WSDL
       # @param resolver [Resolver] the resolver for fetching documents
       # @param documents [DocumentCollection] the collection to store parsed documents
       # @param schemas [Schema::Collection] the collection to store parsed schemas
-      # @param limits [Limits, nil] resource limits for DoS protection.
-      #   If nil, uses {WSDL.limits}.
-      # @param reject_doctype [Boolean] whether to reject XML with DOCTYPE declarations
-      #   (default: true). This is a defense-in-depth security measure.
-      # @param strict_schema [Boolean] strict schema handling mode:
-      #   - `true` (default) — raise recoverable schema import failures
-      #   - `false` — log and skip recoverable schema import failures
-      #   Fatal errors (for example, {PathRestrictionError}) always raise.
-      # rubocop:disable Metrics/ParameterLists
-      def initialize(resolver, documents, schemas, limits: nil, reject_doctype: true, strict_schema: true)
-        # rubocop:enable Metrics/ParameterLists
+      # @param parse_options [ParseOptions] parse configuration options
+      #
+      def initialize(resolver, documents, schemas, parse_options)
         @logger = Logging.logger[self]
 
         @resolver = resolver
         @documents = documents
         @schemas = schemas
-        @limits = limits || WSDL.limits
-        @reject_doctype = reject_doctype
-        @strict_schema = strict_schema ? true : false
+        @limits = parse_options.limits
+        @reject_doctype = parse_options.reject_doctype
+        @strict_schema = parse_options.strict_schema
         @schema_count = 0
         @schema_import_errors = []
       end

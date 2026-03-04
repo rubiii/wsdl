@@ -18,7 +18,7 @@ describe WSDL::Client do
       wsdl_directory = File.dirname(File.expand_path(wsdl))
       parser_result = instance_double(WSDL::Parser::Result, services: {})
       allow(WSDL::Parser::Result).to receive(:parse).with(
-        wsdl, instance_of(WSDL.http_adapter), hash_including(sandbox_paths: [wsdl_directory])
+        wsdl, instance_of(WSDL.http_adapter), having_attributes(sandbox_paths: [wsdl_directory])
       ).and_return(parser_result)
       client = described_class.new(wsdl)
       expect(client.services).to eq({})
@@ -33,7 +33,7 @@ describe WSDL::Client do
       wsdl_directory = File.dirname(File.expand_path(wsdl))
       parser_result = instance_double(WSDL::Parser::Result, services: {})
       allow(WSDL::Parser::Result).to receive(:parse).with(
-        wsdl, http, hash_including(sandbox_paths: [wsdl_directory])
+        wsdl, http, having_attributes(sandbox_paths: [wsdl_directory])
       ).and_return(parser_result)
 
       client = described_class.new(wsdl, http: http)
@@ -245,7 +245,7 @@ describe WSDL::Client do
           described_class.new(wsdl)
 
           expect(WSDL::Parser::Result).to have_received(:parse).with(
-            wsdl, anything, hash_including(sandbox_paths: [wsdl_directory])
+            wsdl, anything, having_attributes(sandbox_paths: [wsdl_directory])
           )
         end
 
@@ -260,7 +260,7 @@ describe WSDL::Client do
           described_class.new(travelport_wsdl)
 
           expect(WSDL::Parser::Result).to have_received(:parse).with(
-            travelport_wsdl, anything, hash_including(sandbox_paths: [travelport_directory])
+            travelport_wsdl, anything, having_attributes(sandbox_paths: [travelport_directory])
           )
         end
       end
@@ -275,7 +275,7 @@ describe WSDL::Client do
           described_class.new(url_wsdl)
 
           expect(WSDL::Parser::Result).to have_received(:parse).with(
-            url_wsdl, anything, hash_including(sandbox_paths: nil)
+            url_wsdl, anything, having_attributes(sandbox_paths: nil)
           )
         end
       end
@@ -300,7 +300,7 @@ describe WSDL::Client do
         described_class.new(wsdl, sandbox_paths: custom_paths)
 
         expect(WSDL::Parser::Result).to have_received(:parse).with(
-          wsdl, anything, hash_including(sandbox_paths: custom_paths)
+          wsdl, anything, having_attributes(sandbox_paths: custom_paths)
         )
       end
     end
@@ -357,7 +357,7 @@ describe WSDL::Client do
       described_class.new(wsdl, http: http_mock, strict_schema: true)
 
       expect(WSDL::Parser::Result).to have_received(:parse).with(
-        wsdl, anything, hash_including(strict_schema: true)
+        wsdl, anything, having_attributes(strict_schema: true)
       )
     end
 
@@ -368,7 +368,7 @@ describe WSDL::Client do
       described_class.new(wsdl, http: http_mock, strict_schema: false)
 
       expect(WSDL::Parser::Result).to have_received(:parse).with(
-        wsdl, anything, hash_including(strict_schema: false)
+        wsdl, anything, having_attributes(strict_schema: false)
       )
     end
   end
@@ -419,7 +419,7 @@ describe WSDL::Client do
       described_class.new(wsdl, http: http_mock, reject_doctype: false)
 
       expect(WSDL::Parser::Result).to have_received(:parse).with(
-        wsdl, anything, hash_including(reject_doctype: false)
+        wsdl, anything, having_attributes(reject_doctype: false)
       )
     end
 
@@ -430,7 +430,7 @@ describe WSDL::Client do
       described_class.new(wsdl, http: http_mock)
 
       expect(WSDL::Parser::Result).to have_received(:parse).with(
-        wsdl, anything, hash_including(reject_doctype: true)
+        wsdl, anything, having_attributes(reject_doctype: true)
       )
     end
   end
@@ -512,7 +512,7 @@ describe WSDL::Client do
       described_class.new(wsdl, http: http_mock, limits: custom_limits, cache: nil)
 
       expect(WSDL::Parser::Result).to have_received(:parse).with(
-        wsdl, anything, hash_including(limits: custom_limits)
+        wsdl, anything, having_attributes(limits: custom_limits)
       )
     end
   end

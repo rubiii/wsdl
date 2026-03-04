@@ -53,6 +53,7 @@ module WSDL
   require 'wsdl/qname'
   require 'wsdl/formatting'
   require 'wsdl/limits'
+  require 'wsdl/parse_options'
   require 'wsdl/source'
   require 'wsdl/cache'
   require 'wsdl/httpclient'

@@ -7,20 +7,15 @@ module WSDL
   module Parser
     # Loads parser results with cache-aware keying.
     #
-    # Cache key correctness is enforced by {ParseInputs}, a frozen Data class
-    # that captures **every** input affecting parse output. Both the cache key
-    # and {Result.parse} receive the same {ParseInputs} instance, so
-    # they can never diverge.
+    # Cache key correctness is enforced by {ParseOptions}, the immutable value
+    # object that captures **every** parse-affecting option. Both the cache key
+    # and {Result.parse} receive the same {ParseOptions} instance (via
+    # {ParseInputs}), so they can never diverge.
     #
-    # Adding a new parse-affecting parameter requires three steps — all in
-    # this file:
+    # Adding a new parse-affecting parameter requires two steps:
     #
-    # 1. Add the member to {ParseInputs}.
-    # 2. Add its normalization to {.cache_key}.
-    # 3. Pass it through in {CachedResult.build_result}.
-    #
-    # Because `Data.define` requires every member at construction time,
-    # forgetting step 1 raises `ArgumentError` immediately.
+    # 1. Add the member to {ParseOptions} (`lib/wsdl/parse_options.rb`).
+    # 2. Add its normalization to {.cache_key} in this file.
     #
     # @api private
     #
@@ -28,11 +23,11 @@ module WSDL
       # Cache key schema version.
       #
       # Bump this when the key *format* changes (e.g. new normalization
-      # logic). Adding a new member to {ParseInputs} also warrants a bump
+      # logic). Adding a new member to {ParseOptions} also warrants a bump
       # so that entries cached by an older version are not reused.
       #
       # @return [Integer]
-      CACHE_KEY_VERSION = 8
+      CACHE_KEY_VERSION = 9
 
       # Every input that affects parser output.
       #
@@ -44,16 +39,10 @@ module WSDL
       #   @return [String] WSDL location (HTTP(S) URL or local file path)
       # @!attribute [r] http
       #   @return [Object] HTTP adapter instance
-      # @!attribute [r] sandbox_paths
-      #   @return [Array<String>, nil] resolved sandbox paths
-      # @!attribute [r] limits
-      #   @return [Limits] resource limits
-      # @!attribute [r] reject_doctype
-      #   @return [Boolean] DOCTYPE policy
-      # @!attribute [r] strict_schema
-      #   @return [Boolean] strict schema handling mode
+      # @!attribute [r] parse_options
+      #   @return [ParseOptions] parse configuration options
       #
-      ParseInputs = Data.define(:wsdl, :http, :sandbox_paths, :limits, :reject_doctype, :strict_schema)
+      ParseInputs = Data.define(:wsdl, :http, :parse_options)
 
       class << self
         # Loads a parser result, using cache when available.
@@ -61,16 +50,11 @@ module WSDL
         # @param wsdl [String] WSDL location (HTTP(S) URL or local file path)
         # @param http [Object] HTTP adapter
         # @param cache [Cache, nil, Symbol] cache instance, nil, or :default
-        # @param sandbox_paths [Array<String>, nil] resolved sandbox paths
-        # @param limits [Limits] resource limits
-        # @param reject_doctype [Boolean] DOCTYPE policy
-        # @param strict_schema [Boolean] strict schema handling mode
+        # @param parse_options [ParseOptions] parse configuration options
         # @return [Result] parsed WSDL result
         #
-        # rubocop:disable Metrics/ParameterLists
-        def load(wsdl:, http:, cache:, sandbox_paths:, limits:, reject_doctype:, strict_schema:)
-          # rubocop:enable Metrics/ParameterLists
-          inputs = ParseInputs.new(wsdl:, http:, sandbox_paths:, limits:, reject_doctype:, strict_schema:)
+        def load(wsdl:, http:, cache:, parse_options:)
+          inputs = ParseInputs.new(wsdl:, http:, parse_options:)
 
           cache = WSDL.cache if cache == :default
           return build_result(inputs) unless cache
@@ -86,14 +70,7 @@ module WSDL
         # @return [Result]
         #
         def build_result(inputs)
-          Result.parse(
-            inputs.wsdl,
-            inputs.http,
-            sandbox_paths: inputs.sandbox_paths,
-            limits: inputs.limits,
-            reject_doctype: inputs.reject_doctype,
-            strict_schema: inputs.strict_schema
-          )
+          Result.parse(inputs.wsdl, inputs.http, inputs.parse_options)
         end
 
         # Derives a deterministic cache key from the given parse inputs.
@@ -106,13 +83,14 @@ module WSDL
         # @return [String] deterministic cache key
         #
         def cache_key(inputs)
+          opts = inputs.parse_options
           payload = {
             version: CACHE_KEY_VERSION,
             source: normalize_source(inputs.wsdl),
-            sandbox_paths: normalize_sandbox_paths(inputs.sandbox_paths),
-            limits: normalize_limits(inputs.limits),
-            reject_doctype: inputs.reject_doctype ? true : false,
-            strict_schema: inputs.strict_schema ? true : false,
+            sandbox_paths: normalize_sandbox_paths(opts.sandbox_paths),
+            limits: normalize_limits(opts.limits),
+            reject_doctype: opts.reject_doctype ? true : false,
+            strict_schema: opts.strict_schema ? true : false,
             http_identity: normalize_http_identity(inputs.http)
           }
 
