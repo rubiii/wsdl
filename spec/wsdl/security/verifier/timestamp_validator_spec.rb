@@ -188,8 +188,13 @@ RSpec.describe WSDL::Security::Verifier::TimestampValidator do
         )
       end
 
-      it 'returns true (malformed Created is treated as absent)' do
-        expect(validator.valid?).to be true
+      it 'returns false' do
+        expect(validator.valid?).to be false
+      end
+
+      it 'reports invalid Created format' do
+        validator.valid?
+        expect(validator.errors).to include(match(/Timestamp Created must be a valid UTC xsd:dateTime/))
       end
 
       it 'sets created_at to nil' do
@@ -206,13 +211,37 @@ RSpec.describe WSDL::Security::Verifier::TimestampValidator do
         )
       end
 
-      it 'returns true (malformed Expires is treated as absent)' do
-        expect(validator.valid?).to be true
+      it 'returns false' do
+        expect(validator.valid?).to be false
+      end
+
+      it 'reports invalid Expires format' do
+        validator.valid?
+        expect(validator.errors).to include(match(/Timestamp Expires must be a valid UTC xsd:dateTime/))
       end
 
       it 'sets expires_at to nil' do
         validator.valid?
         expect(validator.expires_at).to be_nil
+      end
+    end
+
+    context 'when Created and Expires are both malformed' do
+      let(:xml) do
+        build_timestamp_xml(
+          created: 'not-a-valid-time',
+          expires: 'still-not-a-valid-time'
+        )
+      end
+
+      it 'returns false' do
+        expect(validator.valid?).to be false
+      end
+
+      it 'reports both invalid timestamp fields' do
+        validator.valid?
+        expect(validator.errors).to include(match(/Timestamp Created must be a valid UTC xsd:dateTime/))
+        expect(validator.errors).to include(match(/Timestamp Expires must be a valid UTC xsd:dateTime/))
       end
     end
   end
@@ -453,15 +482,15 @@ RSpec.describe WSDL::Security::Verifier::TimestampValidator do
   end
 
   describe 'timezone handling' do
-    context 'with timestamps in different timezone formats' do
+    context 'with UTC zero-offset timezone' do
       let(:xml) do
         build_timestamp_xml(
-          created: '2025-01-15T06:58:00-05:00', # EST (same as 11:58 UTC)
-          expires: '2025-01-15T07:03:00-05:00'  # EST (same as 12:03 UTC)
+          created: '2025-01-15T11:58:00+00:00',
+          expires: '2025-01-15T12:03:00+00:00'
         )
       end
 
-      it 'correctly converts to UTC for comparison' do
+      it 'validates successfully' do
         expect(validator.valid?).to be true
       end
 
@@ -469,6 +498,25 @@ RSpec.describe WSDL::Security::Verifier::TimestampValidator do
         validator.valid?
         expect(validator.created_at.utc?).to be true
         expect(validator.created_at).to eq(Time.utc(2025, 1, 15, 11, 58, 0))
+      end
+    end
+
+    context 'with non-UTC timezone offset' do
+      let(:xml) do
+        build_timestamp_xml(
+          created: '2025-01-15T06:58:00-05:00',
+          expires: '2025-01-15T07:03:00-05:00'
+        )
+      end
+
+      it 'returns false' do
+        expect(validator.valid?).to be false
+      end
+
+      it 'reports invalid UTC requirement for both fields' do
+        validator.valid?
+        expect(validator.errors).to include(match(/Timestamp Created must be a valid UTC xsd:dateTime/))
+        expect(validator.errors).to include(match(/Timestamp Expires must be a valid UTC xsd:dateTime/))
       end
     end
   end

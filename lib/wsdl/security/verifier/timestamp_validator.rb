@@ -39,6 +39,7 @@ module WSDL
         # This value aligns with WS-I BSP guidance and the default TTL
         # used for outgoing timestamps.
         DEFAULT_CLOCK_SKEW = 300
+        XSD_DATETIME_TIMEZONE_SUFFIX = /(Z|[+-]\d{2}:\d{2})\z/
 
         # Returns the parsed Created time from the timestamp.
         #
@@ -65,6 +66,7 @@ module WSDL
           @created_at = nil
           @expires_at = nil
           @parsed = false
+          @parsed_values_valid = true
         end
 
         # Validates the timestamp freshness.
@@ -84,6 +86,7 @@ module WSDL
           parse_timestamp unless @parsed
 
           return true unless timestamp_present?
+          return false unless @parsed_values_valid
 
           validate_created && validate_expires
         end
@@ -128,22 +131,39 @@ module WSDL
 
           return unless timestamp_node
 
-          @created_at = parse_time_element('wsu:Created')
-          @expires_at = parse_time_element('wsu:Expires')
+          @created_at = parse_time_element('wsu:Created', 'Created')
+          @expires_at = parse_time_element('wsu:Expires', 'Expires')
         end
 
         # Parses a time element within the timestamp.
         #
         # @param element_name [String] the element name (e.g., 'wsu:Created')
-        # @return [Time, nil] the parsed UTC time, or nil if not present/invalid
+        # @param field_name [String] display name used in validation errors
+        # @return [Time, nil] the parsed UTC time, or nil if not present
         #
-        def parse_time_element(element_name)
+        def parse_time_element(element_name, field_name)
           element = timestamp_node.at_xpath(element_name, ns)
           return nil unless element
 
-          Time.parse(element.text).utc
+          value = element.text.strip
+          return invalid_time_value(field_name) unless value.match?(XSD_DATETIME_TIMEZONE_SUFFIX)
+
+          parsed_time = Time.iso8601(value)
+          return invalid_time_value(field_name) unless parsed_time.utc_offset.zero?
+
+          parsed_time.utc
         rescue ArgumentError
-          # Malformed time value - will be caught during validation
+          invalid_time_value(field_name)
+        end
+
+        # Records an invalid time parse failure for Created/Expires.
+        #
+        # @param field_name [String] display name used in validation errors
+        # @return [nil]
+        #
+        def invalid_time_value(field_name)
+          @parsed_values_valid = false
+          add_failure("Timestamp #{field_name} must be a valid UTC xsd:dateTime")
           nil
         end
 
