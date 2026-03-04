@@ -39,6 +39,10 @@ module WSDL
         # This value aligns with WS-I BSP guidance and the default TTL
         # used for outgoing timestamps.
         DEFAULT_CLOCK_SKEW = 300
+
+        # Matches xsd:dateTime timezone suffixes (`Z` or `+/-HH:MM`).
+        #
+        # @api private
         XSD_DATETIME_TIMEZONE_SUFFIX = /(Z|[+-]\d{2}:\d{2})\z/
 
         # Returns the parsed Created time from the timestamp.

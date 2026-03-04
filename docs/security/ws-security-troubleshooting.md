@@ -18,6 +18,7 @@ Fix:
 1. Confirm policy mode (`:required`, `:if_present`, `:disabled`).
 2. Configure `trust_store` appropriately.
 3. Confirm certificate chain and message integrity.
+4. Confirm `ds:SignedInfo` includes a reference to SOAP Body.
 
 Example:
 

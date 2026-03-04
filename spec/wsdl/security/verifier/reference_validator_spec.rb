@@ -4,7 +4,7 @@ require 'spec_helper'
 require_relative 'shared_context'
 
 describe WSDL::Security::Verifier::ReferenceValidator, :verifier_helpers do
-  let(:document) { parse_xml(xml) }
+  let(:document) { WSDL::XML::Parser.parse(xml, noblanks: true) }
   let(:signed_info_node) { document.at_xpath('//ds:SignedInfo', ns) }
   let(:validator) { described_class.new(document, signed_info_node) }
 
@@ -19,6 +19,36 @@ describe WSDL::Security::Verifier::ReferenceValidator, :verifier_helpers do
       it 'has no errors' do
         validator.valid?
         expect(validator.errors).to be_empty
+      end
+    end
+
+    context 'when SignedInfo does not reference SOAP Body' do
+      let(:xml) { build_signed_response_without_body_reference }
+
+      it 'returns false' do
+        expect(validator.valid?).to be false
+      end
+
+      it 'reports missing SOAP Body reference' do
+        validator.valid?
+        expect(validator.errors).to include('SignedInfo must contain a reference to the SOAP Body')
+      end
+    end
+
+    context 'when SignedInfo does not reference SOAP Body in SOAP 1.2' do
+      let(:xml) do
+        build_signed_response_without_body_reference(
+          soap_namespace: WSDL::NS::SOAP_1_2
+        )
+      end
+
+      it 'returns false' do
+        expect(validator.valid?).to be false
+      end
+
+      it 'reports missing SOAP Body reference' do
+        validator.valid?
+        expect(validator.errors).to include('SignedInfo must contain a reference to the SOAP Body')
       end
     end
 

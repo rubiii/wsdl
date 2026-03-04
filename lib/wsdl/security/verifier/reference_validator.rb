@@ -49,11 +49,16 @@ module WSDL
 
         # Validates all references in the SignedInfo element.
         #
-        # @return [Boolean] true if all references are valid
+        # In addition to digest integrity, this enforces WS-Security's
+        # "only what is signed is protected" guidance by requiring that
+        # the SOAP Body is explicitly referenced.
+        #
+        # @return [Boolean] true if all references are valid and SOAP Body is signed
         def valid?
           return add_failure('SignedInfo must contain at least one ds:Reference') if references.empty?
+          return false unless references.all? { |ref| validate_single_reference(ref) }
 
-          references.all? { |ref| validate_single_reference(ref) }
+          ensure_body_is_signed
         end
 
         # Returns the number of references being validated.
@@ -236,6 +241,38 @@ module WSDL
         def extract_reference_id(ref)
           uri = ref['URI']
           uri&.delete_prefix('#')
+        end
+
+        # Enforces that the SOAP Body is covered by at least one reference.
+        #
+        # @return [Boolean] true if SOAP Body is signed
+        def ensure_body_is_signed
+          return true if references.any? { |ref| reference_points_to_soap_body?(ref) }
+
+          add_failure('SignedInfo must contain a reference to the SOAP Body')
+        end
+
+        # Returns whether a reference resolves to the SOAP Body element.
+        #
+        # @param ref [Nokogiri::XML::Element] the ds:Reference element
+        # @return [Boolean]
+        def reference_points_to_soap_body?(ref)
+          id = extract_reference_id(ref)
+          return false unless id
+
+          soap_body?(find_element_by_id(id))
+        end
+
+        # Returns whether an element is the SOAP Body (1.1 or 1.2).
+        #
+        # @param element [Nokogiri::XML::Element, nil] candidate element
+        # @return [Boolean]
+        def soap_body?(element)
+          return false unless element
+          return false unless element.name == 'Body'
+
+          namespace = element.namespace&.href
+          [NS::SOAP_1_1, NS::SOAP_1_2].include?(namespace)
         end
       end
     end

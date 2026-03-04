@@ -66,7 +66,7 @@ end
 
 Modes:
 
-- `:required` (default): signature must be present and valid.
+- `:required` (default): signature must be present, valid, and must sign SOAP Body.
 - `:if_present`: verify when signature exists.
 - `:disabled`: skip verification.
 

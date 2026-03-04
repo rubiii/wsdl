@@ -93,6 +93,38 @@ describe WSDL::Security::Verifier, :verifier_helpers do
       end
     end
 
+    context 'with signature that omits SOAP Body' do
+      let(:xml) { build_signed_response_without_body_reference }
+      let(:verifier) { described_class.new(xml) }
+
+      it 'returns false' do
+        expect(verifier.valid?).to be false
+      end
+
+      it 'reports missing SOAP Body reference' do
+        verifier.valid?
+        expect(verifier.errors).to include('SignedInfo must contain a reference to the SOAP Body')
+      end
+    end
+
+    context 'with SOAP 1.2 signature that omits SOAP Body' do
+      let(:xml) do
+        build_signed_response_without_body_reference(
+          soap_namespace: WSDL::NS::SOAP_1_2
+        )
+      end
+      let(:verifier) { described_class.new(xml) }
+
+      it 'returns false' do
+        expect(verifier.valid?).to be false
+      end
+
+      it 'reports missing SOAP Body reference' do
+        verifier.valid?
+        expect(verifier.errors).to include('SignedInfo must contain a reference to the SOAP Body')
+      end
+    end
+
     context 'with explicit namespace prefixes' do
       let(:verifier) { described_class.new(signed_response_with_explicit_prefixes) }
 

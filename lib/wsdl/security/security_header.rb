@@ -210,7 +210,7 @@ module WSDL
         signature.clear_references
 
         sign_timestamp_if_configured(security_node, signature, config)
-        sign_body_if_configured(document, signature, config)
+        sign_body(document, signature)
         sign_addressing_headers(document, signature) if config.sign_addressing?
 
         signature.apply(document, security_node) if signature.references?
@@ -223,9 +223,7 @@ module WSDL
         signature.digest!(timestamp_node) if timestamp_node
       end
 
-      def sign_body_if_configured(document, signature, config)
-        return unless config.sign_body?
-
+      def sign_body(document, signature)
         body_node = find_body_node(document)
         return unless body_node
 

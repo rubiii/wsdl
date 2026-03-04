@@ -10,21 +10,18 @@ module WSDL
     #
     # @example Creating from a hash
     #   options = SignatureOptions.from_hash(
-    #     sign_body: true,
     #     sign_timestamp: true,
     #     sign_addressing: true,
     #     key_reference: :issuer_serial
     #   )
     #
     # @example Checking options
-    #   options.sign_body?              # => true
     #   options.sign_addressing?        # => true
     #   options.key_reference           # => :issuer_serial
     #
     class SignatureOptions
       # Default values for signature options
       DEFAULTS = {
-        sign_body: true,
         sign_timestamp: true,
         sign_addressing: false,
         explicit_namespace_prefixes: false,
@@ -41,7 +38,6 @@ module WSDL
       # Creates a new SignatureOptions instance.
       #
       # @param options [Hash] the signature options
-      # @option options [Boolean] :sign_body whether to sign the SOAP body
       # @option options [Boolean] :sign_timestamp whether to sign the timestamp
       # @option options [Boolean] :sign_addressing whether to sign WS-Addressing headers
       # @option options [Boolean] :explicit_namespace_prefixes whether to use explicit ns prefixes
@@ -49,7 +45,6 @@ module WSDL
       # @option options [Symbol] :digest_algorithm the digest algorithm to use
       #
       def initialize(**options)
-        @sign_body = options[:sign_body]
         @sign_timestamp = options[:sign_timestamp]
         @sign_addressing = options[:sign_addressing]
         @explicit_namespace_prefixes = options[:explicit_namespace_prefixes]
@@ -66,7 +61,6 @@ module WSDL
       #
       def self.from_hash(options)
         new(
-          sign_body: options.fetch(:sign_body, DEFAULTS[:sign_body]),
           sign_timestamp: options.fetch(:sign_timestamp, DEFAULTS[:sign_timestamp]),
           sign_addressing: options.fetch(:sign_addressing, DEFAULTS[:sign_addressing]),
           explicit_namespace_prefixes: options.fetch(:explicit_namespace_prefixes,
@@ -74,14 +68,6 @@ module WSDL
           key_reference: options.fetch(:key_reference, DEFAULTS[:key_reference]),
           digest_algorithm: options.fetch(:digest_algorithm, DEFAULTS[:digest_algorithm])
         )
-      end
-
-      # Returns whether the SOAP body should be signed.
-      #
-      # @return [Boolean]
-      #
-      def sign_body?
-        @sign_body == true
       end
 
       # Returns whether the timestamp should be signed.
@@ -114,7 +100,6 @@ module WSDL
       #
       def to_h
         {
-          sign_body: @sign_body,
           sign_timestamp: @sign_timestamp,
           sign_addressing: @sign_addressing,
           explicit_namespace_prefixes: @explicit_namespace_prefixes,

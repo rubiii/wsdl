@@ -49,6 +49,8 @@ module WSDL
 
       # Configures X.509 certificate signing.
       #
+      # SOAP Body signing is mandatory and cannot be disabled.
+      #
       # @param certificate [OpenSSL::X509::Certificate, String]
       # @param private_key [OpenSSL::PKey::RSA, OpenSSL::PKey::EC, String]
       # @param options [Hash] signing options
@@ -131,13 +133,6 @@ module WSDL
       # @return [Boolean]
       def signature?
         @policy.request.signature?
-      end
-
-      # Returns whether SOAP body signing is enabled.
-      #
-      # @return [Boolean]
-      def sign_body?
-        @policy.request.sign_body?
       end
 
       # Returns whether timestamp signing is enabled.

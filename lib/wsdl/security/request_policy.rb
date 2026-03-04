@@ -83,11 +83,6 @@ module WSDL
       end
 
       # @return [Boolean]
-      def sign_body?
-        @signature&.options&.sign_body? || false
-      end
-
-      # @return [Boolean]
       def sign_timestamp?
         (@signature&.options&.sign_timestamp? && timestamp?) || false
       end

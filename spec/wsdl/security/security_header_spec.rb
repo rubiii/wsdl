@@ -730,53 +730,6 @@ describe WSDL::Security::SecurityHeader do
       end
     end
 
-    context 'with sign_body disabled' do
-      subject(:header) { described_class.new(config) }
-
-      let(:config) do
-        WSDL::Security::Config.new.tap do |c|
-          c.timestamp
-          c.signature(
-            certificate: certificate,
-            private_key: private_key,
-            sign_body: false
-          )
-        end
-      end
-
-      it 'does not sign the body' do
-        result = header.apply(basic_envelope)
-        doc = parse_xml(result)
-
-        body = doc.at_xpath('//env:Body', 'env' => 'http://schemas.xmlsoap.org/soap/envelope/')
-
-        # Body should not have wsu:Id when not being signed
-        wsu_id = body.attribute_with_ns(
-          'Id',
-          'http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd'
-        )
-
-        expect(wsu_id).to be_nil
-      end
-
-      it 'still signs the timestamp' do
-        result = header.apply(basic_envelope)
-        doc = parse_xml(result)
-
-        timestamp = security_node(doc).at_xpath(
-          'wsu:Timestamp',
-          'wsu' => 'http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd'
-        )
-
-        wsu_id = timestamp.attribute_with_ns(
-          'Id',
-          'http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd'
-        )
-
-        expect(reference_exists_for_id?(doc, wsu_id.value)).to be true
-      end
-    end
-
     context 'with sign_timestamp disabled' do
       subject(:header) { described_class.new(config) }
 

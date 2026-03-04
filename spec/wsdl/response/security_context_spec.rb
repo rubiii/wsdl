@@ -23,6 +23,15 @@ RSpec.describe WSDL::Response::SecurityContext, :verifier_helpers do
     XML
   end
 
+  # Helper to build a response signed only over Timestamp and then tamper Body.
+  def tampered_response_with_timestamp_only_signature
+    signed = build_signed_response_without_body_reference
+
+    doc = Nokogiri::XML(signed)
+    doc.at_xpath('//soap:Body//*[local-name()="Name"]', ns).content = 'Mallory'
+    doc.to_xml
+  end
+
   # Helper to build a SOAP response with timestamp only (no signature)
   def response_with_timestamp_xml(created:, expires:)
     <<~XML
@@ -181,6 +190,15 @@ RSpec.describe WSDL::Response::SecurityContext, :verifier_helpers do
 
       it 'returns true' do
         expect(context.verify_signature!).to be true
+      end
+    end
+
+    context 'when signature does not cover SOAP Body' do
+      let(:xml) { tampered_response_with_timestamp_only_signature }
+
+      it 'raises SignatureVerificationError' do
+        expect { context.verify_signature! }
+          .to raise_error(WSDL::SignatureVerificationError, /reference to the SOAP Body/)
       end
     end
   end
@@ -342,6 +360,18 @@ RSpec.describe WSDL::Response::SecurityContext, :verifier_helpers do
 
       it 'returns empty array' do
         expect(context.errors).to be_empty
+      end
+    end
+
+    context 'when signature-only verification fails' do
+      let(:xml) { build_signed_response_without_body_reference }
+
+      before do
+        context.signature_valid?
+      end
+
+      it 'includes signature validation errors' do
+        expect(context.errors).to include('SignedInfo must contain a reference to the SOAP Body')
       end
     end
   end

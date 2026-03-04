@@ -30,6 +30,9 @@ Configure response verification policy with:
 
 Default mode is `:required`.
 
+When a response signature is verified (`:required` or `:if_present`), validation requires that `ds:SignedInfo`
+contains a reference to SOAP Body.
+
 ## SOAP Version Behavior
 
 Security header `mustUnderstand` is emitted per SOAP version:

@@ -121,7 +121,6 @@ RSpec.describe WSDL::Security::Config do
         certificate:,
         private_key:,
         digest_algorithm: :sha512,
-        sign_body: false,
         sign_timestamp: true,
         sign_addressing: true,
         explicit_namespace_prefixes: true,
@@ -130,7 +129,6 @@ RSpec.describe WSDL::Security::Config do
 
       expect(config.signature?).to be(true)
       expect(config.configured?).to be(true)
-      expect(config.sign_body?).to be(false)
       expect(config.sign_timestamp?).to be(false)
       expect(config.sign_addressing?).to be(true)
       expect(config.explicit_namespace_prefixes?).to be(true)

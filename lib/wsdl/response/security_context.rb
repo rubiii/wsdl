@@ -101,6 +101,7 @@ module WSDL
       # This performs full signature verification including:
       # - Locating the signing certificate (from BinarySecurityToken or provided)
       # - Verifying all Reference digests match the signed elements
+      # - Enforcing that SignedInfo references the SOAP Body
       # - Verifying the SignatureValue over the canonicalized SignedInfo
       #
       # Returns false if no signature is present. Use {#signature_present?}
@@ -117,6 +118,8 @@ module WSDL
       end
 
       # Verifies the signature and raises an error if invalid.
+      #
+      # A valid signature must include a SignedInfo reference to SOAP Body.
       #
       # @raise [SignatureVerificationError] if signature is missing or invalid
       # @return [true] if signature is valid
@@ -233,12 +236,19 @@ module WSDL
 
       # Returns all errors from security verification.
       #
-      # This includes errors from both signature and timestamp validation.
+      # This includes errors from both full verification runs and
+      # signature-only verification runs.
       #
       # @return [Array<String>] error messages
       #
       def errors
-        verifier.errors
+        combined_errors = verifier.errors.dup
+
+        if defined?(@verifier_without_timestamp) && @verifier_without_timestamp
+          combined_errors.concat(@verifier_without_timestamp.errors)
+        end
+
+        combined_errors.uniq
       end
 
       private

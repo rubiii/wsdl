@@ -63,11 +63,13 @@ RSpec.shared_context 'verifier test helpers' do
     )
   end
 
-  # Builds a signed SOAP response using the library
-  def build_signed_response(body_id: 'Body-test123', explicit_namespace_prefixes: false, digest_algorithm: :sha256)
+  # Builds a signed SOAP response using the library.
+  # Body signing is always enabled.
+  def build_signed_response(body_id: 'Body-test123', explicit_namespace_prefixes: false, digest_algorithm: :sha256,
+                            sign_timestamp: true, soap_namespace: WSDL::NS::SOAP_1_1)
     envelope = <<~XML
       <?xml version="1.0" encoding="UTF-8"?>
-      <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+      <soap:Envelope xmlns:soap="#{soap_namespace}">
         <soap:Header/>
         <soap:Body xmlns:wsu="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd" wsu:Id="#{body_id}">
           <GetUserResponse xmlns="http://example.com/users">
@@ -85,11 +87,23 @@ RSpec.shared_context 'verifier test helpers' do
       certificate: certificate,
       private_key: private_key,
       explicit_namespace_prefixes: explicit_namespace_prefixes,
-      digest_algorithm: digest_algorithm
+      digest_algorithm: digest_algorithm,
+      sign_timestamp: sign_timestamp
     )
 
     header = WSDL::Security::SecurityHeader.new(config)
     header.apply(envelope)
+  end
+
+  # Returns signed SOAP XML with the Body reference removed from SignedInfo.
+  def build_signed_response_without_body_reference(**options)
+    xml = build_signed_response(**options)
+    doc = Nokogiri::XML(xml)
+    body_id = body_wsu_id(doc)
+    return xml unless body_id
+
+    doc.xpath("//ds:SignedInfo/ds:Reference[@URI='##{body_id}']", ns).remove
+    doc.to_xml
   end
 
   # Parses XML string into Nokogiri document
@@ -103,7 +117,8 @@ RSpec.shared_context 'verifier test helpers' do
       'ds' => 'http://www.w3.org/2000/09/xmldsig#',
       'wsse' => 'http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd',
       'wsu' => 'http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd',
-      'soap' => 'http://schemas.xmlsoap.org/soap/envelope/'
+      'soap' => 'http://schemas.xmlsoap.org/soap/envelope/',
+      'soap12' => 'http://www.w3.org/2003/05/soap-envelope'
     }
   end
 
@@ -159,6 +174,13 @@ RSpec.shared_context 'verifier test helpers' do
         </soap:Body>
       </soap:Envelope>
     XML
+  end
+
+  def body_wsu_id(document)
+    body = document.at_xpath('//soap:Body | //soap12:Body', ns)
+    return nil unless body
+
+    body.attribute_with_ns('Id', ns.fetch('wsu'))&.value
   end
 end
 

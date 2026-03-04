@@ -36,7 +36,6 @@ RSpec.describe WSDL::Security::RequestPolicy do
 
     it 'derives signature flags from signature options' do
       options = WSDL::Security::SignatureOptions.from_hash(
-        sign_body: false,
         sign_timestamp: true,
         sign_addressing: true,
         explicit_namespace_prefixes: true,
@@ -52,7 +51,6 @@ RSpec.describe WSDL::Security::RequestPolicy do
 
       policy = base_policy.with_signature(signature_policy)
 
-      expect(policy.sign_body?).to be(false)
       expect(policy.sign_timestamp?).to be(false)
       expect(policy.sign_addressing?).to be(true)
       expect(policy.explicit_namespace_prefixes?).to be(true)

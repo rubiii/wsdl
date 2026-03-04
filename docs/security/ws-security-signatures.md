@@ -24,7 +24,6 @@ end
 Defaults:
 
 - `digest_algorithm: :sha256`
-- `sign_body: true`
 - `sign_timestamp: true`
 - `sign_addressing: false`
 - `key_reference: :binary_security_token`
@@ -43,7 +42,6 @@ operation.prepare do
       private_key: private_key_pem,
       digest_algorithm: :sha512,
       key_reference: :issuer_serial,
-      sign_body: true,
       sign_timestamp: true,
       sign_addressing: true,
       explicit_namespace_prefixes: true
@@ -57,6 +55,8 @@ Accepted `key_reference` values:
 - `:binary_security_token`
 - `:issuer_serial`
 - `:subject_key_identifier`
+
+SOAP Body is always signed when signatures are enabled.
 
 ## Encrypted Private Keys
 
@@ -100,6 +100,8 @@ end
 - directory path
 - array of certificates
 - `OpenSSL::X509::Store`
+
+Inbound signature verification requires `SignedInfo` to reference SOAP Body.
 
 ## Conflict Errors
 

@@ -139,6 +139,7 @@ module WSDL
   # This error is raised when:
   # - The response does not contain a signature when one is expected
   # - The signature verification process fails
+  # - SignedInfo does not reference the SOAP Body
   # - The digest values do not match the signed content
   #
   # @example
