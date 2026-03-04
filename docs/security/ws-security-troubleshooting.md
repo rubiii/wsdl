@@ -19,6 +19,8 @@ Fix:
 2. Configure `trust_store` appropriately.
 3. Confirm certificate chain and message integrity.
 4. Confirm `ds:SignedInfo` includes a reference to SOAP Body.
+5. If peer uses `issuer_serial` or `subject_key_identifier`, include the signer cert in a `trust_store` array or pass `certificate:`.
+6. Ensure `ds:KeyInfo/wsse:SecurityTokenReference` is present and points to the signing certificate (unreferenced BSTs are ignored).
 
 Example:
 

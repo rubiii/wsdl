@@ -270,7 +270,9 @@ module WSDL
         resolver = Verifier::CertificateResolver.new(
           @document,
           structure_validator.security_node,
-          provided: @provided_certificate
+          signature_node: structure_validator.signature_node,
+          provided: @provided_certificate,
+          trust_store: @trust_store
         )
 
         unless resolver.resolve

@@ -103,6 +103,17 @@ end
 
 Inbound signature verification requires `SignedInfo` to reference SOAP Body.
 
+Certificate resolution order for inbound verification:
+
+1. explicit `certificate:` option (if provided)
+2. `ds:KeyInfo/wsse:SecurityTokenReference`:
+   - `wsse:Reference` to embedded `wsse:BinarySecurityToken`
+   - `ds:X509IssuerSerial` against certificates in `trust_store` arrays
+   - `wsse:KeyIdentifier` with `#X509SubjectKeyIdentifier` against certificates in `trust_store` arrays
+
+If no explicit certificate is provided and no usable `SecurityTokenReference` is present, verification fails.
+Unreferenced `wsse:BinarySecurityToken` elements are not used for implicit certificate selection.
+
 ## Conflict Errors
 
 If you manually inject conflicting WS-Security structures in the same request, `WSDL::RequestSecurityConflictError` is raised before sending.

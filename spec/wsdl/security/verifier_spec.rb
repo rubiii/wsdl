@@ -93,6 +93,52 @@ describe WSDL::Security::Verifier, :verifier_helpers do
       end
     end
 
+    context 'with embedded BST but no SecurityTokenReference' do
+      let(:xml) do
+        doc = Nokogiri::XML(signed_soap_response)
+        doc.xpath('//ds:Signature/ds:KeyInfo', ns).remove
+        doc.to_xml
+      end
+      let(:verifier) { described_class.new(xml) }
+
+      it 'returns false' do
+        expect(verifier.valid?).to be false
+      end
+
+      it 'reports missing certificate resolution' do
+        verifier.valid?
+        expect(verifier.errors).to include('No certificate found for verification')
+      end
+    end
+
+    context 'with issuer_serial key reference and matching trust_store certificate' do
+      let(:xml) { build_signed_response(key_reference: :issuer_serial) }
+      let(:verifier) { described_class.new(xml, trust_store: [certificate]) }
+
+      it 'returns true' do
+        expect(verifier.valid?).to be true
+      end
+
+      it 'has no errors' do
+        verifier.valid?
+        expect(verifier.errors).to be_empty
+      end
+    end
+
+    context 'with subject_key_identifier key reference and matching trust_store certificate' do
+      let(:xml) { build_signed_response(key_reference: :subject_key_identifier) }
+      let(:verifier) { described_class.new(xml, trust_store: [certificate]) }
+
+      it 'returns true' do
+        expect(verifier.valid?).to be true
+      end
+
+      it 'has no errors' do
+        verifier.valid?
+        expect(verifier.errors).to be_empty
+      end
+    end
+
     context 'with signature that omits SOAP Body' do
       let(:xml) { build_signed_response_without_body_reference }
       let(:verifier) { described_class.new(xml) }

@@ -6,7 +6,17 @@ require_relative 'shared_context'
 describe WSDL::Security::Verifier::CertificateResolver, :verifier_helpers do
   let(:document) { parse_xml(xml) }
   let(:security_node) { document.at_xpath('//wsse:Security', ns) }
-  let(:resolver) { described_class.new(document, security_node, provided: provided_cert) }
+  let(:signature_node) { document.at_xpath('//ds:Signature', ns) }
+  let(:trust_store) { nil }
+  let(:resolver) do
+    described_class.new(
+      document,
+      security_node,
+      signature_node: signature_node,
+      provided: provided_cert,
+      trust_store: trust_store
+    )
+  end
   let(:provided_cert) { nil }
 
   describe '#resolve' do
@@ -25,6 +35,34 @@ describe WSDL::Security::Verifier::CertificateResolver, :verifier_helpers do
       it 'has no errors' do
         resolver.resolve
         expect(resolver.errors).to be_empty
+      end
+    end
+
+    context 'with X509IssuerSerial and matching trust_store certificate' do
+      let(:xml) { build_signed_response(key_reference: :issuer_serial) }
+      let(:trust_store) { [certificate] }
+
+      it 'returns true' do
+        expect(resolver.resolve).to be true
+      end
+
+      it 'resolves the certificate from trust_store' do
+        resolver.resolve
+        expect(resolver.certificate.subject.to_s).to eq(certificate.subject.to_s)
+      end
+    end
+
+    context 'with X509SubjectKeyIdentifier and matching trust_store certificate' do
+      let(:xml) { build_signed_response(key_reference: :subject_key_identifier) }
+      let(:trust_store) { [certificate] }
+
+      it 'returns true' do
+        expect(resolver.resolve).to be true
+      end
+
+      it 'resolves the certificate from trust_store' do
+        resolver.resolve
+        expect(resolver.certificate.subject.to_s).to eq(certificate.subject.to_s)
       end
     end
 
@@ -94,6 +132,23 @@ describe WSDL::Security::Verifier::CertificateResolver, :verifier_helpers do
       end
     end
 
+    context 'with BinarySecurityToken but no SecurityTokenReference' do
+      let(:xml) do
+        doc = Nokogiri::XML(signed_soap_response)
+        doc.xpath('//ds:Signature/ds:KeyInfo', ns).remove
+        doc.to_xml
+      end
+
+      it 'returns false' do
+        expect(resolver.resolve).to be false
+      end
+
+      it 'adds error about missing certificate' do
+        resolver.resolve
+        expect(resolver.errors).to include('No certificate found for verification')
+      end
+    end
+
     context 'with invalid provided certificate type' do
       let(:xml) { unsigned_soap_response }
       let(:provided_cert) { 12_345 }
@@ -145,6 +200,11 @@ describe WSDL::Security::Verifier::CertificateResolver, :verifier_helpers do
                     </ds:Reference>
                   </ds:SignedInfo>
                   <ds:SignatureValue>fakesig==</ds:SignatureValue>
+                  <ds:KeyInfo>
+                    <wsse:SecurityTokenReference>
+                      <wsse:Reference URI="#Token-123"/>
+                    </wsse:SecurityTokenReference>
+                  </ds:KeyInfo>
                 </ds:Signature>
               </wsse:Security>
             </soap:Header>

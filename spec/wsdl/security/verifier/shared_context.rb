@@ -17,6 +17,10 @@ RSpec.shared_context 'verifier test helpers' do
     cert.public_key = private_key.public_key
     cert.not_before = Time.now
     cert.not_after = Time.now + 3600
+    extension_factory = OpenSSL::X509::ExtensionFactory.new
+    extension_factory.subject_certificate = cert
+    extension_factory.issuer_certificate = cert
+    cert.add_extension(extension_factory.create_extension('subjectKeyIdentifier', 'hash', false))
     cert.sign(private_key, OpenSSL::Digest.new('SHA256'))
     cert
   end
@@ -66,7 +70,7 @@ RSpec.shared_context 'verifier test helpers' do
   # Builds a signed SOAP response using the library.
   # Body signing is always enabled.
   def build_signed_response(body_id: 'Body-test123', explicit_namespace_prefixes: false, digest_algorithm: :sha256,
-                            sign_timestamp: true, soap_namespace: WSDL::NS::SOAP_1_1)
+                            soap_namespace: WSDL::NS::SOAP_1_1, **signature_options)
     envelope = <<~XML
       <?xml version="1.0" encoding="UTF-8"?>
       <soap:Envelope xmlns:soap="#{soap_namespace}">
@@ -88,7 +92,8 @@ RSpec.shared_context 'verifier test helpers' do
       private_key: private_key,
       explicit_namespace_prefixes: explicit_namespace_prefixes,
       digest_algorithm: digest_algorithm,
-      sign_timestamp: sign_timestamp
+      sign_timestamp: signature_options.fetch(:sign_timestamp, true),
+      key_reference: signature_options.fetch(:key_reference, :binary_security_token)
     )
 
     header = WSDL::Security::SecurityHeader.new(config)
