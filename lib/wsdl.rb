@@ -25,76 +25,25 @@ require 'logging'
 #   response = operation.invoke
 #
 module WSDL
-  # Returns the HTTP adapter class to use for requests.
-  #
-  # @return [Class] the HTTP adapter class (defaults to {HTTPClient})
-  #
-  def self.http_adapter
-    @http_adapter ||= HTTPClient
-  end
-
-  # Sets the HTTP adapter class to use for requests.
-  #
-  # @param adapter [Class] an HTTP adapter class that responds to `new`
-  # @return [Class] the adapter class
-  #
   class << self
-    attr_writer :http_adapter
-  end
+    # @return [Class] the HTTP adapter class (defaults to {HTTPClient})
+    attr_reader :http_adapter
 
-  # Returns the default cache instance for parsed WSDL definitions.
-  #
-  # By default, a shared {Cache} instance is used to avoid redundant
-  # HTTP requests and parsing when creating multiple Client instances
-  # for the same document.
-  #
-  # @return [Cache, nil] the cache instance, or nil if caching is disabled
-  #
-  def self.cache
-    return @cache if defined?(@cache)
+    # @return [Cache, nil] the cache instance, or nil if caching is disabled
+    attr_accessor :cache
 
-    @cache = Cache.new
-  end
+    # @return [Limits] the default limits instance
+    attr_reader :limits
 
-  # Sets the default cache instance.
-  #
-  # @param cache [Cache, nil] a cache instance, or nil to disable caching
-  # @return [Cache, nil] the cache instance
-  #
-  # @example Using a custom cache with TTL
-  #   WSDL.cache = WSDL::Cache.new(ttl: 3600)
-  #
-  # @example Disabling caching globally
-  #   WSDL.cache = nil
-  #
-  class << self
-    attr_writer :cache
-  end
+    # Sets the HTTP adapter class. Pass nil to restore the default.
+    def http_adapter=(adapter)
+      @http_adapter = adapter || HTTPClient
+    end
 
-  # Returns the default resource limits for WSDL parsing.
-  #
-  # By default, a {Limits} instance with sensible defaults is used
-  # to prevent resource exhaustion from malicious WSDL documents.
-  #
-  # @return [Limits] the default limits instance
-  #
-  def self.limits
-    @limits ||= Limits.new
-  end
-
-  # Sets the default resource limits.
-  #
-  # @param limits [Limits] a limits instance
-  # @return [Limits] the limits instance
-  #
-  # @example Increasing the document size limit
-  #   WSDL.limits = WSDL::Limits.new(max_document_size: 20 * 1024 * 1024)
-  #
-  # @example Modifying a single limit
-  #   WSDL.limits = WSDL.limits.with(max_schemas: 100)
-  #
-  class << self
-    attr_writer :limits
+    # Sets the default resource limits. Pass nil to restore defaults.
+    def limits=(value)
+      @limits = value || Limits.new
+    end
   end
 
   # Load core components
@@ -136,4 +85,10 @@ module WSDL
 
   # Load client (main entry point)
   require 'wsdl/client'
+
+  # Initialize defaults. These must be set before spawning threads.
+  # Reconfigure via the corresponding writer (e.g. WSDL.cache = nil).
+  @http_adapter = HTTPClient
+  @cache        = Cache.new
+  @limits       = Limits.new
 end
