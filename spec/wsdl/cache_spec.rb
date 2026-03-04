@@ -46,20 +46,6 @@ RSpec.describe WSDL::Cache do
       expect(cache.fetch('key2') { 'other' }).to eq('value2')
     end
 
-    it 'normalizes inline XML keys to a hash' do
-      xml = '<definitions>test</definitions>'
-      cache.fetch(xml) do
-        'parsed'
-      end
-
-      # Same XML should hit cache
-      expect(cache.fetch(xml) { 'other' }).to eq('parsed')
-
-      # Different XML should not
-      other_xml = '<definitions>other</definitions>'
-      expect(cache.fetch(other_xml) { 'different' }).to eq('different')
-    end
-
     it 'treats URLs and file paths as-is' do
       cache.fetch('http://example.com/service?wsdl') do
         'remote'
@@ -159,15 +145,6 @@ RSpec.describe WSDL::Cache do
 
       expect(cache_with_ttl.key?('key')).to be(false)
     end
-
-    it 'normalizes inline XML keys' do
-      xml = '<definitions>test</definitions>'
-      cache.fetch(xml) do
-        'value'
-      end
-
-      expect(cache.key?(xml)).to be(true)
-    end
   end
 
   describe '#delete' do
@@ -186,18 +163,6 @@ RSpec.describe WSDL::Cache do
 
     it 'returns nil for non-existent key' do
       expect(cache.delete('missing')).to be_nil
-    end
-
-    it 'normalizes inline XML keys' do
-      xml = '<definitions>test</definitions>'
-      cache.fetch(xml) do
-        'value'
-      end
-
-      result = cache.delete(xml)
-
-      expect(result).to eq('value')
-      expect(cache.key?(xml)).to be(false)
     end
   end
 

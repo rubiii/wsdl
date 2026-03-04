@@ -265,6 +265,26 @@ describe WSDL::Parser::Result do
     end
   end
 
+  describe 'source validation' do
+    it 'rejects inline XML content' do
+      expect {
+        described_class.new('<definitions/>', http_mock)
+      }.to raise_error(ArgumentError, /Inline XML WSDL is not supported/)
+    end
+
+    it 'rejects file:// URLs' do
+      expect {
+        described_class.new('file:///tmp/service.wsdl', http_mock)
+      }.to raise_error(ArgumentError, %r{file:// URLs are not supported})
+    end
+
+    it 'rejects unsupported URL schemes' do
+      expect {
+        described_class.new('ftp://example.com/service.wsdl', http_mock)
+      }.to raise_error(ArgumentError, /Unsupported URL scheme/)
+    end
+  end
+
   describe 'schema import failure policy' do
     let(:wsdl_with_missing_schema_import) { fixture('wsdl/juniper') }
 

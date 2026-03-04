@@ -4,9 +4,8 @@ module WSDL
   module Parser
     # Resolves WSDL and schema locations to their XML content.
     #
-    # This class handles three types of locations:
+    # This class handles two types of locations:
     # - HTTP/HTTPS URLs: Fetches the content via HTTP GET
-    # - Raw XML strings: Returns the content as-is
     # - File paths: Reads the content from the local filesystem (with sandbox restrictions)
     #
     # It also supports resolving relative paths against a base location,
@@ -36,15 +35,6 @@ module WSDL
     #
     class Resolver
       include Formatting
-
-      # Pattern for matching HTTP/HTTPS URLs.
-      URL_PATTERN = /^https?:/i
-
-      # Pattern for matching file:// URLs (blocked for security).
-      FILE_URL_PATTERN = /^file:/i
-
-      # Pattern for matching raw XML content (starts with '<').
-      XML_PATTERN = /^</
 
       # Creates a new Resolver instance.
       #
@@ -84,7 +74,7 @@ module WSDL
       # When a base location is provided and the location is relative,
       # the location is resolved against the base before fetching.
       #
-      # @param location [String] a URL, file path, or raw XML string
+      # @param location [String] a URL or file path
       # @param base [String, nil] optional base location for resolving relative paths
       # @return [String] the XML content
       # @raise [Errno::ENOENT] if the file path does not exist
@@ -106,41 +96,34 @@ module WSDL
       # @return [String] the resolved absolute location
       #
       def resolve_location(location, base = nil)
-        # Raw XML is returned as-is
-        return location if location =~ XML_PATTERN
-
-        # Block file:// URLs for security (SSRF prevention)
-        validate_not_file_url!(location)
+        location_source = Source.new(location)
+        validate_location_source!(location_source)
 
         # Already absolute URL
-        return location if location =~ URL_PATTERN
+        return location if location_source.url?
 
         # Already absolute file path
-        return location if absolute_path?(location)
+        return location if location_source.absolute_file_path?
 
         # At this point, location is a relative file path
         # If no base is provided, resolve against current working directory
         # (this handles the initial WSDL being a relative path like "path/to/service.wsdl")
         return File.expand_path(location) if base.nil?
 
-        # If base is inline XML, we can't resolve relative paths against it
+        # Ensure base can anchor relative resolution.
         validate_base_for_relative!(location, base)
 
         # Resolve relative location against base
         resolve_relative(location, base)
       end
 
-      # Checks if a location is relative (not absolute URL, not absolute path, not raw XML).
+      # Checks if a location is relative (not absolute URL, not absolute path).
       #
       # @param location [String] the location to check
       # @return [Boolean] true if the location is relative
       #
       def relative_location?(location)
-        return false if location =~ XML_PATTERN
-        return false if location =~ URL_PATTERN
-        return false if absolute_path?(location)
-
-        true
+        Source.new(location).relative_file_path?
       end
 
       # Checks if file access is allowed in the current configuration.
@@ -164,51 +147,60 @@ module WSDL
         paths.map { |path| canonicalize_path(path) }
       end
 
-      # Validates that a location is not a file:// URL.
+      # Validates that a location uses a supported source type.
       #
-      # file:// URLs are blocked to prevent SSRF attacks that could read
-      # local files through URL-based imports.
+      # Allowed values are HTTP(S) URLs and local file paths.
+      # `file://` and other URI schemes are blocked.
       #
-      # @param location [String] the location to validate
-      # @raise [PathRestrictionError] if the location is a file:// URL
+      # @param source [Source] the source to validate
+      # @raise [PathRestrictionError] if the location is not allowed
       #
-      def validate_not_file_url!(location)
-        return unless location =~ FILE_URL_PATTERN
+      def validate_location_source!(source)
+        if source.inline_xml?
+          raise PathRestrictionError,
+                "Inline XML is not supported as a WSDL/schema location: #{source.value.inspect}. " \
+                'Use an HTTP(S) URL or a local file path.'
+        end
+
+        if source.file_url?
+          raise PathRestrictionError,
+                "file:// URLs are not allowed for security reasons: #{source.value.inspect}. " \
+                'Use a local file path instead if you need to load from the filesystem.'
+        end
+
+        return unless source.unsupported_scheme?
 
         raise PathRestrictionError,
-              "file:// URLs are not allowed for security reasons: #{location.inspect}. " \
-              'Use a local file path instead if you need to load from the filesystem.'
+              "Unsupported URL scheme for schema location #{source.value.inspect}. " \
+              'Only HTTP(S) URLs and local file paths are supported.'
       end
 
       # Validates that a valid base exists for resolving a relative location.
       #
       # This is called after checking for nil base (which is handled by expanding
-      # against current directory), so it only checks for invalid bases like inline XML.
+      # against current directory), so it only checks for invalid base values.
       #
       # @param location [String] the relative location
       # @param base [String] the base location (not nil at this point)
       # @raise [UnresolvableImportError] if the base is invalid for relative resolution
       #
       def validate_base_for_relative!(location, base)
-        return unless base =~ XML_PATTERN
+        base_source = Source.new(base)
+        return if base_source.url? || base_source.file_path?
 
         raise UnresolvableImportError,
-              "Cannot resolve relative path #{location.inspect}: base is inline XML. " \
-              'When loading WSDL from a string, all schema imports must use absolute URLs.'
+              "Cannot resolve relative path #{location.inspect}: base #{base.inspect} is not a URL or file path."
       end
 
       # Fetches content from an absolute location.
       #
-      # @param location [String] the absolute location (URL, file path, or raw XML)
+      # @param location [String] the absolute location (URL or file path)
       # @return [String] the content
       # @raise [PathRestrictionError] if file access is not allowed or path is outside sandbox
       #
       def fetch(location)
-        case location
-        when URL_PATTERN then fetch_http(location)
-        when XML_PATTERN then location
-        else fetch_file(location)
-        end
+        source = Source.new(location)
+        source.url? ? fetch_http(location) : fetch_file(location)
       end
 
       # Fetches content from a file path with security checks.
@@ -424,7 +416,7 @@ module WSDL
       # @return [String] the resolved absolute location
       #
       def resolve_relative(relative, base)
-        if base =~ URL_PATTERN
+        if Source.new(base).url?
           resolve_relative_url(relative, base)
         else
           resolve_relative_path(relative, base)
@@ -452,15 +444,6 @@ module WSDL
         base_dir = File.dirname(File.expand_path(base))
         # Resolve the relative path against it
         File.expand_path(relative, base_dir)
-      end
-
-      # Checks if a path is absolute.
-      #
-      # @param path [String] the path to check
-      # @return [Boolean] true if the path is absolute
-      #
-      def absolute_path?(path)
-        Pathname.new(path).absolute?
       end
     end
   end

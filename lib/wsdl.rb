@@ -103,6 +103,7 @@ module WSDL
   require 'wsdl/errors'
   require 'wsdl/formatting'
   require 'wsdl/limits'
+  require 'wsdl/source'
   require 'wsdl/cache'
   require 'wsdl/httpclient'
 

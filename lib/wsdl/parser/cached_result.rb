@@ -2,7 +2,6 @@
 
 require 'digest'
 require 'json'
-require 'uri'
 
 module WSDL
   module Parser
@@ -19,22 +18,12 @@ module WSDL
       # Bump this when key composition changes.
       #
       # @return [Integer]
-      CACHE_KEY_VERSION = 6
-
-      # Pattern identifying HTTP(S) URL WSDL sources.
-      #
-      # @return [Regexp]
-      URL_PATTERN = /^https?:/i
-
-      # Pattern identifying inline XML sources.
-      #
-      # @return [Regexp]
-      XML_PATTERN = /^</
+      CACHE_KEY_VERSION = 7
 
       class << self
         # Loads a parser result, using cache when available.
         #
-        # @param wsdl [String] WSDL location or inline XML
+        # @param wsdl [String] WSDL location (HTTP(S) URL or local file path)
         # @param http [Object] HTTP adapter
         # @param cache [Cache, nil, Symbol] cache instance, nil, or :default
         # @param parse_options [Hash{Symbol => Object}] parse configuration
@@ -71,7 +60,7 @@ module WSDL
 
         # Builds the parser cache key.
         #
-        # @param wsdl [String] WSDL location or inline XML
+        # @param wsdl [String] WSDL location (HTTP(S) URL or local file path)
         # @param sandbox_paths [Array<String>, nil] resolved sandbox paths
         # @param limits [Limits] resource limits
         # @param reject_doctype [Boolean] DOCTYPE policy
@@ -101,24 +90,10 @@ module WSDL
         # @return [Hash{Symbol => String}] normalized source descriptor
         #
         def normalize_source(wsdl)
-          if wsdl.match?(XML_PATTERN)
-            { type: 'inline', value: Digest::SHA256.hexdigest(wsdl) }
-          elsif wsdl.match?(URL_PATTERN)
-            { type: 'url', value: normalize_url(wsdl) }
-          else
-            { type: 'file', value: File.expand_path(wsdl) }
-          end
-        end
+          source = Source.validate_wsdl!(wsdl)
+          return { type: 'url', value: source.normalized_url } if source.url?
 
-        # Normalizes URLs for stable cache identity.
-        #
-        # @param url [String] URL to normalize
-        # @return [String] canonical URL
-        #
-        def normalize_url(url)
-          URI.parse(url).normalize.to_s
-        rescue URI::InvalidURIError
-          url
+          { type: 'file', value: source.expanded_file_path }
         end
 
         # Normalizes sandbox paths to absolute, unique, sorted values.

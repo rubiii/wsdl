@@ -4,8 +4,7 @@
 
 `WSDL::Client.new(wsdl, **options)` supports:
 
-- `wsdl` must be an HTTP(S) URL or local file path (inline XML strings are not supported).
-
+- `wsdl` must be an HTTP(S) URL or local file path
 - `http:` custom HTTP adapter instance.
 - `pretty_print:` format generated request XML (`true` default).
 - `cache:` parser cache (`:default`, custom cache instance, or `nil`).

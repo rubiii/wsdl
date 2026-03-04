@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require 'digest'
-
 module WSDL
   # Thread-safe in-memory cache for parsed WSDL definitions.
   #
@@ -59,17 +57,14 @@ module WSDL
     # @yieldreturn [Object] the value to cache
     # @return [Object] the cached or computed value
     def fetch(key)
-      # Normalize the key (handle inline XML by hashing)
-      normalized_key = normalize_key(key)
-
       @mutex.synchronize do
-        entry = @store[normalized_key]
+        entry = @store[key]
 
         if entry && !expired?(entry)
           entry[:value]
         else
           value = yield
-          @store[normalized_key] = { value:, timestamp: Time.now }
+          @store[key] = { value:, timestamp: Time.now }
           value
         end
       end
@@ -98,10 +93,8 @@ module WSDL
     # @param key [String] the cache key
     # @return [Boolean] true if the key exists and is valid
     def key?(key)
-      normalized_key = normalize_key(key)
-
       @mutex.synchronize do
-        entry = @store[normalized_key]
+        entry = @store[key]
         !!(entry && !expired?(entry))
       end
     end
@@ -111,31 +104,13 @@ module WSDL
     # @param key [String] the cache key to remove
     # @return [Object, nil] the removed value, or nil if not found
     def delete(key)
-      normalized_key = normalize_key(key)
-
       @mutex.synchronize do
-        entry = @store.delete(normalized_key)
+        entry = @store.delete(key)
         entry&.fetch(:value)
       end
     end
 
     private
-
-    # Normalizes a cache key.
-    #
-    # For inline XML (strings starting with '<'), generates a SHA256 hash
-    # to create a stable, reasonable-length key.
-    # For URLs and file paths, returns the key as-is.
-    #
-    # @param key [String] the original key
-    # @return [String] the normalized key
-    def normalize_key(key)
-      if key.start_with?('<')
-        "inline:#{Digest::SHA256.hexdigest(key)}"
-      else
-        key
-      end
-    end
 
     # Checks if a cache entry has expired.
     #

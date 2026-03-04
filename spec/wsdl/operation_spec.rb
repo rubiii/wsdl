@@ -1,12 +1,18 @@
 # frozen_string_literal: true
 
 require 'spec_helper'
+require 'tempfile'
 
 describe WSDL::Operation do
   subject(:operation)  { described_class.new(operation_info, parser_result, http_mock) }
 
   let(:parser_result)  { WSDL::Parser::Result.new fixture('wsdl/temperature'), http_mock }
   let(:operation_info) { parser_result.operation('ConvertTemperature', 'ConvertTemperatureSoap12', 'ConvertTemp') }
+  let(:tempfiles) { [] }
+
+  after do
+    tempfiles.each(&:close!)
+  end
 
   describe '#endpoint' do
     it 'returns the SOAP endpoint' do
@@ -397,7 +403,7 @@ describe WSDL::Operation do
 
     context 'with strict_schema: false fallback behavior' do
       it 'still raises for non-schema unresolved references' do
-        parser_result = WSDL::Parser::Result.new(header_missing_part_wsdl, http_mock)
+        parser_result = parse_result(header_missing_part_wsdl)
         operation_info = parser_result.operation('TestService', 'TestPort', 'TestOp')
         relaxed_operation = described_class.new(operation_info, parser_result, http_mock, strict_schema: false)
 
@@ -468,6 +474,18 @@ describe WSDL::Operation do
         expect(operation.invoke).to be_a(WSDL::Response)
       end
     end
+  end
+
+  def parse_result(wsdl_xml)
+    WSDL::Parser::Result.new(write_wsdl_file(wsdl_xml), http_mock)
+  end
+
+  def write_wsdl_file(wsdl_xml)
+    file = Tempfile.new(['operation-spec', '.wsdl'])
+    file.write(wsdl_xml)
+    file.flush
+    tempfiles << file
+    file.path
   end
 
   def header_missing_part_wsdl

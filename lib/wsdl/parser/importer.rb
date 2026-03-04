@@ -71,7 +71,7 @@ module WSDL
 
       # Imports a WSDL document and all its dependencies.
       #
-      # @param location [String] the location of the WSDL (URL, file path, or XML string)
+      # @param location [String] the location of the WSDL (URL or file path)
       # @return [void]
       def import(location)
         @import_locations = []

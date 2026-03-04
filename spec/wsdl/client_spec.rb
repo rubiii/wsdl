@@ -102,6 +102,18 @@ describe WSDL::Client do
         }.to raise_error(ArgumentError, /Inline XML WSDL is not supported/)
       end
 
+      it 'rejects file:// URLs' do
+        expect {
+          described_class.new('file:///tmp/service.wsdl')
+        }.to raise_error(ArgumentError, %r{file:// URLs are not supported})
+      end
+
+      it 'rejects unsupported URL schemes' do
+        expect {
+          described_class.new('ftp://example.com/service.wsdl')
+        }.to raise_error(ArgumentError, /Unsupported URL scheme/)
+      end
+
       it 'partitions cache entries by reject_doctype' do
         custom_cache = WSDL::Cache.new
         definition_count = 0

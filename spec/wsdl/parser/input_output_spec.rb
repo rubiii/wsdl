@@ -1,11 +1,18 @@
 # frozen_string_literal: true
 
 require 'spec_helper'
+require 'tempfile'
 
 describe WSDL::Parser::Input do
+  let(:tempfiles) { [] }
+
+  after do
+    tempfiles.each(&:close!)
+  end
+
   describe 'header part resolution' do
     it 'raises a typed error when soap:header is missing message attribute' do
-      parser_result = WSDL::Parser::Result.new(header_missing_message_wsdl, http_mock)
+      parser_result = parse_result(header_missing_message_wsdl)
       operation_info = parser_result.operation('TestService', 'TestPort', 'TestOp')
 
       expect { operation_info.input }.to raise_error(WSDL::UnresolvedReferenceError) { |error|
@@ -15,7 +22,7 @@ describe WSDL::Parser::Input do
     end
 
     it 'raises a typed error when soap:header is missing part attribute' do
-      parser_result = WSDL::Parser::Result.new(header_missing_part_wsdl, http_mock)
+      parser_result = parse_result(header_missing_part_wsdl)
       operation_info = parser_result.operation('TestService', 'TestPort', 'TestOp')
 
       expect { operation_info.input }.to raise_error(WSDL::UnresolvedReferenceError) { |error|
@@ -25,7 +32,7 @@ describe WSDL::Parser::Input do
     end
 
     it 'raises a typed error when soap:header has an empty message attribute' do
-      parser_result = WSDL::Parser::Result.new(header_empty_message_wsdl, http_mock)
+      parser_result = parse_result(header_empty_message_wsdl)
       operation_info = parser_result.operation('TestService', 'TestPort', 'TestOp')
 
       expect { operation_info.input }.to raise_error(WSDL::UnresolvedReferenceError) { |error|
@@ -35,7 +42,7 @@ describe WSDL::Parser::Input do
     end
 
     it 'raises a typed error when soap:header has an empty part attribute' do
-      parser_result = WSDL::Parser::Result.new(header_empty_part_wsdl, http_mock)
+      parser_result = parse_result(header_empty_part_wsdl)
       operation_info = parser_result.operation('TestService', 'TestPort', 'TestOp')
 
       expect { operation_info.input }.to raise_error(WSDL::UnresolvedReferenceError) { |error|
@@ -45,7 +52,7 @@ describe WSDL::Parser::Input do
     end
 
     it 'raises a typed error when soap:header references a missing message part' do
-      parser_result = WSDL::Parser::Result.new(invalid_header_part_wsdl, http_mock)
+      parser_result = parse_result(invalid_header_part_wsdl)
       operation_info = parser_result.operation('TestService', 'TestPort', 'TestOp')
 
       expect { operation_info.input }.to raise_error(WSDL::UnresolvedReferenceError) { |error|
@@ -55,7 +62,7 @@ describe WSDL::Parser::Input do
     end
 
     it 'raises a typed error for output headers with missing message parts' do
-      parser_result = WSDL::Parser::Result.new(invalid_output_header_part_wsdl, http_mock)
+      parser_result = parse_result(invalid_output_header_part_wsdl)
       operation_info = parser_result.operation('TestService', 'TestPort', 'TestOp')
 
       expect { operation_info.output }.to raise_error(WSDL::UnresolvedReferenceError) { |error|
@@ -63,6 +70,18 @@ describe WSDL::Parser::Input do
         expect(error.reference_name).to eq('missing_out')
       }
     end
+  end
+
+  def parse_result(wsdl_xml)
+    WSDL::Parser::Result.new(write_wsdl_file(wsdl_xml), http_mock)
+  end
+
+  def write_wsdl_file(wsdl_xml)
+    file = Tempfile.new(['parser-input', '.wsdl'])
+    file.write(wsdl_xml)
+    file.flush
+    tempfiles << file
+    file.path
   end
 
   def invalid_header_part_wsdl

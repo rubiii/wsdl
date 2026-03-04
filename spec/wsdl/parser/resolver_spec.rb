@@ -33,11 +33,12 @@ describe WSDL::Parser::Resolver do
       expect(xml).to eq(File.read(fixture_path))
     end
 
-    it 'simply returns any raw input' do
+    it 'rejects inline XML input' do
       string = '<xml/>'
 
-      xml = resolver.resolve(string)
-      expect(xml).to eq(string)
+      expect {
+        resolver.resolve(string)
+      }.to raise_error(WSDL::PathRestrictionError, /Inline XML is not supported/)
     end
   end
 
@@ -72,11 +73,12 @@ describe WSDL::Parser::Resolver do
       expect(resolved).to eq(absolute)
     end
 
-    it 'returns raw XML unchanged' do
+    it 'rejects inline XML locations' do
       xml = '<schema/>'
 
-      resolved = resolver.resolve_location(xml, '/some/base.wsdl')
-      expect(resolved).to eq(xml)
+      expect {
+        resolver.resolve_location(xml, '/some/base.wsdl')
+      }.to raise_error(WSDL::PathRestrictionError, /Inline XML is not supported/)
     end
 
     it 'identifies relative locations' do
@@ -95,10 +97,10 @@ describe WSDL::Parser::Resolver do
       expect(resolved).to eq(File.expand_path('relative/path.xsd'))
     end
 
-    it 'raises UnresolvableImportError when base is inline XML' do
+    it 'raises UnresolvableImportError when base is not a URL or file path' do
       expect {
         resolver.resolve_location('relative/path.xsd', '<definitions/>')
-      }.to raise_error(WSDL::UnresolvableImportError, /base is inline XML/)
+      }.to raise_error(WSDL::UnresolvableImportError, /not a URL or file path/)
     end
   end
 
@@ -119,6 +121,12 @@ describe WSDL::Parser::Resolver do
       expect {
         resolver.resolve_location('file:///etc/passwd', base: '/some/base.wsdl')
       }.to raise_error(WSDL::PathRestrictionError, %r{file:// URLs are not allowed})
+    end
+
+    it 'blocks unsupported URL schemes' do
+      expect {
+        resolver.resolve_location('ftp://example.com/schema.xsd')
+      }.to raise_error(WSDL::PathRestrictionError, /Unsupported URL scheme/)
     end
   end
 
@@ -194,9 +202,10 @@ describe WSDL::Parser::Resolver do
         expect(xml).to eq('raw_response for http://example.com/service.wsdl')
       end
 
-      it 'allows raw XML' do
-        xml = resolver.resolve('<xml/>')
-        expect(xml).to eq('<xml/>')
+      it 'blocks inline XML' do
+        expect {
+          resolver.resolve('<xml/>')
+        }.to raise_error(WSDL::PathRestrictionError, /Inline XML is not supported/)
       end
 
       it 'blocks file access' do
