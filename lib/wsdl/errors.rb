@@ -344,7 +344,7 @@ module WSDL
   #   end
   #
   class UnresolvedReferenceError < Error
-    # @return [Symbol, nil] reference type (:binding, :port_type, :message)
+    # @return [Symbol, nil] reference type (:binding, :port_type, :message, :message_part)
     attr_reader :reference_type
 
     # @return [String, nil] unresolved reference name

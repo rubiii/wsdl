@@ -288,6 +288,22 @@ describe WSDL::Operation do
           .to be_equivalent_to(expected).respecting_element_order
       end
     end
+
+    context 'with strict_schema: false fallback behavior' do
+      it 'still raises for non-schema unresolved references' do
+        parser_result = WSDL::Parser::Result.new(header_missing_part_wsdl, http_mock)
+        operation_info = parser_result.operation('TestService', 'TestPort', 'TestOp')
+        relaxed_operation = described_class.new(operation_info, parser_result, http_mock, strict_schema: false)
+
+        expect {
+          relaxed_operation.prepare do
+            tag('TestRequest', 'value')
+          end
+        }.to raise_error(WSDL::UnresolvedReferenceError) { |error|
+          expect(error.reference_type).to eq(:message_part)
+        }
+      end
+    end
   end
 
   describe '#invoke' do
@@ -346,5 +362,64 @@ describe WSDL::Operation do
         expect(operation.invoke).to be_a(WSDL::Response)
       end
     end
+  end
+
+  def header_missing_part_wsdl
+    <<~XML
+      <?xml version="1.0" encoding="UTF-8"?>
+      <definitions xmlns="http://schemas.xmlsoap.org/wsdl/"
+                   xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
+                   xmlns:tns="urn:test"
+                   xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+                   targetNamespace="urn:test"
+                   name="TestService">
+        <types>
+          <xsd:schema targetNamespace="urn:test" elementFormDefault="qualified">
+            <xsd:element name="TestRequest" type="xsd:string"/>
+            <xsd:element name="TestResponse" type="xsd:string"/>
+            <xsd:element name="AuthHeader" type="xsd:string"/>
+          </xsd:schema>
+        </types>
+
+        <message name="TestInput">
+          <part name="parameters" element="tns:TestRequest"/>
+        </message>
+
+        <message name="TestOutput">
+          <part name="parameters" element="tns:TestResponse"/>
+        </message>
+
+        <message name="AuthMessage">
+          <part name="auth" element="tns:AuthHeader"/>
+        </message>
+
+        <portType name="TestPortType">
+          <operation name="TestOp">
+            <input message="tns:TestInput"/>
+            <output message="tns:TestOutput"/>
+          </operation>
+        </portType>
+
+        <binding name="TestBinding" type="tns:TestPortType">
+          <soap:binding style="document" transport="http://schemas.xmlsoap.org/soap/http"/>
+          <operation name="TestOp">
+            <soap:operation soapAction="urn:test#TestOp"/>
+            <input>
+              <soap:body use="literal"/>
+              <soap:header message="tns:AuthMessage" use="literal"/>
+            </input>
+            <output>
+              <soap:body use="literal"/>
+            </output>
+          </operation>
+        </binding>
+
+        <service name="TestService">
+          <port name="TestPort" binding="tns:TestBinding">
+            <soap:address location="http://example.com/test"/>
+          </port>
+        </service>
+      </definitions>
+    XML
   end
 end

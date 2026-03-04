@@ -189,8 +189,9 @@ module WSDL
 
     def request_validation_contract
       contract
-    rescue UnresolvedReferenceError
+    rescue UnresolvedReferenceError => e
       raise if @strict_schema
+      raise unless schema_unresolved_reference?(e)
 
       fallback_validation_contract
     end
@@ -212,6 +213,19 @@ module WSDL
 
     def validation_contract_type
       @validation_contract_type ||= Data.define(:request, :style)
+    end
+
+    def schema_unresolved_reference?(error)
+      schema_reference_types = %i[
+        schema_namespace
+        type
+        simple_type
+        complex_type
+        element
+        attribute
+        attribute_group
+      ]
+      schema_reference_types.include?(error.reference_type)
     end
 
     def enforce_response_verification!(response)

@@ -88,18 +88,61 @@ module WSDL
       #
       # @return [Array<Hash>] the header part definitions
       def collect_header_parts
-        parts = []
+        headers.each_with_object([]) do |header, parts|
+          validate_header_reference!(header)
 
-        headers.each do |header|
-          next unless header.message && header.part
+          message = find_message(header)
+          parts << find_header_part(message, header)
+        end
+      end
 
-          message_parts = find_message(header).parts
-
-          # only add the single header part from the message
-          parts << message_parts.find { |part| part[:name] == header.part }
+      # Validates required soap:header reference attributes.
+      #
+      # The WSDL SOAP binding requires header references to identify both
+      # a message and a part. Missing either makes the contract ambiguous
+      # and must fail closed.
+      #
+      # @param header [HeaderReference] header metadata from the binding
+      # @return [void]
+      # @raise [UnresolvedReferenceError] when required attributes are missing
+      def validate_header_reference!(header)
+        if header.message.nil?
+          raise UnresolvedReferenceError.new(
+            'Unable to resolve soap:header because @message is missing',
+            reference_type: :message,
+            reference_name: nil,
+            context: "soap:header for operation #{@port_type_operation.name.inspect}"
+          )
         end
 
-        parts
+        return if header.part
+
+        raise UnresolvedReferenceError.new(
+          "Unable to resolve soap:header part for message #{header.message.inspect} because @part is missing",
+          reference_type: :message_part,
+          reference_name: nil,
+          namespace: header.message_name&.namespace,
+          context: "soap:header for operation #{@port_type_operation.name.inspect}"
+        )
+      end
+
+      # Finds a SOAP header part in a message definition.
+      #
+      # @param message [MessageInfo] the message that should contain the part
+      # @param header [HeaderReference] header metadata from the binding
+      # @return [Hash] the resolved message part
+      # @raise [UnresolvedReferenceError] if the referenced part does not exist
+      def find_header_part(message, header)
+        message_part = message.parts.find { |part| part[:name] == header.part }
+        return message_part if message_part
+
+        raise UnresolvedReferenceError.new(
+          "Unable to find part #{header.part.inspect} in message #{header.message.inspect}",
+          reference_type: :message_part,
+          reference_name: header.part.to_s,
+          namespace: header.message_name&.namespace,
+          context: "soap:header for operation #{@port_type_operation.name.inspect}"
+        )
       end
 
       # Returns the header definitions from the binding operation.

@@ -28,6 +28,7 @@ WSDL::Client.new('/app/wsdl/service.wsdl', strict_schema: false)
 
 - Recoverable schema import failures are logged and skipped.
 - Parsing can proceed with partial schema metadata.
+- Structural WSDL reference errors still raise (best effort does not downgrade binding/message integrity checks).
 
 Fatal security/path errors still raise in both modes.
 

@@ -12,7 +12,8 @@ module WSDL
         # @param header_node [Nokogiri::XML::Node] soap:header or soap12:header node
         # @return [HeaderReference] parsed header reference
         def from_node(header_node)
-          message = header_node['message']
+          message = normalize_required_attribute(header_node['message'])
+          part = normalize_required_attribute(header_node['part'])
           default_namespace = QualifiedName.document_namespace(header_node.document.root)
           message_name = if message
             QualifiedName.parse(message, namespaces: header_node.namespaces, default_namespace:)
@@ -23,9 +24,18 @@ module WSDL
             namespace: header_node['namespace'],
             use: header_node['use'],
             message:,
-            part: header_node['part'],
+            part:,
             message_name:
           )
+        end
+
+        private
+
+        def normalize_required_attribute(value)
+          return nil unless value
+
+          normalized = value.strip
+          normalized.empty? ? nil : normalized
         end
       end
     }

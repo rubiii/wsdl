@@ -39,7 +39,8 @@ client = WSDL::Client.new(
 `strict_schema: false`:
 
 - Recoverable import failures are tolerated (best effort).
-- Request validation is relaxed for unknown structure.
+- Request validation is relaxed for unknown structure caused by incomplete schema metadata.
+- Structural WSDL reference errors (for example unresolved `message`/`part` in bindings) still raise.
 
 ## Cache
 
