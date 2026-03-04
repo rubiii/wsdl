@@ -72,3 +72,9 @@ Fix:
 - Inspect `response.raw` for returned security headers.
 - Check `response.security.errors` and `response.security.signed_elements`.
 - Start with `verify_response mode: :if_present` while integrating, then harden to `:required`.
+
+## See also
+
+- [WS-Security Overview](ws-security.md)
+- [WS-Security Signatures](ws-security-signatures.md)
+- [Handling Responses](../core/handling-responses.md)

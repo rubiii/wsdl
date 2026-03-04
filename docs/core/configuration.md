@@ -129,3 +129,10 @@ client = WSDL::Client.new(wsdl, reject_doctype: true)
 ```
 
 Disable only for trusted payloads.
+
+## See also
+
+- [Getting Started](../getting_started.md)
+- [Resolving Imports](resolving-imports.md)
+- [Strict Schema Fixture Matrix](../reference/strict-schema-fixture-matrix.md)
+- [Specifications and References](../reference/specifications.md)

@@ -69,3 +69,9 @@ Modes:
 - `:required` (default): signature must be present and valid.
 - `:if_present`: verify when signature exists.
 - `:disabled`: skip verification.
+
+## See also
+
+- [Getting Started](../getting_started.md)
+- [WS-Security Overview](../security/ws-security.md)
+- [WS-Security Troubleshooting](../security/ws-security-troubleshooting.md)

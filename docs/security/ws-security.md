@@ -49,3 +49,5 @@ Detection is namespace-aware (expanded names), not prefix-based.
 - [Signatures](ws-security-signatures.md)
 - [XML Safety](ws-security-xml-safety.md)
 - [Troubleshooting](ws-security-troubleshooting.md)
+- [Handling Responses](../core/handling-responses.md)
+- [Getting Started](../getting_started.md)

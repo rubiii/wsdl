@@ -67,3 +67,9 @@ Strict request validation depends on operation-relevant schema completeness.
 
 - In strict mode, incomplete operation metadata causes request validation errors.
 - In non-strict mode, known parts are validated and unknown parts are tolerated.
+
+## See also
+
+- [Getting Started](../getting_started.md)
+- [Configuration](configuration.md)
+- [Strict Schema Fixture Matrix](../reference/strict-schema-fixture-matrix.md)

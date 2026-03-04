@@ -87,3 +87,9 @@ pp minimal.to_h
 ## Empty Input Operations
 
 If both request header and body are empty (`contract.request.empty? == true`), the operation can be invoked without defining `operation.prepare`.
+
+## See also
+
+- [Getting Started](../getting_started.md)
+- [Building Requests](building-requests.md)
+- [Handling Responses](handling-responses.md)

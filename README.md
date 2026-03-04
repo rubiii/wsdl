@@ -86,7 +86,7 @@ response.body   # => { "GetOrderResponse" => { "order" => { ... } } }
 
 ## Documentation
 
-See the [docs](docs/index.md) folder for guides on configuration, WS-Security, and more.
+See [Getting Started](docs/getting_started.md) for the documentation entrypoint and guide map.
 
 ## License
 

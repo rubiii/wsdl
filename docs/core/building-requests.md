@@ -133,3 +133,10 @@ client = WSDL::Client.new(
 ## RPC/Literal Behavior
 
 For `rpc/literal`, request serialization applies an operation wrapper when needed, using `soap:body@namespace` if present.
+
+## See also
+
+- [Getting Started](../getting_started.md)
+- [Inspecting Services](inspecting-services.md)
+- [Handling Responses](handling-responses.md)
+- [WS-Security Overview](../security/ws-security.md)

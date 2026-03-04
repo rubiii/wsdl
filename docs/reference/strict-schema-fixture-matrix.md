@@ -59,3 +59,9 @@ These fixtures require explicit `sandbox_paths` for sibling relative imports.
 | Fixture | Default Behavior | With `sandbox_paths` |
 | --- | --- | --- |
 | `wsdl/travelport/system_v32_0/System.wsdl` | `WSDL::PathRestrictionError` in strict and relaxed mode | Parses in strict and relaxed mode |
+
+## See also
+
+- [Configuration](../core/configuration.md)
+- [Resolving Imports](../core/resolving-imports.md)
+- [Getting Started](../getting_started.md)

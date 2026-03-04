@@ -23,7 +23,7 @@ bundle exec yard        # Generate YARD documentation
 - **Parser** — Parses WSDL and XSD documents
 - **Request DSL + Serializer** — `operation.prepare { ... }` builds AST and `WSDL::Request::Serializer` / `Operation#to_xml` produce SOAP envelopes
 - **Response** — Wraps SOAP responses with parsing and verification
-- **Security** — WS-Security implementation (see `docs/ws-security.md`)
+- **Security** — WS-Security implementation (see `docs/security/ws-security.md`)
 
 ## Workflow Rules
 
@@ -31,7 +31,7 @@ bundle exec yard        # Generate YARD documentation
 
 2. **Run quality checks after every change.** Run `bundle exec rake ci` to ensure both RuboCop and RSpec pass. Never consider a task complete until CI is green.
 
-3. **Follow the official specifications.** Code must conform to the W3C and OASIS specifications in `docs/specifications.md`.
+3. **Follow the official specifications.** Code must conform to the W3C and OASIS specifications in `docs/reference/specifications.md`.
 
 4. **Update documentation after every change.** Check if YARD docs, `docs/` folder, `AGENTS.md`, or `README.md` need updates. Run `bundle exec yard` to verify.
 
@@ -78,7 +78,7 @@ General guidance:
 
 ## Security
 
-WS-Security docs: `docs/ws-security*.md`
+WS-Security docs: `docs/security/ws-security*.md`
 
 Key points:
 - Never log or expose private keys, passwords, or tokens
@@ -101,5 +101,5 @@ Key points:
 | Error definitions | `lib/wsdl/errors.rb` |
 | Namespace constants | `lib/wsdl/ns.rb` |
 | Security constants | `lib/wsdl/security/constants.rb` |
-| WS-Security docs | `docs/ws-security.md` |
-| Specifications | `docs/specifications.md` |
+| WS-Security docs | `docs/security/ws-security.md` |
+| Specifications | `docs/reference/specifications.md` |
