@@ -25,10 +25,8 @@ module WSDL
     # @example Strict verification with exceptions
     #   begin
     #     response.security.verify!
-    #   rescue WSDL::SignatureVerificationError => e
-    #     puts "Signature error: #{e.message}"
-    #   rescue WSDL::TimestampValidationError => e
-    #     puts "Timestamp error: #{e.message}"
+    #   rescue WSDL::SecurityError => e
+    #     puts "Security verification failed: #{e.message}"
     #   end
     #
     # @see WSDL::Security::Verifier

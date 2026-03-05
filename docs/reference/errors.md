@@ -8,10 +8,12 @@ All exceptions raised by this library inherit from `WSDL::Error` or `WSDL::Fatal
 StandardError
 └── WSDL::Error                        # Recoverable domain errors
     └── WSDL::FatalError               # Non-recoverable / security violations
+        └── WSDL::SecurityError        # Response verification failures
 ```
 
 - **`WSDL::Error`** — base for all WSDL errors. Rescue this to catch everything.
 - **`WSDL::FatalError`** — non-recoverable conditions (security violations, resource exhaustion, path restrictions). These should never be silently swallowed.
+- **`WSDL::SecurityError`** — response security verification failures (signature, certificate, timestamp, algorithm). Rescue this to catch all verification errors at once.
 
 ## Full Hierarchy
 
@@ -21,10 +23,6 @@ WSDL::Error
 │   └── WSDL::SchemaImportParseError
 ├── WSDL::UnsupportedStyleError
 ├── WSDL::InvalidHTTPAdapterError
-├── WSDL::SignatureVerificationError
-├── WSDL::CertificateValidationError
-├── WSDL::TimestampValidationError
-├── WSDL::UnsupportedAlgorithmError
 ├── WSDL::UnresolvedReferenceError
 ├── WSDL::DuplicateDefinitionError
 ├── WSDL::RequestDefinitionError
@@ -33,10 +31,15 @@ WSDL::Error
 ├── WSDL::SealedCollectionError
 │
 └── WSDL::FatalError
-    ├── WSDL::UnresolvableImportError
-    ├── WSDL::PathRestrictionError
+    ├── WSDL::SecurityError
+    │   ├── WSDL::SignatureVerificationError
+    │   ├── WSDL::CertificateValidationError
+    │   ├── WSDL::TimestampValidationError
+    │   └── WSDL::UnsupportedAlgorithmError
     ├── WSDL::XMLSecurityError
     ├── WSDL::RequestSecurityConflictError
+    ├── WSDL::UnresolvableImportError
+    ├── WSDL::PathRestrictionError
     └── WSDL::ResourceLimitError
 ```
 
@@ -62,7 +65,9 @@ WSDL::Error
 | `UnresolvedReferenceError` | Binding, portType, message, or schema reference cannot be resolved |
 | `DuplicateDefinitionError` | Two imported documents define the same component key |
 
-### Security Errors
+### Security Verification Errors (fatal)
+
+All inherit from `WSDL::SecurityError < WSDL::FatalError`. Rescue `WSDL::SecurityError` to catch any of these.
 
 | Error | When |
 |-------|------|
@@ -70,15 +75,20 @@ WSDL::Error
 | `CertificateValidationError` | Certificate expired, untrusted, or chain validation fails |
 | `TimestampValidationError` | Response timestamp expired or clock skew exceeded |
 | `UnsupportedAlgorithmError` | Unknown or unsupported algorithm URI in response signature |
-| `XMLSecurityError` | XML attack detected (entity amplification, excessive depth) (**fatal**) |
+
+### Other Fatal Errors
+
+| Error | When |
+|-------|------|
+| `XMLSecurityError` | XML attack detected (entity amplification, excessive depth) |
+| `PathRestrictionError` | File path violates sandbox restrictions |
+| `ResourceLimitError` | Document size, schema count, or other limit exceeded |
 
 ### Infrastructure Errors
 
 | Error | When |
 |-------|------|
 | `InvalidHTTPAdapterError` | Custom HTTP adapter missing required methods |
-| `PathRestrictionError` | File path violates sandbox restrictions (**fatal**) |
-| `ResourceLimitError` | Document size, schema count, or other limit exceeded (**fatal**) |
 | `SealedCollectionError` | Internal: mutating a sealed parser collection |
 
 ## Rescue Patterns
@@ -90,10 +100,12 @@ rescue WSDL::Error => e
 # Catch only fatal errors
 rescue WSDL::FatalError => e
 
-# Catch security errors during verification
-rescue WSDL::SignatureVerificationError,
-       WSDL::CertificateValidationError,
-       WSDL::TimestampValidationError => e
+# Catch all security verification errors
+rescue WSDL::SecurityError => e
+
+# Catch specific security errors
+rescue WSDL::SignatureVerificationError => e
+rescue WSDL::TimestampValidationError => e
 ```
 
 ## Source

@@ -52,14 +52,14 @@ module WSDL
         !@value.nil? && (!@value.respond_to?(:empty?) || !@value.empty?)
       end
 
-      # @raise [SecurityError] always raises to prevent serialization
+      # @raise [::SecurityError] always raises to prevent serialization
       def marshal_dump
-        raise SecurityError, 'Cannot marshal sensitive values - this would expose secrets'
+        raise ::SecurityError, 'Cannot marshal sensitive values - this would expose secrets'
       end
 
-      # @raise [SecurityError] always raises to prevent deserialization
+      # @raise [::SecurityError] always raises to prevent deserialization
       def marshal_load(_data)
-        raise SecurityError, 'Cannot unmarshal sensitive values'
+        raise ::SecurityError, 'Cannot unmarshal sensitive values'
       end
 
       # @return [String] the redacted placeholder

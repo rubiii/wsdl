@@ -65,7 +65,7 @@ Strict verification with raised errors:
 ```ruby
 begin
   response.security.verify!
-rescue WSDL::SignatureVerificationError, WSDL::TimestampValidationError => e
+rescue WSDL::SecurityError => e
   warn e.message
 end
 ```

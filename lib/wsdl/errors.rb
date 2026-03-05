@@ -134,6 +134,21 @@ module WSDL
   class InvalidHTTPAdapterError < Error
   end
 
+  # Base class for response security verification errors.
+  #
+  # All errors raised during WS-Security response verification inherit
+  # from this class, making it easy to rescue all verification failures:
+  #
+  # @example Rescuing all security verification errors
+  #   begin
+  #     response.security.verify!
+  #   rescue WSDL::SecurityError => e
+  #     log_security_event(e.message)
+  #   end
+  #
+  class SecurityError < FatalError
+  end
+
   # Raised when signature verification fails on a response.
   #
   # This error is raised when:
@@ -149,7 +164,7 @@ module WSDL
   #     log_security_event("Signature verification failed: #{e.message}")
   #   end
   #
-  class SignatureVerificationError < Error
+  class SignatureVerificationError < SecurityError
   end
 
   # Raised when XML parsing detects a potential security attack.
@@ -205,7 +220,7 @@ module WSDL
   #     puts "Signature problem: #{e.message}"
   #   end
   #
-  class CertificateValidationError < Error
+  class CertificateValidationError < SecurityError
   end
 
   # Raised when response timestamp validation fails.
@@ -236,7 +251,7 @@ module WSDL
   #     puts "Signature problem: #{e.message}"
   #   end
   #
-  class TimestampValidationError < Error
+  class TimestampValidationError < SecurityError
   end
 
   # Raised when an algorithm is not supported or not recognized.
@@ -261,7 +276,7 @@ module WSDL
   #
   # @see https://www.w3.org/TR/xmldsig-bestpractices/
   #
-  class UnsupportedAlgorithmError < Error
+  class UnsupportedAlgorithmError < SecurityError
     # @return [String, nil] the unrecognized algorithm URI
     attr_reader :algorithm_uri
 
