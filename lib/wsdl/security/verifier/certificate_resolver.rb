@@ -149,12 +149,7 @@ module WSDL
           return nil unless uri
           return add_failure_nil("Unsupported SecurityTokenReference URI: #{uri.inspect}") unless uri.start_with?('#')
 
-          token_id = uri.delete_prefix('#')
-          unless valid_element_id?(token_id)
-            return add_failure_nil("Invalid token reference ID format: #{token_id.inspect}")
-          end
-
-          extract_from_binary_security_token(find_binary_security_token_by_id(token_id))
+          extract_from_binary_security_token(find_binary_security_token_by_id(uri.delete_prefix('#')))
         end
 
         # Extracts certificate by matching ds:X509IssuerSerial against trust-store
@@ -215,10 +210,16 @@ module WSDL
 
         # Finds BinarySecurityToken by its ID attribute.
         #
+        # Validates the ID format before interpolating into XPath to prevent
+        # XPath injection, regardless of whether the caller performed validation.
+        #
         # @param token_id [String]
         # @return [Nokogiri::XML::Element, nil]
         def find_binary_security_token_by_id(token_id)
           return nil unless @security_node
+          unless valid_element_id?(token_id)
+            return add_failure_nil("Invalid token reference ID format: #{token_id.inspect}")
+          end
 
           @security_node.at_xpath("wsse:BinarySecurityToken[@wsu:Id='#{token_id}']", ns) ||
             @security_node.at_xpath("wsse:BinarySecurityToken[@Id='#{token_id}']", ns) ||
