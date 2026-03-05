@@ -176,7 +176,7 @@ describe 'Integration with Amazon' do
       part = { element: 'tns:Error', namespaces: { 'xmlns:tns' => namespace } }
       elements = builder.build([part])
 
-      document = WSDL::Request::Document.new
+      document = WSDL::Request::AST.new
       context = WSDL::Request::DSLContext.new(
         document:,
         security: WSDL::Security::Config.new,

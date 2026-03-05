@@ -57,7 +57,7 @@ module WSDL
               'Use operation.reset! to clear the previous request before preparing a new one'
       end
 
-      document = Request::Document.new
+      document = Request::AST.new
       security = Security::Config.new
       context = Request::DSLContext.new(document:, security:, request_limits: @request_limits)
       context.instance_exec(&block)
@@ -120,7 +120,7 @@ module WSDL
     def to_xml
       ensure_request_definition!
 
-      document = prepare_serializable_document(@request_document || Request::Document.new)
+      document = prepare_serializable_document(@request_document || Request::AST.new)
       serializer = Request::Serializer.new(document:, soap_version:, pretty_print:)
       return serializer.serialize unless @security.configured?
 

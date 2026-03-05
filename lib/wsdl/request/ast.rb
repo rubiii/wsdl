@@ -2,8 +2,8 @@
 
 module WSDL
   module Request
-    # Root request AST document.
-    class Document
+    # Root node of the request AST.
+    class AST
       def initialize
         @header = []
         @body = []

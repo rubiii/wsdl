@@ -110,7 +110,7 @@ describe WSDL::Security::SecurityHeader do
 
       it 'accepts and signs a prebuilt Nokogiri document' do
         document = WSDL::Request::Serializer.new(
-          document: WSDL::Request::Document.new,
+          document: WSDL::Request::AST.new,
           soap_version: '1.1',
           pretty_print: true
         ).to_document
