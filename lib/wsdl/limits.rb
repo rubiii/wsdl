@@ -25,8 +25,6 @@ module WSDL
   #   unlimited_schemas = WSDL.limits.with(max_schemas: nil)
   #
   class Limits
-    include Formatting
-
     # Default maximum size for a single WSDL or schema document (10 MB).
     DEFAULT_MAX_DOCUMENT_SIZE = 10 * 1024 * 1024
 
@@ -199,8 +197,8 @@ module WSDL
     #
     def inspect
       parts = {
-        max_document_size: format_bytes(@max_document_size),
-        max_total_download_size: format_bytes(@max_total_download_size),
+        max_document_size: Formatting.format_bytes(@max_document_size),
+        max_total_download_size: Formatting.format_bytes(@max_total_download_size),
         max_schemas: limit_value(@max_schemas),
         max_elements_per_type: limit_value(@max_elements_per_type),
         max_attributes_per_element: limit_value(@max_attributes_per_element),

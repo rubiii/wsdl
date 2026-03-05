@@ -34,8 +34,6 @@ module WSDL
     # @api private
     #
     class Resolver
-      include Formatting
-
       # Creates a new Resolver instance.
       #
       # @param http [Object] an HTTP adapter instance that responds to `get(url)`
@@ -234,7 +232,8 @@ module WSDL
         return if file_size <= @limits.max_document_size
 
         raise ResourceLimitError.new(
-          "File size #{format_bytes(file_size)} exceeds limit of #{format_bytes(@limits.max_document_size)}: #{path}",
+          "File size #{Formatting.format_bytes(file_size)} exceeds limit of " \
+          "#{Formatting.format_bytes(@limits.max_document_size)}: #{path}",
           limit_name: :max_document_size,
           limit_value: @limits.max_document_size,
           actual_value: file_size
@@ -268,8 +267,8 @@ module WSDL
         return if size <= @limits.max_document_size
 
         raise ResourceLimitError.new(
-          "Document size #{format_bytes(size)} exceeds limit of " \
-          "#{format_bytes(@limits.max_document_size)}: #{source}",
+          "Document size #{Formatting.format_bytes(size)} exceeds limit of " \
+          "#{Formatting.format_bytes(@limits.max_document_size)}: #{source}",
           limit_name: :max_document_size,
           limit_value: @limits.max_document_size,
           actual_value: size
@@ -295,8 +294,8 @@ module WSDL
         return if @total_bytes_downloaded <= @limits.max_total_download_size
 
         raise ResourceLimitError.new(
-          "Total download size #{format_bytes(@total_bytes_downloaded)} exceeds limit of " \
-          "#{format_bytes(@limits.max_total_download_size)}",
+          "Total download size #{Formatting.format_bytes(@total_bytes_downloaded)} exceeds limit of " \
+          "#{Formatting.format_bytes(@limits.max_total_download_size)}",
           limit_name: :max_total_download_size,
           limit_value: @limits.max_total_download_size,
           actual_value: @total_bytes_downloaded
