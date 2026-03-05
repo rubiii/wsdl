@@ -29,7 +29,7 @@ bundle exec yard        # Generate YARD documentation
 
 1. **Always make a plan first.** Propose a plan and wait for explicit confirmation before making changes.
 
-2. **Run quality checks after every code change.** Run `bundle exec rake ci` to ensure both RuboCop and RSpec pass. Never consider a task complete until CI is green.
+2. **Run quality checks after every code change.** Run `bundle exec rake ci` to ensure both RuboCop and RSpec pass. Never consider a task complete until CI is green. Let RuboCop autofix problems.
 
 3. **Follow the official specifications.** Code must conform to the W3C and OASIS specifications in `docs/reference/specifications.md`.
 
