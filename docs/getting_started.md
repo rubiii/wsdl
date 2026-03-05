@@ -51,6 +51,11 @@ client = WSDL::Client.new('http://example.com/service?wsdl')
 client.services
 # => { "OrderService" => { ports: { "OrderPort" => { ... } } } }
 
+# For single service/port WSDLs (most common):
+client.operations
+# => ["GetOrder", "CreateOrder", "CancelOrder"]
+
+# For multi-service WSDLs, specify service and port:
 client.operations('OrderService', 'OrderPort')
 # => ["GetOrder", "CreateOrder", "CancelOrder"]
 ```
@@ -58,7 +63,11 @@ client.operations('OrderService', 'OrderPort')
 ## 3. Pick an Operation and Inspect the Contract
 
 ```ruby
-operation = client.operation('OrderService', 'OrderPort', 'GetOrder')
+# For single service/port WSDLs:
+operation = client.operation('GetOrder')
+
+# For multi-service WSDLs, specify service and port:
+# operation = client.operation('OrderService', 'OrderPort', 'GetOrder')
 contract = operation.contract
 
 contract.style            # => "document/literal" or "rpc/literal"

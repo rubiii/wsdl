@@ -22,6 +22,15 @@ client.services
 
 ## Operations
 
+For WSDLs with a single service and port (the most common case), arguments can be omitted:
+
+```ruby
+client.operations
+# => ["GetOrder", "CreateOrder", "CancelOrder"]
+```
+
+For WSDLs with multiple services or ports, specify them explicitly:
+
 ```ruby
 client.operations('OrderService', 'OrderPort')
 # => ["GetOrder", "CreateOrder", "CancelOrder"]
@@ -30,7 +39,11 @@ client.operations('OrderService', 'OrderPort')
 ## Operation Contract
 
 ```ruby
-operation = client.operation('OrderService', 'OrderPort', 'CreateOrder')
+# Single service/port shorthand:
+operation = client.operation('CreateOrder')
+
+# Multi-service explicit form:
+# operation = client.operation('OrderService', 'OrderPort', 'CreateOrder')
 contract = operation.contract
 
 contract.style          # => "document/literal" or "rpc/literal"

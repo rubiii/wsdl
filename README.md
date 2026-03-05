@@ -50,12 +50,16 @@ client.services
 #      }
 #    }
 
-# List operations for a service/port
-client.operations('OrderService', 'OrderPort')
+# List operations (auto-resolves single service/port)
+client.operations
 # => ["GetOrder", "CreateOrder", "CancelOrder"]
 
-# Get an operation handle
-operation = client.operation('OrderService', 'OrderPort', 'GetOrder')
+# Get an operation handle (auto-resolves single service/port)
+operation = client.operation('GetOrder')
+
+# For multi-service WSDLs, specify service and port explicitly:
+# client.operations('OrderService', 'OrderPort')
+# client.operation('OrderService', 'OrderPort', 'GetOrder')
 
 # Inspect the expected request structure
 operation.contract.request.body.paths

@@ -518,6 +518,33 @@ describe WSDL::Client do
       expect { client.operations(service_name, :UnknownPort) }
         .to raise_error(ArgumentError, /Unknown service "AmazonFPS" or port "UnknownPort"/)
     end
+
+    context 'with shorthand (no arguments)' do
+      it 'auto-resolves the only service and port' do
+        operations = client.operations
+        expect(operations.count).to eq(25)
+        expect(operations).to include('GetAccountBalance', 'GetTransaction', 'SettleDebt')
+      end
+
+      it 'raises when the WSDL has multiple services' do
+        multi_service_client = described_class.new(fixture('wsdl/oracle'), http: http_mock, strict_schema: false)
+
+        expect { multi_service_client.operations }
+          .to raise_error(ArgumentError, /Cannot auto-resolve service: expected 1, found \d+/)
+      end
+
+      it 'raises when the WSDL has multiple ports' do
+        multi_port_client = described_class.new(fixture('wsdl/temperature'), http: http_mock)
+
+        expect { multi_port_client.operations }
+          .to raise_error(ArgumentError, /Cannot auto-resolve port.*expected 1, found \d+/)
+      end
+
+      it 'raises when called with exactly 1 argument' do
+        expect { client.operations(:AmazonFPS) }
+          .to raise_error(ArgumentError, /Pass 0 arguments.*or 2 arguments/)
+      end
+    end
   end
 
   describe '#operation' do
@@ -545,6 +572,42 @@ describe WSDL::Client do
       expect { client.operation(service_name, port_name, :UnknownOperation) }
         .to raise_error(ArgumentError,
                         /Unknown operation "UnknownOperation" for service "AmazonFPS" and port "AmazonFPSPort"/)
+    end
+
+    context 'with shorthand (operation name only)' do
+      it 'auto-resolves the only service and port' do
+        operation = client.operation(:Pay)
+        expect(operation).to be_a(WSDL::Operation)
+      end
+
+      it 'also accepts a string operation name' do
+        operation = client.operation('Pay')
+        expect(operation).to be_a(WSDL::Operation)
+      end
+
+      it 'raises if the operation does not exist' do
+        expect { client.operation(:UnknownOperation) }
+          .to raise_error(ArgumentError, /Unknown operation "UnknownOperation"/)
+      end
+
+      it 'raises when the WSDL has multiple services' do
+        multi_service_client = described_class.new(fixture('wsdl/oracle'), http: http_mock, strict_schema: false)
+
+        expect { multi_service_client.operation(:SomeOperation) }
+          .to raise_error(ArgumentError, /Cannot auto-resolve service: expected 1, found \d+/)
+      end
+
+      it 'raises when the WSDL has multiple ports' do
+        multi_port_client = described_class.new(fixture('wsdl/temperature'), http: http_mock)
+
+        expect { multi_port_client.operation(:ConvertTemp) }
+          .to raise_error(ArgumentError, /Cannot auto-resolve port.*expected 1, found \d+/)
+      end
+
+      it 'raises when called with exactly 2 arguments' do
+        expect { client.operation(:AmazonFPS, :AmazonFPSPort) }
+          .to raise_error(ArgumentError, /Pass 1 argument.*or 3 arguments/)
+      end
     end
   end
 end
