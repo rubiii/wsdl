@@ -8,7 +8,7 @@ Implementation targets these standards and profiles:
 - SOAP 1.1 and SOAP 1.2
 - XML Schema (XSD 1.0 constructs used in WSDL ecosystems)
 
-> **Note:** WSDL 2.0 is not supported. See `UnsupportedWSDLVersionError`.
+> **Note:** WSDL 2.0 is not supported. See [Unsupported Features](unsupported-features.md) for details.
 
 ## WS-Security
 
@@ -24,9 +24,9 @@ Implementation targets these standards and profiles:
 
 ## Notes
 
-1. RPC/encoded operations are intentionally unsupported.
-2. [`strict_schema`](../core/configuration.md#strict-schema-mode) governs import strictness and request-validation strictness.
-3. Request generation is DSL -> AST -> XML with no Hash adapter layer.
+1. [`strict_schema`](../core/configuration.md#strict-schema-mode) governs import strictness and request-validation strictness.
+2. Request generation is DSL -> AST -> XML with no Hash adapter layer.
+3. See [Unsupported Features](unsupported-features.md) for features explicitly out of scope (WSDL 2.0, RPC/encoded, EncryptedKey, WS-SecurityPolicy, SwA/MTOM, XML Encryption).
 
 ## See also
 

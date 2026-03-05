@@ -23,6 +23,7 @@ This is the docs entrypoint.
 ### Reference
 
 - [Error Hierarchy](reference/errors.md)
+- [Unsupported Features](reference/unsupported-features.md)
 - [Strict Schema Fixture Matrix](reference/strict-schema-fixture-matrix.md)
 - [Specifications and References](reference/specifications.md)
 

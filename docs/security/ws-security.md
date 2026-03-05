@@ -46,6 +46,16 @@ When outbound security is configured, manually defining conflicting WS-Security 
 
 Detection is namespace-aware (expanded names), not prefix-based.
 
+## Limitations
+
+The following WS-Security features are not supported:
+
+- **EncryptedKey token references** — only direct BST, IssuerSerial, and SubjectKeyIdentifier are supported
+- **WS-SecurityPolicy** — security must be configured manually via the `ws_security` DSL
+- **XML Encryption** — only signing and signature verification are implemented
+
+See [Unsupported Features](../reference/unsupported-features.md) for full details and workarounds.
+
 ## Related Guides
 
 - [UsernameToken](ws-security-username-token.md)
