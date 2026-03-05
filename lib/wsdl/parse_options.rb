@@ -6,7 +6,7 @@ module WSDL
   # Result → Importer).
   #
   # @!attribute [r] sandbox_paths
-  #   @return [Array<String>, nil, Symbol] directories where file access is allowed
+  #   @return [Array<String>, nil] directories where file access is allowed
   # @!attribute [r] limits
   #   @return [Limits] resource limits for DoS protection (always resolved, never nil)
   # @!attribute [r] strict_schema
@@ -15,12 +15,12 @@ module WSDL
   ParseOptions = Data.define(:sandbox_paths, :limits, :strict_schema) {
     # Constructs a {ParseOptions} with sensible defaults.
     #
-    # @param sandbox_paths [Array<String>, nil, Symbol] sandbox paths (default: `:auto`)
+    # @param sandbox_paths [Array<String>, nil] sandbox paths (default: `nil`, auto-resolved by Source)
     # @param limits [Limits, nil] resource limits (default: {WSDL.limits})
     # @param strict_schema [Boolean] strict schema mode (default: `true`)
     # @return [ParseOptions]
     #
-    def self.default(sandbox_paths: :auto, limits: nil, strict_schema: true)
+    def self.default(sandbox_paths: nil, limits: nil, strict_schema: true)
       new(
         sandbox_paths: sandbox_paths,
         limits: limits || WSDL.limits,

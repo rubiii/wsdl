@@ -46,7 +46,7 @@ module WSDL
         schemas = Schema::Collection.new
 
         source = Source.validate_wsdl!(wsdl)
-        resolved_sandbox_paths = resolve_sandbox_paths(source, parse_options.sandbox_paths)
+        resolved_sandbox_paths = source.resolve_sandbox_paths(parse_options.sandbox_paths)
         resolver = Resolver.new(http, sandbox_paths: resolved_sandbox_paths, limits: parse_options.limits)
         importer = Importer.new(resolver, documents, schemas, parse_options)
         importer.import(source.value)
@@ -59,20 +59,6 @@ module WSDL
           schema_import_errors: importer.schema_import_errors.freeze
         )
       end
-
-      # Resolves sandbox paths based on the WSDL source type.
-      #
-      # @param source [Source] the WSDL source
-      # @param sandbox_paths [Symbol, Array<String>, nil] explicit sandbox paths or :auto
-      # @return [Array<String>, nil] resolved sandbox paths, or nil if file access is disabled
-      #
-      def self.resolve_sandbox_paths(source, sandbox_paths)
-        return sandbox_paths unless sandbox_paths == :auto
-        return nil if source.url?
-
-        source.default_sandbox_paths
-      end
-      private_class_method :resolve_sandbox_paths
 
       # Creates a new Result with pre-computed data.
       #

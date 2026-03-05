@@ -134,6 +134,19 @@ module WSDL
       nil
     end
 
+    # Resolves sandbox paths for this source.
+    #
+    # When `nil`, falls back to {#default_sandbox_paths} which returns
+    # the WSDL's parent directory for file sources or `nil` for URLs.
+    #
+    # @param sandbox_paths [Array<String>, nil] explicit paths, or `nil` to use defaults
+    # @return [Array<String>, nil] resolved sandbox paths
+    def resolve_sandbox_paths(sandbox_paths)
+      return sandbox_paths if sandbox_paths
+
+      default_sandbox_paths
+    end
+
     private
 
     # @return [Boolean]

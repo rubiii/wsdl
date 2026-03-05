@@ -69,6 +69,36 @@ RSpec.describe WSDL::Source do
     end
   end
 
+  describe '#resolve_sandbox_paths' do
+    context 'with explicit paths' do
+      it 'returns the explicit paths for a URL source' do
+        source = described_class.new('https://example.com/service.wsdl')
+
+        expect(source.resolve_sandbox_paths(['/custom/path'])).to eq(['/custom/path'])
+      end
+
+      it 'returns the explicit paths for a file source' do
+        source = described_class.new('spec/fixtures/wsdl/amazon.wsdl')
+
+        expect(source.resolve_sandbox_paths(['/custom/path'])).to eq(['/custom/path'])
+      end
+    end
+
+    context 'with nil sentinel' do
+      it 'returns nil for URL sources' do
+        source = described_class.new('https://example.com/service.wsdl')
+
+        expect(source.resolve_sandbox_paths(nil)).to be_nil
+      end
+
+      it 'returns default sandbox paths for file sources' do
+        source = described_class.new('spec/fixtures/wsdl/amazon.wsdl')
+
+        expect(source.resolve_sandbox_paths(nil)).to eq(source.default_sandbox_paths)
+      end
+    end
+  end
+
   describe '.validate_wsdl!' do
     it 'returns a source for valid inputs' do
       source = described_class.validate_wsdl!('https://example.com/service.wsdl')

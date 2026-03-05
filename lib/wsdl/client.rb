@@ -66,7 +66,7 @@ module WSDL
 
       validate_http_adapter!(@http)
 
-      resolved_sandbox_paths = resolve_sandbox_paths(source, @config.sandbox_paths)
+      resolved_sandbox_paths = source.resolve_sandbox_paths(@config.sandbox_paths)
       @parser_result = Parser::CachedResult.load(
         wsdl:,
         http: @http,
@@ -235,25 +235,6 @@ module WSDL
       raise ArgumentError, "Cannot auto-resolve port for service #{resolved_service.inspect}: " \
                            "expected 1, found #{ports.size} (#{names}). " \
                            'Pass explicit service and port names.'
-    end
-
-    # Resolves sandbox paths based on the WSDL source type.
-    #
-    # @param source [Source] the WSDL source
-    # @param sandbox_paths [Array<String>, nil] explicit sandbox paths (overrides automatic detection)
-    # @return [Array<String>, nil] resolved sandbox paths, or nil if file access is disabled
-    #
-    def resolve_sandbox_paths(source, sandbox_paths)
-      # If explicit sandbox_paths provided, use them
-      return sandbox_paths if sandbox_paths
-
-      # URL-loaded WSDLs: disable file access entirely
-      # All schema imports must use HTTP/HTTPS URLs
-      return nil if source.url?
-
-      # File path: sandbox to the WSDL's parent directory
-      # This prevents path traversal attacks while allowing imports within the same directory
-      source.default_sandbox_paths
     end
 
     # Raises if the operation style is not supported.
