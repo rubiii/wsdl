@@ -113,6 +113,23 @@ Modes:
 - `:minimal`: required elements/attributes only.
 - `:full`: includes optional content and wildcard hints.
 
+## Checking Preparation State
+
+Use `operation.prepared?` to check whether `prepare` has been called:
+
+```ruby
+operation.prepared?  # => false
+
+operation.prepare do
+  tag('GetOrder') { tag('orderId', 123) }
+end
+
+operation.prepared?  # => true
+
+operation.reset!
+operation.prepared?  # => false
+```
+
 ## Validation Timing and Strictness
 
 Validation runs immediately when the `prepare` block finishes. See [Strict Schema Mode](configuration.md#strict-schema-mode) for full details.

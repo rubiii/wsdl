@@ -152,6 +152,30 @@ describe WSDL::Operation do
     end
   end
 
+  describe '#prepared?' do
+    it 'returns false before prepare is called' do
+      expect(operation.prepared?).to be(false)
+    end
+
+    it 'returns true after prepare is called' do
+      apply_request(operation, body: {
+        ConvertTemp: { Temperature: 30, FromUnit: 'degreeCelsius', ToUnit: 'degreeFahrenheit' }
+      })
+
+      expect(operation.prepared?).to be(true)
+    end
+
+    it 'returns false after reset!' do
+      apply_request(operation, body: {
+        ConvertTemp: { Temperature: 30, FromUnit: 'degreeCelsius', ToUnit: 'degreeFahrenheit' }
+      })
+
+      operation.reset!
+
+      expect(operation.prepared?).to be(false)
+    end
+  end
+
   describe '#prepare' do
     it 'raises when called twice without reset!' do
       apply_request(operation, body: {

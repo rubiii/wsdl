@@ -86,6 +86,13 @@ module WSDL
       self
     end
 
+    # Returns whether a request has been prepared via {#prepare}.
+    #
+    # @return [Boolean]
+    def prepared?
+      !@request_document.nil?
+    end
+
     # Clears the prepared request, allowing {#prepare} to be called again.
     # Also clears any custom HTTP header overrides set via {#http_headers=}.
     #
