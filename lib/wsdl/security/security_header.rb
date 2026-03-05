@@ -336,7 +336,7 @@ module WSDL
         node.add_namespace_definition('wsu', SecurityNS::WSU) unless wsu_ns
 
         # Generate and set ID
-        id = "#{prefix}-#{SecureRandom.uuid}"
+        id = IdGenerator.for(prefix)
         node['wsu:Id'] = id
         id
       end
