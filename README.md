@@ -2,10 +2,11 @@
 
 [![CI](https://github.com/rubiii/wsdl/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/rubiii/wsdl/actions/workflows/ci.yml) [![Gem Version](https://img.shields.io/gem/v/wsdl)](https://rubygems.org/gems/wsdl)
 
-WSDL toolkit for Ruby. Parse WSDL documents, inspect operation contracts, and execute SOAP calls.
+WSDL toolkit for Ruby. Parse WSDL 1.1 documents, inspect operation contracts, and execute SOAP calls.
 
 ## Features
 
+- **WSDL 1.1 Only** — WSDL 2.0 documents are detected and rejected with a clear error
 - **WSDL/XSD Parsing** — Full support for imports, includes, and multiple schema documents
 - **Service Discovery** — Inspect services, ports, and operations programmatically
 - **Contract Introspection** — Explore request/response structure with flat paths or tree views

@@ -19,6 +19,8 @@ module WSDL
         @document = document
         @schemas = schemas
 
+        reject_unsupported_version!
+
         @messages = {}
         @bindings = {}
         @port_types = {}
@@ -84,6 +86,17 @@ module WSDL
       end
 
       private
+
+      # Raises if the document uses an unsupported WSDL version.
+      #
+      # @raise [WSDL::UnsupportedWSDLVersionError] if the document uses WSDL 2.0
+      # @return [void]
+      def reject_unsupported_version!
+        return unless @document.root&.namespace&.href == NS::WSDL_2_0
+
+        raise UnsupportedWSDLVersionError,
+              'WSDL 2.0 is not supported. This library only supports WSDL 1.1 documents.'
+      end
 
       # Collects sections from the WSDL document and stores them in their respective collections.
       #

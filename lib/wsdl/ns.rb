@@ -39,5 +39,9 @@ module WSDL
     # SOAP 1.2 envelope namespace URI.
     # Used for the SOAP Envelope, Header, and Body elements in SOAP 1.2 messages.
     SOAP_1_2 = 'http://www.w3.org/2003/05/soap-envelope'
+
+    # WSDL 2.0 namespace URI.
+    # Used only for detection — WSDL 2.0 is not supported.
+    WSDL_2_0 = 'http://www.w3.org/ns/wsdl'
   end
 end

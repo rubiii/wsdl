@@ -8,6 +8,8 @@ Implementation targets these standards and profiles:
 - SOAP 1.1 and SOAP 1.2
 - XML Schema (XSD 1.0 constructs used in WSDL ecosystems)
 
+> **Note:** WSDL 2.0 is not supported. See `UnsupportedWSDLVersionError`.
+
 ## WS-Security
 
 - OASIS Web Services Security: SOAP Message Security 1.0/1.1

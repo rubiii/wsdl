@@ -69,6 +69,22 @@ module WSDL
   class SchemaImportParseError < SchemaImportError
   end
 
+  # Raised when a WSDL document uses an unsupported WSDL version.
+  #
+  # Currently only WSDL 1.1 is supported. WSDL 2.0 documents
+  # (namespace `http://www.w3.org/ns/wsdl`) are detected and rejected
+  # with a clear error message.
+  #
+  # @example
+  #   begin
+  #     client = WSDL::Client.new('http://example.com/service?wsdl')
+  #   rescue WSDL::UnsupportedWSDLVersionError => e
+  #     puts "WSDL version not supported: #{e.message}"
+  #   end
+  #
+  class UnsupportedWSDLVersionError < FatalError
+  end
+
   # Raised when an operation uses an unsupported SOAP style.
   #
   # Currently, rpc/encoded style operations are not supported.

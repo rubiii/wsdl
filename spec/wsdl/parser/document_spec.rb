@@ -192,6 +192,24 @@ describe WSDL::Parser::Document do
     end
   end
 
+  describe 'WSDL 2.0 detection' do
+    it 'raises UnsupportedWSDLVersionError for WSDL 2.0 documents' do
+      wsdl20 = <<~XML
+        <?xml version="1.0" encoding="UTF-8"?>
+        <description xmlns="http://www.w3.org/ns/wsdl"
+                     targetNamespace="http://example.com/wsdl20">
+          <interface name="ExampleInterface"/>
+        </description>
+      XML
+
+      document = Nokogiri::XML(wsdl20)
+      schemas = WSDL::Schema::Collection.new
+
+      expect { described_class.new(document, schemas) }
+        .to raise_error(WSDL::UnsupportedWSDLVersionError, /WSDL 2\.0 is not supported/)
+    end
+  end
+
   def get_documents(fixture_path)
     parser_result = WSDL::Parser::Result.parse(fixture(fixture_path), http_mock)
     parser_result.documents

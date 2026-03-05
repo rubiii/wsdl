@@ -1,6 +1,6 @@
 # AGENTS.md
 
-WSDL toolkit for Ruby. Turn WSDL documents into inspectable services and callable operations.
+WSDL toolkit for Ruby. Turn WSDL 1.1 documents into inspectable services and callable operations.
 
 ## Project Status
 

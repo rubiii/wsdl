@@ -4,9 +4,10 @@ require 'wsdl/log'
 
 # WSDL toolkit for Ruby.
 #
-# This library provides tools for working with WSDL documents, including
+# This library provides tools for working with WSDL 1.1 documents, including
 # parsing WSDL definitions, inspecting services and operations, and
-# executing SOAP requests.
+# executing SOAP requests. WSDL 2.0 documents are detected and rejected
+# with an {UnsupportedWSDLVersionError}.
 #
 # The main entry point is {Client}, which loads a WSDL document and
 # provides access to its services and operations.

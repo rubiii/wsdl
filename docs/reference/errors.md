@@ -38,6 +38,7 @@ WSDL::Error
     │   └── WSDL::UnsupportedAlgorithmError
     ├── WSDL::XMLSecurityError
     ├── WSDL::RequestSecurityConflictError
+    ├── WSDL::UnsupportedWSDLVersionError
     ├── WSDL::UnresolvableImportError
     ├── WSDL::PathRestrictionError
     └── WSDL::ResourceLimitError
@@ -80,6 +81,7 @@ All inherit from `WSDL::SecurityError < WSDL::FatalError`. Rescue `WSDL::Securit
 
 | Error | When |
 |-------|------|
+| `UnsupportedWSDLVersionError` | Document uses WSDL 2.0, which is not supported |
 | `XMLSecurityError` | XML attack detected (entity amplification, excessive depth) |
 | `PathRestrictionError` | File path violates sandbox restrictions |
 | `ResourceLimitError` | Document size, schema count, or other limit exceeded |
