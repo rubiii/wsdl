@@ -43,7 +43,7 @@ require 'wsdl'
 client = WSDL::Client.new('http://example.com/service?wsdl')
 ```
 
-`strict_schema` is enabled by default. Set `strict_schema: false` when you need best-effort parsing for incomplete enterprise WSDLs.
+[`strict_schema`](core/configuration.md#strict-schema-mode) is enabled by default. Set `strict_schema: false` when you need best-effort parsing for incomplete enterprise WSDLs.
 
 ## 2. Discover Services and Operations
 

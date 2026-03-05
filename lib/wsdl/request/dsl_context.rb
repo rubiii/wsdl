@@ -10,10 +10,10 @@ module WSDL
       # @return [Array<Symbol>]
       RESERVED_METHODS = %i[tag header body ws_security text cdata comment pi xmlns attribute].freeze
 
-      def initialize(document:, security:, request_limits:)
+      def initialize(document:, security:, limits:)
         @document = document
         @security = security
-        @request_limits = request_limits
+        @limits = limits
         @section = :body
         @in_section_block = false
         @stack = []
@@ -271,7 +271,7 @@ module WSDL
       end
 
       def validate_element_count!(count)
-        limit = @request_limits[:max_request_elements]
+        limit = @limits.max_request_elements
         return unless limit
         return if count <= limit
 
@@ -284,7 +284,7 @@ module WSDL
       end
 
       def validate_attribute_count!(count)
-        limit = @request_limits[:max_request_attributes]
+        limit = @limits.max_request_attributes
         return unless limit
         return if count <= limit
 
@@ -297,7 +297,7 @@ module WSDL
       end
 
       def validate_depth!(depth)
-        limit = @request_limits[:max_request_depth]
+        limit = @limits.max_request_depth
         return unless limit
         return if depth <= limit
 

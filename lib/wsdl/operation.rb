@@ -16,15 +16,11 @@ module WSDL
       '1.2' => 'application/soap+xml'
     }.freeze
 
-    # rubocop:disable Metrics/ParameterLists
-    def initialize(operation_info, parser_result, http, pretty_print: true, strict_schema: true, request_limits: {})
-      # rubocop:enable Metrics/ParameterLists
+    def initialize(operation_info, parser_result, http, config: Config.new)
       @operation_info = operation_info
       @parser_result = parser_result
       @http = http
-      @pretty_print = pretty_print
-      @strict_schema = strict_schema
-      @request_limits = request_limits
+      @config = config
 
       @endpoint = operation_info.endpoint
       @soap_version = operation_info.soap_version
@@ -35,7 +31,19 @@ module WSDL
       @security = Security::Config.new
     end
 
-    attr_accessor :endpoint, :soap_version, :soap_action, :encoding, :pretty_print
+    attr_accessor :endpoint, :soap_version, :soap_action, :encoding
+
+    # Returns whether XML output is formatted with indentation.
+    #
+    # @return [Boolean]
+    def format_xml
+      defined?(@format_xml) ? @format_xml : @config.format_xml
+    end
+
+    # Sets whether XML output is formatted with indentation.
+    #
+    # @param value [Boolean]
+    attr_writer :format_xml
 
     # Returns canonical operation contract metadata.
     #
@@ -59,14 +67,14 @@ module WSDL
 
       document = Request::AST.new
       security = Security::Config.new
-      context = Request::DSLContext.new(document:, security:, request_limits: @request_limits)
+      context = Request::DSLContext.new(document:, security:, limits: @config.limits)
       context.instance_exec(&block)
 
       validation_contract = request_validation_contract
 
       Request::Validator.new(
         contract: validation_contract,
-        strict_schema: @strict_schema,
+        strict_schema: @config.strict_schema,
         schema_complete: schema_complete_for_validation?
       ).validate!(document)
 
@@ -121,7 +129,7 @@ module WSDL
       ensure_request_definition!
 
       document = prepare_serializable_document(@request_document || Request::AST.new)
-      serializer = Request::Serializer.new(document:, soap_version:, pretty_print:)
+      serializer = Request::Serializer.new(document:, soap_version:, format_xml:)
       return serializer.serialize unless @security.configured?
 
       Security::SecurityHeader.new(@security).apply(serializer.to_document)
@@ -185,14 +193,14 @@ module WSDL
     def request_validation_contract
       contract
     rescue UnresolvedReferenceError => e
-      raise if @strict_schema
+      raise if @config.strict_schema
       raise unless schema_unresolved_reference?(e)
 
       fallback_validation_contract
     end
 
     def schema_complete_for_validation?
-      return true unless @strict_schema
+      return true unless @config.strict_schema
 
       @parser_result.schema_complete_for_operation?(@operation_info)
     end

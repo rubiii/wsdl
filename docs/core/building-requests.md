@@ -97,7 +97,7 @@ Modes:
 
 ## Validation Timing and Strictness
 
-Validation runs immediately when the `prepare` block finishes.
+Validation runs immediately when the `prepare` block finishes. See [Strict Schema Mode](configuration.md#strict-schema-mode) for full details.
 
 `strict_schema: true` (default):
 
@@ -113,20 +113,22 @@ Validation runs immediately when the `prepare` block finishes.
 
 ## Resource Limits
 
-Request AST construction enforces limits:
+Request AST construction enforces [resource limits](configuration.md#limits):
 
 - `max_request_elements`
 - `max_request_depth`
 - `max_request_attributes`
 
-Configure on client:
+Configure via `limits:`:
 
 ```ruby
 client = WSDL::Client.new(
   wsdl,
-  max_request_elements: 50_000,
-  max_request_depth: 200,
-  max_request_attributes: 5_000
+  limits: WSDL.limits.with(
+    max_request_elements: 50_000,
+    max_request_depth: 200,
+    max_request_attributes: 5_000
+  )
 )
 ```
 
@@ -137,6 +139,7 @@ For `rpc/literal`, request serialization applies an operation wrapper when neede
 ## See also
 
 - [Getting Started](../getting_started.md)
+- [Configuration](configuration.md)
 - [Inspecting Services](inspecting-services.md)
 - [Handling Responses](handling-responses.md)
 - [WS-Security Overview](../security/ws-security.md)

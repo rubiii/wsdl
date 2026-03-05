@@ -47,7 +47,7 @@ describe WSDL::XML::Parser do
     end
 
     context 'DOCTYPE rejection' do
-      it 'rejects XML with DOCTYPE by default' do
+      it 'rejects XML with DOCTYPE' do
         xml_with_doctype = '<!DOCTYPE foo><root/>'
 
         expect {
@@ -61,14 +61,6 @@ describe WSDL::XML::Parser do
             described_class.parse("#{doctype} foo><root/>")
           }.to raise_error(WSDL::XMLSecurityError, /DOCTYPE/)
         end
-      end
-
-      it 'allows DOCTYPE when reject_doctype: false' do
-        xml_with_doctype = '<!DOCTYPE foo><root/>'
-        doc = described_class.parse(xml_with_doctype, reject_doctype: false)
-
-        expect(doc).to be_a(Nokogiri::XML::Document)
-        expect(doc.root.name).to eq('root')
       end
 
       it 'includes helpful message about SOAP/WSDL' do
@@ -134,20 +126,12 @@ describe WSDL::XML::Parser do
     end
 
     context 'DOCTYPE rejection' do
-      it 'rejects XML with DOCTYPE by default' do
+      it 'rejects XML with DOCTYPE' do
         xml_with_doctype = '<!DOCTYPE foo><root/>'
 
         expect {
           described_class.parse_relaxed(xml_with_doctype)
         }.to raise_error(WSDL::XMLSecurityError, /DOCTYPE declarations are not allowed/)
-      end
-
-      it 'allows DOCTYPE when reject_doctype: false' do
-        xml_with_doctype = '<!DOCTYPE foo><root/>'
-        doc = described_class.parse_relaxed(xml_with_doctype, reject_doctype: false)
-
-        expect(doc).to be_a(Nokogiri::XML::Document)
-        expect(doc.root.name).to eq('root')
       end
     end
 
@@ -156,113 +140,6 @@ describe WSDL::XML::Parser do
       doc = described_class.parse_relaxed(xml)
 
       expect(doc).to be_a(Nokogiri::XML::Document)
-    end
-
-    context 'XXE protection (relaxed mode)' do
-      it 'does not expand external file entities' do
-        xxe_xml = <<~XML
-          <?xml version="1.0"?>
-          <!DOCTYPE foo [
-            <!ENTITY xxe SYSTEM "file:///etc/passwd">
-          ]>
-          <root>&xxe;</root>
-        XML
-
-        # Disable DOCTYPE rejection to test underlying XXE protection
-        doc = described_class.parse_relaxed(xxe_xml, reject_doctype: false)
-
-        # The entity should NOT be expanded
-        root_text = doc.root&.text.to_s
-        expect(root_text).not_to include('root:')
-        expect(root_text).not_to include('/bin/')
-      end
-
-      it 'does not expand external HTTP entities' do
-        xxe_xml = <<~XML
-          <?xml version="1.0"?>
-          <!DOCTYPE foo [
-            <!ENTITY xxe SYSTEM "http://internal-server.local/secret">
-          ]>
-          <root>&xxe;</root>
-        XML
-
-        # Disable DOCTYPE rejection to test underlying XXE protection
-        doc = described_class.parse_relaxed(xxe_xml, reject_doctype: false)
-        expect(doc.root&.text.to_s).not_to include('malicious')
-      end
-
-      it 'does not process parameter entities for file access' do
-        xxe_xml = <<~XML
-          <?xml version="1.0"?>
-          <!DOCTYPE foo [
-            <!ENTITY % file SYSTEM "file:///etc/passwd">
-            <!ENTITY % eval "<!ENTITY xxe SYSTEM 'file:///etc/passwd'>">
-            %eval;
-          ]>
-          <root>&xxe;</root>
-        XML
-
-        # Disable DOCTYPE rejection to test underlying XXE protection
-        doc = described_class.parse_relaxed(xxe_xml, reject_doctype: false)
-        root_text = doc.root&.text.to_s
-        expect(root_text).not_to include('root:')
-      end
-
-      it 'does not load external DTDs' do
-        ssrf_xml = <<~XML
-          <?xml version="1.0"?>
-          <!DOCTYPE foo SYSTEM "http://internal-server.local/dtd">
-          <root>content</root>
-        XML
-
-        # Disable DOCTYPE rejection to test underlying DTD protection
-        doc = described_class.parse_relaxed(ssrf_xml, reject_doctype: false)
-        expect(doc.root.name).to eq('root')
-      end
-    end
-  end
-
-  describe 'Billion Laughs / XML Bomb protection' do
-    it 'limits entity expansion to prevent memory exhaustion' do
-      # Classic billion laughs attack - 4 levels deep
-      # Full expansion would be 10^4 = 10,000 "lol" = 30,000 chars
-      bomb_xml = <<~XML
-        <?xml version="1.0"?>
-        <!DOCTYPE lolz [
-          <!ENTITY lol "lol">
-          <!ENTITY lol2 "&lol;&lol;&lol;&lol;&lol;&lol;&lol;&lol;&lol;&lol;">
-          <!ENTITY lol3 "&lol2;&lol2;&lol2;&lol2;&lol2;&lol2;&lol2;&lol2;&lol2;&lol2;">
-          <!ENTITY lol4 "&lol3;&lol3;&lol3;&lol3;&lol3;&lol3;&lol3;&lol3;&lol3;&lol3;">
-        ]>
-        <root>&lol4;</root>
-      XML
-
-      # Disable DOCTYPE rejection to test underlying entity expansion limits
-      doc = described_class.parse_relaxed(bomb_xml, reject_doctype: false)
-      root_text = doc.root&.text.to_s
-
-      # libxml2 has built-in entity expansion limits.
-      # The key assertion is that parsing completes without hanging
-      # and doesn't explode to dangerous sizes (100KB+ would indicate a problem)
-      expect(root_text.length).to be < 100_000
-    end
-
-    it 'handles quadratic blowup attacks' do
-      # Quadratic blowup: many references to a large entity
-      large_entity = 'A' * 10_000
-      bomb_xml = <<~XML
-        <?xml version="1.0"?>
-        <!DOCTYPE foo [
-          <!ENTITY big "#{large_entity}">
-        ]>
-        <root>&big;&big;&big;&big;&big;</root>
-      XML
-
-      # Disable DOCTYPE rejection to test underlying entity expansion limits
-      doc = described_class.parse_relaxed(bomb_xml, reject_doctype: false)
-
-      # Should complete without hanging; exact behavior depends on libxml2 config
-      expect(doc.root).not_to be_nil
     end
   end
 
@@ -353,14 +230,15 @@ describe WSDL::XML::Parser do
       expect(doc.root.name).to eq('root')
     end
 
-    it 'yields threats to the block when detected' do
+    it 'yields threats and then rejects DOCTYPE' do
       xxe_xml = '<!DOCTYPE foo [<!ENTITY xxe SYSTEM "file:///etc/passwd">]><root/>'
       detected_threats = nil
 
-      # Disable DOCTYPE rejection to test threat callback behavior
-      described_class.parse_untrusted(xxe_xml, reject_doctype: false) do |threats|
-        detected_threats = threats
-      end
+      expect {
+        described_class.parse_untrusted(xxe_xml) do |threats|
+          detected_threats = threats
+        end
+      }.to raise_error(WSDL::XMLSecurityError, /DOCTYPE/)
 
       expect(detected_threats).to include(:doctype)
       expect(detected_threats).to include(:entity_declaration)
@@ -376,44 +254,6 @@ describe WSDL::XML::Parser do
       end
 
       expect(block_called).to be false
-    end
-
-    it 'still parses XML securely even when threats are detected' do
-      xxe_xml = '<!DOCTYPE foo [<!ENTITY xxe SYSTEM "file:///etc/passwd">]><root>safe</root>'
-      # Disable DOCTYPE rejection to test underlying XXE protection
-      doc = described_class.parse_untrusted(xxe_xml, reject_doctype: false)
-
-      expect(doc.root.name).to eq('root')
-      expect(doc.root.text).not_to include('root:')
-    end
-
-    it 'allows blocking via callback' do
-      xxe_xml = '<!DOCTYPE foo><root/>'
-
-      expect {
-        # Disable default DOCTYPE rejection to test callback-based blocking
-        described_class.parse_untrusted(xxe_xml, reject_doctype: false) do |threats|
-          raise SecurityError, "Blocked: #{threats.join(', ')}" if threats.any?
-        end
-      }.to raise_error(SecurityError, /doctype/)
-    end
-
-    it 'rejects DOCTYPE by default after threat detection but before parsing completes' do
-      xxe_xml = '<!DOCTYPE foo><root/>'
-      callback_called = false
-      detected_threats = nil
-
-      expect {
-        described_class.parse_untrusted(xxe_xml) do |threats|
-          callback_called = true
-          detected_threats = threats
-        end
-      }.to raise_error(WSDL::XMLSecurityError, /DOCTYPE/)
-
-      # The callback IS invoked (threat detection happens first)
-      # but then parsing fails due to DOCTYPE rejection
-      expect(callback_called).to be true
-      expect(detected_threats).to include(:doctype)
     end
 
     it 'does not call callback for Nokogiri documents' do
@@ -461,23 +301,14 @@ describe WSDL::XML::Parser do
       expect(log_output.string).to be_empty
     end
 
-    it 'logs a warning when threats are detected' do
+    it 'logs a warning and rejects DOCTYPE when threats are detected' do
       xxe_xml = '<!DOCTYPE foo [<!ENTITY xxe SYSTEM "file:///etc/passwd">]><root/>'
 
-      # Disable DOCTYPE rejection to test threat logging behavior
-      described_class.parse_with_logging(xxe_xml, reject_doctype: false)
+      expect {
+        described_class.parse_with_logging(xxe_xml)
+      }.to raise_error(WSDL::XMLSecurityError, /DOCTYPE/)
 
-      expect(log_output.string).to match(
-        /Potential XML attack detected.*doctype.*entity_declaration.*external_reference/
-      )
-    end
-
-    it 'still parses XML securely after logging threats' do
-      xxe_xml = '<!DOCTYPE foo [<!ENTITY xxe SYSTEM "file:///etc/passwd">]><root>safe</root>'
-      # Disable DOCTYPE rejection to test underlying XXE protection
-      doc = described_class.parse_with_logging(xxe_xml, reject_doctype: false)
-
-      expect(doc.root.text).not_to include('root:')
+      expect(log_output.string).to match(/Potential XML attack detected/)
     end
 
     it 'uses strict parsing by default' do
@@ -541,7 +372,7 @@ describe WSDL::XML::Parser do
       expect(body.element_children.first.name).to eq('GetUserResponse')
     end
 
-    it 'protects against XXE in SOAP responses' do
+    it 'rejects SOAP responses with DOCTYPE' do
       malicious_soap = <<~XML
         <?xml version="1.0"?>
         <!DOCTYPE soap:Envelope [
@@ -554,10 +385,9 @@ describe WSDL::XML::Parser do
         </soap:Envelope>
       XML
 
-      # Disable DOCTYPE rejection to test underlying XXE protection
-      doc = described_class.parse_relaxed(malicious_soap, reject_doctype: false)
-      data_text = doc.at_xpath('//Data')&.text.to_s
-      expect(data_text).not_to include('root:')
+      expect {
+        described_class.parse_relaxed(malicious_soap)
+      }.to raise_error(WSDL::XMLSecurityError, /DOCTYPE/)
     end
 
     it 'detects threats in SOAP envelopes' do
@@ -610,7 +440,7 @@ describe WSDL::XML::Parser do
 
   describe 'security regression tests' do
     describe 'XXE (XML External Entity) attacks' do
-      it 'blocks file:// entity access' do
+      it 'rejects DOCTYPE which is the XXE attack vector' do
         xxe_xml = <<~XML
           <?xml version="1.0"?>
           <!DOCTYPE foo [
@@ -619,14 +449,9 @@ describe WSDL::XML::Parser do
           <root>&xxe;</root>
         XML
 
-        # With DOCTYPE rejection disabled to test underlying XXE protection
-        doc = described_class.parse_relaxed(xxe_xml, reject_doctype: false)
-        root_text = doc.root&.text.to_s
-
-        # Must not contain file contents
-        expect(root_text).not_to include('root:')
-        expect(root_text).not_to include('/bin/')
-        expect(root_text).not_to include('nobody')
+        expect {
+          described_class.parse(xxe_xml)
+        }.to raise_error(WSDL::XMLSecurityError, /DOCTYPE/)
       end
 
       it 'blocks http:// entity access via NONET' do
@@ -665,45 +490,19 @@ describe WSDL::XML::Parser do
     end
 
     describe 'entity amplification (Billion Laughs)' do
-      it 'limits entity expansion to prevent memory exhaustion' do
-        # 6-level entity expansion bomb (triggers libxml2's amplification limit)
-        # 5 levels = 30KB which is under the limit, 6 levels would be 300KB
+      it 'rejects DOCTYPE which is required for entity bombs' do
         bomb_xml = <<~XML
           <?xml version="1.0"?>
           <!DOCTYPE lolz [
             <!ENTITY lol "lol">
             <!ENTITY lol2 "&lol;&lol;&lol;&lol;&lol;&lol;&lol;&lol;&lol;&lol;">
-            <!ENTITY lol3 "&lol2;&lol2;&lol2;&lol2;&lol2;&lol2;&lol2;&lol2;&lol2;&lol2;">
-            <!ENTITY lol4 "&lol3;&lol3;&lol3;&lol3;&lol3;&lol3;&lol3;&lol3;&lol3;&lol3;">
-            <!ENTITY lol5 "&lol4;&lol4;&lol4;&lol4;&lol4;&lol4;&lol4;&lol4;&lol4;&lol4;">
-            <!ENTITY lol6 "&lol5;&lol5;&lol5;&lol5;&lol5;&lol5;&lol5;&lol5;&lol5;&lol5;">
           ]>
-          <root>&lol6;</root>
+          <root>&lol2;</root>
         XML
 
-        # libxml2 should reject this with "Maximum entity amplification factor exceeded"
-        # We wrap this in XMLSecurityError for consistent error handling
-        # Disable DOCTYPE rejection to test underlying amplification protection
         expect {
-          described_class.parse(bomb_xml, reject_doctype: false)
-        }.to raise_error(WSDL::XMLSecurityError, /amplification/i)
-      end
-
-      it 'limits total entity references' do
-        # Many references to a single entity
-        many_refs = '&e;' * 200_000
-        bomb_xml = <<~XML
-          <?xml version="1.0"?>
-          <!DOCTYPE foo [
-            <!ENTITY e "x">
-          ]>
-          <root>#{many_refs}</root>
-        XML
-
-        # Disable DOCTYPE rejection to test underlying entity reference limits
-        expect {
-          described_class.parse(bomb_xml, reject_doctype: false)
-        }.to raise_error(WSDL::XMLSecurityError, /amplification|entity/i)
+          described_class.parse(bomb_xml)
+        }.to raise_error(WSDL::XMLSecurityError, /DOCTYPE/)
       end
     end
 
@@ -736,6 +535,14 @@ describe WSDL::XML::Parser do
     end
 
     describe 'DTD attacks' do
+      it 'rejects DOCTYPE which is required for DTD attacks' do
+        dtd_xml = '<!DOCTYPE foo SYSTEM "http://internal-server.local/dtd"><root/>'
+
+        expect {
+          described_class.parse_relaxed(dtd_xml)
+        }.to raise_error(WSDL::XMLSecurityError, /DOCTYPE/)
+      end
+
       it 'does not load external DTDs' do
         # DTDLOAD not being set means external DTDs are not loaded
         expect(described_class::SECURE_PARSE_OPTIONS & Nokogiri::XML::ParseOptions::DTDLOAD).to eq(0)
@@ -761,12 +568,8 @@ describe WSDL::XML::Parser do
         <!DOCTYPE lolz [
           <!ENTITY lol "lol">
           <!ENTITY lol2 "&lol;&lol;&lol;&lol;&lol;&lol;&lol;&lol;&lol;&lol;">
-          <!ENTITY lol3 "&lol2;&lol2;&lol2;&lol2;&lol2;&lol2;&lol2;&lol2;&lol2;&lol2;">
-          <!ENTITY lol4 "&lol3;&lol3;&lol3;&lol3;&lol3;&lol3;&lol3;&lol3;&lol3;&lol3;">
-          <!ENTITY lol5 "&lol4;&lol4;&lol4;&lol4;&lol4;&lol4;&lol4;&lol4;&lol4;&lol4;">
-          <!ENTITY lol6 "&lol5;&lol5;&lol5;&lol5;&lol5;&lol5;&lol5;&lol5;&lol5;&lol5;">
         ]>
-        <root>&lol6;</root>
+        <root>&lol2;</root>
       XML
     end
 
@@ -775,7 +578,7 @@ describe WSDL::XML::Parser do
       expect(WSDL::XMLSecurityError).to be < WSDL::Error
     end
 
-    it 'is raised for DOCTYPE declarations by default' do
+    it 'is raised for DOCTYPE declarations' do
       expect {
         described_class.parse(bomb_xml)
       }.to raise_error(WSDL::XMLSecurityError, /DOCTYPE declarations are not allowed/)
@@ -785,21 +588,6 @@ describe WSDL::XML::Parser do
       expect {
         described_class.parse(bomb_xml)
       }.to raise_error(WSDL::Error)
-    end
-
-    context 'when DOCTYPE rejection is disabled (to test underlying protection)' do
-      it 'includes descriptive message prefix for entity amplification' do
-        expect {
-          described_class.parse(bomb_xml, reject_doctype: false)
-        }.to raise_error(WSDL::XMLSecurityError, /XML security violation detected:/)
-      end
-
-      it 'preserves the original Nokogiri error as cause' do
-        described_class.parse(bomb_xml, reject_doctype: false)
-      rescue WSDL::XMLSecurityError => e
-        expect(e.cause).to be_a(Nokogiri::XML::SyntaxError)
-        expect(e.cause.message).to match(/amplification/i)
-      end
     end
 
     it 'does not wrap non-security syntax errors' do

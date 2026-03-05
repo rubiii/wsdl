@@ -51,9 +51,6 @@ module WSDL
     # - DOCTYPE is the attack vector for XXE, entity expansion, and DTD attacks
     # - Rejecting DOCTYPE before parsing prevents any parser vulnerabilities
     #
-    # This can be disabled with `reject_doctype: false` for edge cases, but
-    # this is strongly discouraged for untrusted input.
-    #
     # @example Parse untrusted XML securely
     #   doc = WSDL::XML::Parser.parse(untrusted_xml)
     #
@@ -62,9 +59,6 @@ module WSDL
     #
     # @example Parse with threat logging
     #   doc = WSDL::XML::Parser.parse_with_logging(xml)
-    #
-    # @example Allow DOCTYPE (not recommended for untrusted input)
-    #   doc = WSDL::XML::Parser.parse(xml, reject_doctype: false)
     #
     # @see https://cheatsheetseries.owasp.org/cheatsheets/XML_External_Entity_Prevention_Cheat_Sheet.html
     # @see https://nokogiri.org/rdoc/Nokogiri/XML/ParseOptions.html
@@ -127,16 +121,11 @@ module WSDL
         # @param noblanks [Boolean] remove blank nodes (default: false)
         #   Set to true when parsing for signature operations to ensure
         #   consistent canonicalization.
-        # @param reject_doctype [Boolean] reject documents with DOCTYPE declarations
-        #   (default: true). This is a defense-in-depth measure since legitimate
-        #   SOAP/WSDL documents never require DOCTYPE. Set to false only if you
-        #   have a specific need and trust the input source.
         #
         # @return [Nokogiri::XML::Document] the parsed document
         #
         # @raise [ArgumentError] if xml is not a String or Document
         # @raise [WSDL::XMLSecurityError] if XML contains a DOCTYPE declaration
-        #   (when reject_doctype is true)
         # @raise [Nokogiri::XML::SyntaxError] if XML is malformed (strict mode)
         #
         # @example Basic usage
@@ -145,12 +134,12 @@ module WSDL
         # @example With blank removal for signatures
         #   doc = Parser.parse(xml, noblanks: true)
         #
-        def parse(xml, noblanks: false, reject_doctype: true)
+        def parse(xml, noblanks: false)
           case xml
           when Nokogiri::XML::Document
             xml
           when String
-            reject_doctype!(xml) if reject_doctype
+            reject_doctype!(xml)
             options = noblanks ? SECURE_PARSE_OPTIONS_NOBLANKS : SECURE_PARSE_OPTIONS
             Nokogiri::XML(xml, nil, nil, options)
           else
@@ -173,14 +162,11 @@ module WSDL
         #
         # @param xml [String] the XML string to parse
         # @param noblanks [Boolean] remove blank nodes
-        # @param reject_doctype [Boolean] reject documents with DOCTYPE declarations
-        #   (default: true)
         # @return [Nokogiri::XML::Document] the parsed document
         # @raise [WSDL::XMLSecurityError] if XML contains a DOCTYPE declaration
-        #   (when reject_doctype is true)
         #
-        def parse_relaxed(xml, noblanks: false, reject_doctype: true)
-          reject_doctype!(xml) if reject_doctype && xml.is_a?(String)
+        def parse_relaxed(xml, noblanks: false)
+          reject_doctype!(xml) if xml.is_a?(String)
           options = noblanks ? RELAXED_PARSE_OPTIONS_NOBLANKS : RELAXED_PARSE_OPTIONS
           Nokogiri::XML(xml, nil, nil, options)
         rescue Nokogiri::XML::SyntaxError => e
@@ -196,23 +182,20 @@ module WSDL
         # @param xml [String] the XML string to parse
         # @param noblanks [Boolean] remove blank nodes
         # @param strict [Boolean] use strict parsing (default: true)
-        # @param reject_doctype [Boolean] reject documents with DOCTYPE declarations
-        #   (default: true)
         #
         # @return [Nokogiri::XML::Document] the parsed document
         # @raise [WSDL::XMLSecurityError] if XML contains a DOCTYPE declaration
-        #   (when reject_doctype is true)
         #
         # @example With logging
         #   doc = Parser.parse_with_logging(response_xml)
         #
-        def parse_with_logging(xml, noblanks: false, strict: true, reject_doctype: true)
+        def parse_with_logging(xml, noblanks: false, strict: true)
           if xml.is_a?(String)
             threats = detect_threats(xml)
             logger.warn("Potential XML attack detected: #{threats.join(', ')}") if threats.any?
           end
 
-          strict ? parse(xml, noblanks:, reject_doctype:) : parse_relaxed(xml, noblanks:, reject_doctype:)
+          strict ? parse(xml, noblanks:) : parse_relaxed(xml, noblanks:)
         end
 
         # Checks if an XML document contains potentially dangerous constructs.
@@ -281,14 +264,11 @@ module WSDL
         # @param xml [String] the XML string to parse
         # @param noblanks [Boolean] remove blank nodes
         # @param strict [Boolean] use strict parsing (default: true)
-        # @param reject_doctype [Boolean] reject documents with DOCTYPE declarations
-        #   (default: true)
         # @yield [threats] called when threats are detected
         # @yieldparam threats [Array<Symbol>] the detected threat types
         #
         # @return [Nokogiri::XML::Document] the parsed document
         # @raise [WSDL::XMLSecurityError] if XML contains a DOCTYPE declaration
-        #   (when reject_doctype is true)
         #
         # @example Log threats but continue parsing
         #   Parser.parse_untrusted(xml) do |threats|
@@ -302,13 +282,13 @@ module WSDL
         #     end
         #   end
         #
-        def parse_untrusted(xml, noblanks: false, strict: true, reject_doctype: true)
+        def parse_untrusted(xml, noblanks: false, strict: true)
           if xml.is_a?(String)
             threats = detect_threats(xml)
             yield threats if threats.any? && block_given?
           end
 
-          strict ? parse(xml, noblanks:, reject_doctype:) : parse_relaxed(xml, noblanks:, reject_doctype:)
+          strict ? parse(xml, noblanks:) : parse_relaxed(xml, noblanks:)
         end
 
         # Checks if an XML string contains a DOCTYPE declaration.

@@ -21,7 +21,6 @@ describe WSDL::Parser::CachedResult do
     parse_options = WSDL::ParseOptions.new(
       sandbox_paths: overrides.fetch(:sandbox_paths, sandbox_paths),
       limits: overrides.fetch(:limits, limits),
-      reject_doctype: overrides.fetch(:reject_doctype, true),
       strict_schema: overrides.fetch(:strict_schema, false)
     )
 
@@ -75,7 +74,6 @@ describe WSDL::Parser::CachedResult do
       parse_options = WSDL::ParseOptions.new(
         sandbox_paths:,
         limits:,
-        reject_doctype: true,
         strict_schema: false
       )
 
@@ -91,22 +89,22 @@ describe WSDL::Parser::CachedResult do
 
   describe '.load' do
     context 'without cache' do
-      it 'bypasses the cache when cache is nil' do
+      it 'bypasses the cache when cache is false' do
         parser_result = instance_double(WSDL::Parser::Result)
         allow(WSDL::Parser::Result).to receive(:parse).and_return(parser_result)
 
-        result = load_cached(cache: nil)
+        result = load_cached(cache: false)
 
         expect(result).to eq(parser_result)
       end
 
-      it 'resolves :default to WSDL.cache' do
+      it 'resolves nil to WSDL.cache' do
         cache, count = stub_result
 
         allow(WSDL).to receive(:cache).and_return(cache)
 
-        load_cached(cache: :default)
-        load_cached(cache: :default)
+        load_cached(cache: nil)
+        load_cached(cache: nil)
 
         expect(count.call).to eq(1)
       end
@@ -130,13 +128,12 @@ describe WSDL::Parser::CachedResult do
         allow(WSDL::Parser::Result).to receive(:parse).and_return(parser_result)
 
         # Use cache: nil to force Result.parse every time (no caching)
-        result = load_cached(cache: nil, http:, reject_doctype: false, strict_schema: true)
+        result = load_cached(cache: nil, http:, strict_schema: true)
 
         expect(result).to eq(parser_result)
         expected_options = WSDL::ParseOptions.new(
           sandbox_paths:,
           limits:,
-          reject_doctype: false,
           strict_schema: true
         )
         expect(WSDL::Parser::Result).to have_received(:parse).with(
@@ -148,16 +145,6 @@ describe WSDL::Parser::CachedResult do
     end
 
     context 'cache key partitioning' do
-      it 'partitions by reject_doctype' do
-        cache, count = stub_result
-
-        load_cached(cache:, reject_doctype: true)
-        load_cached(cache:, reject_doctype: false)
-
-        expect(count.call).to eq(2)
-        expect(cache.size).to eq(2)
-      end
-
       it 'partitions by strict_schema' do
         cache, count = stub_result
 

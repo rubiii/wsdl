@@ -102,7 +102,7 @@ describe 'Request DSL' do
     limited_client = WSDL::Client.new(
       fixture('wsdl/temperature'),
       strict_schema: false,
-      max_request_elements: 2
+      limits: WSDL.limits.with(max_request_elements: 2)
     )
     limited_operation = limited_client.operation('ConvertTemperature', 'ConvertTemperatureSoap12', 'ConvertTemp')
 

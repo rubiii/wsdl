@@ -22,96 +22,64 @@ module WSDL
   # @example With custom HTTP adapter
   #   client = WSDL::Client.new('http://example.com/service?wsdl', http: my_adapter)
   #
-  # @example Disable pretty printing for whitespace-sensitive servers
-  #   client = WSDL::Client.new('http://example.com/service?wsdl', pretty_print: false)
+  # @example Disable XML formatting for whitespace-sensitive servers
+  #   client = WSDL::Client.new('http://example.com/service?wsdl', format_xml: false)
   #
   # @example Disable caching for this instance
-  #   client = WSDL::Client.new('http://example.com/service?wsdl', cache: nil)
+  #   client = WSDL::Client.new('http://example.com/service?wsdl', cache: false)
   #
   # @example Custom sandbox paths for local imports spanning multiple directories
   #   client = WSDL::Client.new('/path/to/service.wsdl',
   #                             sandbox_paths: ['/path/to', '/other/schemas'])
   #
+  # @example Reusable configuration
+  #   config = WSDL::Config.new(format_xml: false, strict_schema: false)
+  #   client = WSDL::Client.new('http://example.com/service?wsdl', config:)
+  #
   class Client
     # Creates a new Client instance.
+    #
+    # Behavioral options (format_xml, strict_schema, sandbox_paths,
+    # limits) can be passed as keyword arguments or
+    # grouped into a {Config} object via the `config:` parameter.
+    # When both are provided, keyword arguments take precedence.
     #
     # @param wsdl [String] a URL or file path to the WSDL document
     # @param http [Object, nil] an optional HTTP adapter instance
     #   (defaults to a new instance of {WSDL.http_adapter})
-    # @param pretty_print [Boolean] whether to format XML output with indentation
-    #   and margins. Set to `false` for whitespace-sensitive SOAP servers.
-    #   Defaults to `true`.
-    # @param cache [Cache, nil, Symbol] the cache to use for parsed definitions.
-    #   Use `:default` to use {WSDL.cache}, or `nil` to disable caching.
-    #   Defaults to {WSDL.cache}. Pass `nil` to disable caching for this instance.
-    # @param sandbox_paths [Array<String>, nil] directories where file access is allowed.
-    #   When nil (default), sandbox is determined automatically based on WSDL source:
-    #   - URL source → file access disabled (all imports must use URLs)
-    #   - File source → sandboxed to the WSDL's parent directory
-    #   When provided, overrides the automatic sandbox with the specified directories.
-    # @param limits [Limits, nil] resource limits for DoS protection.
-    #   If nil, uses {WSDL.limits}. Use a custom Limits instance to increase
-    #   limits for specific WSDLs that exceed defaults.
-    # @param reject_doctype [Boolean] whether to reject XML documents containing
-    #   DOCTYPE declarations (default: true). This is a defense-in-depth measure
-    #   since legitimate SOAP/WSDL documents never require DOCTYPE. Set to false
-    #   only for legacy systems that include DOCTYPE declarations.
-    # @param strict_schema [Boolean] strict schema handling and request validation mode.
-    #   - `true` (default) enables strict schema imports and strict request validation
-    #   - `false` enables best-effort schema imports and relaxed request validation
-    # @param max_request_elements [Integer, nil] max request AST elements (default: limits value)
-    # @param max_request_depth [Integer, nil] max request AST nesting depth (default: limits value)
-    # @param max_request_attributes [Integer, nil] max request AST attributes (default: limits value)
+    # @param cache [Cache, nil, false] the cache to use for parsed definitions.
+    #   Use `nil` (default) to use {WSDL.cache}, or `false` to disable caching.
+    # @param config [Config, nil] a reusable {Config} instance grouping behavioral
+    #   options. Any keyword arguments for Config options override the config object.
+    #   Additional keyword arguments are forwarded to {Config.new}.
+    #   See {Config#initialize} for the full list of supported options.
     #
-    # rubocop:disable Metrics/ParameterLists
-    def initialize(wsdl, http: nil, pretty_print: true, cache: :default, sandbox_paths: nil,
-                   limits: nil, reject_doctype: true, strict_schema: true,
-                   max_request_elements: nil, max_request_depth: nil, max_request_attributes: nil)
-      # rubocop:enable Metrics/ParameterLists
+    def initialize(wsdl, http: nil, cache: nil, config: nil, **)
+      @config = config ? config.with(**) : Config.new(**)
+
       source = Source.validate_wsdl!(wsdl)
       @http = http || WSDL.http_adapter.new
-      @pretty_print = pretty_print
-      @limits = limits || WSDL.limits
-      @reject_doctype = reject_doctype
-      @strict_schema = strict_schema ? true : false
-      @request_limits = {
-        max_request_elements: max_request_elements || @limits.max_request_elements,
-        max_request_depth: max_request_depth || @limits.max_request_depth,
-        max_request_attributes: max_request_attributes || @limits.max_request_attributes
-      }.freeze
 
       validate_http_adapter!(@http)
 
-      resolved_sandbox_paths = resolve_sandbox_paths(source, sandbox_paths)
+      resolved_sandbox_paths = resolve_sandbox_paths(source, @config.sandbox_paths)
       @parser_result = Parser::CachedResult.load(
         wsdl:,
         http: @http,
         cache:,
         parse_options: ParseOptions.new(
           sandbox_paths: resolved_sandbox_paths,
-          limits: @limits,
-          reject_doctype: @reject_doctype,
-          strict_schema: @strict_schema
+          limits: @config.limits,
+          strict_schema: @config.strict_schema
         )
       )
     end
 
-    # Returns whether pretty printing is enabled for XML output.
+    # Returns the behavioral configuration for this client.
     #
-    # @return [Boolean] true if XML will be formatted with indentation
+    # @return [Config] the configuration instance
     #
-    attr_reader :pretty_print
-
-    # Returns the resource limits used for parsing.
-    #
-    # @return [Limits] the limits instance
-    #
-    attr_reader :limits
-
-    # Returns whether strict schema mode is enabled.
-    #
-    # @return [Boolean] strict schema mode
-    attr_reader :strict_schema
+    attr_reader :config
 
     # Returns the HTTP adapter's client instance for configuration.
     #
@@ -174,9 +142,7 @@ module WSDL
         operation_info,
         @parser_result,
         @http,
-        pretty_print:,
-        strict_schema: @strict_schema,
-        request_limits: @request_limits
+        config: @config
       )
     end
 

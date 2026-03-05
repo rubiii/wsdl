@@ -1,6 +1,6 @@
 # Strict Schema Fixture Matrix
 
-This matrix tracks parser behavior for integration fixtures under:
+This matrix tracks parser behavior for integration fixtures under [`strict_schema`](../core/configuration.md#strict-schema-mode):
 
 - `strict_schema: true`
 - `strict_schema: false`
@@ -54,7 +54,7 @@ These fixtures fail in strict mode and parse in relaxed mode.
 
 ## Sandbox-Required Fixtures
 
-These fixtures require explicit `sandbox_paths` for sibling relative imports.
+These fixtures require explicit [`sandbox_paths`](../core/configuration.md#sandbox-paths) for sibling relative imports.
 
 | Fixture | Default Behavior | With `sandbox_paths` |
 | --- | --- | --- |

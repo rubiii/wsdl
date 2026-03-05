@@ -112,7 +112,7 @@ describe WSDL::Security::SecurityHeader do
         document = WSDL::Request::Serializer.new(
           document: WSDL::Request::AST.new,
           soap_version: '1.1',
-          pretty_print: true
+          format_xml: true
         ).to_document
 
         result = header.apply(document)

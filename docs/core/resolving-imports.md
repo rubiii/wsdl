@@ -10,7 +10,7 @@ Resolution uses the parent document location for relative paths and is constrain
 
 ## Strict vs Best-Effort Behavior
 
-Set behavior through `strict_schema`.
+Set behavior through [`strict_schema`](configuration.md#strict-schema-mode).
 
 ```ruby
 # Strict (default)
@@ -40,7 +40,7 @@ Fatal security/path errors still raise in both modes.
 
 ## Sandbox Behavior
 
-Without explicit `sandbox_paths`, file-based WSDLs are sandboxed to the WSDL directory.
+Without explicit [`sandbox_paths`](configuration.md#sandbox-paths), file-based WSDLs are sandboxed to the WSDL directory.
 
 ```ruby
 client = WSDL::Client.new('/app/wsdl/system/service.wsdl')

@@ -130,11 +130,11 @@ module SpecSupport
     def with_strict_schema(operation, strict_schema)
       return yield if strict_schema.nil?
 
-      previous_strict_schema = operation.instance_variable_get(:@strict_schema)
-      operation.instance_variable_set(:@strict_schema, strict_schema)
+      previous_config = operation.instance_variable_get(:@config)
+      operation.instance_variable_set(:@config, previous_config.with(strict_schema:))
       yield
     ensure
-      operation.instance_variable_set(:@strict_schema, previous_strict_schema) unless strict_schema.nil?
+      operation.instance_variable_set(:@config, previous_config) unless strict_schema.nil?
     end
   end
 end

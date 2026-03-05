@@ -166,7 +166,7 @@ describe 'Integration with Oracle' do
       context = WSDL::Request::DSLContext.new(
         document:,
         security: WSDL::Security::Config.new,
-        request_limits: WSDL.limits.to_h
+        limits: WSDL.limits
       )
 
       SpecSupport::RequestDSLHelper.emit_hash_section(context, :body, {
@@ -195,7 +195,7 @@ describe 'Integration with Oracle' do
         }
       }, elements)
 
-      result = WSDL::Request::Serializer.new(document:, soap_version: '1.1', pretty_print: false).serialize
+      result = WSDL::Request::Serializer.new(document:, soap_version: '1.1', format_xml: false).serialize
 
       # Verify defined elements are serialized
       expect(result).to include('<jobID>12345</jobID>')

@@ -79,6 +79,7 @@ module WSDL
   require 'wsdl/parse_options'
   require 'wsdl/source'
   require 'wsdl/cache'
+  require 'wsdl/config'
   require 'wsdl/httpclient'
 
   # Load XML utilities

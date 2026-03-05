@@ -70,19 +70,20 @@ describe WSDL::Operation do
     end
   end
 
-  describe '#pretty_print' do
+  describe '#format_xml' do
     it 'defaults to true' do
-      expect(operation.pretty_print).to be(true)
+      expect(operation.format_xml).to be(true)
     end
 
     it 'can be overwritten' do
-      operation.pretty_print = false
-      expect(operation.pretty_print).to be(false)
+      operation.format_xml = false
+      expect(operation.format_xml).to be(false)
     end
 
-    it 'can be set via constructor' do
-      operation = described_class.new(operation_info, parser_result, http_mock, pretty_print: false)
-      expect(operation.pretty_print).to be(false)
+    it 'can be set via config' do
+      config = WSDL::Config.new(format_xml: false)
+      operation = described_class.new(operation_info, parser_result, http_mock, config:)
+      expect(operation.format_xml).to be(false)
     end
   end
 
@@ -412,8 +413,8 @@ describe WSDL::Operation do
       expect(serialized_document).to be_a(Nokogiri::XML::Document)
     end
 
-    context 'with pretty_print: false' do
-      let(:compact_operation) { described_class.new(operation_info, parser_result, http_mock, pretty_print: false) }
+    context 'with format_xml: false' do
+      let(:compact_operation) { described_class.new(operation_info, parser_result, http_mock, config: WSDL::Config.new(format_xml: false)) }
 
       it 'returns compact XML without indentation' do
         apply_request(compact_operation, body: {
@@ -465,7 +466,8 @@ describe WSDL::Operation do
       it 'still raises for non-schema unresolved references' do
         parser_result = parse_result(header_missing_part_wsdl)
         operation_info = parser_result.operation('TestService', 'TestPort', 'TestOp')
-        relaxed_operation = described_class.new(operation_info, parser_result, http_mock, strict_schema: false)
+        relaxed_operation = described_class.new(operation_info, parser_result, http_mock,
+                                                config: WSDL::Config.new(strict_schema: false))
 
         expect {
           relaxed_operation.prepare do

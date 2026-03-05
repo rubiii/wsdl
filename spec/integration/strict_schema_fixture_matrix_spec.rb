@@ -55,11 +55,11 @@ describe 'Strict schema fixture matrix' do
       wsdl_path = fixture(fixture_key)
 
       expect {
-        WSDL::Client.new(wsdl_path, cache: nil, strict_schema: true)
+        WSDL::Client.new(wsdl_path, cache: false, strict_schema: true)
       }.not_to raise_error, "expected strict mode to parse #{fixture_key}"
 
       expect {
-        WSDL::Client.new(wsdl_path, cache: nil, strict_schema: false)
+        WSDL::Client.new(wsdl_path, cache: false, strict_schema: false)
       }.not_to raise_error, "expected relaxed mode to parse #{fixture_key}"
     end
   end
@@ -69,11 +69,11 @@ describe 'Strict schema fixture matrix' do
       wsdl_path = fixture(fixture_key)
 
       expect {
-        WSDL::Client.new(wsdl_path, cache: nil, strict_schema: true)
+        WSDL::Client.new(wsdl_path, cache: false, strict_schema: true)
       }.to raise_error(strict_error), "expected strict mode to fail for #{fixture_key}"
 
       expect {
-        WSDL::Client.new(wsdl_path, cache: nil, strict_schema: false)
+        WSDL::Client.new(wsdl_path, cache: false, strict_schema: false)
       }.not_to raise_error, "expected relaxed mode to parse #{fixture_key}"
     end
   end
@@ -85,11 +85,11 @@ describe 'Strict schema fixture matrix' do
       relaxed_message = "expected relaxed mode to fail without sandbox_paths for #{fixture_key}"
 
       expect {
-        WSDL::Client.new(wsdl_path, cache: nil, strict_schema: true)
+        WSDL::Client.new(wsdl_path, cache: false, strict_schema: true)
       }.to raise_error(WSDL::PathRestrictionError), strict_message
 
       expect {
-        WSDL::Client.new(wsdl_path, cache: nil, strict_schema: false)
+        WSDL::Client.new(wsdl_path, cache: false, strict_schema: false)
       }.to raise_error(WSDL::PathRestrictionError), relaxed_message
 
       system_dir = File.dirname(File.expand_path(wsdl_path))
@@ -97,11 +97,11 @@ describe 'Strict schema fixture matrix' do
       sandbox_paths = [system_dir, common_dir]
 
       expect {
-        WSDL::Client.new(wsdl_path, cache: nil, strict_schema: true, sandbox_paths:)
+        WSDL::Client.new(wsdl_path, cache: false, strict_schema: true, sandbox_paths:)
       }.not_to raise_error, "expected strict mode to parse #{fixture_key} when sandbox_paths are set"
 
       expect {
-        WSDL::Client.new(wsdl_path, cache: nil, strict_schema: false, sandbox_paths:)
+        WSDL::Client.new(wsdl_path, cache: false, strict_schema: false, sandbox_paths:)
       }.not_to raise_error, "expected relaxed mode to parse #{fixture_key} when sandbox_paths are set"
     end
   end

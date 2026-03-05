@@ -58,15 +58,15 @@ describe WSDL::Client do
         expect(definition_count).to eq(1)
       end
 
-      it 'allows disabling cache with cache: nil' do
+      it 'allows disabling cache with cache: false' do
         definition_count = 0
         allow(WSDL::Parser::Result).to receive(:parse) do |_, _|
           definition_count += 1
           instance_double(WSDL::Parser::Result, services: {}, operations: [])
         end
 
-        described_class.new(wsdl, cache: nil)
-        described_class.new(wsdl, cache: nil)
+        described_class.new(wsdl, cache: false)
+        described_class.new(wsdl, cache: false)
 
         expect(definition_count).to eq(2)
       end
@@ -112,21 +112,6 @@ describe WSDL::Client do
         expect {
           described_class.new('ftp://example.com/service.wsdl')
         }.to raise_error(ArgumentError, /Unsupported URL scheme/)
-      end
-
-      it 'partitions cache entries by reject_doctype' do
-        custom_cache = WSDL::Cache.new
-        definition_count = 0
-        allow(WSDL::Parser::Result).to receive(:parse) do |_, _|
-          definition_count += 1
-          instance_double(WSDL::Parser::Result, services: {}, operations: [])
-        end
-
-        described_class.new(wsdl, cache: custom_cache, reject_doctype: true)
-        described_class.new(wsdl, cache: custom_cache, reject_doctype: false)
-
-        expect(definition_count).to eq(2)
-        expect(custom_cache.size).to eq(2)
       end
 
       it 'partitions cache entries by limits' do
@@ -340,13 +325,13 @@ describe WSDL::Client do
 
     it 'defaults to strict mode and raises on schema import failures' do
       expect {
-        described_class.new(wsdl_with_missing_schema_import, http: http_mock, cache: nil)
+        described_class.new(wsdl_with_missing_schema_import, http: http_mock, cache: false)
       }.to raise_error(WSDL::SchemaImportError)
     end
 
     it 'tolerates recoverable schema import failures when strict_schema: false' do
       expect {
-        described_class.new(wsdl_with_missing_schema_import, http: http_mock, cache: nil, strict_schema: false)
+        described_class.new(wsdl_with_missing_schema_import, http: http_mock, cache: false, strict_schema: false)
       }.not_to raise_error
     end
 
@@ -405,51 +390,27 @@ describe WSDL::Client do
         described_class.new(wsdl_with_doctype_file.path, http: http_mock)
       }.to raise_error(WSDL::XMLSecurityError, /DOCTYPE declarations are not allowed/)
     end
-
-    it 'allows WSDL with DOCTYPE when reject_doctype: false' do
-      expect {
-        described_class.new(wsdl_with_doctype_file.path, http: http_mock, reject_doctype: false)
-      }.not_to raise_error
-    end
-
-    it 'passes reject_doctype option to parser' do
-      parser_result = instance_double(WSDL::Parser::Result, services: {})
-      allow(WSDL::Parser::Result).to receive(:parse).and_return(parser_result)
-
-      described_class.new(wsdl, http: http_mock, reject_doctype: false)
-
-      expect(WSDL::Parser::Result).to have_received(:parse).with(
-        wsdl, anything, having_attributes(reject_doctype: false)
-      )
-    end
-
-    it 'defaults reject_doctype to true' do
-      parser_result = instance_double(WSDL::Parser::Result, services: {})
-      allow(WSDL::Parser::Result).to receive(:parse).and_return(parser_result)
-
-      described_class.new(wsdl, http: http_mock)
-
-      expect(WSDL::Parser::Result).to have_received(:parse).with(
-        wsdl, anything, having_attributes(reject_doctype: true)
-      )
-    end
   end
 
-  describe '#pretty_print' do
-    it 'defaults to true' do
-      expect(client.pretty_print).to be(true)
+  describe '#config' do
+    it 'returns a Config instance' do
+      expect(client.config).to be_a(WSDL::Config)
     end
 
-    it 'can be set to false' do
-      client = described_class.new(wsdl, http: http_mock, pretty_print: false)
-      expect(client.pretty_print).to be(false)
+    it 'defaults format_xml to true' do
+      expect(client.config.format_xml).to be(true)
     end
 
-    it 'passes pretty_print option to operations' do
-      client = described_class.new(wsdl, http: http_mock, pretty_print: false)
+    it 'accepts format_xml: false' do
+      client = described_class.new(wsdl, http: http_mock, format_xml: false)
+      expect(client.config.format_xml).to be(false)
+    end
+
+    it 'passes format_xml option to operations' do
+      client = described_class.new(wsdl, http: http_mock, format_xml: false)
       operation = client.operation(service_name, port_name, operation_name)
 
-      expect(operation.pretty_print).to be(false)
+      expect(operation.format_xml).to be(false)
     end
   end
 
@@ -459,14 +420,14 @@ describe WSDL::Client do
     end
   end
 
-  describe '#strict_schema' do
+  describe '#config.strict_schema' do
     it 'defaults to true' do
-      expect(client.strict_schema).to be(true)
+      expect(client.config.strict_schema).to be(true)
     end
 
     it 'returns false when configured with strict_schema: false' do
-      relaxed_client = described_class.new(wsdl, http: http_mock, cache: nil, strict_schema: false)
-      expect(relaxed_client.strict_schema).to be(false)
+      relaxed_client = described_class.new(wsdl, http: http_mock, cache: false, strict_schema: false)
+      expect(relaxed_client.config.strict_schema).to be(false)
     end
   end
 
@@ -492,16 +453,16 @@ describe WSDL::Client do
     end
   end
 
-  describe '#limits' do
+  describe '#config.limits' do
     it 'uses WSDL.limits by default' do
-      expect(client.limits).to eq(WSDL.limits)
+      expect(client.config.limits).to eq(WSDL.limits)
     end
 
     it 'accepts custom limits' do
       custom_limits = WSDL::Limits.new(max_schemas: 200)
       client_with_limits = described_class.new(wsdl, http: http_mock, limits: custom_limits)
 
-      expect(client_with_limits.limits).to eq(custom_limits)
+      expect(client_with_limits.config.limits).to eq(custom_limits)
     end
 
     it 'passes limits to the parser result' do
@@ -509,7 +470,7 @@ describe WSDL::Client do
       parser_result = instance_double(WSDL::Parser::Result, services: {}, limits: custom_limits)
       allow(WSDL::Parser::Result).to receive(:parse).and_return(parser_result)
 
-      described_class.new(wsdl, http: http_mock, limits: custom_limits, cache: nil)
+      described_class.new(wsdl, http: http_mock, limits: custom_limits, cache: false)
 
       expect(WSDL::Parser::Result).to have_received(:parse).with(
         wsdl, anything, having_attributes(limits: custom_limits)
@@ -522,7 +483,7 @@ describe WSDL::Client do
       tiny_limit = WSDL::Limits.new(max_document_size: 10)
 
       expect {
-        described_class.new(wsdl, http: http_mock, limits: tiny_limit, cache: nil)
+        described_class.new(wsdl, http: http_mock, limits: tiny_limit, cache: false)
       }.to raise_error(WSDL::ResourceLimitError, /exceeds limit/)
     end
 
@@ -530,7 +491,7 @@ describe WSDL::Client do
       generous_limits = WSDL::Limits.new(max_document_size: 10 * 1024 * 1024)
 
       expect {
-        described_class.new(wsdl, http: http_mock, limits: generous_limits, cache: nil)
+        described_class.new(wsdl, http: http_mock, limits: generous_limits, cache: false)
       }.not_to raise_error
     end
   end

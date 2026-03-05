@@ -2,88 +2,157 @@
 
 ## Client Options
 
-`WSDL::Client.new(wsdl, **options)` supports:
+`WSDL::Client.new(wsdl, **options)` accepts infrastructure options directly and forwards behavioral options to `WSDL::Config`:
 
-- `wsdl` must be an HTTP(S) URL or local file path
-- `http:` custom HTTP adapter instance.
-- `pretty_print:` format generated request XML (`true` default).
-- `cache:` parser cache (`:default`, custom cache instance, or `nil`).
-- `sandbox_paths:` allowed local import directories.
-- `limits:` custom `WSDL::Limits` instance.
-- `reject_doctype:` reject DOCTYPE declarations (`true` default).
-- `strict_schema:` strict schema parsing + strict request validation (`true` default).
-- `max_request_elements:` override request AST element limit.
-- `max_request_depth:` override request AST depth limit.
-- `max_request_attributes:` override request AST attribute limit.
+### Infrastructure options (on Client)
 
-Example:
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `wsdl` | `String` | (required) | HTTP(S) URL or local file path to the WSDL document |
+| `http:` | adapter instance | `WSDL.http_adapter.new` | Custom HTTP adapter (see [HTTP Adapter](#http-adapter)) |
+| `cache:` | `Cache`, `nil`, `false` | `nil` | Parser cache — `nil` uses global, `false` disables (see [Cache](#cache)) |
+| `config:` | `Config`, `nil` | `nil` | Reusable Config object (see [Config](#config)) |
+
+### Behavioral options (via Config)
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `format_xml:` | `Boolean` | `true` | Format generated request XML with indentation |
+| `strict_schema:` | `Boolean` | `true` | Strict schema imports and request validation (see [Strict Schema Mode](#strict-schema-mode)) |
+| `sandbox_paths:`| `Array<String>`, `nil` | auto | Allowed directories for local imports (see [Sandbox Paths](#sandbox-paths)) |
+| `limits:` | `Limits`, `nil` | `WSDL.limits` | Resource limits for DoS protection (see [Limits](#limits)) |
 
 ```ruby
 client = WSDL::Client.new(
   '/app/wsdl/service.wsdl',
   strict_schema: false,
-  pretty_print: false,
-  reject_doctype: true,
-  max_request_elements: 20_000
+  format_xml: false
 )
 ```
 
+## Config
+
+`WSDL::Config` groups all behavioral settings into a frozen value object. You can pass options directly to the Client (they are forwarded to Config) or create a reusable Config:
+
+```ruby
+# Direct keyword arguments (most common)
+client = WSDL::Client.new(wsdl, format_xml: false, strict_schema: false)
+
+# Reusable Config object
+config = WSDL::Config.new(format_xml: false, strict_schema: false)
+client1 = WSDL::Client.new(wsdl1, config:)
+client2 = WSDL::Client.new(wsdl2, config:)
+
+# Derive a modified copy
+relaxed = config.with(strict_schema: false)
+```
+
+Config is frozen after construction, like `Limits`.
+
+## Global Defaults
+
+Four module-level settings apply to all new clients:
+
+```ruby
+WSDL.http_adapter = MyAdapterClass  # default: WSDL::HTTPClient
+WSDL.cache = WSDL::Cache.new        # default: enabled
+WSDL.limits = WSDL::Limits.new      # default: sensible defaults
+WSDL.logger = Rails.logger           # default: silent (NullLogger)
+```
+
+Pass `nil` to any setter to restore its default value.
+
+Set these at boot time, before creating clients.
+
 ## Strict Schema Mode
 
-`strict_schema: true`:
+Controls how the library handles incomplete or broken schema imports and how strictly requests are validated.
 
-- Recoverable schema import failures raise `WSDL::SchemaImportError`.
+`strict_schema: true` (default):
+
+- Recoverable schema import failures raise `SchemaImportError`.
 - Request validation is strict for known operation metadata.
 
 `strict_schema: false`:
 
-- Recoverable import failures are tolerated (best effort).
+- Recoverable import failures are logged and skipped (best effort).
 - Request validation is relaxed for unknown structure caused by incomplete schema metadata.
-- Structural WSDL reference errors (for example unresolved `message`/`part` in bindings) still raise.
+- Structural WSDL reference errors (e.g. unresolved `message`/`part` in bindings) still raise.
+
+Use `strict_schema: false` for large enterprise WSDLs with external schema dependencies that are unavailable or broken.
 
 ## Cache
 
-### Per Client
+The parser cache avoids re-parsing the same WSDL on repeated client construction. Cache keys include the WSDL source, sandbox paths, limits, strict schema mode, and HTTP adapter identity.
+
+### Per-client
 
 ```ruby
-client = WSDL::Client.new(wsdl, cache: nil) # disable
+client = WSDL::Client.new(wsdl)                   # use WSDL.cache (default)
+client = WSDL::Client.new(wsdl, cache: false)      # disable for this client
+client = WSDL::Client.new(wsdl, cache: my_cache)   # use a custom cache instance
 ```
 
-### Global Default
+### Global
 
 ```ruby
-WSDL.cache = WSDL::Cache.new
-WSDL.cache = nil
+WSDL.cache = WSDL::Cache.new   # in-memory cache (default)
+WSDL.cache = nil                # disable globally
 ```
 
-Parser cache keys include source identity, sandbox paths, limits, DOCTYPE policy, strict schema mode, and adapter cache identity.
+Custom caches must implement `fetch(key) { ... }` and `clear`.
 
 ## Limits
 
-Global default:
+Limits protect against resource exhaustion from malicious or oversized WSDL documents and requests. All limits are frozen after construction. Use `Limits#with` to create a modified copy.
+
+### All limits and defaults
+
+| Limit | Default | Protects against |
+|-------|---------|-----------------|
+| `max_document_size` | 10 MB | Oversized WSDL/schema documents |
+| `max_total_download_size` | 50 MB | Cumulative download exhaustion |
+| `max_schemas` | 50 | Excessive schema imports |
+| `max_schema_import_iterations` | 100 | Circular or excessive import chains |
+| `max_elements_per_type` | 500 | Oversized complex type definitions |
+| `max_attributes_per_element` | 100 | Oversized attribute lists |
+| `max_type_nesting_depth` | 50 | Deep type inheritance chains |
+| `max_request_elements` | 10,000 | Oversized request payloads |
+| `max_request_depth` | 100 | Deeply nested request structures |
+| `max_request_attributes` | 1,000 | Oversized request attribute lists |
+
+Set any limit to `nil` to disable it.
+
+### Global default
 
 ```ruby
-WSDL.limits = WSDL::Limits.new
+WSDL.limits = WSDL::Limits.new(max_schemas: 200)
 ```
 
-Override one value:
+### Override a single value
 
 ```ruby
 WSDL.limits = WSDL.limits.with(max_schemas: 200)
 ```
 
-Useful request-side limits:
+### Per-client
 
-- `max_request_elements` (default `10_000`)
-- `max_request_depth` (default `100`)
-- `max_request_attributes` (default `1_000`)
+```ruby
+custom_limits = WSDL.limits.with(max_document_size: 20 * 1024 * 1024)
+client = WSDL::Client.new(wsdl, limits: custom_limits)
+```
+
+### When to increase limits
+
+- **`max_schemas`** — large enterprise WSDLs with many imported XSD files.
+- **`max_document_size`** — WSDLs that embed large inline schemas.
+- **`max_request_elements`** — operations with very large payloads (bulk imports, batch operations).
 
 ## Logging
 
-By default all log output is silently discarded. Assign any `Logger`-compatible object to receive log messages:
+All log output is silently discarded by default. Assign any `Logger`-compatible object to enable logging:
 
 ```ruby
-# Use your application's logger (e.g. Rails)
 WSDL.logger = Rails.logger
 
 # Or use Ruby's stdlib Logger
@@ -97,14 +166,18 @@ Reset to silent:
 WSDL.logger = nil
 ```
 
+Log output includes schema import warnings (in relaxed mode), WSDL fetch activity, and security verification details.
+
 ## Sandbox Paths
 
-When `sandbox_paths` is omitted:
+Sandbox paths restrict which directories the parser may access when resolving local schema imports.
 
-- URL WSDL: local file access disabled.
-- File path WSDL: sandbox defaults to WSDL parent directory.
+When `sandbox_paths:` is omitted (default):
 
-Provide explicit paths for sibling import trees:
+- **URL WSDL**: local file access is disabled entirely. All imports must use HTTP(S) URLs.
+- **File path WSDL**: sandboxed to the WSDL's parent directory.
+
+Provide explicit paths when imports span sibling directories:
 
 ```ruby
 client = WSDL::Client.new(
@@ -113,43 +186,76 @@ client = WSDL::Client.new(
 )
 ```
 
-## HTTP Adapter Contract
+## XML Formatting
 
-Client adapters must implement:
-
-1. `#post(endpoint, headers, body)`
-2. `#cache_key` (stable non-empty identity)
-3. `#client` (returns underlying client object used by `client.http`)
-
-Set global adapter class:
+Set `format_xml: false` for servers sensitive to XML whitespace:
 
 ```ruby
-WSDL.http_adapter = MyAdapterClass
+client = WSDL::Client.new(wsdl, format_xml: false)
 ```
 
-Or pass instance per client:
+## HTTP Adapter
+
+The HTTP adapter handles WSDL/schema fetching (`get`) and SOAP operation calls (`post`).
+
+### Adapter interface
+
+Custom adapters must implement:
+
+| Method | Signature | Purpose |
+|--------|-----------|---------|
+| `get` | `get(url) → String` | Fetch WSDL and schema documents |
+| `post` | `post(url, headers, body) → String` | Send SOAP requests |
+| `cache_key` | `cache_key → String` | Stable non-empty identity for cache partitioning |
+| `client` | `client → Object` | Underlying client for user configuration (e.g. timeouts, SSL) |
 
 ```ruby
-client = WSDL::Client.new(wsdl, http: MyAdapterClass.new)
+class MyHTTPAdapter
+  def initialize
+    @client = Faraday.new
+  end
+
+  attr_reader :client
+
+  def cache_key
+    'my-http-adapter:v1'
+  end
+
+  def get(url)
+    @client.get(url).body
+  end
+
+  def post(url, headers, body)
+    @client.post(url, body, headers).body
+  end
+end
 ```
 
-## Pretty Printing
-
-Set `pretty_print: false` for servers sensitive to XML whitespace.
+### Setting the adapter
 
 ```ruby
-client = WSDL::Client.new(wsdl, pretty_print: false)
+# Global (all new clients)
+WSDL.http_adapter = MyHTTPAdapter
+
+# Per-client
+client = WSDL::Client.new(wsdl, http: MyHTTPAdapter.new)
 ```
 
-## DOCTYPE Rejection
+### Default adapter
 
-DOCTYPE is blocked by default as defense-in-depth:
+The built-in `WSDL::HTTPClient` uses the `httpclient` gem with secure defaults:
+
+- Connection timeout: 30s, send: 60s, receive: 120s
+- Redirect limit: 5
+- SSL verification: enabled (VERIFY_PEER)
+
+Configure via `client.http`:
 
 ```ruby
-client = WSDL::Client.new(wsdl, reject_doctype: true)
+client = WSDL::Client.new(wsdl)
+client.http.connect_timeout = 10
+client.http.ssl_config.add_trust_ca('/path/to/ca-bundle.crt')
 ```
-
-Disable only for trusted payloads.
 
 ## See also
 

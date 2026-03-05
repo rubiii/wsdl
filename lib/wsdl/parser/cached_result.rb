@@ -27,7 +27,7 @@ module WSDL
       # so that entries cached by an older version are not reused.
       #
       # @return [Integer]
-      CACHE_KEY_VERSION = 9
+      CACHE_KEY_VERSION = 10
 
       # Every input that affects parser output.
       #
@@ -49,14 +49,14 @@ module WSDL
         #
         # @param wsdl [String] WSDL location (HTTP(S) URL or local file path)
         # @param http [Object] HTTP adapter
-        # @param cache [Cache, nil, Symbol] cache instance, nil, or :default
+        # @param cache [Cache, nil, false] cache instance, nil (use global), or false (disable)
         # @param parse_options [ParseOptions] parse configuration options
         # @return [Result] parsed WSDL result
         #
         def load(wsdl:, http:, cache:, parse_options:)
           inputs = ParseInputs.new(wsdl:, http:, parse_options:)
 
-          cache = WSDL.cache if cache == :default
+          cache = WSDL.cache if cache.nil?
           return build_result(inputs) unless cache
 
           cache.fetch(cache_key(inputs)) { build_result(inputs) }
@@ -89,7 +89,6 @@ module WSDL
             source: normalize_source(inputs.wsdl),
             sandbox_paths: normalize_sandbox_paths(opts.sandbox_paths),
             limits: normalize_limits(opts.limits),
-            reject_doctype: opts.reject_doctype ? true : false,
             strict_schema: opts.strict_schema ? true : false,
             http_identity: normalize_http_identity(inputs.http)
           }

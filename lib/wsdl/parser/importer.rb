@@ -47,7 +47,6 @@ module WSDL
         @documents = documents
         @schemas = schemas
         @limits = parse_options.limits
-        @reject_doctype = parse_options.reject_doctype
         @strict_schema = parse_options.strict_schema
         @schema_count = 0
         @schema_import_errors = []
@@ -100,7 +99,7 @@ module WSDL
         xml = @resolver.resolve(location, base: base)
         @import_locations << resolved_location
 
-        parsed = XML::Parser.parse_with_logging(xml, strict: false, reject_doctype: @reject_doctype)
+        parsed = XML::Parser.parse_with_logging(xml, strict: false)
         document = Document.new(parsed, @schemas)
         block.call(document, resolved_location)
 
@@ -238,7 +237,7 @@ module WSDL
       # @return [Nokogiri::XML::Document] parsed XML document
       # @raise [SchemaImportParseError] when XML is malformed
       def parse_schema_xml(xml, schema_location, base, action)
-        XML::Parser.parse_with_logging(xml, strict: false, reject_doctype: @reject_doctype)
+        XML::Parser.parse_with_logging(xml, strict: false)
       rescue Nokogiri::XML::SyntaxError => e
         raise SchemaImportParseError.new(
           "Failed to parse XML Schema #{action} #{schema_location.inspect} " \
