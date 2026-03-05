@@ -497,6 +497,63 @@ describe WSDL::Operation do
       expect(response).to be_a(WSDL::Response)
     end
 
+    context 'with response size limiting' do
+      let(:request_body) do
+        {
+          ConvertTemp: {
+            Temperature: 30,
+            FromUnit: 'degreeCelsius',
+            ToUnit: 'degreeFahrenheit'
+          }
+        }
+      end
+
+      it 'raises ResourceLimitError when response exceeds max_response_size' do
+        large_body = 'x' * 1024
+        http_mock.fake_request('http://www.webservicex.net/ConvertTemperature.asmx')
+
+        # Override the fake to return a large body
+        allow(http_mock).to receive(:post).and_return(
+          WSDL::HTTPResponse.new(status: 200, body: large_body)
+        )
+
+        limits = WSDL::Limits.new(max_response_size: 512)
+        config = WSDL::Config.new(limits:)
+        op = described_class.new(operation_info, parser_result, http_mock, config:)
+
+        apply_request(op, body: request_body)
+
+        expect { op.invoke }.to raise_error(WSDL::ResourceLimitError) { |error|
+          expect(error.limit_name).to eq(:max_response_size)
+          expect(error.limit_value).to eq(512)
+          expect(error.actual_value).to eq(1024)
+        }
+      end
+
+      it 'does not raise when response is within the limit' do
+        http_mock.fake_request('http://www.webservicex.net/ConvertTemperature.asmx')
+        apply_request(operation, body: request_body)
+
+        expect { operation.invoke }.not_to raise_error
+      end
+
+      it 'does not raise when max_response_size is nil (disabled)' do
+        large_body = 'x' * (20 * 1024 * 1024)
+
+        allow(http_mock).to receive(:post).and_return(
+          WSDL::HTTPResponse.new(status: 200, body: large_body)
+        )
+
+        limits = WSDL::Limits.new(max_response_size: nil)
+        config = WSDL::Config.new(limits:)
+        op = described_class.new(operation_info, parser_result, http_mock, config:)
+
+        apply_request(op, body: request_body)
+
+        expect { op.invoke }.not_to raise_error
+      end
+    end
+
     context 'with response verification enforcement' do
       let(:request_body) do
         {

@@ -55,6 +55,9 @@ module WSDL
     # Default maximum iterations for resolving schema imports and includes.
     DEFAULT_MAX_SCHEMA_IMPORT_ITERATIONS = 100
 
+    # Default maximum size for a SOAP response body (10 MB).
+    DEFAULT_MAX_RESPONSE_SIZE = 10 * 1024 * 1024
+
     # Creates a new Limits instance with the specified resource limits.
     #
     # @param max_document_size [Integer, nil] maximum size in bytes for a single WSDL/schema
@@ -77,6 +80,8 @@ module WSDL
     #   Set to nil to disable. Default: 1,000.
     # @param max_schema_import_iterations [Integer, nil] maximum iterations for resolving
     #   schema imports and includes. Set to nil to disable. Default: 100.
+    # @param max_response_size [Integer, nil] maximum size in bytes for a SOAP response body.
+    #   Set to nil to disable this limit. Default: 10 MB.
     #
     # rubocop:disable Metrics/ParameterLists
     def initialize(
@@ -89,7 +94,8 @@ module WSDL
       max_request_elements: DEFAULT_MAX_REQUEST_ELEMENTS,
       max_request_depth: DEFAULT_MAX_REQUEST_DEPTH,
       max_request_attributes: DEFAULT_MAX_REQUEST_ATTRIBUTES,
-      max_schema_import_iterations: DEFAULT_MAX_SCHEMA_IMPORT_ITERATIONS
+      max_schema_import_iterations: DEFAULT_MAX_SCHEMA_IMPORT_ITERATIONS,
+      max_response_size: DEFAULT_MAX_RESPONSE_SIZE
     )
       # rubocop:enable Metrics/ParameterLists
       @max_document_size = max_document_size
@@ -102,6 +108,7 @@ module WSDL
       @max_request_depth = max_request_depth
       @max_request_attributes = max_request_attributes
       @max_schema_import_iterations = max_schema_import_iterations
+      @max_response_size = max_response_size
 
       freeze
     end
@@ -136,6 +143,9 @@ module WSDL
     # @return [Integer, nil] maximum iterations for resolving schema imports and includes
     attr_reader :max_schema_import_iterations
 
+    # @return [Integer, nil] maximum size in bytes for a SOAP response body
+    attr_reader :max_response_size
+
     # Creates a new Limits instance with some values changed.
     #
     # @param options [Hash] the limits to override
@@ -149,6 +159,7 @@ module WSDL
     # @option options [Integer, nil] :max_request_depth
     # @option options [Integer, nil] :max_request_attributes
     # @option options [Integer, nil] :max_schema_import_iterations
+    # @option options [Integer, nil] :max_response_size
     # @return [Limits] a new Limits instance with the specified changes
     #
     # @example Increase document size limit
@@ -168,7 +179,8 @@ module WSDL
         max_request_elements: options.fetch(:max_request_elements, @max_request_elements),
         max_request_depth: options.fetch(:max_request_depth, @max_request_depth),
         max_request_attributes: options.fetch(:max_request_attributes, @max_request_attributes),
-        max_schema_import_iterations: options.fetch(:max_schema_import_iterations, @max_schema_import_iterations)
+        max_schema_import_iterations: options.fetch(:max_schema_import_iterations, @max_schema_import_iterations),
+        max_response_size: options.fetch(:max_response_size, @max_response_size)
       )
     end
 
@@ -187,7 +199,8 @@ module WSDL
         max_request_elements: @max_request_elements,
         max_request_depth: @max_request_depth,
         max_request_attributes: @max_request_attributes,
-        max_schema_import_iterations: @max_schema_import_iterations
+        max_schema_import_iterations: @max_schema_import_iterations,
+        max_response_size: @max_response_size
       }
     end
 
@@ -206,7 +219,8 @@ module WSDL
         max_request_elements: limit_value(@max_request_elements),
         max_request_depth: limit_value(@max_request_depth),
         max_request_attributes: limit_value(@max_request_attributes),
-        max_schema_import_iterations: limit_value(@max_schema_import_iterations)
+        max_schema_import_iterations: limit_value(@max_schema_import_iterations),
+        max_response_size: Formatting.format_bytes(@max_response_size)
       }.map { |key, value| "#{key}=#{value}" }.join(' ')
 
       "#<#{self.class.name} #{parts}>"

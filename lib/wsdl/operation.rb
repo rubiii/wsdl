@@ -138,10 +138,13 @@ module WSDL
     # Invokes this SOAP operation.
     #
     # @return [Response]
+    # @raise [ResourceLimitError] when the response body exceeds {Limits#max_response_size}
     def invoke
       ensure_request_definition!
 
       http_response = @http.post(endpoint, http_headers, to_xml)
+      enforce_response_size_limit!(http_response)
+
       response = Response.new(
         http: http_response,
         output_body_parts: @operation_info.output.body_parts,
@@ -164,6 +167,21 @@ module WSDL
     end
 
     private
+
+    def enforce_response_size_limit!(http_response)
+      max = @config.limits.max_response_size
+      return unless max
+
+      actual = http_response.body.bytesize
+      return unless actual > max
+
+      raise ResourceLimitError.new(
+        "Response size #{Formatting.format_bytes(actual)} exceeds limit of #{Formatting.format_bytes(max)}",
+        limit_name: :max_response_size,
+        limit_value: max,
+        actual_value: actual
+      )
+    end
 
     def prepare_serializable_document(document)
       return document unless rpc_literal?
