@@ -67,7 +67,7 @@ module WSDL
     #
     def initialize(raw_response = nil, http: nil, output_body_parts: nil, output_header_parts: nil,
                    verification: Security::ResponseVerification::Options.default)
-      @raw_response = raw_response || http&.body || ''
+      @raw_response = (raw_response || http&.body || '').freeze
       @http = http
       @output_body_parts = output_body_parts
       @output_header_parts = output_header_parts

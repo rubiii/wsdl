@@ -59,6 +59,17 @@ describe WSDL::Response, type: :unit do
       it 'returns the raw XML response' do
         expect(response.raw).to eq(soap_response)
       end
+
+      it 'returns a frozen string to prevent TOCTOU mutation' do
+        expect(response.raw).to be_frozen
+      end
+
+      it 'freezes the body extracted from an HTTPResponse' do
+        http = WSDL::HTTPResponse.new(status: 200, body: soap_response.dup)
+        response = described_class.new(http:)
+
+        expect(response.raw).to be_frozen
+      end
     end
 
     describe '#doc' do
