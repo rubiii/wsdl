@@ -14,6 +14,8 @@ module WSDL
     # @api private
     #
     class Importer
+      include Log
+
       # Exceptions that are treated as recoverable schema import failures.
       #
       # These are wrapped into {SchemaImportError} and either raised or collected
@@ -41,8 +43,6 @@ module WSDL
       # @param parse_options [ParseOptions] parse configuration options
       #
       def initialize(resolver, documents, schemas, parse_options)
-        @logger = Logging.logger[self]
-
         @resolver = resolver
         @documents = documents
         @schemas = schemas
@@ -65,7 +65,7 @@ module WSDL
       def import(location)
         @import_locations = []
 
-        @logger.info("Resolving WSDL document #{location.inspect}.")
+        logger.info("Resolving WSDL document #{location.inspect}.")
         import_document(location, base: nil) do |document, resolved_location|
           @documents << document
           schemas = document.schemas(resolved_location)
@@ -93,20 +93,20 @@ module WSDL
         resolved_location = @resolver.resolve_location(location, base)
 
         if @import_locations.include? resolved_location
-          @logger.info("Skipping already imported location #{resolved_location.inspect}.")
+          logger.info("Skipping already imported location #{resolved_location.inspect}.")
           return
         end
 
         xml = @resolver.resolve(location, base: base)
         @import_locations << resolved_location
 
-        parsed = XML::Parser.parse_with_logging(xml, @logger, strict: false, reject_doctype: @reject_doctype)
+        parsed = XML::Parser.parse_with_logging(xml, strict: false, reject_doctype: @reject_doctype)
         document = Document.new(parsed, @schemas)
         block.call(document, resolved_location)
 
         # Resolve WSDL imports (relative to this document's location)
         document.imports.each do |import_location|
-          @logger.info("Resolving WSDL import #{import_location.inspect}.")
+          logger.info("Resolving WSDL import #{import_location.inspect}.")
           import_document(import_location, base: resolved_location, &block)
         end
       end
@@ -127,8 +127,8 @@ module WSDL
 
           next unless iteration == max_iterations - 1
 
-          @logger.warn("Reached maximum schema import iterations (#{max_iterations}). " \
-                       'Some schemas may not have been imported.')
+          logger.warn("Reached maximum schema import iterations (#{max_iterations}). " \
+                      'Some schemas may not have been imported.')
         end
       end
 
@@ -180,7 +180,7 @@ module WSDL
         @processed_locations.add(resolved_location)
 
         if @import_locations.include?(resolved_location)
-          @logger.info("Skipping already imported schema #{schema_location.inspect}.")
+          logger.info("Skipping already imported schema #{schema_location.inspect}.")
           return
         end
 
@@ -196,7 +196,7 @@ module WSDL
       # @return [void]
       def load_schema(schema_location, base, resolved_location, include_into)
         action = include_into ? 'include' : 'import'
-        @logger.info("Resolving XML Schema #{action} #{schema_location.inspect} (base: #{base.inspect}).")
+        logger.info("Resolving XML Schema #{action} #{schema_location.inspect} (base: #{base.inspect}).")
 
         xml = load_schema_xml(schema_location, base, action)
         @import_locations << resolved_location
@@ -238,7 +238,7 @@ module WSDL
       # @return [Nokogiri::XML::Document] parsed XML document
       # @raise [SchemaImportParseError] when XML is malformed
       def parse_schema_xml(xml, schema_location, base, action)
-        XML::Parser.parse_with_logging(xml, @logger, strict: false, reject_doctype: @reject_doctype)
+        XML::Parser.parse_with_logging(xml, strict: false, reject_doctype: @reject_doctype)
       rescue Nokogiri::XML::SyntaxError => e
         raise SchemaImportParseError.new(
           "Failed to parse XML Schema #{action} #{schema_location.inspect} " \
@@ -258,7 +258,7 @@ module WSDL
         @schema_import_errors << error
         raise error if @strict_schema
 
-        @logger.warn(error.message)
+        logger.warn(error.message)
       end
 
       # Applies loaded schemas to the collection or merges them into an existing schema.

@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require 'logging'
-
 module WSDL
   # HTTP adapter using the httpclient gem.
   #
@@ -65,6 +63,8 @@ module WSDL
   #   WSDL.http_adapter = MyHTTPAdapter
   #
   class HTTPClient
+    include Log
+
     # Default connection timeout in seconds.
     # This is the maximum time to wait for a connection to be established.
     DEFAULT_CONNECT_TIMEOUT = 30
@@ -176,13 +176,6 @@ module WSDL
         'This makes connections vulnerable to man-in-the-middle attacks. ' \
         'Only disable verification in development/testing environments.'
       )
-    end
-
-    # Returns the logger for this class.
-    #
-    # @return [Logging::Logger] the logger instance
-    def logger
-      @logger ||= Logging.logger[self]
     end
 
     # Performs an HTTP request.

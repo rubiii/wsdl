@@ -78,6 +78,25 @@ Useful request-side limits:
 - `max_request_depth` (default `100`)
 - `max_request_attributes` (default `1_000`)
 
+## Logging
+
+The library uses the [logging](https://github.com/TwP/logging) gem internally. By default no appenders are attached, so all log output is silently discarded.
+
+Use `WSDL.logger` to configure the root logger. All internal loggers inherit from it.
+
+```ruby
+WSDL.logger.add_appenders(Logging.appenders.stdout)
+WSDL.logger.level = :warn
+```
+
+For finer control, configure a specific namespace:
+
+```ruby
+logger = Logging.logger['WSDL::Parser::Importer']
+logger.add_appenders(Logging.appenders.stdout)
+logger.level = :debug
+```
+
 ## Sandbox Paths
 
 When `sandbox_paths` is omitted:

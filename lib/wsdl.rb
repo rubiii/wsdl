@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'logging'
+require 'wsdl/log'
 
 # WSDL toolkit for Ruby.
 #
@@ -34,6 +34,20 @@ module WSDL
 
     # @return [Limits] the default limits instance
     attr_reader :limits
+
+    # Returns the root logger for the WSDL library.
+    #
+    # Configure appenders and level to control library log output.
+    # By default no appenders are attached, so all log output is discarded.
+    #
+    # @example Enable warn-level output to stdout
+    #   WSDL.logger.add_appenders(Logging.appenders.stdout)
+    #   WSDL.logger.level = :warn
+    #
+    # @return [Logging::Logger]
+    def logger
+      Log.root
+    end
 
     # Sets the HTTP adapter class. Pass nil to restore the default.
     def http_adapter=(adapter)

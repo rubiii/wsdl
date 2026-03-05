@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 require 'nokogiri'
-require 'logging'
 require_relative '../errors'
 
 module WSDL
@@ -62,7 +61,7 @@ module WSDL
     #   doc = WSDL::XML::Parser.parse(xml, noblanks: true)
     #
     # @example Parse with threat logging
-    #   doc = WSDL::XML::Parser.parse_with_logging(xml, logger)
+    #   doc = WSDL::XML::Parser.parse_with_logging(xml)
     #
     # @example Allow DOCTYPE (not recommended for untrusted input)
     #   doc = WSDL::XML::Parser.parse(xml, reject_doctype: false)
@@ -117,6 +116,8 @@ module WSDL
       DOCTYPE_PATTERN = /<!DOCTYPE/i
 
       class << self
+        include Log::ClassMethods
+
         # Parses an XML string or returns an existing document.
         #
         # This method applies secure parsing options to protect against
@@ -193,7 +194,6 @@ module WSDL
         # against your SOAP endpoints.
         #
         # @param xml [String] the XML string to parse
-        # @param logger [Logger, Logging::Logger, nil] logger for threat warnings
         # @param noblanks [Boolean] remove blank nodes
         # @param strict [Boolean] use strict parsing (default: true)
         # @param reject_doctype [Boolean] reject documents with DOCTYPE declarations
@@ -204,12 +204,9 @@ module WSDL
         #   (when reject_doctype is true)
         #
         # @example With logging
-        #   logger = Logging.logger['WSDL::Security']
-        #   doc = Parser.parse_with_logging(response_xml, logger)
+        #   doc = Parser.parse_with_logging(response_xml)
         #
-        def parse_with_logging(xml, logger = nil, noblanks: false, strict: true, reject_doctype: true)
-          logger ||= Logging.logger[self]
-
+        def parse_with_logging(xml, noblanks: false, strict: true, reject_doctype: true)
           if xml.is_a?(String)
             threats = detect_threats(xml)
             logger.warn("Potential XML attack detected: #{threats.join(', ')}") if threats.any?

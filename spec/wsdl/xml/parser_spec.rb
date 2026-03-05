@@ -445,15 +445,16 @@ describe WSDL::XML::Parser do
   end
 
   describe '.parse_with_logging' do
-    let(:logger) { instance_double(Logger) }
+    let(:logger) { Logging.logger['test.xml.parser'] }
 
     before do
+      allow(described_class).to receive(:logger).and_return(logger)
       allow(logger).to receive(:warn)
     end
 
     it 'parses XML normally when no threats' do
       xml = '<root><child>text</child></root>'
-      doc = described_class.parse_with_logging(xml, logger)
+      doc = described_class.parse_with_logging(xml)
 
       expect(doc).to be_a(Nokogiri::XML::Document)
       expect(doc.root.name).to eq('root')
@@ -464,7 +465,7 @@ describe WSDL::XML::Parser do
       xxe_xml = '<!DOCTYPE foo [<!ENTITY xxe SYSTEM "file:///etc/passwd">]><root/>'
 
       # Disable DOCTYPE rejection to test threat logging behavior
-      described_class.parse_with_logging(xxe_xml, logger, reject_doctype: false)
+      described_class.parse_with_logging(xxe_xml, reject_doctype: false)
 
       expect(logger).to have_received(:warn).with(
         /Potential XML attack detected.*doctype.*entity_declaration.*external_reference/
@@ -474,7 +475,7 @@ describe WSDL::XML::Parser do
     it 'still parses XML securely after logging threats' do
       xxe_xml = '<!DOCTYPE foo [<!ENTITY xxe SYSTEM "file:///etc/passwd">]><root>safe</root>'
       # Disable DOCTYPE rejection to test underlying XXE protection
-      doc = described_class.parse_with_logging(xxe_xml, logger, reject_doctype: false)
+      doc = described_class.parse_with_logging(xxe_xml, reject_doctype: false)
 
       expect(doc.root.text).not_to include('root:')
     end
@@ -483,29 +484,22 @@ describe WSDL::XML::Parser do
       malformed_xml = '<root><unclosed>'
 
       expect {
-        described_class.parse_with_logging(malformed_xml, logger)
+        described_class.parse_with_logging(malformed_xml)
       }.to raise_error(Nokogiri::XML::SyntaxError)
     end
 
     it 'uses relaxed parsing when strict: false' do
       malformed_xml = '<root><unclosed>'
-      doc = described_class.parse_with_logging(malformed_xml, logger, strict: false)
+      doc = described_class.parse_with_logging(malformed_xml, strict: false)
 
       expect(doc).to be_a(Nokogiri::XML::Document)
     end
 
     it 'respects noblanks option' do
       xml = "<root>\n  <child>text</child>\n</root>"
-      doc = described_class.parse_with_logging(xml, logger, noblanks: true)
+      doc = described_class.parse_with_logging(xml, noblanks: true)
 
       expect(doc.root.element_children.length).to eq(1)
-    end
-
-    it 'uses default logger when none provided' do
-      xml = '<root/>'
-
-      # Should not raise when logger is nil
-      expect { described_class.parse_with_logging(xml, nil) }.not_to raise_error
     end
   end
 

@@ -26,11 +26,5 @@ module WSDL
   #   user_type.elements.each { |el| puts el.name }
   #
   module Schema
-    # Returns the logger instance for the Schema module.
-    #
-    # @return [Logging::Logger] the logger instance
-    def self.logger
-      @logger ||= Logging.logger[self]
-    end
   end
 end

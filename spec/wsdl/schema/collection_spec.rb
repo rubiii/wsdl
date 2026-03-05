@@ -653,7 +653,7 @@ RSpec.describe WSDL::Schema::Definition do
       it 'logs warnings for conflicting components' do
         warnings = []
         logger = Logging.logger['test.schema.definition.conflict']
-        allow(WSDL::Schema).to receive(:logger).and_return(logger)
+        allow(conflict_base).to receive(:logger).and_return(logger)
         allow(logger).to receive(:warn) { |msg| warnings << msg if msg.is_a?(String) }
 
         conflict_base.merge(conflicting_definition)
@@ -665,7 +665,8 @@ RSpec.describe WSDL::Schema::Definition do
       end
 
       it 'uses the duplicate definition (last write wins)' do
-        allow(WSDL::Schema).to receive(:logger).and_return(Logging.logger['test.schema.definition.conflict2'])
+        logger = Logging.logger['test.schema.definition.conflict2']
+        allow(conflict_base).to receive(:logger).and_return(logger)
 
         conflict_base.merge(conflicting_definition)
 
@@ -677,8 +678,6 @@ RSpec.describe WSDL::Schema::Definition do
       it 'does not log any warnings' do
         warnings = []
         logger = Logging.logger['test.schema.definition.no_conflict']
-        allow(WSDL::Schema).to receive(:logger).and_return(logger)
-        allow(logger).to receive(:warn) { |msg| warnings << msg if msg.is_a?(String) }
 
         no_conflict_base = new_definition('
           <xs:schema targetNamespace="http://example.com"
@@ -692,6 +691,9 @@ RSpec.describe WSDL::Schema::Definition do
             <xs:element name="Beta" type="xs:int"/>
           </xs:schema>
         ')
+
+        allow(no_conflict_base).to receive(:logger).and_return(logger)
+        allow(logger).to receive(:warn) { |msg| warnings << msg if msg.is_a?(String) }
 
         no_conflict_base.merge(no_conflict_other)
 

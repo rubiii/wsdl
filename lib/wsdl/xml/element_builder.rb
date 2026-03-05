@@ -13,13 +13,14 @@ module WSDL
     # to prevent infinite loops during element building.
     #
     class ElementBuilder
+      include Log
+
       # Creates a new ElementBuilder instance.
       #
       # @param schemas [Schema::Collection] the schema collection for resolving types
       # @param limits [Limits, nil] resource limits for DoS protection.
       #   If nil, uses {WSDL.limits}.
       def initialize(schemas, limits: nil)
-        @logger = Logging.logger[self]
         @schemas = schemas
         @limits = limits || WSDL.limits
       end
@@ -169,7 +170,7 @@ module WSDL
                 context: "attribute@ref #{schema_attr.ref.inspect} on type #{type.name.inspect}"
               )
             rescue UnresolvedReferenceError => e
-              @logger.debug("Unable to resolve attribute@ref #{schema_attr.ref.inspect}: #{e.message}")
+              logger.debug("Unable to resolve attribute@ref #{schema_attr.ref.inspect}: #{e.message}")
               next
             end
           end

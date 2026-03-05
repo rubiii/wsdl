@@ -61,7 +61,7 @@ describe WSDL::HTTPClient do
 
   describe 'SSL verification warning' do
     let(:response) { double(content: 'response') }
-    let(:logger) { Logging.logger[http] }
+    let(:logger) { Logging.logger[described_class] }
 
     before do
       allow(http.client).to receive(:request).and_return(response)

@@ -3,7 +3,8 @@
     "allow": [
       "Bash(bundle exec:*)",
       "Bash(grep:*)",
-      "Bash(rake ci:*)"
+      "Bash(rake ci:*)",
+      "Bash(DEBUG=WSDL bundle exec:*)"
     ]
   }
 }

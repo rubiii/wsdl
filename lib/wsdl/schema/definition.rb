@@ -14,6 +14,8 @@ module WSDL
     #   definition.elements['User']  # => Node
     #
     class Definition
+      include Log
+
       # Creates a new Definition by parsing an XML Schema node.
       #
       # @param schema_node [Nokogiri::XML::Node] the xs:schema element
@@ -101,7 +103,7 @@ module WSDL
         conflicting_keys = target.keys & other_hash.keys
         conflicting_keys.each do |key|
           ns = @target_namespace || '(no namespace)'
-          Schema.logger.warn(
+          logger.warn(
             "Schema #{component_type} '#{key}' in namespace '#{ns}' " \
             'is defined in multiple xs:include schemas. The duplicate definition will be used.'
           )
