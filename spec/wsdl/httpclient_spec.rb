@@ -60,12 +60,12 @@ describe WSDL::HTTPClient do
   end
 
   describe 'SSL verification warning' do
-    let(:response) { double(content: 'response') }
+    let(:raw_response) { double(status: 200, headers: {}, content: 'response') }
     let(:log_output) { StringIO.new }
     let(:logger) { Logger.new(log_output) }
 
     before do
-      allow(http.client).to receive(:request).and_return(response)
+      allow(http.client).to receive(:request).and_return(raw_response)
       WSDL.logger = logger
     end
 
@@ -117,7 +117,7 @@ describe WSDL::HTTPClient do
       it 'logs again for a new adapter instance' do
         http2 = described_class.new
         http2.client.ssl_config.verify_mode = OpenSSL::SSL::VERIFY_NONE
-        allow(http2.client).to receive(:request).and_return(response)
+        allow(http2.client).to receive(:request).and_return(raw_response)
 
         http.get('https://example.com')
         http2.get('https://example.com')
@@ -129,30 +129,35 @@ describe WSDL::HTTPClient do
   end
 
   describe '#get' do
-    it 'executes an HTTP GET request and returns the raw response' do
+    it 'returns an HTTPResponse with status, headers, and body' do
       url = 'http://example.com'
 
-      response = double(content: 'raw get!')
-      allow(http.client).to receive(:request).with(:get, url, nil, nil, {}).and_return(response)
+      raw_response = double(status: 200, headers: { 'Content-Type' => 'text/xml' }, content: 'raw get!')
+      allow(http.client).to receive(:request).with(:get, url, nil, nil, {}).and_return(raw_response)
 
-      raw_response = http.get(url)
+      response = http.get(url)
 
-      expect(raw_response).to eq('raw get!')
+      expect(response).to be_a(WSDL::HTTPResponse)
+      expect(response.status).to eq(200)
+      expect(response.headers).to eq('Content-Type' => 'text/xml')
+      expect(response.body).to eq('raw get!')
     end
   end
 
   describe '#post' do
-    it 'executes an HTTP POST request and returns the raw response' do
+    it 'returns an HTTPResponse with status, headers, and body' do
       url = 'http://example.com'
       body = 'post request!'
       headers = { 'Content-Length' => 5 }
 
-      response = double(content: 'raw post!')
-      allow(http.client).to receive(:request).with(:post, url, nil, body, headers).and_return(response)
+      raw_response = double(status: 200, headers: {}, content: 'raw post!')
+      allow(http.client).to receive(:request).with(:post, url, nil, body, headers).and_return(raw_response)
 
-      raw_response = http.post(url, headers, body)
+      response = http.post(url, headers, body)
 
-      expect(raw_response).to eq('raw post!')
+      expect(response).to be_a(WSDL::HTTPResponse)
+      expect(response.status).to eq(200)
+      expect(response.body).to eq('raw post!')
     end
   end
 

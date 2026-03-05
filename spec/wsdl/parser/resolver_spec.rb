@@ -10,7 +10,7 @@ describe WSDL::Parser::Resolver do
   let(:http_test_client) do
     Class.new do
       def get(url)
-        "raw_response for #{url}"
+        WSDL::HTTPResponse.new(status: 200, body: "raw_response for #{url}")
       end
     end.new
   end
@@ -407,7 +407,7 @@ describe WSDL::Parser::Resolver do
             end
 
             def get(_url)
-              @content
+              WSDL::HTTPResponse.new(status: 200, body: @content)
             end
           end.new(large_content)
         end
@@ -506,7 +506,7 @@ describe WSDL::Parser::Resolver do
           end
 
           def get(_url)
-            @content
+            WSDL::HTTPResponse.new(status: 200, body: @content)
           end
         end.new(content)
 

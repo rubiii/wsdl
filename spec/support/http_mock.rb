@@ -18,15 +18,18 @@ module SpecSupport
     end
 
     def get(url)
-      @fakes[url] or raise_mock_error! :get, url
+      entry = @fakes[url] or raise_mock_error!(:get, url)
+      WSDL::HTTPResponse.new(status: entry[:status], body: entry[:body])
     end
 
     def post(url, _headers, _body)
-      @fakes[url] or raise_mock_error! :post, url
+      entry = @fakes[url] or raise_mock_error!(:post, url)
+      WSDL::HTTPResponse.new(status: entry[:status], body: entry[:body])
     end
 
-    def fake_request(url, fixture = nil)
-      @fakes[url] = fixture ? load_fixture(fixture) : ''
+    def fake_request(url, fixture = nil, status: 200)
+      body = fixture ? load_fixture(fixture) : ''
+      @fakes[url] = { status:, body: }
     end
 
     private

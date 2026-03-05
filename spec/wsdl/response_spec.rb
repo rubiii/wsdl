@@ -21,6 +21,37 @@ describe WSDL::Response, type: :unit do
     XML
   end
 
+  describe '#http_status' do
+    it 'returns nil when no HTTP response is provided' do
+      response = described_class.new(soap_response)
+
+      expect(response.http_status).to be_nil
+    end
+
+    it 'returns the HTTP status code from the HTTP response' do
+      http = WSDL::HTTPResponse.new(status: 500, body: soap_response)
+      response = described_class.new(http:)
+
+      expect(response.http_status).to eq(500)
+    end
+  end
+
+  describe '#http_headers' do
+    it 'returns an empty hash when no HTTP response is provided' do
+      response = described_class.new(soap_response)
+
+      expect(response.http_headers).to eq({})
+    end
+
+    it 'returns the HTTP headers from the HTTP response' do
+      headers = { 'Content-Type' => 'text/xml' }
+      http = WSDL::HTTPResponse.new(status: 200, headers:, body: soap_response)
+      response = described_class.new(http:)
+
+      expect(response.http_headers).to eq(headers)
+    end
+  end
+
   describe 'without schema parts (fallback to parser)' do
     subject(:response) { described_class.new(soap_response) }
 

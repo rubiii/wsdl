@@ -141,9 +141,9 @@ module WSDL
     def invoke
       ensure_request_definition!
 
-      raw_response = @http.post(endpoint, http_headers, to_xml)
+      http_response = @http.post(endpoint, http_headers, to_xml)
       response = Response.new(
-        raw_response,
+        http: http_response,
         output_body_parts: @operation_info.output.body_parts,
         output_header_parts: @operation_info.output.header_parts,
         verification: @security.response_verification_options

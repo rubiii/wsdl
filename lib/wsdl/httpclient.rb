@@ -52,11 +52,13 @@ module WSDL
   #     end
   #
   #     def get(url)
-  #       @client.get(url).body
+  #       resp = @client.get(url)
+  #       WSDL::HTTPResponse.new(status: resp.status, headers: resp.headers, body: resp.body)
   #     end
   #
   #     def post(url, headers, body)
-  #       @client.post(url, body, headers).body
+  #       resp = @client.post(url, body, headers)
+  #       WSDL::HTTPResponse.new(status: resp.status, headers: resp.headers, body: resp.body)
   #     end
   #   end
   #
@@ -118,7 +120,7 @@ module WSDL
     # Executes an HTTP GET request.
     #
     # @param url [String] the URL to request
-    # @return [String] the raw HTTP response body
+    # @return [HTTPResponse] the HTTP response
     def get(url)
       warn_if_ssl_verification_disabled
       request(:get, url, {}, nil)
@@ -129,7 +131,7 @@ module WSDL
     # @param url [String] the URL to post to
     # @param headers [Hash] HTTP headers to include in the request
     # @param body [String] the request body
-    # @return [String] the raw HTTP response body
+    # @return [HTTPResponse] the HTTP response
     def post(url, headers, body)
       warn_if_ssl_verification_disabled
       request(:post, url, headers, body)
@@ -184,10 +186,15 @@ module WSDL
     # @param url [String] the URL to request
     # @param headers [Hash] HTTP headers
     # @param body [String, nil] the request body
-    # @return [String] the response body
+    # @return [HTTPResponse] the response
     def request(method, url, headers, body)
       response = @client.request(method, url, nil, body, headers)
-      response.content
+
+      HTTPResponse.new(
+        status: response.status,
+        headers: response.headers,
+        body: response.content
+      )
     end
   end
 end

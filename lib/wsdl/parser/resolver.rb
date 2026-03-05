@@ -247,7 +247,8 @@ module WSDL
       # @raise [ResourceLimitError] if response size exceeds limits
       #
       def fetch_http(url)
-        content = @http.get(url)
+        response = @http.get(url)
+        content = response.body
         content_size = content.bytesize
 
         validate_document_size!(content_size, url)

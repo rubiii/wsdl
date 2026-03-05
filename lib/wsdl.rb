@@ -80,6 +80,7 @@ module WSDL
   require 'wsdl/source'
   require 'wsdl/cache'
   require 'wsdl/config'
+  require 'wsdl/http_response'
   require 'wsdl/httpclient'
 
   # Load XML utilities
