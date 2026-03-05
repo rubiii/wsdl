@@ -44,6 +44,36 @@ describe WSDL::Security::Verifier::ElementPositionValidator, :verifier_helpers d
         end
       end
 
+      context 'as direct child of inner (non-root) Envelope (envelope wrapping attack)' do
+        let(:xml) do
+          <<~XML
+            <?xml version="1.0" encoding="UTF-8"?>
+            <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"
+                           xmlns:wsu="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd">
+              <soap:Header/>
+              <soap:Body>
+                <soap:Envelope>
+                  <soap:Header/>
+                  <soap:Body wsu:Id="Body-inner">
+                    <LegitimateContent/>
+                  </soap:Body>
+                </soap:Envelope>
+              </soap:Body>
+            </soap:Envelope>
+          XML
+        end
+        let(:element_xpath) { '//soap:Body[@wsu:Id]' }
+
+        it 'returns false' do
+          expect(validator.valid?).to be false
+        end
+
+        it 'reports position error' do
+          validator.valid?
+          expect(validator.errors).to include(match(/Body element must be a direct child of soap:Envelope/))
+        end
+      end
+
       context 'inside Security header (XSW attack)' do
         let(:xml) do
           <<~XML

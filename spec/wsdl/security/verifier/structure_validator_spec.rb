@@ -125,6 +125,51 @@ describe WSDL::Security::Verifier::StructureValidator, :verifier_helpers do
       end
     end
 
+    context 'with duplicate IDs across different attribute types (wsu:Id vs bare Id)' do
+      let(:xml) do
+        cert_data = Base64.strict_encode64(certificate.to_der)
+        <<~XML
+          <?xml version="1.0" encoding="UTF-8"?>
+          <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"
+                         xmlns:wsse="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd"
+                         xmlns:wsu="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd"
+                         xmlns:ds="http://www.w3.org/2000/09/xmldsig#">
+            <soap:Header>
+              <wsse:Security soap:mustUnderstand="1">
+                <wsse:BinarySecurityToken wsu:Id="Token-1"
+                  ValueType="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-x509-token-profile-1.0#X509v3"
+                  EncodingType="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-soap-message-security-1.0#Base64Binary">#{cert_data}</wsse:BinarySecurityToken>
+                <ds:Signature>
+                  <ds:SignedInfo>
+                    <ds:CanonicalizationMethod Algorithm="http://www.w3.org/2001/10/xml-exc-c14n#"/>
+                    <ds:SignatureMethod Algorithm="http://www.w3.org/2001/04/xmldsig-more#rsa-sha256"/>
+                    <ds:Reference URI="#Body-crossattr">
+                      <ds:DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha256"/>
+                      <ds:DigestValue>fakedigest==</ds:DigestValue>
+                    </ds:Reference>
+                  </ds:SignedInfo>
+                  <ds:SignatureValue>fakesig==</ds:SignatureValue>
+                </ds:Signature>
+                <MaliciousElement Id="Body-crossattr"><Evil/></MaliciousElement>
+              </wsse:Security>
+            </soap:Header>
+            <soap:Body wsu:Id="Body-crossattr">
+              <Data>Test</Data>
+            </soap:Body>
+          </soap:Envelope>
+        XML
+      end
+
+      it 'returns false' do
+        expect(validator.valid?).to be false
+      end
+
+      it 'detects the cross-attribute duplicate' do
+        validator.valid?
+        expect(validator.errors).to include(match(/Duplicate element IDs.*Body-crossattr/))
+      end
+    end
+
     context 'with multiple elements having different IDs' do
       let(:xml) { build_minimal_signed_document(body_id: 'Body-unique', timestamp_id: 'Timestamp-unique') }
 

@@ -62,13 +62,17 @@ module WSDL
 
         private
 
-        # Validates the Body element is a direct child of the SOAP Envelope.
+        # Validates the Body element is a direct child of the root SOAP Envelope.
+        #
+        # Checking the root element (not just any Envelope) prevents envelope
+        # wrapping attacks where the entire signed message is embedded inside
+        # a new outer Envelope.
         #
         # @return [Boolean] true if position is valid
         def body_position_valid?
           parent = @element.parent
 
-          return true if parent && parent.name == 'Envelope' && soap_namespace?(parent)
+          return true if parent && root_soap_envelope?(parent)
 
           add_failure('Body element must be a direct child of soap:Envelope (possible signature wrapping attack)')
         end
@@ -104,6 +108,14 @@ module WSDL
 
           add_failure("Element '#{@element.name}' found in unexpected location within Security header " \
                       '(possible signature wrapping attack)')
+        end
+
+        # Checks if a node is the root SOAP Envelope element.
+        #
+        # @param node [Nokogiri::XML::Element] candidate node
+        # @return [Boolean] true if node is the document root Envelope
+        def root_soap_envelope?(node)
+          node.name == 'Envelope' && soap_namespace?(node) && node.parent == node.document
         end
 
         # Checks if the element is within the Security header.
