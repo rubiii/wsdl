@@ -1,15 +1,16 @@
 # frozen_string_literal: true
 
-require 'logging'
-
 module WSDL
   # Logging facade that provides a per-class logger to any object.
   #
   # Include this module to get an instance-level {#logger} method, and
   # a class-level {ClassMethods#logger logger} method via +extend+.
   #
-  # Both loggers are lazily created via the +logging+ gem and are
-  # named after the including class (e.g. +"WSDL::XML::Parser"+).
+  # Both loggers delegate to {WSDL.logger}, which defaults to a silent
+  # {NullLogger}. Assign any +Logger+-compatible object to change the
+  # output destination:
+  #
+  #   WSDL.logger = Rails.logger
   #
   # @example Instance logging
   #   class MyService
@@ -30,18 +31,31 @@ module WSDL
   #   end
   #
   module Log
-    # Returns the root logger for the WSDL namespace.
+    # A logger that silently discards all messages.
     #
-    # @return [Logging::Logger]
-    def self.root
-      @root ||= Logging.logger[WSDL]
+    # Used as the default when no logger has been assigned via {WSDL.logger=}.
+    class NullLogger
+      # @return [nil]
+      def debug(*); end
+
+      # @return [nil]
+      def info(*); end
+
+      # @return [nil]
+      def warn(*); end
+
+      # @return [nil]
+      def error(*); end
+
+      # @return [nil]
+      def fatal(*); end
     end
 
-    # Returns a logger named after the receiver's class.
+    # Returns the logger assigned to {WSDL.logger}.
     #
-    # @return [Logging::Logger]
+    # @return [Logger, NullLogger]
     def logger
-      @logger ||= Logging.logger[self.class]
+      WSDL.logger
     end
 
     # @api private
@@ -51,11 +65,11 @@ module WSDL
 
     # Class-level logging methods, automatically extended when {Log} is included.
     module ClassMethods
-      # Returns a logger named after the class or module.
+      # Returns the logger assigned to {WSDL.logger}.
       #
-      # @return [Logging::Logger]
+      # @return [Logger, NullLogger]
       def logger
-        @logger ||= Logging.logger[self]
+        WSDL.logger
       end
     end
   end

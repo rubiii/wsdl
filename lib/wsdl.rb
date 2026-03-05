@@ -35,18 +35,27 @@ module WSDL
     # @return [Limits] the default limits instance
     attr_reader :limits
 
-    # Returns the root logger for the WSDL library.
+    # Returns the logger for the WSDL library.
     #
-    # Configure appenders and level to control library log output.
-    # By default no appenders are attached, so all log output is discarded.
+    # Defaults to a silent {Log::NullLogger} that discards all output.
+    # Assign a custom logger via {.logger=}.
     #
     # @example Enable warn-level output to stdout
-    #   WSDL.logger.add_appenders(Logging.appenders.stdout)
-    #   WSDL.logger.level = :warn
+    #   require 'logger'
+    #   WSDL.logger = Logger.new($stdout, level: :warn)
     #
-    # @return [Logging::Logger]
-    def logger
-      Log.root
+    # @return [Logger, Log::NullLogger]
+    attr_reader :logger
+
+    # Sets the logger for the WSDL library. Pass nil to restore the default.
+    #
+    # Assign any +Logger+-compatible object (must respond to
+    # +debug+, +info+, +warn+, +error+, +fatal+).
+    #
+    # @example Use Rails logger
+    #   WSDL.logger = Rails.logger
+    def logger=(value)
+      @logger = value || Log::NullLogger.new
     end
 
     # Sets the HTTP adapter class. Pass nil to restore the default.
@@ -106,4 +115,5 @@ module WSDL
   @http_adapter = HTTPClient
   @cache        = Cache.new
   @limits       = Limits.new
+  @logger       = Log::NullLogger.new
 end

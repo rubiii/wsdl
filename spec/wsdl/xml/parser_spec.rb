@@ -445,11 +445,11 @@ describe WSDL::XML::Parser do
   end
 
   describe '.parse_with_logging' do
-    let(:logger) { Logging.logger['test.xml.parser'] }
+    let(:log_output) { StringIO.new }
+    let(:logger) { Logger.new(log_output) }
 
     before do
-      allow(described_class).to receive(:logger).and_return(logger)
-      allow(logger).to receive(:warn)
+      WSDL.logger = logger
     end
 
     it 'parses XML normally when no threats' do
@@ -458,7 +458,7 @@ describe WSDL::XML::Parser do
 
       expect(doc).to be_a(Nokogiri::XML::Document)
       expect(doc.root.name).to eq('root')
-      expect(logger).not_to have_received(:warn)
+      expect(log_output.string).to be_empty
     end
 
     it 'logs a warning when threats are detected' do
@@ -467,7 +467,7 @@ describe WSDL::XML::Parser do
       # Disable DOCTYPE rejection to test threat logging behavior
       described_class.parse_with_logging(xxe_xml, reject_doctype: false)
 
-      expect(logger).to have_received(:warn).with(
+      expect(log_output.string).to match(
         /Potential XML attack detected.*doctype.*entity_declaration.*external_reference/
       )
     end

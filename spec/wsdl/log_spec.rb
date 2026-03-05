@@ -3,19 +3,30 @@
 require 'spec_helper'
 
 describe WSDL::Log do
-  describe '.root' do
-    it 'returns a Logging::Logger' do
-      expect(described_class.root).to be_a(Logging::Logger)
+  describe 'WSDL.logger' do
+    it 'defaults to a NullLogger' do
+      WSDL.logger = nil
+      expect(WSDL.logger).to be_a(WSDL::Log::NullLogger)
     end
 
-    it 'is named WSDL' do
-      expect(described_class.root.name).to eq('WSDL')
+    it 'can be set to a custom logger' do
+      custom = Logger.new(StringIO.new)
+      WSDL.logger = custom
+      expect(WSDL.logger).to equal(custom)
     end
   end
 
-  describe 'WSDL.logger' do
-    it 'delegates to Log.root' do
-      expect(WSDL.logger).to equal(described_class.root)
+  describe '#logger' do
+    it 'delegates to WSDL.logger' do
+      obj = Class.new { include WSDL::Log }.new
+      expect(obj.logger).to equal(WSDL.logger)
+    end
+  end
+
+  describe '.logger (class-level)' do
+    it 'delegates to WSDL.logger' do
+      klass = Class.new { include WSDL::Log }
+      expect(klass.logger).to equal(WSDL.logger)
     end
   end
 end

@@ -61,24 +61,25 @@ describe WSDL::HTTPClient do
 
   describe 'SSL verification warning' do
     let(:response) { double(content: 'response') }
-    let(:logger) { Logging.logger[described_class] }
+    let(:log_output) { StringIO.new }
+    let(:logger) { Logger.new(log_output) }
 
     before do
       allow(http.client).to receive(:request).and_return(response)
-      allow(logger).to receive(:warn)
+      WSDL.logger = logger
     end
 
     context 'when SSL verification is enabled' do
       it 'does not log a warning on GET' do
         http.get('https://example.com')
 
-        expect(logger).not_to have_received(:warn)
+        expect(log_output.string).to be_empty
       end
 
       it 'does not log a warning on POST' do
         http.post('https://example.com', {}, 'body')
 
-        expect(logger).not_to have_received(:warn)
+        expect(log_output.string).to be_empty
       end
     end
 
@@ -90,19 +91,19 @@ describe WSDL::HTTPClient do
       it 'logs a warning on GET' do
         http.get('https://example.com')
 
-        expect(logger).to have_received(:warn).with(/SSL certificate verification is disabled/)
+        expect(log_output.string).to match(/SSL certificate verification is disabled/)
       end
 
       it 'logs a warning on POST' do
         http.post('https://example.com', {}, 'body')
 
-        expect(logger).to have_received(:warn).with(/SSL certificate verification is disabled/)
+        expect(log_output.string).to match(/SSL certificate verification is disabled/)
       end
 
       it 'mentions man-in-the-middle attacks in the warning' do
         http.get('https://example.com')
 
-        expect(logger).to have_received(:warn).with(/man-in-the-middle/)
+        expect(log_output.string).to match(/man-in-the-middle/)
       end
 
       it 'only logs the warning once per adapter instance' do
@@ -110,7 +111,7 @@ describe WSDL::HTTPClient do
         http.get('https://example.com')
         http.post('https://example.com', {}, 'body')
 
-        expect(logger).to have_received(:warn).once
+        expect(log_output.string.scan('SSL certificate verification is disabled').length).to eq(1)
       end
 
       it 'logs again for a new adapter instance' do
@@ -118,13 +119,11 @@ describe WSDL::HTTPClient do
         http2.client.ssl_config.verify_mode = OpenSSL::SSL::VERIFY_NONE
         allow(http2.client).to receive(:request).and_return(response)
 
-        # Both adapters use the same class-based logger, so we check
-        # that each instance logs once (total of 2 warnings)
         http.get('https://example.com')
         http2.get('https://example.com')
 
         # Each adapter instance should log once, for a total of 2 warnings
-        expect(logger).to have_received(:warn).twice
+        expect(log_output.string.scan('SSL certificate verification is disabled').length).to eq(2)
       end
     end
   end

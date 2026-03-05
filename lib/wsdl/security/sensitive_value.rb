@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require 'yaml'
+
 module WSDL
   module Security
     # Wrapper for sensitive values that prevents accidental exposure in logs,

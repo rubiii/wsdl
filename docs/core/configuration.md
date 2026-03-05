@@ -80,21 +80,21 @@ Useful request-side limits:
 
 ## Logging
 
-The library uses the [logging](https://github.com/TwP/logging) gem internally. By default no appenders are attached, so all log output is silently discarded.
-
-Use `WSDL.logger` to configure the root logger. All internal loggers inherit from it.
+By default all log output is silently discarded. Assign any `Logger`-compatible object to receive log messages:
 
 ```ruby
-WSDL.logger.add_appenders(Logging.appenders.stdout)
-WSDL.logger.level = :warn
+# Use your application's logger (e.g. Rails)
+WSDL.logger = Rails.logger
+
+# Or use Ruby's stdlib Logger
+require 'logger'
+WSDL.logger = Logger.new($stdout, level: :warn)
 ```
 
-For finer control, configure a specific namespace:
+Reset to silent:
 
 ```ruby
-logger = Logging.logger['WSDL::Parser::Importer']
-logger.add_appenders(Logging.appenders.stdout)
-logger.level = :debug
+WSDL.logger = nil
 ```
 
 ## Sandbox Paths

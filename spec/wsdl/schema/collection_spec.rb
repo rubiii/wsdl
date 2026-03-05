@@ -651,22 +651,21 @@ RSpec.describe WSDL::Schema::Definition do
       end
 
       it 'logs warnings for conflicting components' do
-        warnings = []
-        logger = Logging.logger['test.schema.definition.conflict']
-        allow(conflict_base).to receive(:logger).and_return(logger)
-        allow(logger).to receive(:warn) { |msg| warnings << msg if msg.is_a?(String) }
+        log_output = StringIO.new
+        WSDL.logger = Logger.new(log_output)
 
         conflict_base.merge(conflicting_definition)
 
-        expect(warnings).to include(
-          match(%r{element 'SharedElement'.*namespace 'http://example\.com'.*multiple xs:include}),
-          match(%r{complex_type 'SharedType'.*namespace 'http://example\.com'.*multiple xs:include})
+        expect(log_output.string).to match(
+          %r{element 'SharedElement'.*namespace 'http://example\.com'.*multiple xs:include}
+        )
+        expect(log_output.string).to match(
+          %r{complex_type 'SharedType'.*namespace 'http://example\.com'.*multiple xs:include}
         )
       end
 
       it 'uses the duplicate definition (last write wins)' do
-        logger = Logging.logger['test.schema.definition.conflict2']
-        allow(conflict_base).to receive(:logger).and_return(logger)
+        WSDL.logger = Logger.new(StringIO.new)
 
         conflict_base.merge(conflicting_definition)
 
@@ -676,8 +675,7 @@ RSpec.describe WSDL::Schema::Definition do
 
     context 'without conflicts' do
       it 'does not log any warnings' do
-        warnings = []
-        logger = Logging.logger['test.schema.definition.no_conflict']
+        log_output = StringIO.new
 
         no_conflict_base = new_definition('
           <xs:schema targetNamespace="http://example.com"
@@ -692,12 +690,11 @@ RSpec.describe WSDL::Schema::Definition do
           </xs:schema>
         ')
 
-        allow(no_conflict_base).to receive(:logger).and_return(logger)
-        allow(logger).to receive(:warn) { |msg| warnings << msg if msg.is_a?(String) }
+        WSDL.logger = Logger.new(log_output)
 
         no_conflict_base.merge(no_conflict_other)
 
-        expect(warnings).to be_empty
+        expect(log_output.string).not_to match(/WARN/)
       end
     end
   end

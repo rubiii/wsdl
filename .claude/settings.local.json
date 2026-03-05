@@ -4,7 +4,13 @@
       "Bash(bundle exec:*)",
       "Bash(grep:*)",
       "Bash(rake ci:*)",
-      "Bash(DEBUG=WSDL bundle exec:*)"
+      "Bash(DEBUG=WSDL bundle exec:*)",
+      "WebSearch",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:docs.ruby-lang.org)",
+      "WebFetch(domain:api.rubyonrails.org)",
+      "Bash(bundle install:*)",
+      "Bash(ruby:*)"
     ]
   }
 }

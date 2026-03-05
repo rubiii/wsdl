@@ -13,10 +13,9 @@ end
 
 require 'wsdl'
 
-if (logger_to_enable = ENV.fetch('DEBUG', nil))
-  logger = Logging.logger[logger_to_enable]
-  logger.add_appenders(Logging.appenders.stdout)
-  logger.level = :debug
+if ENV.fetch('DEBUG', nil)
+  require 'logger'
+  WSDL.logger = Logger.new($stdout, level: Logger::DEBUG)
 end
 
 if ENV['GRAPH']
@@ -37,9 +36,9 @@ RSpec.configure do |config|
   config.mock_with :rspec
   config.order = 'random'
 
-  # Disable caching by default to prevent test pollution.
-  # Tests that specifically test caching should enable it explicitly.
+  # Reset global state to prevent test pollution.
   config.before do
     WSDL.cache = nil
+    WSDL.logger = nil
   end
 end
