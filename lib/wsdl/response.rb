@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'wsdl/xml/parser'
+require 'wsdl/response/fault_parser'
 require 'wsdl/response/parser'
 require 'wsdl/response/security_context'
 
@@ -164,6 +165,42 @@ module WSDL
     #   #      "xmlns:ns1" => "http://example.com/users" }
     def xml_namespaces
       @xml_namespaces ||= doc.collect_namespaces
+    end
+
+    # ============================================================
+    # SOAP Fault Detection
+    # ============================================================
+
+    # Returns whether the response contains a SOAP fault.
+    #
+    # Detects faults in both SOAP 1.1 and 1.2 envelopes.
+    #
+    # @return [Boolean] true if the response is a SOAP fault
+    # @example
+    #   if response.fault?
+    #     puts "Fault: #{response.fault.reason}"
+    #   else
+    #     puts response.body
+    #   end
+    def fault?
+      !fault.nil?
+    end
+
+    # Returns the parsed SOAP fault, or nil if the response is not a fault.
+    #
+    # @return [Fault, nil] the parsed fault, or nil
+    # @example
+    #   fault = response.fault
+    #   if fault
+    #     puts fault.code    # => "soap:Server"
+    #     puts fault.reason  # => "Something went wrong"
+    #     puts fault.detail  # => { Error: "details" }
+    #     puts fault.role    # => "http://example.com/actor"
+    #   end
+    def fault
+      return @fault if defined?(@fault)
+
+      @fault = FaultParser.parse(doc)
     end
 
     # ============================================================

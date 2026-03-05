@@ -571,6 +571,285 @@ describe WSDL::Response, type: :unit do
     end
   end
 
+  describe '#fault? and #fault' do
+    context 'with a SOAP 1.1 fault' do
+      subject(:response) { described_class.new(fault_xml) }
+
+      let(:fault_xml) do
+        <<-XML
+          <env:Envelope xmlns:env="http://schemas.xmlsoap.org/soap/envelope/">
+            <env:Body>
+              <env:Fault>
+                <faultcode>env:Server</faultcode>
+                <faultstring>Something went wrong</faultstring>
+                <faultactor>http://example.com/actor</faultactor>
+                <detail>
+                  <Error>
+                    <Code>500</Code>
+                    <Message>Internal error</Message>
+                  </Error>
+                </detail>
+              </env:Fault>
+            </env:Body>
+          </env:Envelope>
+        XML
+      end
+
+      it 'detects the fault' do
+        expect(response.fault?).to be true
+      end
+
+      it 'returns a Fault object' do
+        expect(response.fault).to be_a(WSDL::Response::Fault)
+      end
+
+      it 'parses the fault code' do
+        expect(response.fault.code).to eq('env:Server')
+      end
+
+      it 'returns empty subcodes for SOAP 1.1' do
+        expect(response.fault.subcodes).to eq([])
+      end
+
+      it 'parses the fault string' do
+        expect(response.fault.reason).to eq('Something went wrong')
+      end
+
+      it 'parses the fault actor as role' do
+        expect(response.fault.role).to eq('http://example.com/actor')
+      end
+
+      it 'returns nil for node in SOAP 1.1' do
+        expect(response.fault.node).to be_nil
+      end
+
+      it 'parses the fault detail' do
+        expect(response.fault.detail).to eq({ Error: { Code: '500', Message: 'Internal error' } })
+      end
+
+      it 'provides a human-readable string' do
+        expect(response.fault.to_s).to eq('(env:Server) Something went wrong [role: http://example.com/actor]')
+      end
+    end
+
+    context 'with a SOAP 1.1 fault without optional elements' do
+      subject(:response) { described_class.new(fault_xml) }
+
+      let(:fault_xml) do
+        <<-XML
+          <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+            <soap:Body>
+              <soap:Fault>
+                <faultcode>soap:Client</faultcode>
+                <faultstring>Invalid request</faultstring>
+              </soap:Fault>
+            </soap:Body>
+          </soap:Envelope>
+        XML
+      end
+
+      it 'detects the fault' do
+        expect(response.fault?).to be true
+      end
+
+      it 'returns nil for missing role' do
+        expect(response.fault.role).to be_nil
+      end
+
+      it 'returns nil for missing detail' do
+        expect(response.fault.detail).to be_nil
+      end
+
+      it 'provides a string without role' do
+        expect(response.fault.to_s).to eq('(soap:Client) Invalid request')
+      end
+    end
+
+    context 'with a SOAP 1.1 fault with empty detail element' do
+      subject(:response) { described_class.new(fault_xml) }
+
+      let(:fault_xml) do
+        <<-XML
+          <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+            <soap:Body>
+              <soap:Fault>
+                <faultcode>soap:Server</faultcode>
+                <faultstring>Error</faultstring>
+                <detail/>
+              </soap:Fault>
+            </soap:Body>
+          </soap:Envelope>
+        XML
+      end
+
+      it 'returns nil for empty detail' do
+        expect(response.fault.detail).to be_nil
+      end
+    end
+
+    context 'with a SOAP 1.2 fault' do
+      subject(:response) { described_class.new(fault_xml) }
+
+      let(:fault_xml) do
+        <<-XML
+          <env:Envelope xmlns:env="http://www.w3.org/2003/05/soap-envelope">
+            <env:Body>
+              <env:Fault>
+                <env:Code>
+                  <env:Value>env:Receiver</env:Value>
+                </env:Code>
+                <env:Reason>
+                  <env:Text xml:lang="en">Processing failed</env:Text>
+                </env:Reason>
+                <env:Node>http://example.com/node</env:Node>
+                <env:Role>http://example.com/role</env:Role>
+                <env:Detail>
+                  <ErrorInfo>
+                    <Severity>critical</Severity>
+                  </ErrorInfo>
+                </env:Detail>
+              </env:Fault>
+            </env:Body>
+          </env:Envelope>
+        XML
+      end
+
+      it 'detects the fault' do
+        expect(response.fault?).to be true
+      end
+
+      it 'parses the fault code' do
+        expect(response.fault.code).to eq('env:Receiver')
+      end
+
+      it 'returns empty subcodes when none present' do
+        expect(response.fault.subcodes).to eq([])
+      end
+
+      it 'parses the fault reason' do
+        expect(response.fault.reason).to eq('Processing failed')
+      end
+
+      it 'parses the node' do
+        expect(response.fault.node).to eq('http://example.com/node')
+      end
+
+      it 'parses the role' do
+        expect(response.fault.role).to eq('http://example.com/role')
+      end
+
+      it 'parses the detail' do
+        expect(response.fault.detail).to eq({ ErrorInfo: { Severity: 'critical' } })
+      end
+    end
+
+    context 'with a SOAP 1.2 fault with subcodes' do
+      subject(:response) { described_class.new(fault_xml) }
+
+      let(:fault_xml) do
+        <<-XML
+          <env:Envelope xmlns:env="http://www.w3.org/2003/05/soap-envelope">
+            <env:Body>
+              <env:Fault>
+                <env:Code>
+                  <env:Value>env:Sender</env:Value>
+                  <env:Subcode>
+                    <env:Value>app:ValidationError</env:Value>
+                    <env:Subcode>
+                      <env:Value>app:MissingField</env:Value>
+                    </env:Subcode>
+                  </env:Subcode>
+                </env:Code>
+                <env:Reason>
+                  <env:Text xml:lang="en">Validation failed</env:Text>
+                </env:Reason>
+              </env:Fault>
+            </env:Body>
+          </env:Envelope>
+        XML
+      end
+
+      it 'parses the top-level code' do
+        expect(response.fault.code).to eq('env:Sender')
+      end
+
+      it 'collects nested subcodes in order' do
+        expect(response.fault.subcodes).to eq(%w[app:ValidationError app:MissingField])
+      end
+    end
+
+    context 'with a SOAP 1.2 fault without optional elements' do
+      subject(:response) { described_class.new(fault_xml) }
+
+      let(:fault_xml) do
+        <<-XML
+          <env:Envelope xmlns:env="http://www.w3.org/2003/05/soap-envelope">
+            <env:Body>
+              <env:Fault>
+                <env:Code>
+                  <env:Value>env:Sender</env:Value>
+                </env:Code>
+                <env:Reason>
+                  <env:Text xml:lang="en">Bad request</env:Text>
+                </env:Reason>
+              </env:Fault>
+            </env:Body>
+          </env:Envelope>
+        XML
+      end
+
+      it 'returns nil for missing role' do
+        expect(response.fault.role).to be_nil
+      end
+
+      it 'returns nil for missing node' do
+        expect(response.fault.node).to be_nil
+      end
+
+      it 'returns nil for missing detail' do
+        expect(response.fault.detail).to be_nil
+      end
+    end
+
+    context 'with a SOAP 1.2 fault with empty Detail element' do
+      subject(:response) { described_class.new(fault_xml) }
+
+      let(:fault_xml) do
+        <<-XML
+          <env:Envelope xmlns:env="http://www.w3.org/2003/05/soap-envelope">
+            <env:Body>
+              <env:Fault>
+                <env:Code>
+                  <env:Value>env:Receiver</env:Value>
+                </env:Code>
+                <env:Reason>
+                  <env:Text xml:lang="en">Error</env:Text>
+                </env:Reason>
+                <env:Detail/>
+              </env:Fault>
+            </env:Body>
+          </env:Envelope>
+        XML
+      end
+
+      it 'returns nil for empty detail' do
+        expect(response.fault.detail).to be_nil
+      end
+    end
+
+    context 'with a normal (non-fault) response' do
+      subject(:response) { described_class.new(soap_response) }
+
+      it 'returns false for fault?' do
+        expect(response.fault?).to be false
+      end
+
+      it 'returns nil for fault' do
+        expect(response.fault).to be_nil
+      end
+    end
+  end
+
   describe 'real-world scenario' do
     it 'parses an order response with full type conversion' do
       xml = <<-XML

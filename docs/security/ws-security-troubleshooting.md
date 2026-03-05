@@ -80,4 +80,5 @@ Fix:
 
 - [WS-Security Overview](ws-security.md)
 - [WS-Security Signatures](ws-security-signatures.md)
+- [Error Hierarchy](../reference/errors.md)
 - [Handling Responses](../core/handling-responses.md)

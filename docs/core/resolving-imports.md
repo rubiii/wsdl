@@ -72,5 +72,6 @@ Strict request validation depends on operation-relevant schema completeness.
 ## See also
 
 - [Getting Started](../getting_started.md)
+- [Error Hierarchy](../reference/errors.md)
 - [Configuration](configuration.md)
 - [Strict Schema Fixture Matrix](../reference/strict-schema-fixture-matrix.md)

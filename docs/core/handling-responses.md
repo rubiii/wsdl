@@ -29,6 +29,26 @@ nodes = response.xpath('//ns:OrderId', 'ns' => 'http://example.com/orders')
 
 Use this when you need exact XML-level inspection beyond hash parsing.
 
+## SOAP Fault Detection
+
+Check for SOAP faults before accessing the body:
+
+```ruby
+response = operation.invoke
+
+if response.fault?
+  fault = response.fault
+  puts fault.code      # "soap:Server" (1.1) or "env:Receiver" (1.2)
+  puts fault.reason    # "Something went wrong"
+  puts fault.detail    # { Error: { Code: "500" } } or nil
+  puts fault.role      # faultactor (1.1) or Role (1.2)
+  puts fault.node      # Node URI (SOAP 1.2 only)
+  puts fault.subcodes  # ["app:DbError"] (SOAP 1.2 only, empty for 1.1)
+else
+  puts response.body
+end
+```
+
 ## Security Verification
 
 ```ruby
@@ -73,5 +93,6 @@ Modes:
 ## See also
 
 - [Getting Started](../getting_started.md)
+- [Error Hierarchy](../reference/errors.md)
 - [WS-Security Overview](../security/ws-security.md)
 - [WS-Security Troubleshooting](../security/ws-security-troubleshooting.md)

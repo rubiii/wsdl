@@ -22,6 +22,7 @@ This is the docs entrypoint.
 
 ### Reference
 
+- [Error Hierarchy](reference/errors.md)
 - [Strict Schema Fixture Matrix](reference/strict-schema-fixture-matrix.md)
 - [Specifications and References](reference/specifications.md)
 
@@ -106,9 +107,13 @@ end
 ```ruby
 response = operation.invoke
 
-response.raw     # raw SOAP XML
-response.body    # parsed SOAP body hash
-response.header  # parsed SOAP header hash
+if response.fault?
+  fault = response.fault
+  puts "#{fault.code}: #{fault.reason}"
+else
+  response.body    # parsed SOAP body hash
+  response.header  # parsed SOAP header hash
+end
 ```
 
 ## Next

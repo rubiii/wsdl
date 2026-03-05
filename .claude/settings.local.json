@@ -10,7 +10,9 @@
       "WebFetch(domain:docs.ruby-lang.org)",
       "WebFetch(domain:api.rubyonrails.org)",
       "Bash(bundle install:*)",
-      "Bash(ruby:*)"
+      "Bash(ruby:*)",
+      "Bash(ls:*)",
+      "Bash(wc:*)"
     ]
   }
 }
