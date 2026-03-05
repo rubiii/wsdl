@@ -622,6 +622,82 @@ RSpec.describe WSDL::Schema::Definition do
     it 'merges includes' do
       expect(base_definition.includes).to eq(%w[base-include.xsd other-include.xsd])
     end
+
+    context 'with conflicting definitions' do
+      let(:conflict_base) do
+        new_definition('
+          <xs:schema targetNamespace="http://example.com"
+                     xmlns:xs="http://www.w3.org/2001/XMLSchema">
+            <xs:element name="SharedElement" type="xs:string"/>
+            <xs:complexType name="SharedType">
+              <xs:sequence/>
+            </xs:complexType>
+          </xs:schema>
+        ')
+      end
+
+      let(:conflicting_definition) do
+        new_definition('
+          <xs:schema targetNamespace="http://example.com"
+                     xmlns:xs="http://www.w3.org/2001/XMLSchema">
+            <xs:element name="SharedElement" type="xs:int"/>
+            <xs:complexType name="SharedType">
+              <xs:sequence>
+                <xs:element name="inner" type="xs:string"/>
+              </xs:sequence>
+            </xs:complexType>
+          </xs:schema>
+        ')
+      end
+
+      it 'logs warnings for conflicting components' do
+        warnings = []
+        logger = Logging.logger['test.schema.definition.conflict']
+        allow(WSDL::Schema).to receive(:logger).and_return(logger)
+        allow(logger).to receive(:warn) { |msg| warnings << msg if msg.is_a?(String) }
+
+        conflict_base.merge(conflicting_definition)
+
+        expect(warnings).to include(
+          match(%r{element 'SharedElement'.*namespace 'http://example\.com'.*multiple xs:include}),
+          match(%r{complex_type 'SharedType'.*namespace 'http://example\.com'.*multiple xs:include})
+        )
+      end
+
+      it 'uses the duplicate definition (last write wins)' do
+        allow(WSDL::Schema).to receive(:logger).and_return(Logging.logger['test.schema.definition.conflict2'])
+
+        conflict_base.merge(conflicting_definition)
+
+        expect(conflict_base.elements['SharedElement'].type).to eq('xs:int')
+      end
+    end
+
+    context 'without conflicts' do
+      it 'does not log any warnings' do
+        warnings = []
+        logger = Logging.logger['test.schema.definition.no_conflict']
+        allow(WSDL::Schema).to receive(:logger).and_return(logger)
+        allow(logger).to receive(:warn) { |msg| warnings << msg if msg.is_a?(String) }
+
+        no_conflict_base = new_definition('
+          <xs:schema targetNamespace="http://example.com"
+                     xmlns:xs="http://www.w3.org/2001/XMLSchema">
+            <xs:element name="Alpha" type="xs:string"/>
+          </xs:schema>
+        ')
+        no_conflict_other = new_definition('
+          <xs:schema targetNamespace="http://example.com"
+                     xmlns:xs="http://www.w3.org/2001/XMLSchema">
+            <xs:element name="Beta" type="xs:int"/>
+          </xs:schema>
+        ')
+
+        no_conflict_base.merge(no_conflict_other)
+
+        expect(warnings).to be_empty
+      end
+    end
   end
 
   describe 'context propagation' do

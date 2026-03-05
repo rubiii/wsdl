@@ -73,19 +73,41 @@ module WSDL
       # Used for xs:include processing where the included schema's
       # components should be merged as if defined locally.
       #
+      # Logs a warning if the other definition contains components with the
+      # same name as existing ones, since per the XSD spec xs:include
+      # components should not conflict.
+      #
       # @param other [Definition] the definition to merge
       # @return [void]
       def merge(other)
-        @elements.merge!(other.elements)
-        @complex_types.merge!(other.complex_types)
-        @simple_types.merge!(other.simple_types)
-        @attributes.merge!(other.attributes)
-        @attribute_groups.merge!(other.attribute_groups)
+        merge_with_conflict_detection(@elements, other.elements, :element)
+        merge_with_conflict_detection(@complex_types, other.complex_types, :complex_type)
+        merge_with_conflict_detection(@simple_types, other.simple_types, :simple_type)
+        merge_with_conflict_detection(@attributes, other.attributes, :attribute)
+        merge_with_conflict_detection(@attribute_groups, other.attribute_groups, :attribute_group)
         @imports.merge!(other.imports)
         @includes.concat(other.includes)
       end
 
       private
+
+      # Merges other_hash into target, logging a warning for each key conflict.
+      #
+      # @param target [Hash{String => Node}] the hash to merge into
+      # @param other_hash [Hash{String => Node}] the hash to merge from
+      # @param component_type [Symbol] the type of schema component (for logging)
+      # @return [void]
+      def merge_with_conflict_detection(target, other_hash, component_type)
+        conflicting_keys = target.keys & other_hash.keys
+        conflicting_keys.each do |key|
+          ns = @target_namespace || '(no namespace)'
+          Schema.logger.warn(
+            "Schema #{component_type} '#{key}' in namespace '#{ns}' " \
+            'is defined in multiple xs:include schemas. The duplicate definition will be used.'
+          )
+        end
+        target.merge!(other_hash)
+      end
 
       # Returns the context hash for creating child nodes.
       #
