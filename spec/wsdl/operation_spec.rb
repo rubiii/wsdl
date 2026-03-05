@@ -104,11 +104,26 @@ describe WSDL::Operation do
       )
     end
 
-    it 'can be overwritten' do
-      headers = { 'SecretToken' => 'abc' }
-      operation.http_headers = headers
+    it 'merges custom headers on top of auto-generated headers' do
+      operation.http_headers = { 'X-Auth-Token' => 'abc' }
 
-      expect(operation.http_headers).to eq(headers)
+      expect(operation.http_headers).to include(
+        'Content-Type' => 'application/soap+xml;charset=UTF-8;action="http://www.webserviceX.NET/ConvertTemp"',
+        'X-Auth-Token' => 'abc'
+      )
+    end
+
+    it 'lets custom headers override auto-generated ones' do
+      operation.http_headers = { 'Content-Type' => 'text/plain' }
+
+      expect(operation.http_headers['Content-Type']).to eq('text/plain')
+    end
+
+    it 'clears custom headers on reset!' do
+      operation.http_headers = { 'X-Auth-Token' => 'abc' }
+      operation.reset!
+
+      expect(operation.http_headers).not_to include('X-Auth-Token')
     end
 
     it 'reflects updated SOAP settings on the next call' do

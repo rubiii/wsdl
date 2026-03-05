@@ -29,6 +29,7 @@ module WSDL
 
       @request_document = nil
       @security = Security::Config.new
+      @http_header_overrides = {}
     end
 
     attr_accessor :endpoint, :soap_version, :soap_action, :encoding
@@ -86,20 +87,25 @@ module WSDL
     end
 
     # Clears the prepared request, allowing {#prepare} to be called again.
+    # Also clears any custom HTTP header overrides set via {#http_headers=}.
     #
     # @return [self]
     def reset!
       @request_document = nil
       @security = Security::Config.new
+      @http_header_overrides = {}
       self
     end
 
-    # Returns HTTP headers for the current SOAP version/action.
+    # Returns the merged HTTP headers for the SOAP request.
+    #
+    # Auto-generated headers (Content-Type, SOAPAction) are computed from the
+    # current SOAP version, action, and encoding. Any headers set via
+    # {#http_headers=} are merged on top, so user-provided values win on
+    # conflict while auto-generated defaults are preserved.
     #
     # @return [Hash{String => String}]
     def http_headers
-      return @custom_http_headers unless @custom_http_headers.nil?
-
       headers = {}
       content_type = [CONTENT_TYPE[soap_version], "charset=#{encoding}"]
 
@@ -111,15 +117,19 @@ module WSDL
       end
 
       headers['Content-Type'] = content_type.join(';')
-      headers
+      headers.merge(@http_header_overrides)
     end
 
-    # Overrides auto-generated HTTP headers for outbound calls.
+    # Merges custom headers on top of auto-generated HTTP headers.
+    #
+    # The provided headers are stored and merged over the auto-generated
+    # defaults each time {#http_headers} is called. User-provided values
+    # win on conflict. Call {#reset!} to clear overrides.
     #
     # @param headers [Hash{String => String}]
     # @return [void]
     def http_headers=(headers)
-      @custom_http_headers = headers
+      @http_header_overrides = headers
     end
 
     # Serializes the prepared request AST to SOAP envelope XML.

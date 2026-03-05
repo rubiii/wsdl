@@ -28,6 +28,24 @@ Reserved DSL methods:
 
 If an element name matches a reserved method name, use `tag('name')`.
 
+## HTTP Headers
+
+Auto-generated HTTP headers (Content-Type, SOAPAction) are derived from the operation's SOAP version, action, and encoding. Use `http_headers=` to merge custom headers on top — user values win on conflict, while auto-generated defaults are preserved:
+
+```ruby
+# Add a custom header alongside auto-generated ones
+operation.http_headers = { 'X-Auth-Token' => 'bearer-abc123' }
+operation.http_headers
+# => { "Content-Type" => "text/xml;charset=UTF-8",
+#      "SOAPAction"   => "\"urn:example#GetOrder\"",
+#      "X-Auth-Token" => "bearer-abc123" }
+
+# Override an auto-generated header
+operation.http_headers = { 'Content-Type' => 'application/xml' }
+```
+
+Custom headers are cleared by `operation.reset!`.
+
 ## Header vs Body
 
 Top-level content defaults to SOAP body.
