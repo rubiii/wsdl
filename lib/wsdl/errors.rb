@@ -452,6 +452,36 @@ module WSDL
   class RequestSecurityConflictError < FatalError
   end
 
+  # Raised when an HTTP redirect targets a restricted destination.
+  #
+  # This error prevents SSRF (Server-Side Request Forgery) attacks where
+  # a malicious WSDL endpoint redirects to internal network addresses
+  # such as cloud metadata services, loopback interfaces, or RFC 1918
+  # private networks.
+  #
+  # @example Catching unsafe redirects
+  #   begin
+  #     client = WSDL::Client.new('https://evil.example.com/service?wsdl')
+  #   rescue WSDL::UnsafeRedirectError => e
+  #     puts "Blocked redirect to: #{e.target_url}"
+  #   end
+  #
+  # @see https://cheatsheetseries.owasp.org/cheatsheets/Server_Side_Request_Forgery_Prevention_Cheat_Sheet.html
+  #
+  class UnsafeRedirectError < FatalError
+    # @return [String, nil] the redirect target URL that was blocked
+    attr_reader :target_url
+
+    # Creates a new UnsafeRedirectError.
+    #
+    # @param message [String] error message
+    # @param target_url [String, nil] the blocked redirect target
+    def initialize(message = nil, target_url: nil)
+      @target_url = target_url
+      super(message)
+    end
+  end
+
   # Raised when a sealed collection is mutated.
   #
   # This error indicates internal misuse where a parser collection that has

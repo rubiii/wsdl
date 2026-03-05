@@ -34,6 +34,16 @@ describe WSDL::HTTPClient do
       end
     end
 
+    # httpclient internal types (HTTP::Message, HTTP::Message::Headers)
+    # are not easily verifiable-doubled.
+    # rubocop:disable RSpec/VerifiedDoubles
+    def redirect_response(location)
+      header = double('header')
+      allow(header).to receive(:[]).with('location').and_return([location])
+      double('response', header:)
+    end
+    # rubocop:enable RSpec/VerifiedDoubles
+
     describe 'redirect handling' do
       it 'sets follow_redirect_count to 5' do
         expect(http.client.follow_redirect_count).to eq(5)
@@ -43,6 +53,107 @@ describe WSDL::HTTPClient do
         http.client.follow_redirect_count = 10
 
         expect(http.client.follow_redirect_count).to eq(10)
+      end
+
+      it 'installs SSRF-safe redirect callback on the underlying client' do
+        # Verify the callback is wired up by invoking safe_redirect_uri_callback
+        # with a redirect to a private IP, which should raise UnsafeRedirectError.
+        uri = URI.parse('http://example.com/service')
+        response = redirect_response('http://127.0.0.1/secret')
+
+        expect { http.send(:safe_redirect_uri_callback, uri, response) }
+          .to raise_error(WSDL::UnsafeRedirectError)
+      end
+    end
+
+    describe 'redirect SSRF protection' do
+      let(:origin_uri) { URI.parse('https://example.com/service?wsdl') }
+
+      describe 'blocks private/reserved IP address literals' do
+        %w[
+          http://127.0.0.1/secret
+          http://10.0.0.1/internal
+          http://172.16.0.1/internal
+          http://192.168.1.1/internal
+          http://169.254.169.254/latest/meta-data/
+          http://100.64.0.1/internal
+          http://0.0.0.1/internal
+        ].each do |target|
+          it "blocks redirect to #{target}" do
+            response = redirect_response(target)
+
+            expect { http.send(:safe_redirect_uri_callback, origin_uri, response) }
+              .to raise_error(WSDL::UnsafeRedirectError, %r{private/reserved address blocked})
+          end
+        end
+      end
+
+      describe 'blocks private IPv6 address literals' do
+        %w[
+          http://[::1]/secret
+          http://[fc00::1]/internal
+          http://[fe80::1]/internal
+        ].each do |target|
+          it "blocks redirect to #{target}" do
+            response = redirect_response(target)
+
+            expect { http.send(:safe_redirect_uri_callback, origin_uri, response) }
+              .to raise_error(WSDL::UnsafeRedirectError, %r{private/reserved address blocked})
+          end
+        end
+      end
+
+      describe 'allows public IP addresses' do
+        %w[
+          https://93.184.216.34/service
+          https://8.8.8.8/service
+          https://203.0.113.1/service
+        ].each do |target|
+          it "allows redirect to #{target}" do
+            response = redirect_response(target)
+            result = http.send(:safe_redirect_uri_callback, origin_uri, response)
+
+            expect(result.to_s).to eq(target)
+          end
+        end
+      end
+
+      describe 'DNS resolution' do
+        it 'blocks hostnames that resolve to private addresses' do
+          response = redirect_response('https://evil.example.com/internal')
+          allow(Resolv).to receive(:getaddresses).with('evil.example.com').and_return(['127.0.0.1'])
+
+          expect { http.send(:safe_redirect_uri_callback, origin_uri, response) }
+            .to raise_error(WSDL::UnsafeRedirectError)
+        end
+
+        it 'blocks when any resolved address is private' do
+          response = redirect_response('https://dual.example.com/service')
+          allow(Resolv).to receive(:getaddresses).with('dual.example.com').and_return(['93.184.216.34', '10.0.0.1'])
+
+          expect { http.send(:safe_redirect_uri_callback, origin_uri, response) }
+            .to raise_error(WSDL::UnsafeRedirectError)
+        end
+
+        it 'allows hostnames that resolve to public addresses' do
+          response = redirect_response('https://safe.example.com/service')
+          allow(Resolv).to receive(:getaddresses).with('safe.example.com').and_return(['93.184.216.34'])
+
+          result = http.send(:safe_redirect_uri_callback, origin_uri, response)
+
+          expect(result.to_s).to eq('https://safe.example.com/service')
+        end
+      end
+
+      describe 'error attributes' do
+        it 'includes the target URL in the error' do
+          response = redirect_response('http://127.0.0.1/secret')
+
+          expect { http.send(:safe_redirect_uri_callback, origin_uri, response) }
+            .to raise_error(WSDL::UnsafeRedirectError) { |error|
+              expect(error.target_url).to eq('http://127.0.0.1/secret')
+            }
+        end
       end
     end
 
