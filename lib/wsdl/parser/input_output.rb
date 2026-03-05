@@ -2,17 +2,14 @@
 
 module WSDL
   module Parser
-    # Represents the input message definition for an operation.
-    #
-    # This class processes the binding and port type operation definitions
-    # to build the header and body parts that define the structure of
-    # request messages. It resolves message references and builds XML
-    # element definitions that can be used to construct SOAP envelopes.
+    # Base class for building message parts (headers and body) from
+    # WSDL operation definitions. Subclasses specify the message direction
+    # by implementing {#message_reference} and {#headers}.
     #
     # @api private
     #
-    class Input
-      # Creates a new Input instance.
+    class MessageParts
+      # Creates a new MessageParts instance.
       #
       # @param binding_operation [BindingOperation] the binding operation with protocol details
       # @param port_type_operation [PortTypeOperation] the port type operation with interface details
@@ -25,18 +22,16 @@ module WSDL
         build_parts
       end
 
-      # The header part elements for this input message.
+      # The header part elements for this message.
       #
-      # These elements define the structure of the SOAP header
-      # that should be sent with the request.
+      # These elements define the structure of the SOAP header.
       #
       # @return [Array<XML::Element>] the header part elements
       attr_reader :header_parts
 
-      # The body part elements for this input message.
+      # The body part elements for this message.
       #
-      # These elements define the structure of the SOAP body
-      # that should be sent with the request.
+      # These elements define the structure of the SOAP body.
       #
       # @return [Array<XML::Element>] the body part elements
       attr_reader :body_parts
@@ -73,18 +68,19 @@ module WSDL
         find_message(reference).parts
       end
 
-      # Returns the message reference for the input.
+      # Returns the message reference for this direction.
+      # Subclasses must override to return the input or output reference.
       #
       # @return [MessageReference] parsed message reference
       def message_reference
-        @port_type_operation.input
+        raise NotImplementedError
       end
 
       # Collects the header parts from explicitly defined header references.
       #
       # Each header in the binding may reference a different message
       # and part, allowing headers to be defined separately from
-      # the main input message.
+      # the main message.
       #
       # @return [Array<Hash>] the header part definitions
       def collect_header_parts
@@ -146,10 +142,11 @@ module WSDL
       end
 
       # Returns the header definitions from the binding operation.
+      # Subclasses must override to return input or output headers.
       #
       # @return [Array<HeaderReference>] the header definitions
       def headers
-        @binding_operation.input_headers
+        raise NotImplementedError
       end
 
       # Finds a message by reference metadata.
@@ -171,15 +168,39 @@ module WSDL
       end
     end
 
-    # Represents the output message definition for an operation.
+    # Represents the input message definition for an operation.
     #
-    # This class extends {Input} to process output (response) messages
-    # instead of input (request) messages. It overrides the message
-    # and header accessors to reference the output definitions.
+    # Processes the binding and port type operation definitions to build
+    # the header and body parts for request messages.
     #
     # @api private
     #
-    class Output < Input
+    class Input < MessageParts
+      private
+
+      # Returns the message reference for the input.
+      #
+      # @return [MessageReference] parsed message reference
+      def message_reference
+        @port_type_operation.input
+      end
+
+      # Returns the header definitions from the binding operation input.
+      #
+      # @return [Array<HeaderReference>] the input header definitions
+      def headers
+        @binding_operation.input_headers
+      end
+    end
+
+    # Represents the output message definition for an operation.
+    #
+    # Processes the binding and port type operation definitions to build
+    # the header and body parts for response messages.
+    #
+    # @api private
+    #
+    class Output < MessageParts
       private
 
       # Returns the message reference for the output.
