@@ -208,6 +208,19 @@ Set `format_xml: false` for servers sensitive to XML whitespace:
 client = WSDL::Client.new(wsdl, format_xml: false)
 ```
 
+### Per-operation override
+
+Each operation inherits `format_xml` from the client config but can override it individually:
+
+```ruby
+client = WSDL::Client.new(wsdl)  # format_xml: true by default
+
+operation = client.operation('SendData')
+operation.format_xml = false  # disable formatting for this operation only
+```
+
+This is useful when most operations work fine with formatted XML but a specific operation requires compact output (e.g., a whitespace-sensitive server endpoint). The override is cleared by `operation.reset!`.
+
 ## HTTP Adapter
 
 The HTTP adapter handles WSDL/schema fetching (`get`) and SOAP operation calls (`post`).

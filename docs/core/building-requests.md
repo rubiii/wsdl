@@ -167,6 +167,16 @@ client = WSDL::Client.new(
 )
 ```
 
+## XML Formatting
+
+Each operation inherits `format_xml` from the client [configuration](configuration.md#xml-formatting) but can override it:
+
+```ruby
+operation.format_xml = false  # compact XML for this operation only
+```
+
+The override is cleared by `operation.reset!`. See [XML Formatting](configuration.md#xml-formatting) for details.
+
 ## RPC/Literal Behavior
 
 For `rpc/literal`, request serialization applies an operation wrapper when needed, using `soap:body@namespace` if present.

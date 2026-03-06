@@ -36,12 +36,26 @@ module WSDL
 
     # Returns whether XML output is formatted with indentation.
     #
+    # Defaults to the client's {Config#format_xml} setting. Set per-operation
+    # via {#format_xml=} to override the client default for this operation only.
+    #
     # @return [Boolean]
+    #
+    # @example Check the current setting
+    #   operation.format_xml  # => true (inherits from client config)
+    #
+    # @example Override per-operation
+    #   operation.format_xml = false
+    #   operation.format_xml  # => false
+    #
     def format_xml
       defined?(@format_xml) ? @format_xml : @config.format_xml
     end
 
-    # Sets whether XML output is formatted with indentation.
+    # Sets whether XML output is formatted with indentation for this operation.
+    #
+    # Overrides the client-level {Config#format_xml} setting for this
+    # operation only. Cleared by {#reset!}.
     #
     # @param value [Boolean]
     attr_writer :format_xml
@@ -101,6 +115,7 @@ module WSDL
       @request_document = nil
       @security = Security::Config.new
       @http_header_overrides = {}
+      remove_instance_variable(:@format_xml) if defined?(@format_xml)
       self
     end
 

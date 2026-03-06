@@ -85,6 +85,19 @@ describe WSDL::Operation do
       operation = described_class.new(operation_info, parser_result, http_mock, config:)
       expect(operation.format_xml).to be(false)
     end
+
+    it 'per-operation override takes precedence over config' do
+      config = WSDL::Config.new(format_xml: false)
+      operation = described_class.new(operation_info, parser_result, http_mock, config:)
+      operation.format_xml = true
+      expect(operation.format_xml).to be(true)
+    end
+
+    it 'reverts to config default after reset!' do
+      operation.format_xml = false
+      operation.reset!
+      expect(operation.format_xml).to be(true)
+    end
   end
 
   describe '#http_headers' do
