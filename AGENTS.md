@@ -42,7 +42,11 @@ bundle exec yard            # Generate YARD documentation
 - `# frozen_string_literal: true` at the top of every file
 - Single quotes for strings, 120 character max line length
 - Semantic blocks: `do...end` for side effects, `{...}` for return values
-- Follow `.rubocop.yml` — prefer inline ignores over global rule changes
+- Readability comes first. When a linting rule conflicts with clear code:
+  1. Try refactoring — extract a method, simplify logic, etc.
+  2. If the code is already clean, add an inline `rubocop:disable` comment.
+  3. If inline disables accumulate for the same rule, relax it in `.rubocop.yml`.
+- Never degrade code quality (shorten docs, remove blank lines, merge logic) just to satisfy a metric.
 
 ## Testing
 
