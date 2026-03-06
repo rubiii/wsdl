@@ -45,7 +45,6 @@ module WSDL
     require 'wsdl/security/constants'
 
     # Load utility modules
-    require 'wsdl/security/sensitive_value'
     require 'wsdl/security/id_generator'
     require 'wsdl/security/algorithm_mapper'
     require 'wsdl/security/reference'
