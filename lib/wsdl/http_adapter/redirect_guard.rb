@@ -100,10 +100,15 @@ module WSDL
 
       # Parses a string as an IP address, returning nil if it's not a valid IP.
       #
+      # Strips IPv6 zone IDs (e.g., `%eth0` in `fe80::1%eth0`) before parsing.
+      # Zone IDs are interface-scoped and not relevant for SSRF range checks,
+      # but would cause {IPAddr} to reject the address, bypassing validation.
+      #
       # @param host [String] the string to parse
       # @return [IPAddr, nil] parsed IP address or nil
       def parse_ip(host)
-        IPAddr.new(host)
+        sanitized = host.split('%', 2).first
+        IPAddr.new(sanitized)
       rescue IPAddr::InvalidAddressError
         nil
       end

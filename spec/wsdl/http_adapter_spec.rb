@@ -99,6 +99,26 @@ describe WSDL::HTTPAdapter do
       end
     end
 
+    describe 'blocks IPv6 addresses with zone IDs' do
+      # IPv6 zone IDs (e.g., fe80::1%eth0) cause IPAddr::InvalidAddressError,
+      # which without zone stripping would bypass private IP detection entirely.
+      # Ruby's URI.parse rejects zone IDs, so we stub hostname to simulate a
+      # malicious redirect Location header that includes one.
+
+      {
+        'link-local' => 'fe80::1%eth0',
+        'loopback' => '::1%lo',
+        'unique local' => 'fc00::1%eth0'
+      }.each do |label, address|
+        it "blocks #{label} IPv6 with zone ID (#{address})" do
+          uri = instance_double(URI::HTTP, hostname: address, host: address, to_s: "http://[#{address}]/")
+
+          expect { http.send(:validate_redirect_target!, uri) }
+            .to raise_error(WSDL::UnsafeRedirectError, %r{private/reserved address blocked})
+        end
+      end
+    end
+
     describe 'allows public IP addresses' do
       %w[
         https://93.184.216.34/service
