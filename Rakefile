@@ -32,4 +32,4 @@ task :benchmark do
   ruby 'benchmarks/run.rb'
 end
 
-task ci: %i[lint spec yard:audit]
+task ci: %i[lint yard:audit spec]
