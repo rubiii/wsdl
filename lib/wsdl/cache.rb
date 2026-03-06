@@ -90,8 +90,8 @@ module WSDL
         entry = promote!(key)
         return entry[:value] if entry
 
+        evict_lru! if @max_entries && @store.size >= @max_entries
         @store[key] = { value:, timestamp: Time.now }
-        evict_lru! if @max_entries && @store.size > @max_entries
         value
       end
     end
