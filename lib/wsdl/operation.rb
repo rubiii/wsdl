@@ -233,11 +233,21 @@ module WSDL
       response
     end
 
+    # Low-level input binding style from the WSDL.
+    #
+    # Prefer {#contract} `.style` for public introspection.
+    #
+    # @api private
     # @return [String] e.g. `document/literal`
     def input_style
       @operation_info.input_style
     end
 
+    # Low-level output binding style from the WSDL.
+    #
+    # Prefer {#contract} `.style` for public introspection.
+    #
+    # @api private
     # @return [String] e.g. `document/literal`
     def output_style
       @operation_info.output_style
