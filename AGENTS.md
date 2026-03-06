@@ -104,3 +104,4 @@ Key points:
 | Security constants | `lib/wsdl/security/constants.rb` |
 | WS-Security docs | `docs/security/ws-security.md` |
 | Specifications | `docs/reference/specifications.md` |
+| Benchmarks | `docs/reference/benchmarks.md` |
