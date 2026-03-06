@@ -116,7 +116,7 @@ module WSDL
   # Initialize defaults. These must be set before spawning threads.
   # Reconfigure via the corresponding writer (e.g. WSDL.cache = nil).
   @http_adapter = HTTPClient
-  @cache        = Cache.new
+  @cache        = Cache.new(max_entries: 50)
   @limits       = Limits.new
   @logger       = Log::NullLogger.new
 end

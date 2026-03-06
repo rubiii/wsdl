@@ -118,6 +118,152 @@ RSpec.describe WSDL::Cache do
     end
   end
 
+  describe '#fetch with max_entries (LRU eviction)' do
+    let(:cache) { described_class.new(max_entries: 3) }
+
+    it 'allows entries up to the limit' do
+      3.times do |i|
+        cache.fetch("key#{i}") { "value#{i}" }
+      end
+
+      expect(cache.size).to eq(3)
+      expect(cache.fetch('key0') { 'other' }).to eq('value0')
+      expect(cache.fetch('key1') { 'other' }).to eq('value1')
+      expect(cache.fetch('key2') { 'other' }).to eq('value2')
+    end
+
+    it 'evicts the least recently used entry when the limit is exceeded' do
+      3.times do |i|
+        cache.fetch("key#{i}") { "value#{i}" }
+      end
+
+      cache.fetch('key3') do
+        'value3'
+      end
+
+      expect(cache.size).to eq(3)
+      expect(cache.key?('key0')).to be(false)
+      expect(cache.fetch('key1') { 'other' }).to eq('value1')
+      expect(cache.fetch('key3') { 'other' }).to eq('value3')
+    end
+
+    it 'evicts multiple least recently used entries as new ones are added' do
+      5.times do |i|
+        cache.fetch("key#{i}") { "value#{i}" }
+      end
+
+      expect(cache.size).to eq(3)
+      expect(cache.key?('key0')).to be(false)
+      expect(cache.key?('key1')).to be(false)
+      expect(cache.fetch('key2') { 'other' }).to eq('value2')
+      expect(cache.fetch('key3') { 'other' }).to eq('value3')
+      expect(cache.fetch('key4') { 'other' }).to eq('value4')
+    end
+
+    it 'promotes a fetched entry to most recently used' do
+      3.times do |i|
+        cache.fetch("key#{i}") { "value#{i}" }
+      end
+
+      # Access key0 — this promotes it ahead of key1 and key2
+      cache.fetch('key0') do
+        'should_not_run'
+      end
+
+      # Add a new entry — key1 is now the LRU, not key0
+      cache.fetch('key3') do
+        'value3'
+      end
+
+      expect(cache.size).to eq(3)
+      expect(cache.key?('key1')).to be(false)
+      expect(cache.fetch('key0') { 'other' }).to eq('value0')
+      expect(cache.fetch('key2') { 'other' }).to eq('value2')
+      expect(cache.fetch('key3') { 'other' }).to eq('value3')
+    end
+
+    it 'promotes on every access, not just the first' do
+      cache = described_class.new(max_entries: 2)
+
+      cache.fetch('A') do
+        'a'
+      end
+      cache.fetch('B') do
+        'b'
+      end
+
+      # Access A, then B — B is now the most recently used
+      cache.fetch('A') do
+        'x'
+      end
+      cache.fetch('B') do
+        'x'
+      end
+
+      # Add C — A is the LRU because B was accessed last
+      cache.fetch('C') do
+        'c'
+      end
+
+      expect(cache.key?('A')).to be(false)
+      expect(cache.fetch('B') { 'x' }).to eq('b')
+      expect(cache.fetch('C') { 'x' }).to eq('c')
+    end
+
+    it 'does not evict when fetching an existing key' do
+      3.times do |i|
+        cache.fetch("key#{i}") { "value#{i}" }
+      end
+
+      # Re-fetch existing key — should not trigger eviction
+      cache.fetch('key0') do
+        'should_not_run'
+      end
+
+      expect(cache.size).to eq(3)
+      expect(cache.key?('key0')).to be(true)
+      expect(cache.key?('key1')).to be(true)
+      expect(cache.key?('key2')).to be(true)
+    end
+
+    it 'works with TTL and max_entries combined' do
+      cache = described_class.new(ttl: 5, max_entries: 2)
+
+      cache.fetch('A') do
+        'a'
+      end
+      cache.fetch('B') do
+        'b'
+      end
+
+      # Expire only A by advancing time just past its TTL
+      future = Time.now + 6
+      allow(Time).to receive(:now).and_return(future)
+
+      # A is expired, so fetching it recomputes
+      result = cache.fetch('A') { 'a_refreshed' }
+      expect(result).to eq('a_refreshed')
+
+      # B is also expired — adding C evicts B (the LRU)
+      cache.fetch('C') do
+        'c'
+      end
+
+      expect(cache.size).to eq(2)
+      expect(cache.fetch('A') { 'x' }).to eq('a_refreshed')
+      expect(cache.fetch('C') { 'x' }).to eq('c')
+    end
+
+    it 'does not limit when max_entries is nil' do
+      unlimited = described_class.new
+      100.times do |i|
+        unlimited.fetch("key#{i}") { "value#{i}" }
+      end
+
+      expect(unlimited.size).to eq(100)
+    end
+  end
+
   describe '#clear' do
     let(:cache) { described_class.new }
 

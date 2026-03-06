@@ -54,10 +54,10 @@ Config is frozen after construction, like `Limits`.
 Four module-level settings apply to all new clients:
 
 ```ruby
-WSDL.http_adapter = MyAdapterClass  # default: WSDL::HTTPClient
-WSDL.cache = WSDL::Cache.new        # default: enabled
-WSDL.limits = WSDL::Limits.new      # default: sensible defaults
-WSDL.logger = Rails.logger           # default: silent (NullLogger)
+WSDL.http_adapter = MyAdapterClass             # default: WSDL::HTTPClient
+WSDL.cache = WSDL::Cache.new(max_entries: 50)  # default: LRU cache, 50 entries
+WSDL.limits = WSDL::Limits.new                 # default: sensible defaults
+WSDL.logger = Rails.logger                     # default: silent (NullLogger)
 ```
 
 Pass `nil` to any setter to restore its default value.
@@ -85,10 +85,19 @@ Use `strict_schema: false` for large enterprise WSDLs with external schema depen
 
 The parser cache avoids re-parsing the same WSDL on repeated client construction. Cache keys include the WSDL source, sandbox paths, limits, strict schema mode, and HTTP adapter identity.
 
+The built-in `WSDL::Cache` is a thread-safe in-memory LRU cache. When the entry limit is reached, the least recently used entry is evicted.
+
+### Options
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `max_entries:` | `Integer`, `nil` | `50` | Maximum number of cached entries. LRU eviction when exceeded. `nil` for unlimited. |
+| `ttl:` | `Integer`, `nil` | `nil` | Time-to-live in seconds. Expired entries are recomputed on next access. `nil` for no expiry. |
+
 ### Per-client
 
 ```ruby
-client = WSDL::Client.new(wsdl)                   # use WSDL.cache (default)
+client = WSDL::Client.new(wsdl)                    # use WSDL.cache (default)
 client = WSDL::Client.new(wsdl, cache: false)      # disable for this client
 client = WSDL::Client.new(wsdl, cache: my_cache)   # use a custom cache instance
 ```
@@ -96,8 +105,10 @@ client = WSDL::Client.new(wsdl, cache: my_cache)   # use a custom cache instance
 ### Global
 
 ```ruby
-WSDL.cache = WSDL::Cache.new   # in-memory cache (default)
-WSDL.cache = nil                # disable globally
+WSDL.cache = WSDL::Cache.new(max_entries: 50)       # LRU cache, max 50 entries (default)
+WSDL.cache = WSDL::Cache.new(max_entries: 200)      # raise the entry limit
+WSDL.cache = WSDL::Cache.new(ttl: 3600)             # 1-hour TTL
+WSDL.cache = nil                                    # disable caching globally
 ```
 
 Custom caches must implement `fetch(key) { ... }` and `clear`.

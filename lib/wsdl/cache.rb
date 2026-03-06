@@ -1,10 +1,12 @@
 # frozen_string_literal: true
 
 module WSDL
-  # Thread-safe in-memory cache for parsed WSDL definitions.
+  # Thread-safe in-memory LRU cache for parsed WSDL definitions.
   #
   # This cache is designed to avoid redundant HTTP requests and parsing
   # when working with WSDL documents, especially in multithreaded environments.
+  # When a +max_entries+ limit is set, the least recently used entry is
+  # evicted to make room for new ones.
   #
   # Uses double-checked locking so the global mutex is never held while the
   # block executes. Concurrent requests for *different* keys compute in
@@ -18,6 +20,9 @@ module WSDL
   #
   # @example With TTL (time-to-live)
   #   cache = WSDL::Cache.new(ttl: 3600)  # 1 hour TTL
+  #
+  # @example With max entries to prevent unbounded memory growth
+  #   cache = WSDL::Cache.new(max_entries: 100)
   #
   # @example Custom cache implementation for Redis
   #   class RedisCache
@@ -47,9 +52,13 @@ module WSDL
     #
     # @param ttl [Integer, nil] optional time-to-live in seconds for cached entries.
     #   When nil (default), entries never expire.
-    def initialize(ttl: nil)
+    # @param max_entries [Integer, nil] optional maximum number of entries to store.
+    #   When the limit is reached, the least recently used (LRU) entry is evicted.
+    #   When nil (default), the cache can grow without bound.
+    def initialize(ttl: nil, max_entries: nil)
       @store = {}
       @ttl = ttl
+      @max_entries = max_entries
       @mutex = Mutex.new
     end
 
@@ -67,8 +76,8 @@ module WSDL
     def fetch(key)
       # Fast path — return a cached, non-expired entry.
       @mutex.synchronize do
-        entry = @store[key]
-        return entry[:value] if entry && !expired?(entry)
+        entry = promote!(key)
+        return entry[:value] if entry
       end
 
       # Compute outside the lock so concurrent misses for different keys
@@ -78,10 +87,11 @@ module WSDL
       # Store the result.  Double-check: if another thread populated
       # the entry while we were computing, keep the earlier value.
       @mutex.synchronize do
-        entry = @store[key]
-        return entry[:value] if entry && !expired?(entry)
+        entry = promote!(key)
+        return entry[:value] if entry
 
         @store[key] = { value:, timestamp: Time.now }
+        evict_lru! if @max_entries && @store.size > @max_entries
         value
       end
     end
@@ -127,6 +137,27 @@ module WSDL
     end
 
     private
+
+    # Promotes a key to most-recently-used by deleting and reinserting it.
+    # Returns the entry hash on hit, or nil on miss/expiry.
+    # Assumes the mutex is already held by the caller.
+    #
+    # @param key [String] the cache key
+    # @return [Hash, nil] the cache entry, or nil
+    def promote!(key)
+      entry = @store.delete(key)
+      return unless entry && !expired?(entry)
+
+      @store[key] = entry
+    end
+
+    # Evicts the least recently used entry from the cache.
+    # Assumes the mutex is already held by the caller.
+    #
+    # @return [void]
+    def evict_lru!
+      @store.delete(@store.each_key.first)
+    end
 
     # Checks if a cache entry has expired.
     #
