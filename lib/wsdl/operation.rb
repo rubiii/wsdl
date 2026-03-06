@@ -32,7 +32,51 @@ module WSDL
       @http_header_overrides = {}
     end
 
-    attr_accessor :endpoint, :soap_version, :soap_action, :encoding
+    attr_reader :endpoint, :soap_version, :soap_action, :encoding
+
+    # Overrides the SOAP endpoint URL for this operation.
+    #
+    # @param value [String] a non-empty endpoint URL
+    # @raise [ArgumentError] when the value is not a non-empty String
+    # @return [String]
+    def endpoint=(value)
+      raise ArgumentError, 'endpoint must be a non-empty String' unless value.is_a?(String) && !value.empty?
+
+      @endpoint = value
+    end
+
+    # Overrides the SOAP version for this operation.
+    #
+    # @param value [String] `"1.1"` or `"1.2"`
+    # @raise [ArgumentError] when the value is not a supported SOAP version
+    # @return [String]
+    def soap_version=(value)
+      raise ArgumentError, "soap_version must be '1.1' or '1.2'" unless CONTENT_TYPE.key?(value)
+
+      @soap_version = value
+    end
+
+    # Overrides the SOAP action for this operation.
+    #
+    # @param value [String, nil] the SOAP action string, or nil to clear
+    # @raise [ArgumentError] when the value is not a String or nil
+    # @return [String, nil]
+    def soap_action=(value)
+      raise ArgumentError, 'soap_action must be a String or nil' unless value.nil? || value.is_a?(String)
+
+      @soap_action = value
+    end
+
+    # Overrides the XML encoding for this operation.
+    #
+    # @param value [String] a non-empty encoding name (e.g. `"UTF-8"`)
+    # @raise [ArgumentError] when the value is not a non-empty String
+    # @return [String]
+    def encoding=(value)
+      raise ArgumentError, 'encoding must be a non-empty String' unless value.is_a?(String) && !value.empty?
+
+      @encoding = value
+    end
 
     # Returns whether XML output is formatted with indentation.
     #

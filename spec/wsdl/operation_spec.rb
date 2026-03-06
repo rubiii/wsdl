@@ -23,6 +23,14 @@ describe WSDL::Operation do
       operation.endpoint = 'http://example.com'
       expect(operation.endpoint).to eq('http://example.com')
     end
+
+    it 'raises on empty string' do
+      expect { operation.endpoint = '' }.to raise_error(ArgumentError, /non-empty String/)
+    end
+
+    it 'raises on non-string' do
+      expect { operation.endpoint = nil }.to raise_error(ArgumentError, /non-empty String/)
+    end
   end
 
   describe '#soap_version' do
@@ -34,6 +42,10 @@ describe WSDL::Operation do
       operation.soap_version = '1.1'
       expect(operation.soap_version).to eq('1.1')
     end
+
+    it 'raises on unsupported version' do
+      expect { operation.soap_version = '2.0' }.to raise_error(ArgumentError, /'1.1' or '1.2'/)
+    end
   end
 
   describe '#soap_action' do
@@ -44,6 +56,15 @@ describe WSDL::Operation do
     it 'can be overwritten' do
       operation.soap_action = 'ConvertSomething'
       expect(operation.soap_action).to eq('ConvertSomething')
+    end
+
+    it 'can be set to nil' do
+      operation.soap_action = nil
+      expect(operation.soap_action).to be_nil
+    end
+
+    it 'raises on non-string' do
+      expect { operation.soap_action = 123 }.to raise_error(ArgumentError, /String or nil/)
     end
   end
 
@@ -67,6 +88,14 @@ describe WSDL::Operation do
     it 'can be overwritten' do
       operation.encoding = 'US-ASCII'
       expect(operation.encoding).to eq('US-ASCII')
+    end
+
+    it 'raises on empty string' do
+      expect { operation.encoding = '' }.to raise_error(ArgumentError, /non-empty String/)
+    end
+
+    it 'raises on non-string' do
+      expect { operation.encoding = nil }.to raise_error(ArgumentError, /non-empty String/)
     end
   end
 

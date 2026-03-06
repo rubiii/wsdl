@@ -28,6 +28,26 @@ Reserved DSL methods:
 
 If an element name matches a reserved method name, use `tag('name')`.
 
+## Operation Overrides
+
+Each operation inherits its endpoint, SOAP version, SOAP action, and encoding from the WSDL. These can be overridden per-operation:
+
+```ruby
+# Redirect to a different endpoint (e.g., test environment)
+operation.endpoint = 'https://staging.example.com/api'
+
+# Switch SOAP version ('1.1' or '1.2')
+operation.soap_version = '1.1'
+
+# Override the SOAP action, or set to nil to clear
+operation.soap_action = 'urn:example#CustomAction'
+
+# Change XML encoding (defaults to UTF-8)
+operation.encoding = 'ISO-8859-1'
+```
+
+All setters validate their input and raise `ArgumentError` on invalid values. Overrides are not cleared by `operation.reset!` — they persist across request cycles.
+
 ## HTTP Headers
 
 Auto-generated HTTP headers (Content-Type, SOAPAction) are derived from the operation's SOAP version, action, and encoding. Use `http_headers=` to merge custom headers on top — user values win on conflict, while auto-generated defaults are preserved:
