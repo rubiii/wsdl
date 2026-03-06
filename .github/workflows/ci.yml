@@ -28,8 +28,11 @@ jobs:
           ruby-version: ${{ matrix.ruby-version }}
           bundler-cache: true
 
-      - name: Run linting
+      - name: Run lint
         run: bundle exec rake lint
+
+      - name: Run yard audit
+        run: bundle exec rake yard:audit
 
       - name: Run specs
         run: bundle exec rake spec
