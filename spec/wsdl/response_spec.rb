@@ -7,7 +7,7 @@ describe WSDL::Response, type: :unit do
   include SchemaElementHelper
 
   def build_response(xml, **kwargs)
-    described_class.new(http: WSDL::HTTPResponse.new(status: 200, body: xml), **kwargs)
+    described_class.new(http_response: WSDL::HTTPResponse.new(status: 200, body: xml), **kwargs)
   end
 
   let(:soap_response) do
@@ -27,8 +27,8 @@ describe WSDL::Response, type: :unit do
 
   describe '#http_status' do
     it 'returns the HTTP status code from the HTTP response' do
-      http = WSDL::HTTPResponse.new(status: 500, body: soap_response)
-      response = described_class.new(http:)
+      http_response = WSDL::HTTPResponse.new(status: 500, body: soap_response)
+      response = described_class.new(http_response:)
 
       expect(response.http_status).to eq(500)
     end
@@ -43,8 +43,8 @@ describe WSDL::Response, type: :unit do
 
     it 'returns the HTTP headers from the HTTP response' do
       headers = { 'Content-Type' => 'text/xml' }
-      http = WSDL::HTTPResponse.new(status: 200, headers:, body: soap_response)
-      response = described_class.new(http:)
+      http_response = WSDL::HTTPResponse.new(status: 200, headers:, body: soap_response)
+      response = described_class.new(http_response:)
 
       expect(response.http_headers).to eq(headers)
     end
@@ -63,8 +63,8 @@ describe WSDL::Response, type: :unit do
       end
 
       it 'freezes the body extracted from an HTTPResponse' do
-        http = WSDL::HTTPResponse.new(status: 200, body: soap_response.dup)
-        response = described_class.new(http:)
+        http_response = WSDL::HTTPResponse.new(status: 200, body: soap_response.dup)
+        response = described_class.new(http_response:)
 
         expect(response.raw).to be_frozen
       end

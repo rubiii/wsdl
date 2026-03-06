@@ -106,13 +106,13 @@ RSpec.describe 'Security sign + verify round-trip', :verifier_helpers do
     let(:signed_xml) { sign_envelope(soap_1_1_envelope) }
 
     it 'validates signature through Response#security' do
-      response = WSDL::Response.new(http: WSDL::HTTPResponse.new(status: 200, body: signed_xml))
+      response = WSDL::Response.new(http_response: WSDL::HTTPResponse.new(status: 200, body: signed_xml))
       expect(response.security.valid?).to be true
       expect(response.security.signed_elements).to contain_exactly('Body', 'Timestamp')
     end
 
     it 'provides signature algorithm info' do
-      response = WSDL::Response.new(http: WSDL::HTTPResponse.new(status: 200, body: signed_xml))
+      response = WSDL::Response.new(http_response: WSDL::HTTPResponse.new(status: 200, body: signed_xml))
       expect(response.security.signature_algorithm).to include('rsa-sha256')
     end
   end

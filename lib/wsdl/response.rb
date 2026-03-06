@@ -55,7 +55,7 @@ module WSDL
   class Response
     # Creates a new Response instance.
     #
-    # @param http [HTTPResponse] the HTTP response metadata (status code, headers, body)
+    # @param http_response [HTTPResponse] the HTTP response metadata (status code, headers, body)
     # @param output_body_parts [Array<WSDL::XML::Element>, nil] optional schema elements
     #   describing the expected body structure for type-aware parsing
     # @param output_header_parts [Array<WSDL::XML::Element>, nil] optional schema elements
@@ -63,10 +63,10 @@ module WSDL
     # @param verification [Security::ResponseVerification] response verification options
     #   for signature and timestamp validation
     #
-    def initialize(http:, output_body_parts: nil, output_header_parts: nil,
+    def initialize(http_response:, output_body_parts: nil, output_header_parts: nil,
                    verification: Security::ResponseVerification::Options.default)
-      @raw_response = (http.body || '').freeze
-      @http = http
+      @raw_response = (http_response.body || '').freeze
+      @http_response = http_response
       @output_body_parts = output_body_parts
       @output_header_parts = output_header_parts
       @verification = verification
@@ -79,14 +79,14 @@ module WSDL
     #   response.http_status  # => 200
     #   response.http_status  # => 500 (SOAP fault)
     def http_status
-      @http&.status
+      @http_response.status
     end
 
     # Returns the HTTP response headers.
     #
     # @return [Hash{String => String}] the HTTP response headers
     def http_headers
-      @http&.headers || {}
+      @http_response.headers
     end
 
     # Returns the raw XML response string.
