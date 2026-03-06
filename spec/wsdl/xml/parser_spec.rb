@@ -219,6 +219,46 @@ describe WSDL::XML::Parser do
       # Should have :external_reference only once even though both SYSTEM and PUBLIC are present
       expect(threats.count(:external_reference)).to eq(1)
     end
+
+    it 'detects deep nesting above 1,000 open tags' do
+      xml = ('<a>' * 1_001) + ('</a>' * 1_001)
+      threats = described_class.detect_threats(xml)
+      expect(threats).to include(:deep_nesting)
+    end
+
+    it 'does not flag deep nesting at 1,000 open tags' do
+      xml = ('<a>' * 1_000) + ('</a>' * 1_000)
+      threats = described_class.detect_threats(xml)
+      expect(threats).not_to include(:deep_nesting)
+    end
+
+    it 'detects a single large attribute value above 10,000 characters' do
+      xml = %(<root attr="#{'x' * 10_001}"/>)
+      threats = described_class.detect_threats(xml)
+      expect(threats).to include(:large_attribute)
+    end
+
+    it 'does not flag an attribute value at 10,000 characters' do
+      xml = %(<root attr="#{'x' * 10_000}"/>)
+      threats = described_class.detect_threats(xml)
+      expect(threats).not_to include(:large_attribute)
+    end
+
+    it 'detects cumulative attribute size above 1,000,000 bytes' do
+      # 101 attributes of 10,000 chars each = 1,010,000 total
+      attrs = (1..101).map { |i| %(a#{i}="#{'x' * 10_000}") }.join(' ')
+      xml = "<root #{attrs}/>"
+      threats = described_class.detect_threats(xml)
+      expect(threats).to include(:large_attributes_total)
+    end
+
+    it 'does not flag cumulative attribute size at 1,000,000 bytes' do
+      # 100 attributes of 10,000 chars each = 1,000,000 total
+      attrs = (1..100).map { |i| %(a#{i}="#{'x' * 10_000}") }.join(' ')
+      xml = "<root #{attrs}/>"
+      threats = described_class.detect_threats(xml)
+      expect(threats).not_to include(:large_attributes_total)
+    end
   end
 
   describe '.parse_untrusted' do

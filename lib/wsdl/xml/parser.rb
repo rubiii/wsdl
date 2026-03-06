@@ -63,7 +63,7 @@ module WSDL
     # @see https://cheatsheetseries.owasp.org/cheatsheets/XML_External_Entity_Prevention_Cheat_Sheet.html
     # @see https://nokogiri.org/rdoc/Nokogiri/XML/ParseOptions.html
     #
-    module Parser
+    module Parser # rubocop:disable Metrics/ModuleLength
       # Secure parse options for strict XML parsing.
       #
       # These options provide secure defaults:
@@ -209,8 +209,9 @@ module WSDL
         # - `:entity_declaration` — ENTITY definitions
         # - `:external_reference` — SYSTEM or PUBLIC identifiers
         # - `:parameter_entity` — Parameter entity references (%entity;)
-        # - `:deep_nesting` — Excessive tag nesting (potential DoS)
-        # - `:large_attribute` — Very long attribute values (potential DoS)
+        # - `:deep_nesting` — Excessive tag nesting (potential DoS, >1,000 open tags)
+        # - `:large_attribute` — Single attribute value >10,000 characters (potential DoS)
+        # - `:large_attributes_total` — Cumulative attribute size >1,000,000 bytes (potential DoS)
         #
         # @param xml_string [String] the XML string to check
         # @return [Array<Symbol>] list of detected threat indicators
@@ -282,7 +283,6 @@ module WSDL
         #
         # @param bin [String] binary-encoded XML string
         # @return [Array<Symbol>] detected threat indicators
-        # rubocop:disable Metrics/CyclomaticComplexity
         def detect_threat_patterns(bin)
           threats = []
 
@@ -301,16 +301,32 @@ module WSDL
           # Parameter entities (%name;) are often used in advanced XXE
           threats << :parameter_entity if bin.match?(/%[a-zA-Z_][a-zA-Z0-9_]*;/)
 
-          # Excessive nesting could indicate a DoS attempt
+          # Excessive nesting could indicate a DoS attempt (libxml2 has its own
+          # limits, but we flag well before that to enable logging/rejection)
           open_tags = bin.scan(%r{<[a-zA-Z][^>/]*>}).length
-          threats << :deep_nesting if open_tags > 10_000
+          threats << :deep_nesting if open_tags > 1_000
 
-          # Very long attribute values could indicate a DoS attempt
-          threats << :large_attribute if bin.match?(/\w+\s*=\s*["'][^"']{100_000,}["']/)
+          # Scan attribute values for individual and cumulative size threats
+          detect_attribute_threats(bin, threats)
 
           threats
         end
-        # rubocop:enable Metrics/CyclomaticComplexity
+
+        # Scans attribute values for individual and cumulative size threats.
+        # Uses a simple scan instead of a single large-quantifier regex to
+        # avoid backtracking-induced CPU spikes on large documents.
+        #
+        # @param bin [String] binary-encoded XML string
+        # @param threats [Array<Symbol>] threat list to append to
+        def detect_attribute_threats(bin, threats)
+          total_attr_size = 0
+          bin.scan(/=\s*["']([^"']*)["']/) do
+            value = Regexp.last_match(1)
+            total_attr_size += value.length
+            threats << :large_attribute if value.length > 10_000
+          end
+          threats << :large_attributes_total if total_attr_size > 1_000_000
+        end
 
         # Raises XMLSecurityError if XML contains a DOCTYPE declaration.
         #
