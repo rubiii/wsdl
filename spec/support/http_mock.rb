@@ -9,8 +9,8 @@ module SpecSupport
       @fakes = {}
     end
 
-    def client
-      :mock_client
+    def config
+      :mock_config
     end
 
     def cache_key

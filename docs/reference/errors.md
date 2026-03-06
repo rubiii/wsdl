@@ -40,6 +40,7 @@ WSDL::Error
     ├── WSDL::RequestSecurityConflictError
     ├── WSDL::UnsupportedWSDLVersionError
     ├── WSDL::UnresolvableImportError
+    ├── WSDL::TooManyRedirectsError
     ├── WSDL::UnsafeRedirectError
     ├── WSDL::PathRestrictionError
     └── WSDL::ResourceLimitError
@@ -84,6 +85,7 @@ All inherit from `WSDL::SecurityError < WSDL::FatalError`. Rescue `WSDL::Securit
 |-------|------|
 | `UnsupportedWSDLVersionError` | Document uses WSDL 2.0, which is not supported |
 | `XMLSecurityError` | XML attack detected (entity amplification, excessive depth) |
+| `TooManyRedirectsError` | HTTP redirect limit exceeded (prevents redirect loops) |
 | `UnsafeRedirectError` | HTTP redirect targets a private/reserved IP or DNS resolution fails |
 | `PathRestrictionError` | File path violates sandbox restrictions |
 | `ResourceLimitError` | Document size, schema count, or other limit exceeded |

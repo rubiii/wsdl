@@ -27,7 +27,7 @@ require 'wsdl/log'
 #
 module WSDL
   class << self
-    # @return [Class] the HTTP adapter class (defaults to {HTTPClient})
+    # @return [Class] the HTTP adapter class (defaults to {HTTPAdapter})
     attr_reader :http_adapter
 
     # The parser cache instance, or +nil+ if caching is disabled.
@@ -81,7 +81,7 @@ module WSDL
     # @param adapter [Class, nil] an HTTP adapter class, or +nil+ to reset
     # @see file:docs/core/configuration.md#http-adapter HTTP Adapter docs
     def http_adapter=(adapter)
-      @http_adapter = adapter || HTTPClient
+      @http_adapter = adapter || HTTPAdapter
     end
 
     # Sets the default resource limits. Pass +nil+ to restore defaults.
@@ -111,7 +111,7 @@ module WSDL
   require 'wsdl/cache'
   require 'wsdl/config'
   require 'wsdl/http_response'
-  require 'wsdl/httpclient'
+  require 'wsdl/http_adapter'
 
   # Load XML utilities
   require 'wsdl/xml/attribute'
@@ -144,7 +144,7 @@ module WSDL
 
   # Initialize defaults. These must be set before spawning threads.
   # Reconfigure via the corresponding writer (e.g. WSDL.cache = nil).
-  @http_adapter = HTTPClient
+  @http_adapter = HTTPAdapter
   @cache        = Cache.new(max_entries: 50)
   @limits       = Limits.new
   @logger       = Log::NullLogger.new

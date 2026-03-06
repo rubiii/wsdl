@@ -482,6 +482,13 @@ module WSDL
     end
   end
 
+  # Raised when the maximum number of HTTP redirects is exceeded.
+  #
+  # This prevents redirect loops and excessive redirect chains that
+  # could be used for denial-of-service attacks.
+  class TooManyRedirectsError < FatalError
+  end
+
   # Raised when a sealed collection is mutated.
   #
   # This error indicates internal misuse where a parser collection that has

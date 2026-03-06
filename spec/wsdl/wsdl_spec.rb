@@ -9,8 +9,8 @@ describe WSDL do
       described_class.http_adapter = nil
     end
 
-    it 'returns the default HTTP client to use' do
-      expect(described_class.http_adapter).to eq(WSDL::HTTPClient)
+    it 'returns the default HTTP adapter class' do
+      expect(described_class.http_adapter).to eq(WSDL::HTTPAdapter)
     end
 
     it 'can be changed to use a custom adapter' do
@@ -19,8 +19,8 @@ describe WSDL do
           'custom-adapter'
         end
 
-        def client
-          'http-client'
+        def config
+          'http-config'
         end
       end
 
@@ -28,7 +28,7 @@ describe WSDL do
       expect(described_class.http_adapter).to eq(adapter_class)
 
       client = WSDL::Client.new(fixture('wsdl/amazon'))
-      expect(client.http).to eq('http-client')
+      expect(client.http).to eq('http-config')
     end
   end
 

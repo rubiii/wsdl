@@ -26,7 +26,6 @@ Or in `Gemfile`:
 
 ```ruby
 gem 'wsdl'
-gem 'httpclient' # optional; default HTTP adapter
 ```
 
 ## Quickstart

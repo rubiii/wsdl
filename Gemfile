@@ -15,7 +15,6 @@ gem 'irb' if RUBY_VERSION >= '4.0'
 group :development do
   gem 'benchmark-ips', '~> 2.14', require: false
   gem 'equivalent-xml', '~> 0.6'
-  gem 'httpclient', '~> 2.9'
   gem 'rake', '~> 13.3'
   gem 'rantly', '~> 2.0', require: false
   gem 'redcarpet', require: false
@@ -25,6 +24,7 @@ group :development do
   gem 'rubocop-rspec', require: false
   gem 'rubocop-yard', require: false
   gem 'simplecov', '~> 0.22', require: false
+  gem 'webmock', '~> 3.24', require: false
   gem 'yard', require: false
   gem 'yard-markdown-relative-links', require: false
 end

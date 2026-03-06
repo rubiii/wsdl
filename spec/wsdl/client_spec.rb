@@ -163,10 +163,10 @@ describe WSDL::Client do
 
       it 'raises when explicit HTTP adapter does not implement cache_key' do
         adapter_class = Class.new do
-          attr_reader :client
+          attr_reader :config
 
           def initialize
-            @client = Object.new
+            @config = Object.new
           end
         end
 
@@ -177,10 +177,10 @@ describe WSDL::Client do
 
       it 'raises when explicit HTTP adapter returns empty cache_key' do
         adapter_class = Class.new do
-          attr_reader :client
+          attr_reader :config
 
           def initialize
-            @client = Object.new
+            @config = Object.new
           end
 
           def cache_key
@@ -195,11 +195,11 @@ describe WSDL::Client do
 
       it 'shares cache entries across explicit HTTP adapters with the same cache_key' do
         adapter_class = Class.new do
-          attr_reader :cache_key, :client
+          attr_reader :cache_key, :config
 
           def initialize(cache_key)
             @cache_key = cache_key
-            @client = Object.new
+            @config = Object.new
           end
         end
 
@@ -432,9 +432,9 @@ describe WSDL::Client do
   end
 
   describe '#http' do
-    it 'returns the HTTP adapter\'s client to configure' do
+    it 'returns the HTTP adapter\'s config for customization' do
       client = described_class.new(wsdl)
-      expect(client.http).to be_an_instance_of(HTTPClient)
+      expect(client.http).to be_an_instance_of(WSDL::HTTPAdapter::Config)
     end
   end
 

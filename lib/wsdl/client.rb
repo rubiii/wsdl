@@ -85,12 +85,12 @@ module WSDL
     #
     attr_reader :config
 
-    # Returns the HTTP adapter's client instance for configuration.
+    # Returns the HTTP adapter's config for customizing timeouts, SSL, etc.
     #
-    # @return [Object] the underlying HTTP client
+    # @return [Object] the adapter configuration object
     #
     def http
-      @http.client
+      @http.config
     end
 
     # Returns the services and ports defined by the WSDL.

@@ -27,6 +27,7 @@ ENV['RANTLY_VERBOSE'] ||= '0'
 
 require 'equivalent-xml'
 require 'equivalent-xml/rspec_matchers'
+require 'webmock/rspec'
 
 support_files = File.expand_path('spec/support/**/*.rb')
 Dir[support_files].each do |file|

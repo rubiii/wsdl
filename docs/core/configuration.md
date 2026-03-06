@@ -54,7 +54,7 @@ Config is frozen after construction, like `Limits`.
 Four module-level settings apply to all new clients:
 
 ```ruby
-WSDL.http_adapter = MyAdapterClass             # default: WSDL::HTTPClient
+WSDL.http_adapter = MyAdapterClass             # default: WSDL::HTTPAdapter
 WSDL.cache = WSDL::Cache.new(max_entries: 50)  # default: LRU cache, 50 entries
 WSDL.limits = WSDL::Limits.new                 # default: sensible defaults
 WSDL.logger = Rails.logger                     # default: silent (NullLogger)
@@ -231,29 +231,32 @@ Custom adapters must implement:
 
 | Method | Signature | Purpose |
 |--------|-----------|---------|
-| `get` | `get(url) → String` | Fetch WSDL and schema documents |
-| `post` | `post(url, headers, body) → String` | Send SOAP requests |
+| `get` | `get(url) → HTTPResponse` | Fetch WSDL and schema documents |
+| `post` | `post(url, headers, body) → HTTPResponse` | Send SOAP requests |
 | `cache_key` | `cache_key → String` | Stable non-empty identity for cache partitioning |
-| `client` | `client → Object` | Underlying client for user configuration (e.g. timeouts, SSL) |
+| `config` | `config → Object` | Configuration object exposed via `client.http` (e.g. timeouts, SSL) |
 
 ```ruby
 class MyHTTPAdapter
   def initialize
-    @client = Faraday.new
+    @connection = Faraday.new
   end
 
-  attr_reader :client
+  # Expose the Faraday connection for user configuration
+  # (e.g. client.http.options.timeout = 30).
+  attr_reader :connection
+  alias config connection
 
   def cache_key
     'my-http-adapter:v1'
   end
 
   def get(url)
-    @client.get(url).body
+    @connection.get(url).body
   end
 
   def post(url, headers, body)
-    @client.post(url, body, headers).body
+    @connection.post(url, body, headers).body
   end
 end
 ```
@@ -270,20 +273,24 @@ client = WSDL::Client.new(wsdl, http: MyHTTPAdapter.new)
 
 ### Default adapter
 
-The built-in `WSDL::HTTPClient` uses the `httpclient` gem with secure defaults:
+The built-in `WSDL::HTTPAdapter` uses Ruby's stdlib `net/http` with secure defaults (no external dependencies):
 
-- Connection timeout: 30s, send: 60s, receive: 120s
+- Open timeout: 30s, write: 60s, read: 120s
 - Redirect limit: 5
 - SSL verification: enabled (VERIFY_PEER)
 - SSRF protection: redirects to private/reserved IPs are blocked
+- Scheme downgrade protection: HTTPS-to-HTTP redirects are blocked
 - DNS resolution timeout: 5s (blocks redirect if resolution fails)
 
-Configure via `client.http`:
+Configure via `client.http` (returns a `WSDL::HTTPAdapter::Config`):
 
 ```ruby
 client = WSDL::Client.new(wsdl)
-client.http.connect_timeout = 10
-client.http.ssl_config.add_trust_ca('/path/to/ca-bundle.crt')
+client.http.open_timeout = 10
+client.http.read_timeout = 60
+client.http.ca_file = '/path/to/ca-bundle.crt'
+client.http.cert = OpenSSL::X509::Certificate.new(File.read('/path/to/client.crt'))
+client.http.key = OpenSSL::PKey::RSA.new(File.read('/path/to/client.key'))
 ```
 
 ## See also

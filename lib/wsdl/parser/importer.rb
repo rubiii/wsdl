@@ -31,8 +31,8 @@ module WSDL
         Timeout::Error
       ].tap { |errors|
         errors << OpenSSL::SSL::SSLError if defined?(OpenSSL::SSL::SSLError)
-        errors << HTTPClient::BadResponseError if defined?(HTTPClient::BadResponseError)
-        errors << HTTPClient::TimeoutError if defined?(HTTPClient::TimeoutError)
+        errors << Net::OpenTimeout if defined?(Net::OpenTimeout)
+        errors << Net::ReadTimeout if defined?(Net::ReadTimeout)
       }.freeze
 
       # Creates a new Importer instance.
