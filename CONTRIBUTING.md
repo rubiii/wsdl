@@ -8,7 +8,7 @@ By participating, you agree to abide by its terms.
 ## Security Vulnerabilities
 
 **Do not open a public issue for security vulnerabilities.** Instead, email
-[me@rubiii.com](mailto:me@rubiii.com) with a description of the issue, steps to reproduce,
+[security@rubiii.com](mailto:security@rubiii.com) with a description of the issue, steps to reproduce,
 and any relevant WSDL fixtures. You will receive a response within 48 hours.
 
 ## Getting Started
