@@ -12,10 +12,18 @@ module WSDL
         freeze
       end
 
+      # Returns the frozen collection of elements for this part.
+      #
+      # The array itself is frozen; individual elements should be treated as
+      # read-only introspection objects.
+      #
       # @return [Array<WSDL::XML::Element>]
       attr_reader :elements
 
       # Flat path metadata for this part.
+      #
+      # Returns a fresh array of hashes on each call. Mutating the returned
+      # collection does not affect the contract's internal state.
       #
       # @return [Array<Hash{Symbol => Object}>]
       def paths
@@ -36,6 +44,9 @@ module WSDL
       end
 
       # Hierarchical structure metadata for this part.
+      #
+      # Returns a fresh array of hashes on each call. Mutating the returned
+      # collection does not affect the contract's internal state.
       #
       # @return [Array<Hash{Symbol => Object}>]
       def tree
