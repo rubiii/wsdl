@@ -191,6 +191,12 @@ describe WSDL::HTTPClient do
       end
     end
 
+    describe 'gzip decompression' do
+      it 'disables transparent gzip decompression to prevent gzip bombs' do
+        expect(http.client.transparent_gzip_decompression).to be false
+      end
+    end
+
     describe 'SSL verification' do
       it 'has SSL verification enabled by default' do
         expect(http.ssl_verification_disabled?).to be false

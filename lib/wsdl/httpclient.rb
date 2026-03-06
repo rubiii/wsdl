@@ -207,6 +207,12 @@ module WSDL
       # Validate redirect targets to prevent SSRF via open redirects
       @client.redirect_uri_callback = method(:safe_redirect_uri_callback)
 
+      # Disable transparent gzip decompression to prevent gzip bombs.
+      # A small compressed payload could decompress into gigabytes in memory
+      # before document size limits can be checked. WSDL/XSD documents are
+      # plain XML and don't benefit meaningfully from compression.
+      @client.transparent_gzip_decompression = false
+
       # SSL verification is enabled by default in httpclient (VERIFY_PEER)
       # We don't change this, but we warn if the user disables it
     end
