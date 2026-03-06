@@ -15,7 +15,7 @@ and any relevant WSDL fixtures. You will receive a response within 48 hours.
 
 Requirements:
 
-- Ruby 3.2+
+- Ruby 3.3+
 - Bundler
 
 ```sh

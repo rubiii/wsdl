@@ -2,10 +2,6 @@
 
 WSDL toolkit for Ruby. Turn WSDL 1.1 documents into inspectable services and callable operations.
 
-## Project Status
-
-This library is being revived. It was previously published as `Sekken` but is now renamed to `WSDL`. The gem is currently unpublished, so we don't need to care about backward compatibility at all. Big changes are welcome!
-
 ## Getting Started
 
 ```sh
@@ -38,7 +34,7 @@ bundle exec yard            # Generate YARD documentation
 
 ## Code Style
 
-- Ruby 3.2+ with modern idioms (shorthand hash syntax, Data classes)
+- Ruby 3.3+ with modern idioms (shorthand hash syntax, Data classes)
 - `# frozen_string_literal: true` at the top of every file
 - Single quotes for strings, 120 character max line length
 - Semantic blocks: `do...end` for side effects, `{...}` for return values

@@ -13,7 +13,7 @@ Gem::Specification.new do |s|
   s.homepage    = 'https://github.com/rubiii/wsdl'
   s.summary     = 'WSDL toolkit for Ruby'
   s.description = 'Turn WSDL 1.1 documents into inspectable services and callable operations'
-  s.required_ruby_version = '>= 3.2'
+  s.required_ruby_version = '>= 3.3'
 
   s.license = 'MIT'
 
