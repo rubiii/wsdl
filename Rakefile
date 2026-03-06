@@ -9,6 +9,21 @@ RSpec::Core::RakeTask.new
 RuboCop::RakeTask.new
 YARD::Rake::YardocTask.new
 
+namespace :yard do
+  desc 'Check YARD documentation coverage and warnings'
+  task :audit do
+    require 'open3'
+
+    flags = %w[stats --list-undoc --fail-on-warning --no-cache --no-save]
+    stdout, stderr, status = Open3.capture3('bundle', 'exec', 'yard', *flags)
+    output = stdout + stderr
+    puts output
+
+    abort 'YARD audit failed: warnings detected' unless status.success?
+    abort 'YARD audit failed: not 100% documented' unless output.include?('100.00% documented')
+  end
+end
+
 desc 'Run linting'
 task lint: :rubocop
 
@@ -17,4 +32,4 @@ task :benchmark do
   ruby 'benchmarks/run.rb'
 end
 
-task ci: %i[lint spec]
+task ci: %i[lint spec yard:audit]
