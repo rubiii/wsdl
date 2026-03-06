@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1772823790989,
+  "lastUpdate": 1772825909032,
   "repoUrl": "https://github.com/rubiii/wsdl",
   "entries": {
     "Benchmark": [
@@ -528,6 +528,72 @@ window.BENCHMARK_DATA = {
             "value": 119.42,
             "unit": "i/s",
             "range": "± 1.7%"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "me@rubiii.com",
+            "name": "rubiii",
+            "username": "rubiii"
+          },
+          "committer": {
+            "email": "me@rubiii.com",
+            "name": "rubiii",
+            "username": "rubiii"
+          },
+          "distinct": true,
+          "id": "a715f6d055365b507b25f06de40e663e4dc19341",
+          "message": "Require nokogiri >= 1.19.1\n\n1.19.1 is an important security release.",
+          "timestamp": "2026-03-06T20:34:10+01:00",
+          "tree_id": "205b2759fa92568038e1d3d5d56af11df459f8c9",
+          "url": "https://github.com/rubiii/wsdl/commit/a715f6d055365b507b25f06de40e663e4dc19341"
+        },
+        "date": 1772825908227,
+        "tool": "customBiggerIsBetter",
+        "benches": [
+          {
+            "name": "parse: small WSDL (blz_service, 88 lines)",
+            "value": 1965.12,
+            "unit": "i/s",
+            "range": "± 1.9%"
+          },
+          {
+            "name": "parse: large WSDL (economic, 65k lines)",
+            "value": 5.28,
+            "unit": "i/s",
+            "range": "± 0.0%"
+          },
+          {
+            "name": "request: build + serialize",
+            "value": 4405.5,
+            "unit": "i/s",
+            "range": "± 1.2%"
+          },
+          {
+            "name": "sign: X.509 SHA-256 + Timestamp",
+            "value": 686.54,
+            "unit": "i/s",
+            "range": "± 2.0%"
+          },
+          {
+            "name": "verify: signature + timestamp",
+            "value": 658.78,
+            "unit": "i/s",
+            "range": "± 4.9%"
+          },
+          {
+            "name": "response: parse small (15 lines)",
+            "value": 10054.31,
+            "unit": "i/s",
+            "range": "± 2.9%"
+          },
+          {
+            "name": "response: parse large (200 items)",
+            "value": 120.96,
+            "unit": "i/s",
+            "range": "± 2.5%"
           }
         ]
       }
