@@ -225,4 +225,144 @@ describe 'Request DSL' do
     xml = operation.to_xml
     expect(xml).to include('version="1.0"')
   end
+
+  it 'raises RequestDslError for too many positional content arguments' do
+    expect {
+      operation.prepare do
+        tag('ConvertTemp', 'first', 'second')
+      end
+    }.to raise_error(WSDL::RequestDslError, /at most one positional content argument/)
+  end
+
+  it 'raises RequestDslError for undeclared attribute namespace prefix' do
+    expect {
+      operation.prepare do
+        tag('ConvertTemp') do
+          attribute('ord:version', '1.0')
+        end
+      end
+    }.to raise_error(WSDL::RequestDslError, /Undeclared namespace prefix/)
+  end
+
+  it 'raises RequestDslError for duplicate qualified attribute' do
+    expect {
+      operation.prepare do
+        xmlns('ns', 'http://example.com')
+        tag('ConvertTemp') do
+          attribute('ns:version', '1.0')
+          attribute('ns:version', '2.0')
+        end
+      end
+    }.to raise_error(WSDL::RequestDslError, /Duplicate attribute/)
+  end
+
+  it 'raises RequestDslError for duplicate unqualified attribute' do
+    expect {
+      operation.prepare do
+        tag('ConvertTemp') do
+          attribute('version', '1.0')
+          attribute('version', '2.0')
+        end
+      end
+    }.to raise_error(WSDL::RequestDslError, /Duplicate attribute/)
+  end
+
+  it 'raises RequestDslError for text/cdata/comment/pi/attribute outside tag block' do
+    expect {
+      operation.prepare do
+        text('orphan')
+      end
+    }.to raise_error(WSDL::RequestDslError, /require a surrounding tag block/)
+  end
+
+  it 'raises RequestDslError for unknown ws_security DSL methods' do
+    expect {
+      operation.prepare do
+        ws_security do
+          nonexistent_method
+        end
+      end
+    }.to raise_error(WSDL::RequestDslError, /Unknown ws_security DSL method/)
+  end
+
+  it 'enforces request depth limits' do
+    limited_client = WSDL::Client.new(
+      fixture('wsdl/temperature'),
+      strict_schema: false,
+      limits: WSDL.limits.with(max_request_depth: 1)
+    )
+    limited_operation = limited_client.operation('ConvertTemperature', 'ConvertTemperatureSoap12', 'ConvertTemp')
+
+    expect {
+      limited_operation.prepare do
+        tag('ConvertTemp') do
+          tag('Temperature', 30)
+        end
+      end
+    }.to raise_error(WSDL::ResourceLimitError, /depth.*exceeds limit/)
+  end
+
+  it 'enforces request attribute limits' do
+    limited_client = WSDL::Client.new(
+      fixture('wsdl/temperature'),
+      strict_schema: false,
+      limits: WSDL.limits.with(max_request_attributes: 1)
+    )
+    limited_operation = limited_client.operation('ConvertTemperature', 'ConvertTemperatureSoap12', 'ConvertTemp')
+
+    expect {
+      limited_operation.prepare do
+        tag('ConvertTemp') do
+          attribute('a', '1')
+          attribute('b', '2')
+        end
+      end
+    }.to raise_error(WSDL::ResourceLimitError, /attribute count.*exceeds limit/)
+  end
+
+  it 'supports hash-style attributes on tag' do
+    operation.prepare do
+      tag('ConvertTemp', version: '1.0') do
+        tag('Temperature', 30)
+        tag('FromUnit', 'degreeCelsius')
+        tag('ToUnit', 'degreeFahrenheit')
+      end
+    end
+
+    xml = operation.to_xml
+    expect(xml).to include('version="1.0"')
+  end
+
+  it 'exposes __document__ and __security__ internal accessors' do
+    document = nil
+    security = nil
+    operation.prepare do
+      document = __document__
+      security = __security__
+      tag('ConvertTemp') do
+        tag('Temperature', 30)
+        tag('FromUnit', 'degreeCelsius')
+        tag('ToUnit', 'degreeFahrenheit')
+      end
+    end
+
+    expect(document).to be_a(WSDL::Request::Envelope)
+    expect(security).to be_a(WSDL::Security::Config)
+  end
+
+  it 'forwards respond_to? to the security config via method_missing' do
+    responded = nil
+    operation.prepare do
+      ws_security do
+        responded = respond_to?(:timestamp)
+      end
+      tag('ConvertTemp') do
+        tag('Temperature', 30)
+        tag('FromUnit', 'degreeCelsius')
+        tag('ToUnit', 'degreeFahrenheit')
+      end
+    end
+
+    expect(responded).to be true
+  end
 end

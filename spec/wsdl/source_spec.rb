@@ -67,6 +67,12 @@ RSpec.describe WSDL::Source do
 
       expect(source.default_sandbox_paths).to eq([File.dirname(File.expand_path(source.value))])
     end
+
+    it 'returns nil for non-URL, non-file-path sources' do
+      source = described_class.new('ftp://example.com/service.wsdl')
+
+      expect(source.default_sandbox_paths).to be_nil
+    end
   end
 
   describe '#resolve_sandbox_paths' do
@@ -121,6 +127,26 @@ RSpec.describe WSDL::Source do
       expect {
         described_class.validate_wsdl!('ftp://example.com/service.wsdl')
       }.to raise_error(ArgumentError, /Unsupported URL scheme/)
+    end
+
+    it 'rejects non-string and empty inputs' do
+      expect { described_class.validate_wsdl!(nil) }.to raise_error(ArgumentError, /non-empty String/)
+      expect { described_class.validate_wsdl!(123) }.to raise_error(ArgumentError, /non-empty String/)
+      expect { described_class.validate_wsdl!('') }.to raise_error(ArgumentError, /non-empty String/)
+    end
+  end
+
+  describe '#normalized_url' do
+    it 'normalizes valid URLs' do
+      source = described_class.new('HTTP://EXAMPLE.COM/service.wsdl')
+
+      expect(source.normalized_url).to eq('http://example.com/service.wsdl')
+    end
+
+    it 'returns original value for invalid URIs' do
+      source = described_class.new('http://[invalid')
+
+      expect(source.normalized_url).to eq('http://[invalid')
     end
   end
 end

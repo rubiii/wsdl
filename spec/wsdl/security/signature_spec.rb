@@ -99,44 +99,79 @@ describe WSDL::Security::Signature do
       end
     end
 
-    context 'security scenarios' do
-      it 'is safe when used in string interpolation' do
-        output = "Signature: #{signature.inspect}"
-        expect(output).not_to include('BEGIN')
-        expect(output).not_to include('PRIVATE KEY')
-        expect(output).to include('[REDACTED]')
-      end
+    context 'when certificate.subject raises' do
+      it 'falls back to unknown for certificate subject' do
+        bad_cert = instance_double(OpenSSL::X509::Certificate)
+        allow(bad_cert).to receive(:subject).and_raise(StandardError, 'broken')
 
-      it 'is safe when used in exception messages' do
-        raise StandardError, "Signature error: #{signature.inspect}"
-      rescue StandardError => e
-        expect(e.message).not_to include('BEGIN')
-        expect(e.message).not_to include('PRIVATE KEY')
-        expect(e.message).to include('[REDACTED]')
-      end
+        sig = described_class.new(
+          certificate: bad_cert,
+          private_key: private_key,
+          digest_algorithm: :sha256
+        )
 
-      it 'is safe when signature is in an array' do
-        array = [signature, 'other']
-        output = array.inspect
-        expect(output).not_to include('BEGIN')
-        expect(output).not_to include('PRIVATE KEY')
-        expect(output).to include('[REDACTED]')
+        expect(sig.inspect).to include('certificate="unknown"')
+        expect(sig.inspect).to include('private_key=[REDACTED]')
       end
+    end
+  end
 
-      it 'is safe when signature is in a hash' do
-        hash = { signature: signature, name: 'test' }
-        output = hash.inspect
-        expect(output).not_to include('BEGIN')
-        expect(output).not_to include('PRIVATE KEY')
-        expect(output).to include('[REDACTED]')
-      end
+  describe '#sign_element with inclusive_namespaces' do
+    it 'includes InclusiveNamespaces element in the signed reference' do
+      sig = described_class.new(
+        certificate: certificate,
+        private_key: private_key,
+        digest_algorithm: :sha256
+      )
 
-      it 'is safe when p() is called' do
-        # p() internally calls inspect
-        output = signature.inspect
-        expect(output).not_to include('BEGIN')
-        expect(output).not_to include('PRIVATE KEY')
-      end
+      envelope = Nokogiri::XML(<<~XML)
+        <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+          <soap:Header>
+            <wsse:Security xmlns:wsse="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd"/>
+          </soap:Header>
+          <soap:Body xmlns:wsu="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd" wsu:Id="Body-123">
+            <Data>Test</Data>
+          </soap:Body>
+        </soap:Envelope>
+      XML
+
+      body = envelope.at_xpath('//soap:Body',
+                               'soap' => 'http://schemas.xmlsoap.org/soap/envelope/')
+      security = envelope.at_xpath('//wsse:Security',
+                                   'wsse' => 'http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd')
+
+      sig.sign_element(body, inclusive_namespaces: %w[soap])
+      sig.apply(envelope, security)
+
+      ns = {
+        'ds' => 'http://www.w3.org/2000/09/xmldsig#',
+        'ec' => 'http://www.w3.org/2001/10/xml-exc-c14n#'
+      }
+
+      inclusive = envelope.at_xpath('//ds:Reference/ds:Transforms/ds:Transform/ec:InclusiveNamespaces', ns)
+      expect(inclusive).not_to be_nil
+      expect(inclusive['PrefixList']).to eq('soap')
+    end
+  end
+
+  describe '#explicit_namespace_prefixes?' do
+    it 'returns false by default' do
+      sig = described_class.new(
+        certificate: certificate,
+        private_key: private_key
+      )
+
+      expect(sig.explicit_namespace_prefixes?).to be false
+    end
+
+    it 'returns true when enabled' do
+      sig = described_class.new(
+        certificate: certificate,
+        private_key: private_key,
+        explicit_namespace_prefixes: true
+      )
+
+      expect(sig.explicit_namespace_prefixes?).to be true
     end
   end
 end

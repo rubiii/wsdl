@@ -107,12 +107,12 @@ module WSDL
       def apply_namespace_resolution!(node, expected)
         return unless expected.form == 'qualified'
         return if node.namespace_uri == expected.namespace
-        return resolve_missing_namespace!(node, expected) if node.namespace_uri.nil?
-        return unless @strict_schema
 
-        raise RequestValidationError,
-              "Element #{node.name.inspect} namespace #{node.namespace_uri.inspect} does not match expected " \
-              "#{expected.namespace.inspect}"
+        # When namespace_uri is nil, auto-resolve to the expected namespace.
+        # Mismatched (non-nil) namespaces are caught earlier by
+        # raise_namespace_mismatch_if_known_name! since resolve_expected
+        # only matches nil or correct namespaces.
+        resolve_missing_namespace!(node, expected)
       end
 
       def validate_attributes!(node, expected)

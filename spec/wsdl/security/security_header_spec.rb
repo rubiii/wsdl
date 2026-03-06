@@ -174,6 +174,42 @@ describe WSDL::Security::SecurityHeader do
       end
     end
 
+    context 'with envelope missing Header element' do
+      subject(:header) { described_class.new(config) }
+
+      let(:config) do
+        WSDL::Security::Config.new.tap do |c|
+          c.timestamp(expires_in: 300)
+        end
+      end
+
+      let(:envelope_without_header) do
+        <<~XML
+          <?xml version="1.0" encoding="UTF-8"?>
+          <env:Envelope xmlns:env="http://schemas.xmlsoap.org/soap/envelope/">
+            <env:Body>
+              <GetUser xmlns="http://example.com/users">
+                <userId>123</userId>
+              </GetUser>
+            </env:Body>
+          </env:Envelope>
+        XML
+      end
+
+      it 'creates the Header element and adds Security to it' do
+        result = header.apply(envelope_without_header)
+        doc = parse_xml(result)
+
+        expect(security_node(doc)).not_to be_nil
+        # Verify the Header was created before Body
+        envelope = doc.root
+        header_node = envelope.at_xpath('env:Header', 'env' => envelope.namespace.href)
+        body_node = envelope.at_xpath('env:Body', 'env' => envelope.namespace.href)
+        expect(header_node).not_to be_nil
+        expect(body_node).not_to be_nil
+      end
+    end
+
     context 'with timestamp only' do
       subject(:header) { described_class.new(config) }
 

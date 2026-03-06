@@ -295,6 +295,24 @@ RSpec.describe WSDL::Security::Config do
   end
 
   describe '#inspect' do
+    it 'falls back to simple output when inspect internals raise' do
+      broken_config = Class.new(described_class) do
+        private
+
+        def inspect_base_parts
+          raise StandardError, 'broken'
+        end
+      end.new
+
+      broken_config.username_token('admin', 'secret')
+      output = broken_config.inspect
+
+      expect(output).to include('username_token=true')
+      expect(output).to include('timestamp=false')
+      expect(output).to include('signature=false')
+      expect(output).to include('verify_response=false')
+    end
+
     it 'redacts secrets and keeps useful metadata' do
       config
         .username_token('admin', 'super-secret', digest: true)

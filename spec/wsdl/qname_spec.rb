@@ -116,6 +116,25 @@ RSpec.describe WSDL::QName do
     end
   end
 
+  describe '.document_namespace' do
+    it 'returns targetNamespace when present' do
+      root = Nokogiri::XML('<definitions targetNamespace="http://example.com"/>').root
+      expect(described_class.document_namespace(root)).to eq('http://example.com')
+    end
+
+    it 'raises UnresolvedReferenceError when targetNamespace is missing' do
+      root = Nokogiri::XML('<definitions/>').root
+      expect { described_class.document_namespace(root) }
+        .to raise_error(WSDL::UnresolvedReferenceError, /missing required targetNamespace/)
+    end
+
+    it 'raises UnresolvedReferenceError when targetNamespace is empty' do
+      root = Nokogiri::XML('<definitions targetNamespace=""/>').root
+      expect { described_class.document_namespace(root) }
+        .to raise_error(WSDL::UnresolvedReferenceError, /missing required targetNamespace/)
+    end
+  end
+
   describe '#to_s' do
     it 'returns Clark notation with namespace' do
       qname = described_class.new('http://example.com', 'User')

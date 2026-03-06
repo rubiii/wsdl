@@ -108,5 +108,21 @@ describe WSDL::Response::TypeCoercer do
       expect(described_class.coerce('', 'xsd:int')).to eq('')
       expect(described_class.coerce(nil, 'xsd:int')).to be_nil
     end
+
+    it 'returns original value for invalid decimal values' do
+      expect(described_class.coerce('not-a-number', 'xsd:decimal')).to eq('not-a-number')
+    end
+
+    it 'returns original value for invalid float values' do
+      expect(described_class.coerce('not-a-float', 'xsd:float')).to eq('not-a-float')
+    end
+
+    it 'returns original value for unparseable dateTime with timezone' do
+      expect(described_class.coerce('9999-99-99T99:99:99Z', 'xsd:dateTime')).to eq('9999-99-99T99:99:99Z')
+    end
+
+    it 'returns original value for unparseable xsd:time with timezone' do
+      expect(described_class.coerce('99:99:99Z', 'xsd:time')).to eq('99:99:99Z')
+    end
   end
 end

@@ -146,9 +146,12 @@ module WSDL
                        "Use tag('#{name}') for elements, or one of the reserved methods: #{available}"
       end
 
+      # :nocov:
+      # Required by RuboCop but unreachable — BasicObject has no respond_to? to trigger this.
       def respond_to_missing?(_name, _include_private = false)
         false
       end
+      # :nocov:
 
       private
 
@@ -328,9 +331,12 @@ module WSDL
           @config.public_send(name, ...)
         end
 
+        # :nocov:
+        # Required by RuboCop but unreachable — BasicObject has no respond_to? to trigger this.
         def respond_to_missing?(name, include_private = false)
           @config.respond_to?(name, include_private)
         end
+        # :nocov:
       end
     end
     # rubocop:enable Metrics/ClassLength

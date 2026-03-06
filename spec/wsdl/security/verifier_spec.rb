@@ -702,4 +702,30 @@ describe WSDL::Security::Verifier, :verifier_helpers do
       end
     end
   end
+
+  describe 'full verification with expired timestamp' do
+    it 'returns false and includes timestamp errors when signature is valid but timestamp expired' do
+      past_time = Time.now.utc - 600
+      envelope = <<~XML
+        <?xml version="1.0" encoding="UTF-8"?>
+        <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+          <soap:Header/>
+          <soap:Body xmlns:wsu="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd" wsu:Id="Body-expired">
+            <Data>Test</Data>
+          </soap:Body>
+        </soap:Envelope>
+      XML
+
+      config = WSDL::Security::Config.new
+      config.timestamp(created_at: past_time, expires_at: past_time + 60)
+      config.signature(certificate: certificate, private_key: private_key)
+
+      header = WSDL::Security::SecurityHeader.new(config)
+      signed_xml = header.apply(envelope)
+
+      verifier = described_class.new(signed_xml, validate_timestamp: true, clock_skew: 0)
+      expect(verifier.valid?).to be false
+      expect(verifier.errors).to include(match(/expired/i))
+    end
+  end
 end

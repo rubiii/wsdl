@@ -746,4 +746,11 @@ describe WSDL::Operation do
       </definitions>
     XML
   end
+
+  describe '#to_xml without prepare' do
+    it 'raises RequestDefinitionError when contract has elements but prepare was not called' do
+      expect { operation.to_xml }
+        .to raise_error(WSDL::RequestDefinitionError, /requires a request definition/)
+    end
+  end
 end

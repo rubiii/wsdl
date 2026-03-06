@@ -394,4 +394,100 @@ describe WSDL::Security::Verifier::CertificateResolver, :verifier_helpers do
       expect(resolver.certificate.subject.to_s).not_to eq(certificate.subject.to_s)
     end
   end
+
+  describe 'invalid token reference ID format' do
+    let(:xml) do
+      response = signed_soap_response
+      doc = Nokogiri::XML(response)
+      ref = doc.at_xpath('//wsse:SecurityTokenReference/wsse:Reference', ns)
+      ref['URI'] = '#invalid id with spaces'
+      doc.to_xml
+    end
+
+    it 'returns false with error about invalid ID format' do
+      expect(resolver.resolve).to be false
+      expect(resolver.errors.join).to match(/[Ii]nvalid token reference ID format/)
+    end
+  end
+
+  describe 'trust store with string certificates' do
+    let(:xml) { build_signed_response(key_reference: :issuer_serial) }
+    let(:trust_store) { [certificate.to_pem] }
+
+    it 'parses PEM strings from trust store' do
+      expect(resolver.resolve).to be true
+      expect(resolver.certificate.subject.to_s).to eq(certificate.subject.to_s)
+    end
+  end
+
+  describe 'trust store with invalid string entries' do
+    let(:xml) { build_signed_response(key_reference: :issuer_serial) }
+    let(:trust_store) { ['not-a-certificate', certificate] }
+
+    it 'skips invalid entries and resolves from valid ones' do
+      expect(resolver.resolve).to be true
+    end
+  end
+
+  describe 'IssuerSerial with invalid X509IssuerName' do
+    let(:xml) do
+      response = build_signed_response(key_reference: :issuer_serial)
+      doc = Nokogiri::XML(response)
+      issuer_name = doc.at_xpath('//ds:X509IssuerName', ns)
+      issuer_name.content = '/INVALID=\x00bad'
+      doc.to_xml
+    end
+    let(:trust_store) { [certificate] }
+
+    it 'returns false with error about invalid issuer name' do
+      expect(resolver.resolve).to be false
+      expect(resolver.errors.join).to match(/[Ii]nvalid X509IssuerName/)
+    end
+  end
+
+  describe 'IssuerSerial with invalid serial number' do
+    let(:xml) do
+      response = build_signed_response(key_reference: :issuer_serial)
+      doc = Nokogiri::XML(response)
+      serial = doc.at_xpath('//ds:X509SerialNumber', ns)
+      serial.content = 'not-a-number'
+      doc.to_xml
+    end
+    let(:trust_store) { [certificate] }
+
+    it 'returns false with error about invalid serial' do
+      expect(resolver.resolve).to be false
+      expect(resolver.errors.join).to match(/[Ii]nvalid X509SerialNumber/)
+    end
+  end
+
+  describe 'IssuerSerial with negative serial number' do
+    let(:xml) do
+      response = build_signed_response(key_reference: :issuer_serial)
+      doc = Nokogiri::XML(response)
+      serial = doc.at_xpath('//ds:X509SerialNumber', ns)
+      serial.content = '-1'
+      doc.to_xml
+    end
+    let(:trust_store) { [certificate] }
+
+    it 'returns false with error about invalid serial' do
+      expect(resolver.resolve).to be false
+      expect(resolver.errors.join).to match(/[Ii]nvalid X509SerialNumber/)
+    end
+  end
+
+  describe 'multiple certificates matching in trust store' do
+    let(:xml) { build_signed_response(key_reference: :subject_key_identifier) }
+
+    let(:trust_store) do
+      # Create two certificates with the same SKI (by using the same key pair)
+      [certificate, certificate]
+    end
+
+    it 'returns false when multiple certificates match' do
+      expect(resolver.resolve).to be false
+      expect(resolver.errors.join).to match(/[Mm]ultiple certificates matched/)
+    end
+  end
 end

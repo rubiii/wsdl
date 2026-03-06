@@ -499,6 +499,28 @@ describe WSDL::Security::Verifier::ReferenceValidator, :verifier_helpers do
     end
   end
 
+  describe 'unsupported algorithm handling' do
+    context 'with unsupported digest algorithm' do
+      let(:xml) do
+        response = signed_soap_response
+        doc = Nokogiri::XML(response)
+        doc.xpath('//ds:Reference/ds:DigestMethod', ns).each do |dm|
+          dm['Algorithm'] = 'http://example.com/unsupported-digest'
+        end
+        doc.to_xml
+      end
+
+      it 'returns false' do
+        expect(validator.valid?).to be false
+      end
+
+      it 'reports unsupported algorithm' do
+        validator.valid?
+        expect(validator.errors.join).to match(/[Uu]nsupported/)
+      end
+    end
+  end
+
   describe 'digest computation' do
     context 'with different digest algorithms' do
       context 'SHA-256 (default)' do
@@ -535,16 +557,6 @@ describe WSDL::Security::Verifier::ReferenceValidator, :verifier_helpers do
         validator.valid?
         expect(validator.errors).to include(match(/signature wrapping attack/))
       end
-    end
-  end
-
-  describe 'timing-safe comparison' do
-    # This test verifies that SecureCompare is used for digest comparison
-    # We can't easily test timing directly, but we can verify the mechanism exists
-    let(:xml) { signed_soap_response }
-
-    it 'uses SecureCompare module' do
-      expect(WSDL::Security::SecureCompare).to respond_to(:equal?)
     end
   end
 

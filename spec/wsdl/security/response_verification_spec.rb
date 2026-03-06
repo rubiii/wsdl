@@ -111,6 +111,26 @@ RSpec.describe WSDL::Security::ResponseVerification do
         end
       end
 
+      context 'with a duck-typed config without response_verification_options' do
+        it 'builds Options from individual config accessors' do
+          duck_config = Struct.new(:verification_trust_store, :check_certificate_validity,
+                                   :validate_timestamp, :clock_skew)
+            .new(
+              verification_trust_store: :system,
+              check_certificate_validity: false,
+              validate_timestamp: false,
+              clock_skew: 120
+            )
+
+          options = described_class.from_config(duck_config)
+
+          expect(options.certificate.trust_store).to eq(:system)
+          expect(options.certificate.verify_not_expired).to be false
+          expect(options.timestamp.validate).to be false
+          expect(options.timestamp.tolerance_seconds).to eq(120)
+        end
+      end
+
       context 'with configured verify_response' do
         subject(:options) { described_class.from_config(config) }
 

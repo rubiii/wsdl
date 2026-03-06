@@ -614,5 +614,23 @@ RSpec.describe WSDL::Security::Verifier::TimestampValidator do
         expect(validator.valid?).to be true
       end
     end
+
+    context 'with Created matching timezone regex but failing iso8601 parse' do
+      let(:xml) do
+        build_timestamp_xml(
+          created: '2025-13-01T00:00:00Z',
+          expires: '2025-01-15T12:05:00Z'
+        )
+      end
+
+      it 'returns false for unparseable date' do
+        expect(validator.valid?).to be false
+      end
+
+      it 'reports invalid time value' do
+        validator.valid?
+        expect(validator.errors.join).to match(/Created.*valid/)
+      end
+    end
   end
 end

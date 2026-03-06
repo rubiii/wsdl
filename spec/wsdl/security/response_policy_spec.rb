@@ -47,6 +47,32 @@ RSpec.describe WSDL::Security::ResponsePolicy do
     end
   end
 
+  describe '#verify_if_present?' do
+    it 'returns true for if_present mode' do
+      policy = described_class.new(
+        mode: described_class::MODE_IF_PRESENT,
+        options: WSDL::Security::ResponseVerification::Options.default
+      )
+
+      expect(policy.verify_if_present?).to be(true)
+      expect(policy.disabled?).to be(false)
+      expect(policy.required?).to be(false)
+    end
+  end
+
+  describe '#required?' do
+    it 'returns true for required mode' do
+      policy = described_class.new(
+        mode: described_class::MODE_REQUIRED,
+        options: WSDL::Security::ResponseVerification::Options.default
+      )
+
+      expect(policy.required?).to be(true)
+      expect(policy.disabled?).to be(false)
+      expect(policy.verify_if_present?).to be(false)
+    end
+  end
+
   describe '#enforce!' do
     let(:security_context) { instance_double(WSDL::Response::SecurityContext) }
     let(:response) { instance_double(WSDL::Response, security: security_context) }

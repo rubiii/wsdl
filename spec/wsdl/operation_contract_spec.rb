@@ -58,5 +58,43 @@ describe WSDL::Operation do
       # Header content SHOULD be wrapped in explicit `header do` block
       expect(dsl).to include('header do')
     end
+
+    it 'builds template in full mode including optional elements' do
+      template = operation.contract.request.body.template(mode: :full)
+
+      hash = template.to_h
+      expect(hash).to have_key(:ConvertTemp)
+
+      dsl = template.to_dsl
+      expect(dsl).to include('operation.prepare do')
+    end
+
+    it 'raises ArgumentError for invalid template mode' do
+      expect {
+        operation.contract.request.body.template(mode: :unknown)
+      }.to raise_error(ArgumentError, /Invalid template mode/)
+    end
+
+    it 'reports empty? for message contracts without elements' do
+      empty_part = operation.contract.request.header
+      contract = WSDL::Contract::MessageContract.new(header: empty_part, body: empty_part)
+
+      expect(contract.empty?).to be true
+    end
+
+    it 'includes attributes in tree view' do
+      tree = operation.contract.request.body.tree
+
+      # Walk the tree looking for any element that has attributes
+      # If none have attributes, at least verify the structure works
+      visit = lambda { |nodes|
+        nodes.each do |node|
+          expect(node).to have_key(:attributes)
+          expect(node[:attributes]).to be_an(Array)
+          visit.call(node[:children]) if node[:children]
+        end
+      }
+      visit.call(tree)
+    end
   end
 end

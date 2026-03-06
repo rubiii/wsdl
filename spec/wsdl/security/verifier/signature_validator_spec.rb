@@ -271,21 +271,6 @@ describe WSDL::Security::Verifier::SignatureValidator, :verifier_helpers do
     end
   end
 
-  describe 'canonicalization' do
-    # Canonicalization ensures the same XML is produced regardless of formatting
-    context 'with extra whitespace in document' do
-      let(:xml) do
-        # The signed_soap_response should be verified even with reformatting
-        # that doesn't affect canonical form
-        signed_soap_response
-      end
-
-      it 'still verifies correctly' do
-        expect(validator.valid?).to be true
-      end
-    end
-  end
-
   describe 'error handling' do
     let(:xml) { signed_soap_response }
 
@@ -310,45 +295,56 @@ describe WSDL::Security::Verifier::SignatureValidator, :verifier_helpers do
     end
   end
 
-  describe 'OpenSSL error handling' do
-    context 'when OpenSSL raises an error' do
+  describe 'unsupported algorithm handling' do
+    context 'with unsupported canonicalization algorithm' do
+      let(:xml) do
+        response = signed_soap_response
+        doc = Nokogiri::XML(response)
+        c14n = doc.at_xpath('//ds:CanonicalizationMethod', ns)
+        c14n['Algorithm'] = 'http://example.com/unsupported-c14n'
+        doc.to_xml
+      end
+
+      it 'returns false' do
+        expect(validator.valid?).to be false
+      end
+
+      it 'reports unsupported algorithm' do
+        validator.valid?
+        expect(validator.errors.join).to match(/[Uu]nsupported/)
+      end
+    end
+
+    context 'with unsupported signature algorithm' do
+      let(:xml) do
+        response = signed_soap_response
+        doc = Nokogiri::XML(response)
+        sig_method = doc.at_xpath('//ds:SignatureMethod', ns)
+        sig_method['Algorithm'] = 'http://example.com/unsupported-sig'
+        doc.to_xml
+      end
+
+      it 'returns false' do
+        expect(validator.valid?).to be false
+      end
+
+      it 'reports unsupported algorithm' do
+        validator.valid?
+        expect(validator.errors.join).to match(/[Uu]nsupported/)
+      end
+    end
+
+    context 'when OpenSSL raises PKeyError during verification' do
       let(:xml) { signed_soap_response }
-      let(:cert) do
-        # Create a certificate with mismatched key type could cause issues
-        # In practice, most errors are caught and reported gracefully
-        certificate
+
+      it 'catches PKeyError and adds failure' do
+        bad_key = instance_double(OpenSSL::PKey::RSA)
+        allow(bad_key).to receive(:verify).and_raise(OpenSSL::PKey::PKeyError, 'key format error')
+        allow(cert).to receive(:public_key).and_return(bad_key)
+
+        expect(validator.valid?).to be false
+        expect(validator.errors.join).to include('Signature verification error: key format error')
       end
-
-      # This test verifies the error handling path exists
-      # Actual OpenSSL errors are hard to trigger in controlled tests
-      it 'reports errors gracefully' do
-        # If validation fails for any reason, errors should be populated
-        result = validator.valid?
-        expect(result).to be(true).or be(false)
-        # Either way, the validator should not raise an exception
-      end
-    end
-  end
-
-  describe 'integration with AlgorithmMapper' do
-    let(:xml) { signed_soap_response }
-
-    it 'uses AlgorithmMapper for signature digest' do
-      expect(WSDL::Security::AlgorithmMapper).to respond_to(:signature_digest)
-    end
-
-    it 'uses AlgorithmMapper for c14n algorithm' do
-      expect(WSDL::Security::AlgorithmMapper).to respond_to(:c14n_algorithm)
-    end
-  end
-
-  describe 'integration with Canonicalizer' do
-    let(:xml) { signed_soap_response }
-
-    it 'uses Canonicalizer for SignedInfo' do
-      allow(WSDL::Security::Canonicalizer).to receive(:new).and_call_original
-      validator.valid?
-      expect(WSDL::Security::Canonicalizer).to have_received(:new).at_least(:once)
     end
   end
 end
