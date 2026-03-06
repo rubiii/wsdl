@@ -2,7 +2,7 @@
 
 module WSDL
   module Request
-    # Schema-aware validator for request AST documents.
+    # Schema-aware validator for request envelope documents.
     class Validator
       def initialize(contract:, strict_schema:, schema_complete:)
         @contract = contract

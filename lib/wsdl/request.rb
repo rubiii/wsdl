@@ -1,10 +1,10 @@
 # frozen_string_literal: true
 
 module WSDL
-  # Request AST, DSL, validation and serialization pipeline.
+  # Request envelope, DSL, validation and serialization pipeline.
   module Request
     require 'wsdl/request/names'
-    require 'wsdl/request/ast'
+    require 'wsdl/request/envelope'
     require 'wsdl/request/dsl_context'
     require 'wsdl/request/validator'
     require 'wsdl/request/security_conflict_detector'

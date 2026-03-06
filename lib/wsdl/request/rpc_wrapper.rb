@@ -22,8 +22,8 @@ module WSDL
       # Returns the document unchanged if wrapping is not needed
       # (empty body or already wrapped).
       #
-      # @param document [Request::AST]
-      # @return [Request::AST]
+      # @param document [Request::Envelope]
+      # @return [Request::Envelope]
       def wrap(document)
         return document if document.body.empty?
         return document if already_wrapped?(document.body)
@@ -38,7 +38,7 @@ module WSDL
       end
 
       def build_wrapped_document(document)
-        wrapped = AST.new
+        wrapped = Envelope.new
         wrapped.namespace_decls.concat(document.namespace_decls)
         wrapped.header.concat(document.header)
         wrapped.body << build_wrapper(document.body)

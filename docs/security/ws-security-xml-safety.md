@@ -28,7 +28,7 @@ Request generation enforces:
 - Namespace prefix declaration checks.
 - Reserved prefix protection for SOAP and WS-Security prefixes.
 - Duplicate attribute rejection.
-- Request AST [resource limits](../core/configuration.md#limits) (`max_request_elements`, `max_request_depth`, `max_request_attributes`).
+- Request envelope [resource limits](../core/configuration.md#limits) (`max_request_elements`, `max_request_depth`, `max_request_attributes`).
 
 ## Text Escaping
 

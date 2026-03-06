@@ -430,7 +430,7 @@ module WSDL
   # Raised when request definition is missing or structurally incomplete.
   #
   # This error is raised when calling an operation that expects input but no
-  # request AST has been defined via {WSDL::Operation#prepare}.
+  # request envelope has been defined via {WSDL::Operation#prepare}.
   class RequestDefinitionError < Error
   end
 

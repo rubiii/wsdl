@@ -43,13 +43,13 @@ module WSDL
     # Default maximum depth of type inheritance/nesting.
     DEFAULT_MAX_TYPE_NESTING_DEPTH = 50
 
-    # Default maximum total elements in request AST construction.
+    # Default maximum total elements in request envelope construction.
     DEFAULT_MAX_REQUEST_ELEMENTS = 10_000
 
-    # Default maximum request AST nesting depth.
+    # Default maximum request envelope nesting depth.
     DEFAULT_MAX_REQUEST_DEPTH = 100
 
-    # Default maximum total attributes in request AST construction.
+    # Default maximum total attributes in request envelope construction.
     DEFAULT_MAX_REQUEST_ATTRIBUTES = 1_000
 
     # Default maximum iterations for resolving schema imports and includes.
@@ -72,11 +72,11 @@ module WSDL
     #   Set to nil to disable. Default: 100.
     # @param max_type_nesting_depth [Integer, nil] maximum depth of type inheritance/nesting.
     #   Set to nil to disable. Default: 50.
-    # @param max_request_elements [Integer, nil] maximum total elements allowed in request AST.
+    # @param max_request_elements [Integer, nil] maximum total elements allowed in request envelope.
     #   Set to nil to disable. Default: 10,000.
-    # @param max_request_depth [Integer, nil] maximum request AST nesting depth.
+    # @param max_request_depth [Integer, nil] maximum request envelope nesting depth.
     #   Set to nil to disable. Default: 100.
-    # @param max_request_attributes [Integer, nil] maximum total attributes in request AST.
+    # @param max_request_attributes [Integer, nil] maximum total attributes in request envelope.
     #   Set to nil to disable. Default: 1,000.
     # @param max_schema_import_iterations [Integer, nil] maximum iterations for resolving
     #   schema imports and includes. Set to nil to disable. Default: 100.
@@ -131,13 +131,13 @@ module WSDL
     # @return [Integer, nil] maximum depth of type inheritance/nesting
     attr_reader :max_type_nesting_depth
 
-    # @return [Integer, nil] maximum total elements in request AST
+    # @return [Integer, nil] maximum total elements in request envelope
     attr_reader :max_request_elements
 
-    # @return [Integer, nil] maximum request AST nesting depth
+    # @return [Integer, nil] maximum request envelope nesting depth
     attr_reader :max_request_depth
 
-    # @return [Integer, nil] maximum total attributes in request AST
+    # @return [Integer, nil] maximum total attributes in request envelope
     attr_reader :max_request_attributes
 
     # @return [Integer, nil] maximum iterations for resolving schema imports and includes

@@ -4,7 +4,7 @@ require 'nokogiri'
 
 module WSDL
   module Request
-    # Serializes request AST into SOAP envelope XML.
+    # Serializes a request envelope into SOAP envelope XML.
     class Serializer
       def initialize(document:, soap_version:, format_xml:)
         @document = document

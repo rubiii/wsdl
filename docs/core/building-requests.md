@@ -148,7 +148,7 @@ Validation runs immediately when the `prepare` block finishes. See [Strict Schem
 
 ## Resource Limits
 
-Request AST construction enforces [resource limits](configuration.md#limits):
+Request envelope construction enforces [resource limits](configuration.md#limits):
 
 - `max_request_elements`
 - `max_request_depth`

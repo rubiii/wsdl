@@ -162,7 +162,7 @@ describe 'Integration with Oracle' do
       part = { element: 'sawsoap:getJobInfoResult', namespaces: { 'xmlns:sawsoap' => namespace } }
       elements = builder.build([part])
 
-      document = WSDL::Request::AST.new
+      document = WSDL::Request::Envelope.new
       context = WSDL::Request::DSLContext.new(
         document:,
         security: WSDL::Security::Config.new,

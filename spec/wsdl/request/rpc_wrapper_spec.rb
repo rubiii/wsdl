@@ -11,7 +11,7 @@ RSpec.describe WSDL::Request::RPCWrapper do
   end
 
   def build_document(body_nodes: [], header_nodes: [], namespace_decls: [])
-    doc = WSDL::Request::AST.new
+    doc = WSDL::Request::Envelope.new
     doc.body.concat(body_nodes)
     doc.header.concat(header_nodes)
     doc.namespace_decls.concat(namespace_decls)

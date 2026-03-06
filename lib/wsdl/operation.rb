@@ -53,7 +53,7 @@ module WSDL
       @contract ||= Contract::OperationContract.new(@operation_info)
     end
 
-    # Prepares request AST from DSL and validates it immediately.
+    # Prepares request envelope from DSL and validates it immediately.
     #
     # @yield DSL prepare block
     # @return [self]
@@ -66,7 +66,7 @@ module WSDL
               'Use operation.reset! to clear the previous request before preparing a new one'
       end
 
-      document = Request::AST.new
+      document = Request::Envelope.new
       security = Security::Config.new
       context = Request::DSLContext.new(document:, security:, limits: @config.limits)
       context.instance_exec(&block)
@@ -139,13 +139,13 @@ module WSDL
       @http_header_overrides = headers
     end
 
-    # Serializes the prepared request AST to SOAP envelope XML.
+    # Serializes the prepared request envelope to SOAP envelope XML.
     #
     # @return [String]
     def to_xml
       ensure_request_definition!
 
-      document = prepare_serializable_document(@request_document || Request::AST.new)
+      document = prepare_serializable_document(@request_document || Request::Envelope.new)
       serializer = Request::Serializer.new(document:, soap_version:, format_xml:)
       return serializer.serialize unless @security.configured?
 

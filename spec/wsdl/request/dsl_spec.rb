@@ -98,7 +98,7 @@ describe 'Request DSL' do
     }.to raise_error(WSDL::RequestDslError, /reserved and cannot be overridden/)
   end
 
-  it 'enforces request resource limits during AST construction' do
+  it 'enforces request resource limits during envelope construction' do
     limited_client = WSDL::Client.new(
       fixture('wsdl/temperature'),
       strict_schema: false,

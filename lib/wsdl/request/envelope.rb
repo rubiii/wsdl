@@ -2,8 +2,8 @@
 
 module WSDL
   module Request
-    # Root node of the request AST.
-    class AST
+    # Root node of the request envelope.
+    class Envelope
       def initialize
         @header = []
         @body = []
@@ -40,7 +40,7 @@ module WSDL
       end
     end
 
-    # Element node in request AST.
+    # Element node in request envelope.
     class Node
       # @param name [String]
       # @param prefix [String, nil]
