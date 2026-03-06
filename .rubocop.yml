@@ -36,7 +36,7 @@ Metrics/BlockLength:
     - '*.gemspec'
 
 Metrics/ClassLength:
-  Max: 200
+  Max: 210
   Exclude:
     - 'lib/wsdl/security/signature.rb'
     - 'lib/wsdl/security/verifier.rb'

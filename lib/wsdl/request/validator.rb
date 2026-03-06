@@ -165,6 +165,8 @@ module WSDL
       end
 
       def validate_required_attributes!(expected_attributes, present, node)
+        return unless @strict_schema
+
         expected_attributes.each do |expected_attribute|
           next if expected_attribute.optional?
           next if present[expected_attribute.name].positive?
