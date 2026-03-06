@@ -2,6 +2,7 @@
 
 require 'ipaddr'
 require 'resolv'
+require 'timeout'
 
 module WSDL
   # HTTP adapter using the httpclient gem.
@@ -106,6 +107,10 @@ module WSDL
     # Default maximum number of redirects to follow.
     # Prevents redirect loops and excessive redirect chains.
     DEFAULT_REDIRECT_LIMIT = 5
+
+    # Timeout in seconds for DNS resolution during redirect validation.
+    # Prevents indefinite hangs when resolving redirect target hostnames.
+    DNS_RESOLUTION_TIMEOUT = 5
 
     # Private/reserved IPv4 and IPv6 ranges that must not be redirect targets.
     # @api private
@@ -265,11 +270,31 @@ module WSDL
       end
 
       # Host is a DNS name — resolve and check all addresses
-      resolved = Resolv.getaddresses(host)
+      validate_resolved_addresses!(host, uri)
+    end
+
+    # Resolves a hostname via DNS and validates all returned addresses.
+    #
+    # Uses a timeout to prevent hangs on slow/broken DNS resolvers.
+    # If resolution fails for any reason, the redirect is blocked
+    # since the target's safety cannot be verified.
+    #
+    # @param host [String] the hostname to resolve
+    # @param uri [URI] the redirect target URI (for error context)
+    # @raise [UnsafeRedirectError] if resolution fails or any address is private
+    #
+    def validate_resolved_addresses!(host, uri)
+      resolved = Timeout.timeout(DNS_RESOLUTION_TIMEOUT) { Resolv.getaddresses(host) }
       resolved.each do |addr|
         resolved_ip = parse_ip(addr)
         raise_if_private!(resolved_ip, uri) if resolved_ip
       end
+    rescue Resolv::ResolvError, SocketError, Timeout::Error
+      raise UnsafeRedirectError.new(
+        "Redirect blocked: DNS resolution failed for #{uri.host}. " \
+        'Cannot verify redirect target is safe.',
+        target_url: uri.to_s
+      )
     end
 
     # Parses a string as an IP address, returning nil if it's not a valid IP.

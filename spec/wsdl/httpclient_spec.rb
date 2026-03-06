@@ -143,6 +143,40 @@ describe WSDL::HTTPClient do
 
           expect(result.to_s).to eq('https://safe.example.com/service')
         end
+
+        it 'blocks redirect when DNS resolution times out' do
+          response = redirect_response('https://slow-dns.example.com/service')
+          allow(Resolv).to receive(:getaddresses).with('slow-dns.example.com') { raise Timeout::Error }
+
+          expect { http.send(:safe_redirect_uri_callback, origin_uri, response) }
+            .to raise_error(WSDL::UnsafeRedirectError, /DNS resolution failed/)
+        end
+
+        it 'blocks redirect when DNS resolution fails with ResolvError' do
+          response = redirect_response('https://nonexistent.example.com/service')
+          allow(Resolv).to receive(:getaddresses).with('nonexistent.example.com') { raise Resolv::ResolvError }
+
+          expect { http.send(:safe_redirect_uri_callback, origin_uri, response) }
+            .to raise_error(WSDL::UnsafeRedirectError, /DNS resolution failed/)
+        end
+
+        it 'blocks redirect when DNS resolution fails with SocketError' do
+          response = redirect_response('https://broken-dns.example.com/service')
+          allow(Resolv).to receive(:getaddresses).with('broken-dns.example.com') { raise SocketError }
+
+          expect { http.send(:safe_redirect_uri_callback, origin_uri, response) }
+            .to raise_error(WSDL::UnsafeRedirectError, /DNS resolution failed/)
+        end
+
+        it 'includes the target URL in DNS failure errors' do
+          response = redirect_response('https://timeout.example.com/service')
+          allow(Resolv).to receive(:getaddresses).with('timeout.example.com') { raise Timeout::Error }
+
+          expect { http.send(:safe_redirect_uri_callback, origin_uri, response) }
+            .to raise_error(WSDL::UnsafeRedirectError) { |error|
+              expect(error.target_url).to eq('https://timeout.example.com/service')
+            }
+        end
       end
 
       describe 'error attributes' do
@@ -287,6 +321,10 @@ describe WSDL::HTTPClient do
 
     it 'defines DEFAULT_REDIRECT_LIMIT' do
       expect(described_class::DEFAULT_REDIRECT_LIMIT).to eq(5)
+    end
+
+    it 'defines DNS_RESOLUTION_TIMEOUT' do
+      expect(described_class::DNS_RESOLUTION_TIMEOUT).to eq(5)
     end
   end
 end

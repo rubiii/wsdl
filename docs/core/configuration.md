@@ -275,6 +275,8 @@ The built-in `WSDL::HTTPClient` uses the `httpclient` gem with secure defaults:
 - Connection timeout: 30s, send: 60s, receive: 120s
 - Redirect limit: 5
 - SSL verification: enabled (VERIFY_PEER)
+- SSRF protection: redirects to private/reserved IPs are blocked
+- DNS resolution timeout: 5s (blocks redirect if resolution fails)
 
 Configure via `client.http`:
 
