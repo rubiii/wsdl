@@ -36,6 +36,9 @@ jobs:
 
   benchmark:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
     steps:
       - name: Checkout code
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
@@ -47,5 +50,16 @@ jobs:
           bundler-cache: true
 
       - name: Run benchmarks
-        continue-on-error: true
-        run: bundle exec rake benchmark
+        run: BENCHMARK_OUTPUT=benchmark_results.json bundle exec rake benchmark
+
+      - name: Track benchmark results
+        uses: benchmark-action/github-action-benchmark@d48d326b4ca9ba73ca0cd0d59f108f9e02a381c7 # v1.20.4
+        with:
+          tool: customBiggerIsBetter
+          output-file-path: benchmark_results.json
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          auto-push: ${{ github.ref == 'refs/heads/main' }}
+          alert-threshold: '150%'
+          comment-on-alert: true
+          fail-on-alert: false
+          benchmark-data-dir-path: dev/benchmark
