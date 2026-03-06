@@ -30,7 +30,12 @@ module WSDL
     # @return [Class] the HTTP adapter class (defaults to {HTTPClient})
     attr_reader :http_adapter
 
-    # @return [Cache, nil] the cache instance, or nil if caching is disabled
+    # The parser cache instance, or +nil+ if caching is disabled.
+    #
+    # This is a global setting. Set it once at boot time, before creating
+    # any clients or spawning threads.
+    #
+    # @return [Cache, nil]
     attr_accessor :cache
 
     # @return [Limits] the default limits instance
@@ -48,23 +53,47 @@ module WSDL
     # @return [Logger, Log::NullLogger]
     attr_reader :logger
 
-    # Sets the logger for the WSDL library. Pass nil to restore the default.
+    # Sets the logger for the WSDL library. Pass +nil+ to restore the default.
+    #
+    # This is a global setting. Set it once at boot time, before creating
+    # any clients or spawning threads.
     #
     # Assign any +Logger+-compatible object (must respond to
     # +debug+, +info+, +warn+, +error+, +fatal+).
     #
     # @example Use Rails logger
     #   WSDL.logger = Rails.logger
+    #
+    # @param value [Logger, nil] a logger instance, or +nil+ to reset
     def logger=(value)
       @logger = value || Log::NullLogger.new
     end
 
-    # Sets the HTTP adapter class. Pass nil to restore the default.
+    # Sets the HTTP adapter class. Pass +nil+ to restore the default.
+    #
+    # This is a global setting. Set it once at boot time, before creating
+    # any clients or spawning threads. Changing it after clients exist may
+    # cause inconsistent behavior.
+    #
+    # @example
+    #   WSDL.http_adapter = MyHTTPAdapter
+    #
+    # @param adapter [Class, nil] an HTTP adapter class, or +nil+ to reset
+    # @see file:docs/core/configuration.md#http-adapter HTTP Adapter docs
     def http_adapter=(adapter)
       @http_adapter = adapter || HTTPClient
     end
 
-    # Sets the default resource limits. Pass nil to restore defaults.
+    # Sets the default resource limits. Pass +nil+ to restore defaults.
+    #
+    # This is a global setting. Set it once at boot time, before creating
+    # any clients or spawning threads.
+    #
+    # @example
+    #   WSDL.limits = WSDL::Limits.new(max_schemas: 200)
+    #
+    # @param value [Limits, nil] a limits instance, or +nil+ to reset
+    # @see Limits
     def limits=(value)
       @limits = value || Limits.new
     end

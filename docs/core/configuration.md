@@ -62,7 +62,10 @@ WSDL.logger = Rails.logger                     # default: silent (NullLogger)
 
 Pass `nil` to any setter to restore its default value.
 
-Set these at boot time, before creating clients.
+> **Thread safety:** These are global settings shared across all clients.
+> Set them once at boot time (e.g. in a Rails initializer), before creating
+> any clients or spawning threads. Changing them after clients exist may
+> cause inconsistent behavior.
 
 ## Strict Schema Mode
 
