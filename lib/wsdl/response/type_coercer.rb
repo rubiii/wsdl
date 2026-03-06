@@ -148,6 +148,8 @@ module WSDL
         end
 
         def convert_hex_binary(value)
+          return value unless value.length.even? && value.match?(/\A[0-9a-fA-F]+\z/)
+
           [value].pack('H*')
         end
 

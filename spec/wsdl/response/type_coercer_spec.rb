@@ -96,6 +96,14 @@ describe WSDL::Response::TypeCoercer do
       expect(described_class.coerce('48656C6C6F', 'xsd:hexBinary')).to eq('Hello')
     end
 
+    it 'returns odd-length hex strings unchanged' do
+      expect(described_class.coerce('ABC', 'xsd:hexBinary')).to eq('ABC')
+    end
+
+    it 'returns non-hex strings unchanged' do
+      expect(described_class.coerce('GHIJKL', 'xsd:hexBinary')).to eq('GHIJKL')
+    end
+
     it 'returns empty values unchanged' do
       expect(described_class.coerce('', 'xsd:int')).to eq('')
       expect(described_class.coerce(nil, 'xsd:int')).to be_nil
