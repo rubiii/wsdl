@@ -151,16 +151,16 @@ module WSDL
       attr_accessor :any_content
       alias any_content? any_content
 
-      # @!attribute [rw] attributes
-      #   The XML attributes defined on this element.
-      #   @return [Array<Attribute>] the attribute definitions
+      # The XML attributes defined on this element.
+      #
+      # @return [Array<Attribute>] the attribute definitions
       attr_reader :attributes
 
-      # @!attribute [w] attributes
-      #   Sets attribute definitions for this element.
-      #   @param value [Array<Attribute>, nil] attribute definitions
-      #   @raise [TypeError] if value is not an array of {Attribute}
-      #   @return [void]
+      # Sets attribute definitions for this element.
+      #
+      # @param value [Array<Attribute>, nil] attribute definitions
+      # @raise [TypeError] if value is not an array of {Attribute}
+      # @return [void]
       def attributes=(value)
         normalized = value.nil? ? EMPTY_ATTRIBUTES : value
 

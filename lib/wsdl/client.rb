@@ -55,7 +55,7 @@ module WSDL
     #   Use `nil` (default) to use {WSDL.cache}, or `false` to disable caching.
     # @param config [Config, nil] a reusable {Config} instance grouping behavioral
     #   options. Any keyword arguments for Config options override the config object.
-    #   Additional keyword arguments are forwarded to {Config.new}.
+    #   Additional keyword arguments are forwarded to {Config#initialize}.
     #   See {Config#initialize} for the full list of supported options.
     #
     def initialize(wsdl, http: nil, cache: nil, config: nil, **)
@@ -192,14 +192,6 @@ module WSDL
     # @param port_name [String, Symbol, nil] explicit port name, or nil to auto-resolve
     # @return [Array(String, String)] the resolved service and port names
     # @raise [ArgumentError] if auto-resolution fails due to multiple services or ports
-    #
-    # Resolves the single service and port from the WSDL, or returns explicit names.
-    #
-    # @param service_name [String, Symbol, nil] explicit service name, or nil to auto-resolve
-    # @param port_name [String, Symbol, nil] explicit port name, or nil to auto-resolve
-    # @return [Array(String, String)] the resolved [service_name, port_name]
-    # @raise [ArgumentError] if auto-resolution fails due to multiple services or ports
-    #
     def resolve_service_and_port(service_name, port_name)
       return [service_name, port_name] if service_name && port_name
 
