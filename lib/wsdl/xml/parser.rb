@@ -225,35 +225,9 @@ module WSDL
         #   threats = Parser.detect_threats(xml)
         #   raise SecurityError, "Rejected: #{threats}" if threats.include?(:external_reference)
         #
-        # rubocop:disable Metrics/CyclomaticComplexity
         def detect_threats(xml_string)
-          threats = []
-
-          # DOCTYPE declarations often indicate XXE attempts
-          threats << :doctype if xml_string.match?(DOCTYPE_PATTERN)
-
-          # ENTITY declarations are used to define XXE payloads
-          threats << :entity_declaration if xml_string.match?(/<!ENTITY/i)
-
-          # SYSTEM keyword indicates external resource access
-          threats << :external_reference if xml_string.match?(/\bSYSTEM\s+["']/i)
-
-          # PUBLIC keyword also indicates external resource access
-          threats << :external_reference if xml_string.match?(/\bPUBLIC\s+["']/i)
-
-          # Parameter entities (%name;) are often used in advanced XXE
-          threats << :parameter_entity if xml_string.match?(/%[a-zA-Z_][a-zA-Z0-9_]*;/)
-
-          # Excessive nesting could indicate a DoS attempt
-          open_tags = xml_string.scan(%r{<[a-zA-Z][^>/]*>}).length
-          threats << :deep_nesting if open_tags > 10_000
-
-          # Very long attribute values could indicate a DoS attempt
-          threats << :large_attribute if xml_string.match?(/\w+\s*=\s*["'][^"']{100_000,}["']/)
-
-          threats.uniq
+          detect_threat_patterns(xml_string.b).uniq
         end
-        # rubocop:enable Metrics/CyclomaticComplexity
 
         # Parses XML with threat callback.
         #
@@ -297,10 +271,46 @@ module WSDL
         # @return [Boolean] true if DOCTYPE is present
         #
         def contains_doctype?(xml_string)
-          xml_string.match?(DOCTYPE_PATTERN)
+          xml_string.b.match?(DOCTYPE_PATTERN)
         end
 
         private
+
+        # Scans a binary-encoded string for XML attack patterns.
+        # Binary encoding avoids encoding errors on arbitrary input
+        # and works correctly since all patterns are ASCII-only.
+        #
+        # @param bin [String] binary-encoded XML string
+        # @return [Array<Symbol>] detected threat indicators
+        # rubocop:disable Metrics/CyclomaticComplexity
+        def detect_threat_patterns(bin)
+          threats = []
+
+          # DOCTYPE declarations often indicate XXE attempts
+          threats << :doctype if bin.match?(DOCTYPE_PATTERN)
+
+          # ENTITY declarations are used to define XXE payloads
+          threats << :entity_declaration if bin.match?(/<!ENTITY/i)
+
+          # SYSTEM keyword indicates external resource access
+          threats << :external_reference if bin.match?(/\bSYSTEM\s+["']/i)
+
+          # PUBLIC keyword also indicates external resource access
+          threats << :external_reference if bin.match?(/\bPUBLIC\s+["']/i)
+
+          # Parameter entities (%name;) are often used in advanced XXE
+          threats << :parameter_entity if bin.match?(/%[a-zA-Z_][a-zA-Z0-9_]*;/)
+
+          # Excessive nesting could indicate a DoS attempt
+          open_tags = bin.scan(%r{<[a-zA-Z][^>/]*>}).length
+          threats << :deep_nesting if open_tags > 10_000
+
+          # Very long attribute values could indicate a DoS attempt
+          threats << :large_attribute if bin.match?(/\w+\s*=\s*["'][^"']{100_000,}["']/)
+
+          threats
+        end
+        # rubocop:enable Metrics/CyclomaticComplexity
 
         # Raises XMLSecurityError if XML contains a DOCTYPE declaration.
         #

@@ -13,6 +13,7 @@ group :development do
   gem 'equivalent-xml', '~> 0.6'
   gem 'httpclient', '~> 2.9'
   gem 'rake', '~> 13.3'
+  gem 'rantly', '~> 2.0', require: false
   gem 'redcarpet', require: false
   gem 'rspec', '~> 3'
   gem 'rubocop', require: false
