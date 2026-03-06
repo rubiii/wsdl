@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1772799757048,
+  "lastUpdate": 1772821094465,
   "repoUrl": "https://github.com/rubiii/wsdl",
   "entries": {
     "Benchmark": [
@@ -198,6 +198,72 @@ window.BENCHMARK_DATA = {
             "value": 119,
             "unit": "i/s",
             "range": "± 3.4%"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "me@rubiii.com",
+            "name": "rubiii",
+            "username": "rubiii"
+          },
+          "committer": {
+            "email": "me@rubiii.com",
+            "name": "rubiii",
+            "username": "rubiii"
+          },
+          "distinct": true,
+          "id": "52790ffb269352d23940195bec922093a55324be",
+          "message": "Mark Operation#input_style and #output_style as private API\n\nDirect users to contract.style for public introspection. Marking these\nas @api private before 1.0 avoids locking them into the public API\nsurface under semver.",
+          "timestamp": "2026-03-06T19:16:25+01:00",
+          "tree_id": "f99a599910a1ad6c99d1b7034f6daa352dd4230a",
+          "url": "https://github.com/rubiii/wsdl/commit/52790ffb269352d23940195bec922093a55324be"
+        },
+        "date": 1772821093446,
+        "tool": "customBiggerIsBetter",
+        "benches": [
+          {
+            "name": "parse: small WSDL (blz_service, 88 lines)",
+            "value": 1962.65,
+            "unit": "i/s",
+            "range": "± 2.5%"
+          },
+          {
+            "name": "parse: large WSDL (economic, 65k lines)",
+            "value": 5.33,
+            "unit": "i/s",
+            "range": "± 0.0%"
+          },
+          {
+            "name": "request: build + serialize",
+            "value": 4427.71,
+            "unit": "i/s",
+            "range": "± 0.6%"
+          },
+          {
+            "name": "sign: X.509 SHA-256 + Timestamp",
+            "value": 683.04,
+            "unit": "i/s",
+            "range": "± 1.6%"
+          },
+          {
+            "name": "verify: signature + timestamp",
+            "value": 653.27,
+            "unit": "i/s",
+            "range": "± 2.4%"
+          },
+          {
+            "name": "response: parse small (15 lines)",
+            "value": 10021.5,
+            "unit": "i/s",
+            "range": "± 1.0%"
+          },
+          {
+            "name": "response: parse large (200 items)",
+            "value": 120.95,
+            "unit": "i/s",
+            "range": "± 1.7%"
           }
         ]
       }
