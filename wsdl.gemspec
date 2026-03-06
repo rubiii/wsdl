@@ -31,4 +31,8 @@ Gem::Specification.new do |s|
 
   s.require_path = 'lib'
   s.metadata['rubygems_mfa_required'] = 'true'
+  s.metadata['source_code_uri']      = 'https://github.com/rubiii/wsdl'
+  s.metadata['changelog_uri']        = 'https://github.com/rubiii/wsdl/blob/main/CHANGELOG.md'
+  s.metadata['bug_tracker_uri']      = 'https://github.com/rubiii/wsdl/issues'
+  s.metadata['documentation_uri']    = 'https://rubydoc.info/gems/wsdl'
 end
