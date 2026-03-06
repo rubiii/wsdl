@@ -13,8 +13,6 @@ response.header       # parsed SOAP header hash (or nil)
 response.envelope_hash
 ```
 
-`response.to_hash` is an alias of `response.body`.
-
 ## Schema-Aware Parsing
 
 When output schema metadata is available, response parsing performs type conversion for known XML Schema types (for example integer, boolean, decimal, date/time) and preserves array semantics for repeating elements.

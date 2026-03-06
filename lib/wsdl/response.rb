@@ -118,7 +118,6 @@ module WSDL
     def body
       @body ||= parse_body
     end
-    alias to_hash body
 
     # Returns the parsed SOAP header as a Hash.
     #
