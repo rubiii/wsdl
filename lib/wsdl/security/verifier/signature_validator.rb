@@ -88,6 +88,7 @@ module WSDL
           return false unless canonical_signed_info # Algorithm error already recorded
 
           signature_bytes = decode_signature_value
+          return false unless signature_bytes
 
           verify_with_public_key(canonical_signed_info, signature_bytes)
         end
@@ -106,9 +107,13 @@ module WSDL
 
         # Decodes the Base64-encoded SignatureValue.
         #
-        # @return [String] the raw signature bytes
+        # @return [String, nil] the raw signature bytes, or nil on invalid encoding
         def decode_signature_value
-          Base64.decode64(signature_value_node.text)
+          encoded = signature_value_node.text.to_s.gsub(/\s+/, '')
+          Base64.strict_decode64(encoded)
+        rescue ArgumentError => e
+          add_failure("Invalid SignatureValue encoding: #{e.message}")
+          nil
         end
 
         # Verifies the signature using the certificate's public key.

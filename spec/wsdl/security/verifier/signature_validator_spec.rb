@@ -129,6 +129,25 @@ describe WSDL::Security::Verifier::SignatureValidator, :verifier_helpers do
       end
     end
 
+    context 'with invalid base64 in SignatureValue' do
+      let(:xml) do
+        response = signed_soap_response
+        doc = Nokogiri::XML(response)
+        sig_value = doc.at_xpath('//ds:SignatureValue', ns)
+        sig_value.content = 'not!valid@base64'
+        doc.to_xml
+      end
+
+      it 'returns false' do
+        expect(validator.valid?).to be false
+      end
+
+      it 'reports invalid encoding' do
+        validator.valid?
+        expect(validator.errors).to include(match(/Invalid SignatureValue encoding/))
+      end
+    end
+
     context 'with corrupted SignatureValue' do
       let(:xml) do
         # Take a signed response and corrupt the signature

@@ -219,9 +219,106 @@ describe WSDL::Security::Verifier::CertificateResolver, :verifier_helpers do
         expect(resolver.resolve).to be false
       end
 
-      it 'adds error about parsing failure' do
+      it 'adds error about empty token' do
         resolver.resolve
-        expect(resolver.errors).to include(match(/Failed to parse certificate/))
+        expect(resolver.errors).to include(match(/BinarySecurityToken is empty/))
+      end
+    end
+
+    context 'with oversized BinarySecurityToken' do
+      let(:xml) do
+        oversized_data = 'A' * (described_class::MAX_ENCODED_TOKEN_SIZE + 1)
+        <<~XML
+          <?xml version="1.0" encoding="UTF-8"?>
+          <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"
+                         xmlns:wsse="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd"
+                         xmlns:wsu="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd"
+                         xmlns:ds="http://www.w3.org/2000/09/xmldsig#">
+            <soap:Header>
+              <wsse:Security>
+                <wsse:BinarySecurityToken wsu:Id="Token-123"
+                  ValueType="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-x509-token-profile-1.0#X509v3"
+                  EncodingType="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-soap-message-security-1.0#Base64Binary">#{oversized_data}</wsse:BinarySecurityToken>
+                <ds:Signature>
+                  <ds:SignedInfo>
+                    <ds:CanonicalizationMethod Algorithm="http://www.w3.org/2001/10/xml-exc-c14n#"/>
+                    <ds:SignatureMethod Algorithm="http://www.w3.org/2001/04/xmldsig-more#rsa-sha256"/>
+                    <ds:Reference URI="#Body-123">
+                      <ds:DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha256"/>
+                      <ds:DigestValue>fakedigest==</ds:DigestValue>
+                    </ds:Reference>
+                  </ds:SignedInfo>
+                  <ds:SignatureValue>fakesig==</ds:SignatureValue>
+                  <ds:KeyInfo>
+                    <wsse:SecurityTokenReference>
+                      <wsse:Reference URI="#Token-123"/>
+                    </wsse:SecurityTokenReference>
+                  </ds:KeyInfo>
+                </ds:Signature>
+              </wsse:Security>
+            </soap:Header>
+            <soap:Body wsu:Id="Body-123">
+              <Data>Test</Data>
+            </soap:Body>
+          </soap:Envelope>
+        XML
+      end
+
+      it 'returns false' do
+        expect(resolver.resolve).to be false
+      end
+
+      it 'adds error about exceeding maximum size' do
+        resolver.resolve
+        expect(resolver.errors).to include(match(/BinarySecurityToken exceeds maximum size/))
+      end
+    end
+
+    context 'with invalid base64 in BinarySecurityToken' do
+      let(:xml) do
+        <<~XML
+          <?xml version="1.0" encoding="UTF-8"?>
+          <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"
+                         xmlns:wsse="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd"
+                         xmlns:wsu="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd"
+                         xmlns:ds="http://www.w3.org/2000/09/xmldsig#">
+            <soap:Header>
+              <wsse:Security>
+                <wsse:BinarySecurityToken wsu:Id="Token-123"
+                  ValueType="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-x509-token-profile-1.0#X509v3"
+                  EncodingType="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-soap-message-security-1.0#Base64Binary">not!valid@base64</wsse:BinarySecurityToken>
+                <ds:Signature>
+                  <ds:SignedInfo>
+                    <ds:CanonicalizationMethod Algorithm="http://www.w3.org/2001/10/xml-exc-c14n#"/>
+                    <ds:SignatureMethod Algorithm="http://www.w3.org/2001/04/xmldsig-more#rsa-sha256"/>
+                    <ds:Reference URI="#Body-123">
+                      <ds:DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha256"/>
+                      <ds:DigestValue>fakedigest==</ds:DigestValue>
+                    </ds:Reference>
+                  </ds:SignedInfo>
+                  <ds:SignatureValue>fakesig==</ds:SignatureValue>
+                  <ds:KeyInfo>
+                    <wsse:SecurityTokenReference>
+                      <wsse:Reference URI="#Token-123"/>
+                    </wsse:SecurityTokenReference>
+                  </ds:KeyInfo>
+                </ds:Signature>
+              </wsse:Security>
+            </soap:Header>
+            <soap:Body wsu:Id="Body-123">
+              <Data>Test</Data>
+            </soap:Body>
+          </soap:Envelope>
+        XML
+      end
+
+      it 'returns false' do
+        expect(resolver.resolve).to be false
+      end
+
+      it 'adds error about invalid encoding' do
+        resolver.resolve
+        expect(resolver.errors).to include(match(/Invalid BinarySecurityToken value/))
       end
     end
 

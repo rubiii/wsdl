@@ -32,6 +32,10 @@ module WSDL
       #   cert = resolver.certificate
       #
       class CertificateResolver < Base
+        # Maximum size in bytes for Base64-encoded BinarySecurityToken content.
+        # X.509 certificates are typically 1-4 KB; 100 KB is extremely generous.
+        MAX_ENCODED_TOKEN_SIZE = 100_000
+
         # Pattern for valid XML element IDs (NCName production).
         #
         # This is used before interpolating IDs into XPath expressions to
@@ -204,7 +208,16 @@ module WSDL
         def extract_from_binary_security_token(bst)
           return nil unless bst
 
-          der_data = Base64.decode64(bst.text)
+          encoded = bst.text.to_s.gsub(/\s+/, '')
+          return add_failure_nil('BinarySecurityToken is empty') if encoded.empty?
+
+          if encoded.bytesize > MAX_ENCODED_TOKEN_SIZE
+            return add_failure_nil("BinarySecurityToken exceeds maximum size (#{encoded.bytesize} bytes)")
+          end
+
+          der_data = decode_base64(encoded, 'BinarySecurityToken')
+          return nil unless der_data
+
           parse_certificate(der_data)
         end
 
