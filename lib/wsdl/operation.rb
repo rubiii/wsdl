@@ -152,7 +152,8 @@ module WSDL
     end
 
     # Clears the prepared request, allowing {#prepare} to be called again.
-    # Also clears any custom HTTP header overrides set via {#http_headers=}.
+    # Also clears any custom HTTP header overrides set via {#http_headers=}
+    # and the per-operation {#format_xml} override.
     #
     # @return [self]
     def reset!
