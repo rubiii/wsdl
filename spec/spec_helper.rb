@@ -23,6 +23,8 @@ if ENV['GRAPH']
   Rubydeps.start
 end
 
+ENV['RANTLY_VERBOSE'] ||= '0'
+
 require 'equivalent-xml'
 require 'equivalent-xml/rspec_matchers'
 

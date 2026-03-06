@@ -12,4 +12,9 @@ YARD::Rake::YardocTask.new
 desc 'Run linting'
 task lint: :rubocop
 
+desc 'Run performance benchmarks'
+task :benchmark do
+  ruby 'benchmarks/run.rb'
+end
+
 task ci: %i[lint spec]

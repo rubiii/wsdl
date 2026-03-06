@@ -10,6 +10,7 @@ gem 'syslog' if RUBY_VERSION >= '3.4'
 gem 'benchmark' if RUBY_VERSION >= '3.4'
 
 group :development do
+  gem 'benchmark-ips', '~> 2.14', require: false
   gem 'equivalent-xml', '~> 0.6'
   gem 'httpclient', '~> 2.9'
   gem 'rake', '~> 13.3'

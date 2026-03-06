@@ -9,11 +9,12 @@ This library is being revived. It was previously published as `Sekken` but is no
 ## Getting Started
 
 ```sh
-bundle install          # Install dependencies
-bundle exec rspec       # Run tests
-bundle exec rubocop     # Run linter
-bundle exec rake ci     # Run all checks (CI task)
-bundle exec yard        # Generate YARD documentation
+bundle install              # Install dependencies
+bundle exec rspec           # Run tests
+bundle exec rubocop         # Run linter
+bundle exec rake ci         # Run all checks (CI task)
+bundle exec rake benchmark  # Run performance benchmarks
+bundle exec yard            # Generate YARD documentation
 ```
 
 ## Key Concepts
