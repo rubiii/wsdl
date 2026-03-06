@@ -55,9 +55,7 @@ module WSDL
   class Response
     # Creates a new Response instance.
     #
-    # @param raw_response [String, nil] the raw HTTP response body (XML).
-    #   When omitted, the body is extracted from the +http+ parameter.
-    # @param http [HTTPResponse, nil] the HTTP response metadata (status code, headers, body)
+    # @param http [HTTPResponse] the HTTP response metadata (status code, headers, body)
     # @param output_body_parts [Array<WSDL::XML::Element>, nil] optional schema elements
     #   describing the expected body structure for type-aware parsing
     # @param output_header_parts [Array<WSDL::XML::Element>, nil] optional schema elements
@@ -65,9 +63,9 @@ module WSDL
     # @param verification [Security::ResponseVerification] response verification options
     #   for signature and timestamp validation
     #
-    def initialize(raw_response = nil, http: nil, output_body_parts: nil, output_header_parts: nil,
+    def initialize(http:, output_body_parts: nil, output_header_parts: nil,
                    verification: Security::ResponseVerification::Options.default)
-      @raw_response = (raw_response || http&.body || '').freeze
+      @raw_response = (http.body || '').freeze
       @http = http
       @output_body_parts = output_body_parts
       @output_header_parts = output_header_parts

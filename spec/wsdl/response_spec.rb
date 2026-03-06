@@ -6,6 +6,10 @@ require_relative 'security/verifier/shared_context'
 describe WSDL::Response, type: :unit do
   include SchemaElementHelper
 
+  def build_response(xml, **kwargs)
+    described_class.new(http: WSDL::HTTPResponse.new(status: 200, body: xml), **kwargs)
+  end
+
   let(:soap_response) do
     <<-XML
       <env:Envelope xmlns:env="http://schemas.xmlsoap.org/soap/envelope/">
@@ -22,12 +26,6 @@ describe WSDL::Response, type: :unit do
   end
 
   describe '#http_status' do
-    it 'returns nil when no HTTP response is provided' do
-      response = described_class.new(soap_response)
-
-      expect(response.http_status).to be_nil
-    end
-
     it 'returns the HTTP status code from the HTTP response' do
       http = WSDL::HTTPResponse.new(status: 500, body: soap_response)
       response = described_class.new(http:)
@@ -37,8 +35,8 @@ describe WSDL::Response, type: :unit do
   end
 
   describe '#http_headers' do
-    it 'returns an empty hash when no HTTP response is provided' do
-      response = described_class.new(soap_response)
+    it 'returns empty hash when no headers provided' do
+      response = build_response(soap_response)
 
       expect(response.http_headers).to eq({})
     end
@@ -53,7 +51,7 @@ describe WSDL::Response, type: :unit do
   end
 
   describe 'without schema parts (fallback to parser)' do
-    subject(:response) { described_class.new(soap_response) }
+    subject(:response) { build_response(soap_response) }
 
     describe '#raw' do
       it 'returns the raw XML response' do
@@ -149,7 +147,7 @@ describe WSDL::Response, type: :unit do
   end
 
   describe '#security', :verifier_helpers do
-    subject(:response) { described_class.new(pretty_signed_response) }
+    subject(:response) { build_response(pretty_signed_response) }
 
     let(:pretty_signed_response) { Nokogiri::XML(signed_soap_response).to_xml(indent: 2) }
 
@@ -175,7 +173,7 @@ describe WSDL::Response, type: :unit do
         response_element = schema_element('Response', children: [count_element])
         output_body_parts = [response_element]
 
-        response = described_class.new(xml, output_body_parts:)
+        response = build_response(xml, output_body_parts:)
 
         expect(response.body[:Response][:Count]).to eq(42)
         expect(response.body[:Response][:Count]).to be_a(Integer)
@@ -196,7 +194,7 @@ describe WSDL::Response, type: :unit do
         response_element = schema_element('Response', children: [price_element])
         output_body_parts = [response_element]
 
-        response = described_class.new(xml, output_body_parts:)
+        response = build_response(xml, output_body_parts:)
 
         expect(response.body[:Response][:Price]).to eq(BigDecimal('99.99'))
         expect(response.body[:Response][:Price]).to be_a(BigDecimal)
@@ -219,7 +217,7 @@ describe WSDL::Response, type: :unit do
         response_element = schema_element('Response', children: [active_element, deleted_element])
         output_body_parts = [response_element]
 
-        response = described_class.new(xml, output_body_parts:)
+        response = build_response(xml, output_body_parts:)
 
         expect(response.body[:Response][:Active]).to be true
         expect(response.body[:Response][:Deleted]).to be false
@@ -240,7 +238,7 @@ describe WSDL::Response, type: :unit do
         response_element = schema_element('Response', children: [date_element])
         output_body_parts = [response_element]
 
-        response = described_class.new(xml, output_body_parts:)
+        response = build_response(xml, output_body_parts:)
 
         expect(response.body[:Response][:BirthDate]).to eq(Date.new(2024, 1, 15))
         expect(response.body[:Response][:BirthDate]).to be_a(Date)
@@ -261,7 +259,7 @@ describe WSDL::Response, type: :unit do
         response_element = schema_element('Response', children: [datetime_element])
         output_body_parts = [response_element]
 
-        response = described_class.new(xml, output_body_parts:)
+        response = build_response(xml, output_body_parts:)
 
         expect(response.body[:Response][:CreatedAt]).to be_a(Time)
         expect(response.body[:Response][:CreatedAt].year).to eq(2024)
@@ -282,7 +280,7 @@ describe WSDL::Response, type: :unit do
         response_element = schema_element('Response', children: [datetime_element])
         output_body_parts = [response_element]
 
-        response = described_class.new(xml, output_body_parts:)
+        response = build_response(xml, output_body_parts:)
 
         expect(response.body[:Response][:CreatedAt]).to eq('2024-01-15T10:30:00')
       end
@@ -303,7 +301,7 @@ describe WSDL::Response, type: :unit do
           response_element = schema_element('Response', children: [item_element])
           output_body_parts = [response_element]
 
-          response = described_class.new(xml, output_body_parts:)
+          response = build_response(xml, output_body_parts:)
 
           expect(response.body[:Response][:Item]).to eq(['only-one'])
           expect(response.body[:Response][:Item]).to be_an(Array)
@@ -324,7 +322,7 @@ describe WSDL::Response, type: :unit do
           response_element = schema_element('Response', children: [item_element])
           output_body_parts = [response_element]
 
-          response = described_class.new(xml, output_body_parts:)
+          response = build_response(xml, output_body_parts:)
 
           expect(response.body[:Response][:Item]).to eq('only-one')
           expect(response.body[:Response][:Item]).not_to be_an(Array)
@@ -347,7 +345,7 @@ describe WSDL::Response, type: :unit do
           response_element = schema_element('Response', children: [item_element])
           output_body_parts = [response_element]
 
-          response = described_class.new(xml, output_body_parts:)
+          response = build_response(xml, output_body_parts:)
 
           expect(response.body[:Response][:Item]).to eq(%w[one two three])
         end
@@ -372,7 +370,7 @@ describe WSDL::Response, type: :unit do
           response_element = schema_element('Response', children: [user_element])
           output_body_parts = [response_element]
 
-          response = described_class.new(xml, output_body_parts:)
+          response = build_response(xml, output_body_parts:)
 
           expect(response.body[:Response][:User]).to eq([{ Name: 'Alice', Age: 30 }])
           expect(response.body[:Response][:User].first[:Age]).to be_a(Integer)
@@ -395,7 +393,7 @@ describe WSDL::Response, type: :unit do
           response_element = schema_element('Response', children: [value_element])
           output_body_parts = [response_element]
 
-          response = described_class.new(xml, output_body_parts:)
+          response = build_response(xml, output_body_parts:)
 
           expect(response.body[:Response][:Value]).to be_nil
         end
@@ -418,7 +416,7 @@ describe WSDL::Response, type: :unit do
           response_element = schema_element('Response', children: [known_element])
           output_body_parts = [response_element]
 
-          response = described_class.new(xml, output_body_parts:)
+          response = build_response(xml, output_body_parts:)
 
           expect(response.body[:Response][:Known]).to eq('expected')
           expect(response.body[:Response][:Unknown]).to eq('extra')
@@ -446,7 +444,7 @@ describe WSDL::Response, type: :unit do
           )
           output_body_parts = [response_element]
 
-          response = described_class.new(xml, output_body_parts:)
+          response = build_response(xml, output_body_parts:)
 
           expect(response.body).to eq({ Response: 'raw-content' })
         end
@@ -472,7 +470,7 @@ describe WSDL::Response, type: :unit do
         response_element = schema_element('Response', children: [result_element])
         output_body_parts = [response_element]
 
-        response = described_class.new(xml, output_body_parts:)
+        response = build_response(xml, output_body_parts:)
 
         expect(response.header).to eq({ SessionId: 'abc123' })
       end
@@ -494,7 +492,7 @@ describe WSDL::Response, type: :unit do
         response_element = schema_element('Response', children: [count_element])
         output_body_parts = [response_element]
 
-        response = described_class.new(xml, output_body_parts:)
+        response = build_response(xml, output_body_parts:)
 
         # envelope_hash does NOT use schema-aware parsing
         expect(response.envelope_hash[:Envelope][:Body][:Response][:Count]).to eq('42')
@@ -523,7 +521,7 @@ describe WSDL::Response, type: :unit do
         timestamp_element = schema_element('Timestamp', type: 'xsd:dateTime')
         output_header_parts = [request_id_element, timestamp_element]
 
-        response = described_class.new(xml, output_header_parts:)
+        response = build_response(xml, output_header_parts:)
 
         expect(response.header[:RequestId]).to eq(12_345)
         expect(response.header[:RequestId]).to be_a(Integer)
@@ -547,7 +545,7 @@ describe WSDL::Response, type: :unit do
         token_element = schema_element('Token', type: 'xsd:string', singular: false)
         output_header_parts = [token_element]
 
-        response = described_class.new(xml, output_header_parts:)
+        response = build_response(xml, output_header_parts:)
 
         expect(response.header[:Token]).to eq(%w[token1 token2])
       end
@@ -572,7 +570,7 @@ describe WSDL::Response, type: :unit do
         auth_header_element = schema_element('AuthHeader', children: [user_id_element, expires_element])
         output_header_parts = [auth_header_element]
 
-        response = described_class.new(xml, output_header_parts:)
+        response = build_response(xml, output_header_parts:)
 
         expect(response.header[:AuthHeader]).to eq({ UserId: 'user123', Expires: 300 })
         expect(response.header[:AuthHeader][:Expires]).to be_a(Integer)
@@ -604,7 +602,7 @@ describe WSDL::Response, type: :unit do
       expiry_element = schema_element('SessionExpiry', type: 'xsd:int')
       output_header_parts = [expiry_element]
 
-      response = described_class.new(xml, output_body_parts:, output_header_parts:)
+      response = build_response(xml, output_body_parts:, output_header_parts:)
 
       expect(response.body[:Response][:Count]).to eq(42)
       expect(response.body[:Response][:Count]).to be_a(Integer)
@@ -615,7 +613,7 @@ describe WSDL::Response, type: :unit do
 
   describe '#fault? and #fault' do
     context 'with a SOAP 1.1 fault' do
-      subject(:response) { described_class.new(fault_xml) }
+      subject(:response) { build_response(fault_xml) }
 
       let(:fault_xml) do
         <<-XML
@@ -675,7 +673,7 @@ describe WSDL::Response, type: :unit do
     end
 
     context 'with a SOAP 1.1 fault without optional elements' do
-      subject(:response) { described_class.new(fault_xml) }
+      subject(:response) { build_response(fault_xml) }
 
       let(:fault_xml) do
         <<-XML
@@ -708,7 +706,7 @@ describe WSDL::Response, type: :unit do
     end
 
     context 'with a SOAP 1.1 fault with empty detail element' do
-      subject(:response) { described_class.new(fault_xml) }
+      subject(:response) { build_response(fault_xml) }
 
       let(:fault_xml) do
         <<-XML
@@ -730,7 +728,7 @@ describe WSDL::Response, type: :unit do
     end
 
     context 'with a SOAP 1.2 fault' do
-      subject(:response) { described_class.new(fault_xml) }
+      subject(:response) { build_response(fault_xml) }
 
       let(:fault_xml) do
         <<-XML
@@ -786,7 +784,7 @@ describe WSDL::Response, type: :unit do
     end
 
     context 'with a SOAP 1.2 fault with subcodes' do
-      subject(:response) { described_class.new(fault_xml) }
+      subject(:response) { build_response(fault_xml) }
 
       let(:fault_xml) do
         <<-XML
@@ -821,7 +819,7 @@ describe WSDL::Response, type: :unit do
     end
 
     context 'with a SOAP 1.2 fault without optional elements' do
-      subject(:response) { described_class.new(fault_xml) }
+      subject(:response) { build_response(fault_xml) }
 
       let(:fault_xml) do
         <<-XML
@@ -854,7 +852,7 @@ describe WSDL::Response, type: :unit do
     end
 
     context 'with a SOAP 1.2 fault with empty Detail element' do
-      subject(:response) { described_class.new(fault_xml) }
+      subject(:response) { build_response(fault_xml) }
 
       let(:fault_xml) do
         <<-XML
@@ -880,7 +878,7 @@ describe WSDL::Response, type: :unit do
     end
 
     context 'with a normal (non-fault) response' do
-      subject(:response) { described_class.new(soap_response) }
+      subject(:response) { build_response(soap_response) }
 
       it 'returns false for fault?' do
         expect(response.fault?).to be false
@@ -936,7 +934,7 @@ describe WSDL::Response, type: :unit do
       response_element = schema_element('GetOrderResponse', children: [order_element])
       output_body_parts = [response_element]
 
-      response = described_class.new(xml, output_body_parts:)
+      response = build_response(xml, output_body_parts:)
 
       expect(response.body).to eq({
         GetOrderResponse: {

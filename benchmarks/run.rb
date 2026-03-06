@@ -201,11 +201,11 @@ response_report = Benchmark.ips { |x|
   x.config(warmup: 2, time: 5)
 
   x.report('response: parse small (15 lines)') do
-    WSDL::Response.new(SMALL_RESPONSE_XML).body
+    WSDL::Response.new(http: WSDL::HTTPResponse.new(status: 200, body: SMALL_RESPONSE_XML)).body
   end
 
   x.report('response: parse large (200 items)') do
-    WSDL::Response.new(LARGE_RESPONSE_XML).body
+    WSDL::Response.new(http: WSDL::HTTPResponse.new(status: 200, body: LARGE_RESPONSE_XML)).body
   end
 
   x.compare!
