@@ -648,7 +648,7 @@ RSpec.describe WSDL::Security::Verifier, :verifier_helpers do
 
       it 'accepts certificates signed by trusted CA' do
         # Build CA and signed certificate
-        ca_key = OpenSSL::PKey::RSA.new(2048)
+        ca_key = OpenSSL::PKey::RSA.new(1024)
         ca_cert = OpenSSL::X509::Certificate.new
         ca_cert.version = 2
         ca_cert.serial = 1000
@@ -665,7 +665,7 @@ RSpec.describe WSDL::Security::Verifier, :verifier_helpers do
         ca_cert.sign(ca_key, OpenSSL::Digest.new('SHA256'))
 
         # Create certificate signed by CA
-        signed_key = OpenSSL::PKey::RSA.new(2048)
+        signed_key = OpenSSL::PKey::RSA.new(1024)
         signed_cert = OpenSSL::X509::Certificate.new
         signed_cert.version = 2
         signed_cert.serial = 1001

@@ -2,7 +2,7 @@
 
 RSpec.describe WSDL::Security::Verifier::CertificateValidator do
   # Generate a self-signed certificate for testing
-  let(:private_key) { OpenSSL::PKey::RSA.new(2048) }
+  let(:private_key) { OpenSSL::PKey::RSA.new(1024) }
 
   let(:valid_certificate) do
     cert = OpenSSL::X509::Certificate.new
@@ -44,7 +44,7 @@ RSpec.describe WSDL::Security::Verifier::CertificateValidator do
   end
 
   # CA and signed certificate for chain validation
-  let(:ca_private_key) { OpenSSL::PKey::RSA.new(2048) }
+  let(:ca_private_key) { OpenSSL::PKey::RSA.new(1024) }
 
   let(:ca_certificate) do
     cert = OpenSSL::X509::Certificate.new
@@ -72,7 +72,7 @@ RSpec.describe WSDL::Security::Verifier::CertificateValidator do
     cert
   end
 
-  let(:signed_private_key) { OpenSSL::PKey::RSA.new(2048) }
+  let(:signed_private_key) { OpenSSL::PKey::RSA.new(1024) }
 
   let(:ca_signed_certificate) do
     cert = OpenSSL::X509::Certificate.new

@@ -3,7 +3,7 @@
 RSpec.describe WSDL::Security::RequestMaterializer do
   let(:now) { Time.utc(2026, 3, 8, 12, 0, 0) }
 
-  let(:private_key) { OpenSSL::PKey::RSA.new(2048) }
+  let(:private_key) { OpenSSL::PKey::RSA.new(1024) }
   let(:certificate) do
     cert = OpenSSL::X509::Certificate.new
     cert.version = 2

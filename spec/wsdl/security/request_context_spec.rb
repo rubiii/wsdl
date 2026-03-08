@@ -11,7 +11,7 @@ RSpec.describe WSDL::Security::RequestContext do
     )
   end
 
-  let(:private_key) { OpenSSL::PKey::RSA.new(2048) }
+  let(:private_key) { OpenSSL::PKey::RSA.new(1024) }
   let(:certificate) do
     cert = OpenSSL::X509::Certificate.new
     cert.version = 2

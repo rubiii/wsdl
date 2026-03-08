@@ -133,7 +133,7 @@ RSpec.shared_context 'verifier test helpers' do
   include VerifierTestMethods
 
   # Generate a self-signed certificate and key for testing
-  let(:private_key) { OpenSSL::PKey::RSA.new(2048) }
+  let(:private_key) { OpenSSL::PKey::RSA.new(1024) }
 
   let(:certificate) do
     cert = OpenSSL::X509::Certificate.new
@@ -152,7 +152,7 @@ RSpec.shared_context 'verifier test helpers' do
     cert
   end
 
-  let(:other_private_key) { OpenSSL::PKey::RSA.new(2048) }
+  let(:other_private_key) { OpenSSL::PKey::RSA.new(1024) }
 
   let(:other_certificate) do
     cert = OpenSSL::X509::Certificate.new

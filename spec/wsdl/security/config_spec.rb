@@ -3,7 +3,7 @@
 RSpec.describe WSDL::Security::Config do
   subject(:config) { described_class.new }
 
-  let(:private_key) { OpenSSL::PKey::RSA.new(2048) }
+  let(:private_key) { OpenSSL::PKey::RSA.new(1024) }
   let(:certificate) do
     cert = OpenSSL::X509::Certificate.new
     cert.version = 2

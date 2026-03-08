@@ -2,7 +2,7 @@
 
 RSpec.describe WSDL::Security::SecurityHeader do
   # Generate a self-signed certificate and key for testing
-  let(:private_key) { OpenSSL::PKey::RSA.new(2048) }
+  let(:private_key) { OpenSSL::PKey::RSA.new(1024) }
   let(:certificate) do
     cert = OpenSSL::X509::Certificate.new
     cert.version = 2

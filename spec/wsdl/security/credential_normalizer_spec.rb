@@ -4,7 +4,7 @@ RSpec.describe WSDL::Security::CredentialNormalizer do
   subject(:normalizer) { described_class.new }
 
   describe '#validate_key_reference!' do
-    let(:private_key) { OpenSSL::PKey::RSA.new(2048) }
+    let(:private_key) { OpenSSL::PKey::RSA.new(1024) }
     let(:certificate_without_ski) do
       cert = OpenSSL::X509::Certificate.new
       cert.version = 2
