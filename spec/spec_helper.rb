@@ -34,9 +34,8 @@ require 'equivalent-xml'
 require 'equivalent-xml/rspec_matchers'
 require 'webmock/rspec'
 
-support_files = File.expand_path('spec/support/**/*.rb')
-Dir[support_files].each do |file|
-  require file
+Dir[File.join(__dir__, 'support', '**', '*.rb')].each do |f|
+  require f
 end
 
 RSpec.configure do |config|
