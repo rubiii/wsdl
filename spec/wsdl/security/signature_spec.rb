@@ -1,6 +1,13 @@
 # frozen_string_literal: true
 
 RSpec.describe WSDL::Security::Signature do
+  subject(:signature) do
+    described_class.new(
+      certificate: certificate,
+      private_key: private_key
+    )
+  end
+
   # Generate a self-signed certificate and key for testing
   let(:private_key) { OpenSSL::PKey::RSA.new(1024) }
   let(:certificate) do
@@ -16,15 +23,62 @@ RSpec.describe WSDL::Security::Signature do
     cert
   end
 
-  describe '#inspect' do
-    subject(:signature) do
-      described_class.new(
-        certificate: certificate,
-        private_key: private_key,
-        digest_algorithm: :sha256
-      )
+  describe '#initialize' do
+    it 'defaults digest_algorithm to :sha256' do
+      expect(signature.digest_algorithm).to eq(:sha256)
     end
 
+    it 'defaults key_reference to :binary_security_token' do
+      expect(signature.key_reference).to eq(:binary_security_token)
+    end
+
+    it 'defaults explicit_namespace_prefixes to false' do
+      expect(signature.explicit_namespace_prefixes).to be false
+    end
+
+    it 'auto-generates security_token_id with SecurityToken prefix' do
+      expect(signature.security_token_id).to match(/\ASecurityToken-/)
+    end
+
+    it 'preserves a custom security_token_id' do
+      sig = described_class.new(
+        certificate: certificate,
+        private_key: private_key,
+        security_token_id: 'custom-token-id'
+      )
+      expect(sig.security_token_id).to eq('custom-token-id')
+    end
+
+    it 'raises ArgumentError for unknown digest_algorithm' do
+      expect {
+        described_class.new(
+          certificate: certificate,
+          private_key: private_key,
+          digest_algorithm: :md5
+        )
+      }.to raise_error(ArgumentError, /Unknown digest algorithm.*:md5/)
+    end
+
+    it 'raises ArgumentError when certificate is nil' do
+      expect {
+        described_class.new(
+          certificate: nil,
+          private_key: private_key
+        )
+      }.to raise_error(ArgumentError, /certificate is required/)
+    end
+
+    it 'raises ArgumentError when private_key is nil' do
+      expect {
+        described_class.new(
+          certificate: certificate,
+          private_key: nil
+        )
+      }.to raise_error(ArgumentError, /private_key is required/)
+    end
+  end
+
+  describe '#inspect' do
     it 'includes the class name' do
       expect(signature.inspect).to include('WSDL::Security::Signature')
     end
@@ -114,14 +168,63 @@ RSpec.describe WSDL::Security::Signature do
     end
   end
 
-  describe '#sign_element with inclusive_namespaces' do
-    it 'includes InclusiveNamespaces element in the signed reference' do
+  describe '#references?' do
+    it 'returns false when no elements have been signed' do
+      expect(signature.references?).to be false
+    end
+
+    it 'returns true after sign_element is called' do
+      node = Nokogiri::XML('<Body/>').root
+      signature.sign_element(node, id: 'Body-1')
+      expect(signature.references?).to be true
+    end
+  end
+
+  describe '#clear_references' do
+    it 'clears references after signing' do
+      node = Nokogiri::XML('<Body/>').root
+      signature.sign_element(node, id: 'Body-1')
+      signature.clear_references
+      expect(signature.references?).to be false
+    end
+
+    it 'returns self for chaining' do
+      expect(signature.clear_references).to be signature
+    end
+  end
+
+  describe '#sign_element' do
+    it 'returns self for chaining' do
+      node = Nokogiri::XML('<Body/>').root
+      expect(signature.sign_element(node, id: 'Body-1')).to be signature
+    end
+  end
+
+  describe '#encoded_certificate' do
+    it 'returns Base64-encoded DER of the certificate' do
+      decoded = Base64.strict_decode64(signature.encoded_certificate)
+      expect(decoded).to eq(certificate.to_der)
+    end
+  end
+
+  describe '#explicit_namespace_prefixes?' do
+    it 'returns false by default' do
+      expect(signature.explicit_namespace_prefixes?).to be false
+    end
+
+    it 'returns true when enabled' do
       sig = described_class.new(
         certificate: certificate,
         private_key: private_key,
-        digest_algorithm: :sha256
+        explicit_namespace_prefixes: true
       )
 
+      expect(sig.explicit_namespace_prefixes?).to be true
+    end
+  end
+
+  describe '#sign_element with inclusive_namespaces' do
+    it 'includes InclusiveNamespaces element in the signed reference' do
       envelope = Nokogiri::XML(<<~XML)
         <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
           <soap:Header>
@@ -138,8 +241,8 @@ RSpec.describe WSDL::Security::Signature do
       security = envelope.at_xpath('//wsse:Security',
                                    'wsse' => 'http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd')
 
-      sig.sign_element(body, inclusive_namespaces: %w[soap])
-      sig.apply(envelope, security)
+      signature.sign_element(body, inclusive_namespaces: %w[soap])
+      signature.apply(envelope, security)
 
       ns = {
         'ds' => 'http://www.w3.org/2000/09/xmldsig#',
@@ -149,27 +252,6 @@ RSpec.describe WSDL::Security::Signature do
       inclusive = envelope.at_xpath('//ds:Reference/ds:Transforms/ds:Transform/ec:InclusiveNamespaces', ns)
       expect(inclusive).not_to be_nil
       expect(inclusive['PrefixList']).to eq('soap')
-    end
-  end
-
-  describe '#explicit_namespace_prefixes?' do
-    it 'returns false by default' do
-      sig = described_class.new(
-        certificate: certificate,
-        private_key: private_key
-      )
-
-      expect(sig.explicit_namespace_prefixes?).to be false
-    end
-
-    it 'returns true when enabled' do
-      sig = described_class.new(
-        certificate: certificate,
-        private_key: private_key,
-        explicit_namespace_prefixes: true
-      )
-
-      expect(sig.explicit_namespace_prefixes?).to be true
     end
   end
 end
