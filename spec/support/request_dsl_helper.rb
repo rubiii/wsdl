@@ -127,6 +127,11 @@ module SpecSupport
       end
     end
 
+    # Temporarily overrides strict_schema on an Operation for the duration of the block.
+    #
+    # Operation#config is intentionally private — config should be immutable after
+    # construction. We reach in with instance_variable_get/set here rather than
+    # adding a public setter that would only serve tests.
     def with_strict_schema(operation, strict_schema)
       return yield if strict_schema.nil?
 
