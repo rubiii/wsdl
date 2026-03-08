@@ -3,7 +3,6 @@
 yard_docs
 coverage
 .yardoc
-graph
 pkg
 *~
 *.rbc

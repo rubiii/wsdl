@@ -18,11 +18,6 @@ if ENV.fetch('DEBUG', nil)
   WSDL.logger = Logger.new($stdout, level: Logger::DEBUG)
 end
 
-if ENV['GRAPH']
-  require 'rubydeps'
-  Rubydeps.start
-end
-
 ENV['RANTLY_VERBOSE'] ||= '0'
 
 require 'equivalent-xml'
