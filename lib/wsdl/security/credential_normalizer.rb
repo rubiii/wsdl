@@ -54,7 +54,7 @@ module WSDL
         end
 
         return unless key_reference == KeyRef::SUBJECT_KEY_IDENTIFIER
-        return unless extract_subject_key_identifier(certificate).nil?
+        return if subject_key_identifier?(certificate)
 
         raise ArgumentError, 'Cannot use :subject_key_identifier key reference: ' \
                              'certificate does not have a Subject Key Identifier extension'
@@ -63,13 +63,9 @@ module WSDL
       private
 
       # @param certificate [OpenSSL::X509::Certificate]
-      # @return [String, nil]
-      def extract_subject_key_identifier(certificate)
-        certificate.extensions.each do |ext|
-          return ext.value.delete(':') if ext.oid == 'subjectKeyIdentifier'
-        end
-
-        nil
+      # @return [Boolean]
+      def subject_key_identifier?(certificate)
+        certificate.extensions.any? { |ext| ext.oid == 'subjectKeyIdentifier' }
       end
     end
   end
