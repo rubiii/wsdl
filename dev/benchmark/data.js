@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1772829867630,
+  "lastUpdate": 1772993257972,
   "repoUrl": "https://github.com/rubiii/wsdl",
   "entries": {
     "Benchmark": [
@@ -660,6 +660,72 @@ window.BENCHMARK_DATA = {
             "value": 110.73,
             "unit": "i/s",
             "range": "± 1.8%"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "me@rubiii.com",
+            "name": "rubiii",
+            "username": "rubiii"
+          },
+          "committer": {
+            "email": "me@rubiii.com",
+            "name": "rubiii",
+            "username": "rubiii"
+          },
+          "distinct": true,
+          "id": "c4d5123c12c550ea88255eab0ee8f8295e7fe1bd",
+          "message": "Add mutant gem for mutation testing\n\n* Run on security module:\n  bundle exec mutant run 'WSDL::Security*'\n* Run on a single class:\n  bundle exec mutant run 'WSDL::Security::Signature'",
+          "timestamp": "2026-03-08T17:19:00+01:00",
+          "tree_id": "3fdf4b993461988e351b9fa9894fa16b57bed39d",
+          "url": "https://github.com/rubiii/wsdl/commit/c4d5123c12c550ea88255eab0ee8f8295e7fe1bd"
+        },
+        "date": 1772993257130,
+        "tool": "customBiggerIsBetter",
+        "benches": [
+          {
+            "name": "parse: small WSDL (blz_service, 88 lines)",
+            "value": 1952.74,
+            "unit": "i/s",
+            "range": "± 1.7%"
+          },
+          {
+            "name": "parse: large WSDL (economic, 65k lines)",
+            "value": 5.16,
+            "unit": "i/s",
+            "range": "± 0.0%"
+          },
+          {
+            "name": "request: build + serialize",
+            "value": 4509.46,
+            "unit": "i/s",
+            "range": "± 0.7%"
+          },
+          {
+            "name": "sign: X.509 SHA-256 + Timestamp",
+            "value": 687.58,
+            "unit": "i/s",
+            "range": "± 2.6%"
+          },
+          {
+            "name": "verify: signature + timestamp",
+            "value": 672.05,
+            "unit": "i/s",
+            "range": "± 3.0%"
+          },
+          {
+            "name": "response: parse small (15 lines)",
+            "value": 10165.48,
+            "unit": "i/s",
+            "range": "± 1.6%"
+          },
+          {
+            "name": "response: parse large (200 items)",
+            "value": 120.45,
+            "unit": "i/s",
+            "range": "± 2.5%"
           }
         ]
       }
