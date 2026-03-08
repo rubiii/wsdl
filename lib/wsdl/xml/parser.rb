@@ -63,7 +63,7 @@ module WSDL
     # @see https://cheatsheetseries.owasp.org/cheatsheets/XML_External_Entity_Prevention_Cheat_Sheet.html
     # @see https://nokogiri.org/rdoc/Nokogiri/XML/ParseOptions.html
     #
-    module Parser # rubocop:disable Metrics/ModuleLength
+    module Parser
       # Secure parse options for strict XML parsing.
       #
       # These options provide secure defaults:

@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-describe 'Integration with a Document/Literal example' do
+RSpec.describe 'Integration with a Document/Literal example' do
   subject(:client) { WSDL::Client.new fixture('wsdl/document_literal_wrapped') }
 
   let(:service_name) { :SampleService }

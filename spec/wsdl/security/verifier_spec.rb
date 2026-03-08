@@ -1,9 +1,8 @@
 # frozen_string_literal: true
 
 require 'spec_helper'
-require_relative 'verifier/shared_context'
 
-describe WSDL::Security::Verifier, :verifier_helpers do
+RSpec.describe WSDL::Security::Verifier, :verifier_helpers do
   describe '#initialize' do
     it 'accepts an XML string' do
       verifier = described_class.new(unsigned_soap_response)

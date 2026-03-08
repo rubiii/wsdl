@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-describe WSDL::Response::TypeCoercer do
+RSpec.describe WSDL::Response::TypeCoercer do
   describe '.coerce' do
     it 'leaves unknown types untouched' do
       expect(described_class.coerce('abc', 'xsd:unknownType')).to eq('abc')

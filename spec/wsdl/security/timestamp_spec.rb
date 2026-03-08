@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-describe WSDL::Security::Timestamp do
+RSpec.describe WSDL::Security::Timestamp do
   describe 'DEFAULT_TTL' do
     it 'is 300 seconds (5 minutes)' do
       expect(described_class::DEFAULT_TTL).to eq(300)

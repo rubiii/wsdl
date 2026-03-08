@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-describe WSDL::Operation do
+RSpec.describe WSDL::Operation do
   let(:add_logins) do
     client = WSDL::Client.new fixture('wsdl/bronto')
 

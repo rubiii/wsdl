@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-describe WSDL::Log do
+RSpec.describe WSDL::Log do
   describe 'WSDL.logger' do
     it 'defaults to a NullLogger' do
       WSDL.logger = nil

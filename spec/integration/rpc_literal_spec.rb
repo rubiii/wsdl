@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-describe 'Integration with an RPC/Literal example' do
+RSpec.describe 'Integration with an RPC/Literal example' do
   subject(:client) { WSDL::Client.new fixture('wsdl/rpc_literal') }
 
   let(:service_name) { :SampleService }

@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 require 'spec_helper'
-require_relative '../wsdl/security/verifier/shared_context'
 
 # Integration tests for sign + verify round-trip.
 #

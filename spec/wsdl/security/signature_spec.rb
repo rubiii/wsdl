@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-describe WSDL::Security::Signature do
+RSpec.describe WSDL::Security::Signature do
   # Generate a self-signed certificate and key for testing
   let(:private_key) { OpenSSL::PKey::RSA.new(2048) }
   let(:certificate) do

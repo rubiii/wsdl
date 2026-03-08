@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-describe 'Integration with Daisycon' do
+RSpec.describe 'Integration with Daisycon' do
   subject(:client) { WSDL::Client.new fixture('wsdl/daisycon') }
 
   it 'returns a map of services and ports' do

@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-describe WSDL::Security::Constants do
+RSpec.describe WSDL::Security::Constants do
   describe 'NS module' do
     describe 'Security' do
       it 'defines WSSE for WS-Security Extension namespace' do

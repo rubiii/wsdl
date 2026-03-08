@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-describe WSDL::Security::Canonicalizer do
+RSpec.describe WSDL::Security::Canonicalizer do
   describe 'ALGORITHMS' do
     it 'includes exclusive_1_0 algorithm' do
       expect(described_class::ALGORITHMS).to have_key(:exclusive_1_0)

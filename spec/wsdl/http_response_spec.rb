@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-describe WSDL::HTTPResponse do
+RSpec.describe WSDL::HTTPResponse do
   describe '.new' do
     it 'creates a response with status, headers, and body' do
       response = described_class.new(status: 200, headers: { 'Content-Type' => 'text/xml' }, body: '<xml/>')

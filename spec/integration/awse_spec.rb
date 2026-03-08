@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-describe 'Integration with AWSE' do
+RSpec.describe 'Integration with AWSE' do
   subject(:client) { WSDL::Client.new fixture('wsdl/awse') }
 
   it 'returns a map of services and ports' do

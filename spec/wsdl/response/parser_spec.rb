@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-describe WSDL::Response::Parser do
+RSpec.describe WSDL::Response::Parser do
   include SchemaElementHelper
 
   describe '.parse without schema' do

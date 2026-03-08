@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-describe 'Integration with Betfair' do
+RSpec.describe 'Integration with Betfair' do
   subject(:client) { WSDL::Client.new fixture('wsdl/betfair') }
 
   let(:service_name) { :BFExchangeService }

@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-describe WSDL::Parser::Document do
+RSpec.describe WSDL::Parser::Document do
   describe '#messages' do
     it 'works with single element parts' do
       document = get_documents('wsdl/oracle').first

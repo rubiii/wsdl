@@ -1,9 +1,8 @@
 # frozen_string_literal: true
 
 require 'spec_helper'
-require_relative 'shared_context'
 
-describe WSDL::Security::Verifier::ElementPositionValidator, :verifier_helpers do
+RSpec.describe WSDL::Security::Verifier::ElementPositionValidator, :verifier_helpers do
   let(:document) { parse_xml(xml) }
   let(:element) { document.at_xpath(element_xpath, ns) }
   let(:validator) { described_class.new(element) }

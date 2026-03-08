@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-describe 'Integration with Bronto' do
+RSpec.describe 'Integration with Bronto' do
   subject(:client) { WSDL::Client.new fixture('wsdl/bronto') }
 
   let(:service_name) { :BrontoSoapApiImplService }

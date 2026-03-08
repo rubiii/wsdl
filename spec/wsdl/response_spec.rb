@@ -1,9 +1,8 @@
 # frozen_string_literal: true
 
 require 'spec_helper'
-require_relative 'security/verifier/shared_context'
 
-describe WSDL::Response, type: :unit do
+RSpec.describe WSDL::Response, type: :unit do
   include SchemaElementHelper
 
   def build_response(xml, **kwargs)

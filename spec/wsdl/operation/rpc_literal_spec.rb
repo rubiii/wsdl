@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-describe WSDL::Operation do
+RSpec.describe WSDL::Operation do
   # namespace reference:
   #   http://www.ibm.com/developerworks/webservices/library/ws-tip-namespace/index.html
   context 'with an rpc/literal document' do

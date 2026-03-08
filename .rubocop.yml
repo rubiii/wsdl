@@ -41,6 +41,9 @@ Metrics/ClassLength:
     - 'lib/wsdl/security/signature.rb'
     - 'lib/wsdl/security/verifier.rb'
 
+Metrics/ModuleLength:
+  Max: 120
+
 Metrics/MethodLength:
   Max: 29
 

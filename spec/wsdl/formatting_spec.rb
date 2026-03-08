@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-describe WSDL::Formatting do
+RSpec.describe WSDL::Formatting do
   describe '.format_bytes' do
     it 'formats megabytes' do
       expect(described_class.format_bytes(10 * 1024 * 1024)).to eq('10MB')

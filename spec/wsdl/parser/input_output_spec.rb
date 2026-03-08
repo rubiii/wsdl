@@ -3,7 +3,7 @@
 require 'spec_helper'
 require 'tempfile'
 
-describe WSDL::Parser::Input do
+RSpec.describe WSDL::Parser::Input do
   let(:tempfiles) { [] }
 
   after do

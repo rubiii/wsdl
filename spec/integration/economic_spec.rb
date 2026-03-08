@@ -3,7 +3,7 @@
 require 'spec_helper'
 require 'benchmark'
 
-describe 'Integration with Economic' do
+RSpec.describe 'Integration with Economic' do
   before :all do
     @client = WSDL::Client.new fixture('wsdl/economic')
   end

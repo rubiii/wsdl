@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-describe 'Integration with BLZService' do
+RSpec.describe 'Integration with BLZService' do
   subject(:client) { WSDL::Client.new fixture('wsdl/blz_service') }
 
   let(:service_name) { :BLZService }

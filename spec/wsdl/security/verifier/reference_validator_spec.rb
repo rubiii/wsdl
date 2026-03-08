@@ -1,9 +1,8 @@
 # frozen_string_literal: true
 
 require 'spec_helper'
-require_relative 'shared_context'
 
-describe WSDL::Security::Verifier::ReferenceValidator, :verifier_helpers do
+RSpec.describe WSDL::Security::Verifier::ReferenceValidator, :verifier_helpers do
   let(:document) { WSDL::XML::Parser.parse(xml, noblanks: true) }
   let(:signed_info_node) { document.at_xpath('//ds:SignedInfo', ns) }
   let(:validator) { described_class.new(document, signed_info_node) }

@@ -5,7 +5,7 @@ require 'spec_helper'
 # WebMock intercepts at the net/http socket layer, so the full adapter code
 # path (URI parsing, Net::HTTP.new, config, start, request, response parsing)
 # is exercised — unlike the unit spec which mocks Net::HTTP at the class level.
-describe WSDL::HTTPAdapter do
+RSpec.describe WSDL::HTTPAdapter do
   subject(:http) { described_class.new }
 
   describe '#get' do

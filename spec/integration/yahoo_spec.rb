@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-describe 'Integration with Yahoo\'s AccountService' do
+RSpec.describe 'Integration with Yahoo\'s AccountService' do
   subject(:client) { WSDL::Client.new fixture('wsdl/yahoo') }
 
   let(:service_name) { :AccountServiceService }

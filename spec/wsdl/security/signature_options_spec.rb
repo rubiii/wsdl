@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-describe WSDL::Security::SignatureOptions do
+RSpec.describe WSDL::Security::SignatureOptions do
   describe 'DEFAULTS' do
     it 'has sign_timestamp defaulting to true' do
       expect(described_class::DEFAULTS[:sign_timestamp]).to be true

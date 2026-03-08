@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-describe 'Request DSL' do
+RSpec.describe 'Request DSL' do
   let(:client) { WSDL::Client.new(fixture('wsdl/temperature'), strict_schema: false) }
   let(:operation) { client.operation('ConvertTemperature', 'ConvertTemperatureSoap12', 'ConvertTemp') }
 

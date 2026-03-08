@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-describe 'Integration with Stockquote service' do
+RSpec.describe 'Integration with Stockquote service' do
   subject(:client) { WSDL::Client.new fixture('wsdl/stockquote') }
 
   let(:service_name) { :StockQuote }

@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-describe 'Integration with Telefonkatalogen' do
+RSpec.describe 'Integration with Telefonkatalogen' do
   # reference: savon#295
   subject(:client) { WSDL::Client.new fixture('wsdl/telefonkatalogen') }
 

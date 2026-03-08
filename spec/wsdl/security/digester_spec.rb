@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-describe WSDL::Security::Digester do
+RSpec.describe WSDL::Security::Digester do
   describe 'ALGORITHMS' do
     it 'includes sha1 algorithm' do
       expect(described_class::ALGORITHMS).to have_key(:sha1)

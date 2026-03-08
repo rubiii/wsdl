@@ -3,7 +3,7 @@
 require 'spec_helper'
 require 'logger'
 
-describe WSDL::XML::Parser do
+RSpec.describe WSDL::XML::Parser do
   describe '.parse' do
     it 'parses valid XML' do
       xml = '<root><child>text</child></root>'

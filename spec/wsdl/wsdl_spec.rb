@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-describe WSDL do
+RSpec.describe WSDL do
   describe '.http_adapter' do
     after do
       # reset global state!

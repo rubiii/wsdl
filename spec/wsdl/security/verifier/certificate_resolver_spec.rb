@@ -1,9 +1,8 @@
 # frozen_string_literal: true
 
 require 'spec_helper'
-require_relative 'shared_context'
 
-describe WSDL::Security::Verifier::CertificateResolver, :verifier_helpers do
+RSpec.describe WSDL::Security::Verifier::CertificateResolver, :verifier_helpers do
   let(:document) { parse_xml(xml) }
   let(:security_node) { document.at_xpath('//wsse:Security', ns) }
   let(:signature_node) { document.at_xpath('//ds:Signature', ns) }

@@ -1,9 +1,8 @@
 # frozen_string_literal: true
 
 require 'spec_helper'
-require_relative 'shared_context'
 
-describe WSDL::Security::Verifier::StructureValidator, :verifier_helpers do
+RSpec.describe WSDL::Security::Verifier::StructureValidator, :verifier_helpers do
   let(:document) { parse_xml(xml) }
   let(:validator) { described_class.new(document) }
 

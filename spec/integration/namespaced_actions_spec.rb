@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-describe 'Integration with namespaced actions example' do
+RSpec.describe 'Integration with namespaced actions example' do
   subject(:client) { WSDL::Client.new fixture('wsdl/namespaced_actions') }
 
   it 'returns a map of services and ports' do

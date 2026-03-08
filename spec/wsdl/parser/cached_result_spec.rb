@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-describe WSDL::Parser::CachedResult do
+RSpec.describe WSDL::Parser::CachedResult do
   let(:wsdl) { fixture('wsdl/amazon') }
   let(:limits) { WSDL::Limits.new }
   let(:sandbox_paths) { [File.dirname(File.expand_path(wsdl))] }

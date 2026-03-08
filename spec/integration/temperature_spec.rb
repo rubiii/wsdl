@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-describe 'Integration with Temperature service' do
+RSpec.describe 'Integration with Temperature service' do
   subject(:client) { WSDL::Client.new fixture('wsdl/temperature') }
 
   let(:service_name) { :ConvertTemperature }

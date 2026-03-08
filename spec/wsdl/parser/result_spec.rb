@@ -3,7 +3,7 @@
 require 'spec_helper'
 require 'tmpdir'
 
-describe WSDL::Parser::Result do
+RSpec.describe WSDL::Parser::Result do
   subject(:parser_result) { described_class.parse fixture('wsdl/authentication'), http_mock }
 
   let(:operation_name) { 'authenticate' }

@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-describe WSDL::Security::IdGenerator do
+RSpec.describe WSDL::Security::IdGenerator do
   describe '.for' do
     it 'generates an ID with the given prefix' do
       id = described_class.for('Timestamp')

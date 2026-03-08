@@ -36,8 +36,15 @@ end
 
 RSpec.configure do |config|
   config.include SpecSupport
-  config.mock_with :rspec
+
+  config.disable_monkey_patching!
   config.order = 'random'
+  config.warnings = true
+  config.shared_context_metadata_behavior = :apply_to_host_groups
+  config.mock_with :rspec
+  config.expect_with :rspec do |c|
+    c.syntax = :expect
+  end
 
   # Reset global state to prevent test pollution.
   config.before do

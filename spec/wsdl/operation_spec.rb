@@ -3,7 +3,7 @@
 require 'spec_helper'
 require 'tempfile'
 
-describe WSDL::Operation do
+RSpec.describe WSDL::Operation do
   subject(:operation)  { described_class.new(operation_info, parser_result, http_mock) }
 
   let(:parser_result)  { WSDL::Parser::Result.parse fixture('wsdl/temperature'), http_mock }

@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-describe WSDL::Security::AlgorithmMapper do
+RSpec.describe WSDL::Security::AlgorithmMapper do
   describe '.digest_algorithm' do
     context 'with supported algorithms' do
       it 'maps SHA-1 URI' do

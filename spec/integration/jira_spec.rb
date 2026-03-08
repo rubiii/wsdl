@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-describe 'Integration with Atlassian Jira' do
+RSpec.describe 'Integration with Atlassian Jira' do
   subject(:client) { WSDL::Client.new fixture('wsdl/jira') }
 
   it 'returns a map of services and ports' do

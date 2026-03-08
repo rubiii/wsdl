@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-describe WSDL::Config do
+RSpec.describe WSDL::Config do
   subject(:config) { described_class.new }
 
   describe '.new' do

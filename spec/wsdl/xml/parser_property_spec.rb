@@ -6,7 +6,7 @@ require 'spec_helper'
 require 'rantly'
 require 'rantly/rspec_extensions'
 
-describe WSDL::XML::Parser do
+RSpec.describe WSDL::XML::Parser do
   describe 'property-based security' do
     let(:trial_count) { 100 }
 

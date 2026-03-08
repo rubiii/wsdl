@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-describe 'Integration with Authentication service' do
+RSpec.describe 'Integration with Authentication service' do
   subject(:client) { WSDL::Client.new fixture('wsdl/authentication') }
 
   it 'returns a map of services and ports' do

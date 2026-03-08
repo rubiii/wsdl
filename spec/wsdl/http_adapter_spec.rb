@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-describe WSDL::HTTPAdapter do
+RSpec.describe WSDL::HTTPAdapter do
   subject(:http) { described_class.new }
 
   describe '#config' do

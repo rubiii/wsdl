@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-describe WSDL::Security::Reference do
+RSpec.describe WSDL::Security::Reference do
   describe '#initialize' do
     context 'with required arguments' do
       subject(:reference) { described_class.new(id: 'Body-123', digest_value: 'abc123') }

@@ -4,7 +4,7 @@ require 'spec_helper'
 require 'tmpdir'
 require 'fileutils'
 
-describe WSDL::Parser::Resolver do
+RSpec.describe WSDL::Parser::Resolver do
   subject(:resolver) { described_class.new(http_test_client, **options) }
 
   let(:http_test_client) do

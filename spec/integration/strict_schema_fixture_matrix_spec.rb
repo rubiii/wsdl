@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-describe 'Strict schema fixture matrix' do
+RSpec.describe 'Strict schema fixture matrix' do
   let(:strict_supported_fixtures) do
     %w[
       wsdl/amazon

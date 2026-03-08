@@ -1,72 +1,10 @@
 # frozen_string_literal: true
 
-require 'spec_helper'
-
-# Shared context for verifier component specs.
-# Provides test certificates, keys, and helper methods for building test XML.
-RSpec.shared_context 'verifier test helpers' do
-  # Generate a self-signed certificate and key for testing
-  let(:private_key) { OpenSSL::PKey::RSA.new(2048) }
-
-  let(:certificate) do
-    cert = OpenSSL::X509::Certificate.new
-    cert.version = 2
-    cert.serial = 1
-    cert.subject = OpenSSL::X509::Name.new([['CN', 'Test Certificate']])
-    cert.issuer = cert.subject
-    cert.public_key = private_key.public_key
-    cert.not_before = Time.now
-    cert.not_after = Time.now + 3600
-    extension_factory = OpenSSL::X509::ExtensionFactory.new
-    extension_factory.subject_certificate = cert
-    extension_factory.issuer_certificate = cert
-    cert.add_extension(extension_factory.create_extension('subjectKeyIdentifier', 'hash', false))
-    cert.sign(private_key, OpenSSL::Digest.new('SHA256'))
-    cert
-  end
-
-  let(:other_private_key) { OpenSSL::PKey::RSA.new(2048) }
-
-  let(:other_certificate) do
-    cert = OpenSSL::X509::Certificate.new
-    cert.version = 2
-    cert.serial = 2
-    cert.subject = OpenSSL::X509::Name.new([['CN', 'Other Certificate']])
-    cert.issuer = cert.subject
-    cert.public_key = other_private_key.public_key
-    cert.not_before = Time.now
-    cert.not_after = Time.now + 3600
-    cert.sign(other_private_key, OpenSSL::Digest.new('SHA256'))
-    cert
-  end
-
-  let(:unsigned_soap_response) do
-    <<~XML
-      <?xml version="1.0" encoding="UTF-8"?>
-      <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
-        <soap:Header/>
-        <soap:Body>
-          <GetUserResponse xmlns="http://example.com/users">
-            <User>
-              <Name>John Doe</Name>
-            </User>
-          </GetUserResponse>
-        </soap:Body>
-      </soap:Envelope>
-    XML
-  end
-
-  let(:signed_soap_response) do
-    build_signed_response(body_id: 'Body-test123')
-  end
-
-  let(:signed_response_with_explicit_prefixes) do
-    build_signed_response(
-      body_id: 'Body-explicit123',
-      explicit_namespace_prefixes: true
-    )
-  end
-
+# Helper methods for verifier specs.
+# Extracted into a module so they are included via the ancestor chain
+# (once) rather than re-evaluated per example group, which triggers
+# Ruby "method redefined" warnings under config.warnings = true.
+module VerifierTestMethods
   # Builds a signed SOAP response using the library.
   # Body signing is always enabled.
   def build_signed_response(body_id: 'Body-test123', explicit_namespace_prefixes: false, digest_algorithm: :sha256,
@@ -101,8 +39,8 @@ RSpec.shared_context 'verifier test helpers' do
   end
 
   # Returns signed SOAP XML with the Body reference removed from SignedInfo.
-  def build_signed_response_without_body_reference(**options)
-    xml = build_signed_response(**options)
+  def build_signed_response_without_body_reference(**)
+    xml = build_signed_response(**)
     doc = Nokogiri::XML(xml)
     body_id = body_wsu_id(doc)
     return xml unless body_id
@@ -186,6 +124,74 @@ RSpec.shared_context 'verifier test helpers' do
     return nil unless body
 
     body.attribute_with_ns('Id', ns.fetch('wsu'))&.value
+  end
+end
+
+# Shared context for verifier component specs.
+# Provides test certificates, keys, and helper methods for building test XML.
+RSpec.shared_context 'verifier test helpers' do
+  include VerifierTestMethods
+
+  # Generate a self-signed certificate and key for testing
+  let(:private_key) { OpenSSL::PKey::RSA.new(2048) }
+
+  let(:certificate) do
+    cert = OpenSSL::X509::Certificate.new
+    cert.version = 2
+    cert.serial = 1
+    cert.subject = OpenSSL::X509::Name.new([['CN', 'Test Certificate']])
+    cert.issuer = cert.subject
+    cert.public_key = private_key.public_key
+    cert.not_before = Time.now
+    cert.not_after = Time.now + 3600
+    extension_factory = OpenSSL::X509::ExtensionFactory.new
+    extension_factory.subject_certificate = cert
+    extension_factory.issuer_certificate = cert
+    cert.add_extension(extension_factory.create_extension('subjectKeyIdentifier', 'hash', false))
+    cert.sign(private_key, OpenSSL::Digest.new('SHA256'))
+    cert
+  end
+
+  let(:other_private_key) { OpenSSL::PKey::RSA.new(2048) }
+
+  let(:other_certificate) do
+    cert = OpenSSL::X509::Certificate.new
+    cert.version = 2
+    cert.serial = 2
+    cert.subject = OpenSSL::X509::Name.new([['CN', 'Other Certificate']])
+    cert.issuer = cert.subject
+    cert.public_key = other_private_key.public_key
+    cert.not_before = Time.now
+    cert.not_after = Time.now + 3600
+    cert.sign(other_private_key, OpenSSL::Digest.new('SHA256'))
+    cert
+  end
+
+  let(:unsigned_soap_response) do
+    <<~XML
+      <?xml version="1.0" encoding="UTF-8"?>
+      <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+        <soap:Header/>
+        <soap:Body>
+          <GetUserResponse xmlns="http://example.com/users">
+            <User>
+              <Name>John Doe</Name>
+            </User>
+          </GetUserResponse>
+        </soap:Body>
+      </soap:Envelope>
+    XML
+  end
+
+  let(:signed_soap_response) do
+    build_signed_response(body_id: 'Body-test123')
+  end
+
+  let(:signed_response_with_explicit_prefixes) do
+    build_signed_response(
+      body_id: 'Body-explicit123',
+      explicit_namespace_prefixes: true
+    )
   end
 end
 

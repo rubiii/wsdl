@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-describe 'Integration with Atlassian Crowd' do
+RSpec.describe 'Integration with Atlassian Crowd' do
   subject(:client) { WSDL::Client.new fixture('wsdl/crowd') }
 
   it 'returns a map of services and ports' do

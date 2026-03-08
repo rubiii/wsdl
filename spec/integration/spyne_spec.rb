@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-describe 'Integration with a Spyne.io service' do
+RSpec.describe 'Integration with a Spyne.io service' do
   subject(:client) { WSDL::Client.new fixture('wsdl/spyne') }
 
   let(:service_name) { :HelloWorldService }

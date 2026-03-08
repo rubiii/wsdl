@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-describe WSDL::Limits do
+RSpec.describe WSDL::Limits do
   subject(:limits) { described_class.new }
 
   describe '.new' do

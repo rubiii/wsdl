@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-describe 'Integration with RATP' do
+RSpec.describe 'Integration with RATP' do
   subject(:client) { WSDL::Client.new fixture('wsdl/ratp') }
 
   let(:service_name) { :Wsiv }

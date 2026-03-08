@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-describe 'Nillable elements' do
+RSpec.describe 'Nillable elements' do
   let(:parser_result) { WSDL::Parser::Result.parse(fixture('wsdl/nillable_elements'), http_mock) }
   let(:operation_info) { parser_result.operation('UserService', 'UserServicePort', 'CreateUser') }
 

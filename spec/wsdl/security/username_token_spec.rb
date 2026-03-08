@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-describe WSDL::Security::UsernameToken do
+RSpec.describe WSDL::Security::UsernameToken do
   let(:username) { 'testuser' }
   let(:password) { 'secret123' }
 

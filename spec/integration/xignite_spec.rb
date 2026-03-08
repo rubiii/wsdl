@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-describe 'Integration with Xignite' do
+RSpec.describe 'Integration with Xignite' do
   # reference: http://www.xignite.com/product/global-security-master-data/api/GetSecurities/
   subject(:client) { WSDL::Client.new fixture('wsdl/xignite') }
 

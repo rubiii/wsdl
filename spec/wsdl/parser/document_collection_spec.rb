@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-describe WSDL::Parser::DocumentCollection do
+RSpec.describe WSDL::Parser::DocumentCollection do
   subject(:collection) { described_class.new }
 
   describe '#seal!' do

@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-describe 'Integration with Equifax' do
+RSpec.describe 'Integration with Equifax' do
   subject(:client) { WSDL::Client.new fixture('wsdl/equifax') }
 
   let(:service_name) { :canadav2 }

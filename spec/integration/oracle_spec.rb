@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-describe 'Integration with Oracle' do
+RSpec.describe 'Integration with Oracle' do
   subject(:client) { WSDL::Client.new fixture('wsdl/oracle') }
 
   it 'returns a map of services and ports' do

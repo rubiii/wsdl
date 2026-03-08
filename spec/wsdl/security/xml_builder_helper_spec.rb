@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-describe WSDL::Security::XmlBuilderHelper do
+RSpec.describe WSDL::Security::XmlBuilderHelper do
   let(:ns_ds) { WSDL::Security::Constants::NS::Signature::DS }
   let(:ns_wsse) { WSDL::Security::Constants::NS::Security::WSSE }
   let(:ns_wsu) { WSDL::Security::Constants::NS::Security::WSU }

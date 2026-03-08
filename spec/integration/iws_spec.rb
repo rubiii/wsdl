@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-describe 'Integration with IWS' do
+RSpec.describe 'Integration with IWS' do
   subject(:client) { WSDL::Client.new fixture('wsdl/iws') }
 
   it 'returns a map of services and ports' do

@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-describe 'Integration with Jetairways\'s SessionCreate Service' do
+RSpec.describe 'Integration with Jetairways\'s SessionCreate Service' do
   subject(:client) { WSDL::Client.new fixture('wsdl/jetairways') }
 
   let(:service_name) { :SessionCreate }

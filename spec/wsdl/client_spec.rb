@@ -3,7 +3,7 @@
 require 'spec_helper'
 require 'tempfile'
 
-describe WSDL::Client do
+RSpec.describe WSDL::Client do
   subject(:client) { described_class.new(wsdl, http: http_mock) }
 
   let(:wsdl) { fixture('wsdl/amazon') }
