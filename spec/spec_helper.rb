@@ -8,6 +8,16 @@ unless RUBY_PLATFORM =~ /java/
 
   SimpleCov.start do
     add_filter('spec')
+    enable_coverage(:branch)
+
+    minimum_coverage line: 95, branch: 80
+    minimum_coverage_by_file 80
+
+    add_group 'Security', 'lib/wsdl/security'
+    add_group 'Parser',   'lib/wsdl/parser'
+    add_group 'Request',  'lib/wsdl/request'
+    add_group 'Response', 'lib/wsdl/response'
+    add_group 'XML',      'lib/wsdl/xml'
   end
 end
 
