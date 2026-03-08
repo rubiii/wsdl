@@ -44,6 +44,10 @@ RSpec.configure do |config|
     c.syntax = :expect
   end
 
+  config.define_derived_metadata do |meta|
+    meta[:aggregate_failures] = true unless meta.key?(:aggregate_failures)
+  end
+
   # Reset global state to prevent test pollution.
   config.before do
     WSDL.cache = nil
