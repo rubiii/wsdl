@@ -7,7 +7,7 @@ require 'rantly/rspec_extensions'
 
 RSpec.describe WSDL::XML::Parser do
   describe 'property-based security' do
-    let(:trial_count) { 100 }
+    let(:trial_count) { Integer(ENV.fetch('PROPERTY_TRIALS', 100)) }
 
     describe 'invariant: DOCTYPE is always rejected regardless of casing or position' do
       it 'rejects randomly-cased DOCTYPE declarations' do
