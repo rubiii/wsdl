@@ -1,8 +1,6 @@
 # frozen_string_literal: true
 
-RSpec.describe WSDL::Response, type: :unit do
-  include SchemaElementHelper
-
+RSpec.describe WSDL::Response do
   def build_response(xml, **kwargs)
     described_class.new(http_response: WSDL::HTTPResponse.new(status: 200, body: xml), **kwargs)
   end

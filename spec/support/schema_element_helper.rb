@@ -52,5 +52,5 @@ module SchemaElementHelper
 end
 
 RSpec.configure do |config|
-  config.include SchemaElementHelper, type: :unit
+  config.include SchemaElementHelper
 end

@@ -1,8 +1,6 @@
 # frozen_string_literal: true
 
 RSpec.describe WSDL::Response::Parser do
-  include SchemaElementHelper
-
   describe '.parse without schema' do
     it 'parses an XML string into a Hash' do
       xml = '<Root><Child>content</Child></Root>'
