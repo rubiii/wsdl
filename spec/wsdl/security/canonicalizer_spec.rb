@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require 'spec_helper'
-
 RSpec.describe WSDL::Security::Canonicalizer do
   describe 'ALGORITHMS' do
     it 'includes exclusive_1_0 algorithm' do

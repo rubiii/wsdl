@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require 'spec_helper'
-
 RSpec.describe WSDL::XML::ElementBuilder do
   let(:schemas) { WSDL::Schema::Collection.new }
 

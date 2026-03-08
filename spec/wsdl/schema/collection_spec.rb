@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require 'spec_helper'
-
 RSpec.describe WSDL::Schema::Collection do
   subject(:collection) { described_class.new }
 

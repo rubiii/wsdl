@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require 'spec_helper'
-
 RSpec.describe WSDL::Security::AlgorithmMapper do
   describe '.digest_algorithm' do
     context 'with supported algorithms' do

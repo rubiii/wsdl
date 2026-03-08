@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require 'spec_helper'
-
 RSpec.describe WSDL::Security::Verifier::ElementPositionValidator, :verifier_helpers do
   let(:document) { parse_xml(xml) }
   let(:element) { document.at_xpath(element_xpath, ns) }

@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require 'spec_helper'
-
 RSpec.describe WSDL::Security::SignatureOptions do
   describe 'DEFAULTS' do
     it 'has sign_timestamp defaulting to true' do

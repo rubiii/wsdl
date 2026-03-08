@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require 'spec_helper'
-
 RSpec.describe 'Integration with an RPC/Literal example' do
   subject(:client) { WSDL::Client.new fixture('wsdl/rpc_literal') }
 

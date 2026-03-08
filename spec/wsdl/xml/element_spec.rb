@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require 'spec_helper'
-
 RSpec.describe WSDL::XML::Element do
   describe '#attributes' do
     subject(:element) { described_class.new }

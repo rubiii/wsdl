@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require 'spec_helper'
-
 RSpec.describe WSDL::Security::Verifier, :verifier_helpers do
   describe '#initialize' do
     it 'accepts an XML string' do

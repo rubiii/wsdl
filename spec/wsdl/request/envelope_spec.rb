@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require 'spec_helper'
-
 RSpec.describe WSDL::Request::Envelope do
   describe '#namespace_uri_for' do
     it 'returns the URI for a declared prefix' do

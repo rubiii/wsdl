@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require 'spec_helper'
-
 RSpec.describe WSDL::Response::TypeCoercer do
   describe '.coerce' do
     it 'leaves unknown types untouched' do

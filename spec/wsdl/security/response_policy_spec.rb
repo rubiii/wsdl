@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require 'spec_helper'
-
 RSpec.describe WSDL::Security::ResponsePolicy do
   describe '.default' do
     it 'returns a frozen disabled policy with default options' do

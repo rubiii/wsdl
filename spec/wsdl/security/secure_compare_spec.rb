@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-require 'spec_helper'
 require 'wsdl/security/secure_compare'
 
 RSpec.describe WSDL::Security::SecureCompare do

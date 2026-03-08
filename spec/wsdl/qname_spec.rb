@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require 'spec_helper'
-
 RSpec.describe WSDL::QName do
   describe '.parse' do
     let(:namespaces) do

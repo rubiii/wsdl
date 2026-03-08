@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require 'spec_helper'
-
 RSpec.describe 'Integration with Rio II' do
   before :all do
     wsdl_url  = 'http://193.155.1.72/MyCentral-RioII-Services/SecurityService.svc?wsdl'

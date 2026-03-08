@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require 'spec_helper'
-
 RSpec.describe WSDL::Security::Reference do
   describe '#initialize' do
     context 'with required arguments' do

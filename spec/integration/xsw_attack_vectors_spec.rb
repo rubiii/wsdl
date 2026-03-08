@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require 'spec_helper'
-
 # Integration tests for XML Signature Wrapping (XSW) attack detection.
 #
 # Each test starts from a legitimately signed SOAP envelope (produced by

@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require 'spec_helper'
-
 RSpec.describe WSDL::Security::ResponseVerification do
   describe WSDL::Security::ResponseVerification::Certificate do
     describe '.default' do

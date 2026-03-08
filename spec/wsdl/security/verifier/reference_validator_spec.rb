@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require 'spec_helper'
-
 RSpec.describe WSDL::Security::Verifier::ReferenceValidator, :verifier_helpers do
   let(:document) { WSDL::XML::Parser.parse(xml, noblanks: true) }
   let(:signed_info_node) { document.at_xpath('//ds:SignedInfo', ns) }

@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require 'spec_helper'
-
 RSpec.describe WSDL::Security::RequestPolicy do
   describe '.empty' do
     it 'returns a frozen unconfigured policy' do

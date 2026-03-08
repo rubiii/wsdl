@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require 'spec_helper'
-
 RSpec.describe 'Integration with Telefonkatalogen' do
   # reference: savon#295
   subject(:client) { WSDL::Client.new fixture('wsdl/telefonkatalogen') }

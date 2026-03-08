@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require 'spec_helper'
-
 # rubocop:disable Style/RedundantFetchBlock
 # Our Cache#fetch requires a block - it doesn't support the two-argument form like Hash#fetch
 RSpec.describe WSDL::Cache do

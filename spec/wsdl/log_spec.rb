@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require 'spec_helper'
-
 RSpec.describe WSDL::Log do
   describe 'WSDL.logger' do
     it 'defaults to a NullLogger' do

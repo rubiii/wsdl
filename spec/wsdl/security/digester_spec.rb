@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require 'spec_helper'
-
 RSpec.describe WSDL::Security::Digester do
   describe 'ALGORITHMS' do
     it 'includes sha1 algorithm' do

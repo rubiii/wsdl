@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require 'spec_helper'
-
 RSpec.describe WSDL::HTTPAdapter do
   subject(:http) { described_class.new }
 

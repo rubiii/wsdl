@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require 'spec_helper'
-
 RSpec.describe WSDL::Source do
   describe '#url?' do
     it 'returns true for HTTP(S) URLs' do

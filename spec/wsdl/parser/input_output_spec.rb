@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-require 'spec_helper'
 require 'tempfile'
 
 RSpec.describe WSDL::Parser::Input do

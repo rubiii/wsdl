@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require 'spec_helper'
-
 RSpec.describe 'Integration with Travelport' do
   # The Travelport WSDL imports schemas from sibling directories (../common_v32_0/)
   # so we need to explicitly sandbox to the parent travelport directory

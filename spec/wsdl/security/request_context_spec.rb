@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require 'spec_helper'
-
 RSpec.describe WSDL::Security::RequestContext do
   let(:signature_options) do
     WSDL::Security::Signature.new(

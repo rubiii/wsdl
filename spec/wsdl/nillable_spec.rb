@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require 'spec_helper'
-
 RSpec.describe 'Nillable elements' do
   let(:parser_result) { WSDL::Parser::Result.parse(fixture('wsdl/nillable_elements'), http_mock) }
   let(:operation_info) { parser_result.operation('UserService', 'UserServicePort', 'CreateUser') }

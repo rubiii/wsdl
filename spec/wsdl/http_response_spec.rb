@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require 'spec_helper'
-
 RSpec.describe WSDL::HTTPResponse do
   describe '.new' do
     it 'creates a response with status, headers, and body' do

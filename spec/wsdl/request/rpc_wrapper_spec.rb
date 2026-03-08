@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require 'spec_helper'
-
 RSpec.describe WSDL::Request::RPCWrapper do
   subject(:wrapper) do
     described_class.new(

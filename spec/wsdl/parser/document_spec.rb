@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require 'spec_helper'
-
 RSpec.describe WSDL::Parser::Document do
   describe '#messages' do
     it 'works with single element parts' do

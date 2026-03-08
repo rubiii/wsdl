@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require 'spec_helper'
-
 RSpec.describe WSDL::Security::Verifier::TimestampValidator do
   let(:clock_skew) { 300 } # 5 minutes default
   let(:reference_time) { Time.utc(2025, 1, 15, 12, 0, 0) }

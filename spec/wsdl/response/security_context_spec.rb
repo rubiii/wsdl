@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require 'spec_helper'
-
 RSpec.describe WSDL::Response::SecurityContext, :verifier_helpers do
   include_context 'verifier test helpers'
 

@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require 'spec_helper'
-
 # Integration tests for sign + verify round-trip.
 #
 # These tests sign a SOAP envelope with SecurityHeader and then verify the

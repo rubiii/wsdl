@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require 'spec_helper'
-
 RSpec.describe WSDL::Security::XmlBuilderHelper do
   let(:ns_ds) { WSDL::Security::Constants::NS::Signature::DS }
   let(:ns_wsse) { WSDL::Security::Constants::NS::Security::WSSE }

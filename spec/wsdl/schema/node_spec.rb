@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require 'spec_helper'
-
 RSpec.describe WSDL::Schema::Node do
   def new_node(xml, collection = nil, context = {})
     node = Nokogiri.XML(xml).root

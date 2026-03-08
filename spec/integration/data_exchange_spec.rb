@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require 'spec_helper'
-
 RSpec.describe 'Integration with DataExchange' do
   subject(:client) { WSDL::Client.new fixture('wsdl/data_exchange') }
 

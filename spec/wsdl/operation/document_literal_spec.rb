@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require 'spec_helper'
-
 RSpec.describe WSDL::Operation do
   # namespace reference:
   #   http://www.ibm.com/developerworks/webservices/library/ws-tip-namespace/index.html

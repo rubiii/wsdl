@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require 'spec_helper'
-
 RSpec.describe 'Integration with Wasmuth' do
   subject(:client) { WSDL::Client.new(wsdl_url, http: http_mock) }
 

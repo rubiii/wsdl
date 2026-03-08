@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require 'spec_helper'
-
 RSpec.describe WSDL::Request::SecurityConflictDetector do
   subject(:detector) { described_class.new(document:, security:) }
 

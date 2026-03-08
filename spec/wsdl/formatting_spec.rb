@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require 'spec_helper'
-
 RSpec.describe WSDL::Formatting do
   describe '.format_bytes' do
     it 'formats megabytes' do

@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require 'spec_helper'
-
 RSpec.describe 'Integration with BLZService' do
   subject(:client) { WSDL::Client.new fixture('wsdl/blz_service') }
 

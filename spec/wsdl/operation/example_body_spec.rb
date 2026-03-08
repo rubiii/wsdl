@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require 'spec_helper'
-
 RSpec.describe WSDL::Operation do
   let(:add_logins) do
     client = WSDL::Client.new fixture('wsdl/bronto')

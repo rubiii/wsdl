@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require 'spec_helper'
-
 RSpec.describe WSDL::Security::Verifier::CertificateResolver, :verifier_helpers do
   let(:document) { parse_xml(xml) }
   let(:security_node) { document.at_xpath('//wsse:Security', ns) }

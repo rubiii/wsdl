@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require 'spec_helper'
-
 RSpec.describe WSDL::Security::Timestamp do
   describe 'DEFAULT_TTL' do
     it 'is 300 seconds (5 minutes)' do

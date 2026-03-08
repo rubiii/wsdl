@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require 'spec_helper'
-
 RSpec.describe 'Strict schema fixture matrix' do
   let(:strict_supported_fixtures) do
     %w[

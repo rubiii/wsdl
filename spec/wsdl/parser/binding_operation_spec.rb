@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require 'spec_helper'
-
 RSpec.describe WSDL::Parser::BindingOperation do
   describe '#input_body' do
     it 'returns input body attributes' do

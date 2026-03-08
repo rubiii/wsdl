@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require 'spec_helper'
-
 RSpec.describe WSDL::Security::CredentialNormalizer do
   subject(:normalizer) { described_class.new }
 

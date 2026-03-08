@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require 'spec_helper'
-
 RSpec.describe WSDL::Parser::CachedResult do
   let(:wsdl) { fixture('wsdl/amazon') }
   let(:limits) { WSDL::Limits.new }

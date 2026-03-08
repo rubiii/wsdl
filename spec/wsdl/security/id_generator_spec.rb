@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require 'spec_helper'
-
 RSpec.describe WSDL::Security::IdGenerator do
   describe '.for' do
     it 'generates an ID with the given prefix' do

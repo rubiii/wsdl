@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require 'spec_helper'
-
 RSpec.describe WSDL::Security::SecurityHeader do
   # Generate a self-signed certificate and key for testing
   let(:private_key) { OpenSSL::PKey::RSA.new(2048) }

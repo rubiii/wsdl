@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require 'spec_helper'
-
 RSpec.describe 'Integration with Atlassian Crowd' do
   subject(:client) { WSDL::Client.new fixture('wsdl/crowd') }
 

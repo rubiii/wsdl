@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require 'spec_helper'
-
 RSpec.describe WSDL::Contract::PartContract do
   # rubocop:disable Metrics/ParameterLists
   def build_element(name:, base_type: nil, children: [], attributes: [],

@@ -2,7 +2,6 @@
 
 # rubocop:disable Style/MultilineBlockChain
 
-require 'spec_helper'
 require 'rantly'
 require 'rantly/rspec_extensions'
 
