@@ -15,6 +15,7 @@ gem 'irb' if RUBY_VERSION >= '4.0'
 group :development do
   gem 'benchmark-ips', '~> 2.14', require: false
   gem 'equivalent-xml', '~> 0.6'
+  gem 'mutant-rspec', '~> 0.12', require: false
   gem 'rake', '~> 13.3'
   gem 'rantly', '~> 2.0', require: false
   gem 'redcarpet', require: false

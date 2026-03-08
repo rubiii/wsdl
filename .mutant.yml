@@ -1,0 +1,10 @@
+usage: opensource
+includes:
+  - lib
+requires:
+  - wsdl
+integration:
+  name: rspec
+mutation:
+  timeout: 10.0
+jobs: 4
