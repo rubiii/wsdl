@@ -24,8 +24,6 @@ module WSDL
     # @see https://ruby-doc.org/3.2.0/exts/openssl/OpenSSL.html#method-c-secure_compare
     #
     module SecureCompare
-      module_function
-
       # Performs a timing-safe comparison of two strings.
       #
       # This method uses `OpenSSL.secure_compare` which:
@@ -48,7 +46,7 @@ module WSDL
       # @example With Base64-encoded digests
       #   SecureCompare.equal?(expected_digest, computed_digest)
       #
-      def equal?(expected, actual)
+      def self.equal?(expected, actual)
         return false unless expected.is_a?(String) && actual.is_a?(String)
 
         OpenSSL.secure_compare(expected, actual)
