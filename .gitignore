@@ -7,7 +7,6 @@ pkg
 *~
 *.rbc
 *.gem
-.rspec
 .bundle
 Gemfile.lock
 bin/

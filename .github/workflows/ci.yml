@@ -35,7 +35,7 @@ jobs:
         run: bundle exec rake yard:audit
 
       - name: Run specs
-        run: bundle exec rake spec
+        run: bundle exec rake spec -f documentation
 
   benchmark:
     runs-on: ubuntu-latest
