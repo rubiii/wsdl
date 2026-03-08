@@ -19,6 +19,7 @@ group :development do
   gem 'rantly', '~> 2.0', require: false
   gem 'redcarpet', require: false
   gem 'rspec', '~> 3'
+  gem 'rspec-github', '~> 2.4', require: false
   gem 'rubocop', require: false
   gem 'rubocop-rake', require: false
   gem 'rubocop-rspec', require: false

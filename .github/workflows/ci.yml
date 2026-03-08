@@ -35,7 +35,7 @@ jobs:
         run: bundle exec rake yard:audit
 
       - name: Run specs
-        run: bundle exec rake spec -f documentation
+        run: bundle exec rspec --require rspec/github --format RSpec::Github::Formatter
 
   benchmark:
     runs-on: ubuntu-latest
