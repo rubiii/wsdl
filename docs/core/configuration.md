@@ -223,79 +223,22 @@ This is useful when most operations work fine with formatted XML but a specific 
 
 ## HTTP Adapter
 
-The HTTP adapter handles WSDL/schema fetching (`get`) and SOAP operation calls (`post`).
+The HTTP adapter handles WSDL/schema fetching (`get`) and SOAP operation calls (`post`). The built-in `WSDL::HTTPAdapter` uses Ruby's stdlib `net/http` with secure defaults.
 
-### Adapter interface
-
-Custom adapters must implement:
-
-| Method | Signature | Purpose |
-|--------|-----------|---------|
-| `get` | `get(url) → HTTPResponse` | Fetch WSDL and schema documents |
-| `post` | `post(url, headers, body) → HTTPResponse` | Send SOAP requests |
-| `cache_key` | `cache_key → String` | Stable non-empty identity for cache partitioning |
-| `config` | `config → Object` | Configuration object exposed via `client.http` (e.g. timeouts, SSL) |
-
-```ruby
-class MyHTTPAdapter
-  def initialize
-    @connection = Faraday.new
-  end
-
-  # Expose the Faraday connection for user configuration
-  # (e.g. client.http.options.timeout = 30).
-  attr_reader :connection
-  alias config connection
-
-  def cache_key
-    'my-http-adapter:v1'
-  end
-
-  def get(url)
-    @connection.get(url).body
-  end
-
-  def post(url, headers, body)
-    @connection.post(url, body, headers).body
-  end
-end
-```
-
-### Setting the adapter
-
-```ruby
-# Global (all new clients)
-WSDL.http_adapter = MyHTTPAdapter
-
-# Per-client
-client = WSDL::Client.new(wsdl, http: MyHTTPAdapter.new)
-```
-
-### Default adapter
-
-The built-in `WSDL::HTTPAdapter` uses Ruby's stdlib `net/http` with secure defaults (no external dependencies):
-
-- Open timeout: 30s, write: 60s, read: 120s
-- Redirect limit: 5
-- SSL verification: enabled (VERIFY_PEER)
-- SSRF protection: redirects to private/reserved IPs are blocked
-- Scheme downgrade protection: HTTPS-to-HTTP redirects are blocked
-- DNS resolution timeout: 5s (blocks redirect if resolution fails)
-
-Configure via `client.http` (returns a `WSDL::HTTPAdapter::Config`):
 
 ```ruby
 client = WSDL::Client.new(wsdl)
 client.http.open_timeout = 10
 client.http.read_timeout = 60
 client.http.ca_file = '/path/to/ca-bundle.crt'
-client.http.cert = OpenSSL::X509::Certificate.new(File.read('/path/to/client.crt'))
-client.http.key = OpenSSL::PKey::RSA.new(File.read('/path/to/client.key'))
 ```
+
+See [HTTP Adapter](http-adapter.md) for the full security model, blocked IP ranges, custom adapter interface, and configuration options.
 
 ## See also
 
 - [Getting Started](../getting_started.md)
+- [HTTP Adapter](http-adapter.md)
 - [Error Hierarchy](../reference/errors.md)
 - [Resolving Imports](resolving-imports.md)
 - [Strict Schema Fixture Matrix](../reference/strict-schema-fixture-matrix.md)

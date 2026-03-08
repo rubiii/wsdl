@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require 'logger'
+
 RSpec.describe WSDL::HTTPAdapter do
   subject(:http) { described_class.new }
 
@@ -60,179 +62,6 @@ RSpec.describe WSDL::HTTPAdapter do
     end
   end
 
-  describe 'redirect SSRF protection' do
-    let(:origin_uri) { URI.parse('https://example.com/service?wsdl') }
-
-    describe 'blocks private/reserved IP address literals' do
-      %w[
-        http://127.0.0.1/secret
-        http://10.0.0.1/internal
-        http://172.16.0.1/internal
-        http://192.168.1.1/internal
-        http://169.254.169.254/latest/meta-data/
-        http://100.64.0.1/internal
-        http://0.0.0.1/internal
-      ].each do |target|
-        it "blocks redirect to #{target}" do
-          uri = URI.parse(target)
-
-          expect { http.send(:validate_redirect_target!, uri) }
-            .to raise_error(WSDL::UnsafeRedirectError, %r{private/reserved address blocked})
-        end
-      end
-    end
-
-    describe 'blocks private IPv6 address literals' do
-      %w[
-        http://[::1]/secret
-        http://[fc00::1]/internal
-        http://[fe80::1]/internal
-      ].each do |target|
-        it "blocks redirect to #{target}" do
-          uri = URI.parse(target)
-
-          expect { http.send(:validate_redirect_target!, uri) }
-            .to raise_error(WSDL::UnsafeRedirectError, %r{private/reserved address blocked})
-        end
-      end
-    end
-
-    describe 'blocks IPv6 addresses with zone IDs' do
-      # IPv6 zone IDs (e.g., fe80::1%eth0) cause IPAddr::InvalidAddressError,
-      # which without zone stripping would bypass private IP detection entirely.
-      # Ruby's URI.parse rejects zone IDs, so we stub hostname to simulate a
-      # malicious redirect Location header that includes one.
-
-      {
-        'link-local' => 'fe80::1%eth0',
-        'loopback' => '::1%lo',
-        'unique local' => 'fc00::1%eth0'
-      }.each do |label, address|
-        it "blocks #{label} IPv6 with zone ID (#{address})" do
-          uri = instance_double(URI::HTTP, hostname: address, host: address, to_s: "http://[#{address}]/")
-
-          expect { http.send(:validate_redirect_target!, uri) }
-            .to raise_error(WSDL::UnsafeRedirectError, %r{private/reserved address blocked})
-        end
-      end
-    end
-
-    describe 'allows public IP addresses' do
-      %w[
-        https://93.184.216.34/service
-        https://8.8.8.8/service
-        https://203.0.113.1/service
-      ].each do |target|
-        it "allows redirect to #{target}" do
-          uri = URI.parse(target)
-
-          expect { http.send(:validate_redirect_target!, uri) }.not_to raise_error
-        end
-      end
-    end
-
-    describe 'DNS resolution' do
-      it 'blocks hostnames that resolve to private addresses' do
-        uri = URI.parse('https://evil.example.com/internal')
-        allow(Resolv).to receive(:getaddresses).with('evil.example.com').and_return(['127.0.0.1'])
-
-        expect { http.send(:validate_redirect_target!, uri) }
-          .to raise_error(WSDL::UnsafeRedirectError)
-      end
-
-      it 'blocks when any resolved address is private' do
-        uri = URI.parse('https://dual.example.com/service')
-        allow(Resolv).to receive(:getaddresses).with('dual.example.com').and_return(['93.184.216.34', '10.0.0.1'])
-
-        expect { http.send(:validate_redirect_target!, uri) }
-          .to raise_error(WSDL::UnsafeRedirectError)
-      end
-
-      it 'allows hostnames that resolve to public addresses' do
-        uri = URI.parse('https://safe.example.com/service')
-        allow(Resolv).to receive(:getaddresses).with('safe.example.com').and_return(['93.184.216.34'])
-
-        expect { http.send(:validate_redirect_target!, uri) }.not_to raise_error
-      end
-
-      it 'blocks redirect when DNS resolution times out' do
-        uri = URI.parse('https://slow-dns.example.com/service')
-        allow(Resolv).to receive(:getaddresses).with('slow-dns.example.com') { raise Timeout::Error }
-
-        expect { http.send(:validate_redirect_target!, uri) }
-          .to raise_error(WSDL::UnsafeRedirectError, /DNS resolution failed/)
-      end
-
-      it 'blocks redirect when DNS resolution fails with ResolvError' do
-        uri = URI.parse('https://nonexistent.example.com/service')
-        allow(Resolv).to receive(:getaddresses).with('nonexistent.example.com') { raise Resolv::ResolvError }
-
-        expect { http.send(:validate_redirect_target!, uri) }
-          .to raise_error(WSDL::UnsafeRedirectError, /DNS resolution failed/)
-      end
-
-      it 'blocks redirect when DNS resolution fails with SocketError' do
-        uri = URI.parse('https://broken-dns.example.com/service')
-        allow(Resolv).to receive(:getaddresses).with('broken-dns.example.com') { raise SocketError }
-
-        expect { http.send(:validate_redirect_target!, uri) }
-          .to raise_error(WSDL::UnsafeRedirectError, /DNS resolution failed/)
-      end
-
-      it 'includes the target URL in DNS failure errors' do
-        uri = URI.parse('https://timeout.example.com/service')
-        allow(Resolv).to receive(:getaddresses).with('timeout.example.com') { raise Timeout::Error }
-
-        expect { http.send(:validate_redirect_target!, uri) }
-          .to raise_error(WSDL::UnsafeRedirectError) { |error|
-            expect(error.target_url).to eq('https://timeout.example.com/service')
-          }
-      end
-    end
-
-    describe 'error attributes' do
-      it 'includes the target URL in the error' do
-        uri = URI.parse('http://127.0.0.1/secret')
-
-        expect { http.send(:validate_redirect_target!, uri) }
-          .to raise_error(WSDL::UnsafeRedirectError) { |error|
-            expect(error.target_url).to eq('http://127.0.0.1/secret')
-          }
-      end
-    end
-  end
-
-  describe 'HTTPS to HTTP downgrade protection' do
-    it 'blocks HTTPS to HTTP downgrades' do
-      original = URI.parse('https://example.com/service')
-      target = URI.parse('http://example.com/service')
-
-      expect { http.send(:validate_redirect_scheme!, original, target) }
-        .to raise_error(WSDL::UnsafeRedirectError, /HTTPS to HTTP downgrade/)
-    end
-
-    it 'allows HTTP to HTTP redirects' do
-      original = URI.parse('http://example.com/service')
-      target = URI.parse('http://other.example.com/service')
-
-      expect { http.send(:validate_redirect_scheme!, original, target) }.not_to raise_error
-    end
-
-    it 'allows HTTPS to HTTPS redirects' do
-      original = URI.parse('https://example.com/service')
-      target = URI.parse('https://other.example.com/service')
-
-      expect { http.send(:validate_redirect_scheme!, original, target) }.not_to raise_error
-    end
-
-    it 'allows HTTP to HTTPS upgrades' do
-      original = URI.parse('http://example.com/service')
-      target = URI.parse('https://example.com/service')
-
-      expect { http.send(:validate_redirect_scheme!, original, target) }.not_to raise_error
-    end
-  end
-
   describe 'redirect following' do
     let(:ok_net_response) do
       instance_double(Net::HTTPOK, code: '200', body: 'ok').tap do |r|
@@ -244,6 +73,7 @@ RSpec.describe WSDL::HTTPAdapter do
 
     before do
       allow(Net::HTTP).to receive(:new).and_return(net_http)
+      allow(net_http).to receive(:ipaddr=)
       allow(net_http).to receive(:use_ssl=)
       allow(net_http).to receive(:start).and_yield
       allow(net_http).to receive(:open_timeout=)
@@ -318,17 +148,409 @@ RSpec.describe WSDL::HTTPAdapter do
         .to raise_error(WSDL::TooManyRedirectsError, /Too many redirects/)
     end
 
-    it 'treats a redirect without Location header as a redirect to the same URI' do
+    it 'strips sensitive headers on cross-origin 307 redirect' do
+      redirect_response = instance_double(Net::HTTPTemporaryRedirect, code: '307', body: '').tap do |r|
+        allow(r).to receive(:each_header)
+          .and_yield('location', 'https://other.example.com/new')
+          .and_yield('content-type', 'text/html')
+      end
+
+      allow(net_http).to receive(:request).and_return(redirect_response, ok_net_response)
+      allow(Resolv).to receive(:getaddresses).with('other.example.com').and_return(['93.184.216.34'])
+
+      request_headers = []
+      allow(net_http).to receive(:request) do |req|
+        request_headers << req.to_hash
+        request_headers.size == 1 ? redirect_response : ok_net_response
+      end
+
+      http.post('https://example.com/api',
+                { 'Authorization' => 'Bearer secret', 'Content-Type' => 'text/xml', 'Cookie' => 'session=abc' },
+                '<soap/>')
+
+      # First request should have Authorization and Cookie
+      expect(request_headers[0]).to include('authorization', 'cookie')
+      # Second request (cross-origin) should not
+      expect(request_headers[1]).not_to include('authorization')
+      expect(request_headers[1]).not_to include('cookie')
+    end
+
+    it 'preserves sensitive headers on same-origin 307 redirect' do
+      redirect_response = instance_double(Net::HTTPTemporaryRedirect, code: '307', body: '').tap do |r|
+        allow(r).to receive(:each_header)
+          .and_yield('location', 'https://example.com/new')
+          .and_yield('content-type', 'text/html')
+      end
+
+      allow(net_http).to receive(:request).and_return(redirect_response, ok_net_response)
+      allow(Resolv).to receive(:getaddresses).with('example.com').and_return(['93.184.216.34'])
+
+      request_headers = []
+      allow(net_http).to receive(:request) do |req|
+        request_headers << req.to_hash
+        request_headers.size == 1 ? redirect_response : ok_net_response
+      end
+
+      http.post('https://example.com/api',
+                { 'Authorization' => 'Bearer secret', 'Content-Type' => 'text/xml' },
+                '<soap/>')
+
+      # Both requests should have Authorization
+      expect(request_headers[0]).to include('authorization')
+      expect(request_headers[1]).to include('authorization')
+    end
+
+    it 'strips sensitive headers on cross-origin 308 redirect' do
+      redirect_response = instance_double(Net::HTTPPermanentRedirect, code: '308', body: '').tap do |r|
+        allow(r).to receive(:each_header)
+          .and_yield('location', 'https://other.example.com/new')
+          .and_yield('content-type', 'text/html')
+      end
+
+      allow(net_http).to receive(:request).and_return(redirect_response, ok_net_response)
+      allow(Resolv).to receive(:getaddresses).with('other.example.com').and_return(['93.184.216.34'])
+
+      request_headers = []
+      allow(net_http).to receive(:request) do |req|
+        request_headers << req.to_hash
+        request_headers.size == 1 ? redirect_response : ok_net_response
+      end
+
+      http.post('https://example.com/api',
+                { 'Authorization' => 'Bearer secret', 'Content-Type' => 'text/xml' },
+                '<soap/>')
+
+      expect(request_headers[1]).not_to include('authorization')
+      # Content-Type should be preserved (not sensitive)
+      expect(request_headers[1]).to include('content-type')
+    end
+
+    it 'preserves sensitive headers on http to https upgrade to same host' do
+      redirect_response = instance_double(Net::HTTPTemporaryRedirect, code: '307', body: '').tap do |r|
+        allow(r).to receive(:each_header)
+          .and_yield('location', 'https://example.com/new')
+          .and_yield('content-type', 'text/html')
+      end
+
+      allow(net_http).to receive(:request).and_return(redirect_response, ok_net_response)
+      allow(Resolv).to receive(:getaddresses).with('example.com').and_return(['93.184.216.34'])
+
+      request_headers = []
+      allow(net_http).to receive(:request) do |req|
+        request_headers << req.to_hash
+        request_headers.size == 1 ? redirect_response : ok_net_response
+      end
+
+      http.post('http://example.com/api',
+                { 'Authorization' => 'Bearer secret', 'Content-Type' => 'text/xml' },
+                '<soap/>')
+
+      # http→https on same host is a TLS upgrade, not a cross-origin redirect
+      expect(request_headers[1]).to include('authorization')
+    end
+
+    it 'pins the resolved IP on the connection to prevent DNS rebinding' do
+      redirect_response = instance_double(Net::HTTPFound, code: '302', body: '').tap do |r|
+        allow(r).to receive(:each_header)
+          .and_yield('location', 'https://rebind.example.com/target')
+          .and_yield('content-type', 'text/html')
+      end
+
+      allow(net_http).to receive(:request).and_return(redirect_response, ok_net_response)
+      allow(Resolv).to receive(:getaddresses).with('rebind.example.com').and_return(['93.184.216.34'])
+
+      http.get('https://example.com/start')
+
+      expect(net_http).to have_received(:ipaddr=).with('93.184.216.34')
+    end
+
+    it 'pins the IP literal directly without DNS resolution' do
+      redirect_response = instance_double(Net::HTTPFound, code: '302', body: '').tap do |r|
+        allow(r).to receive(:each_header)
+          .and_yield('location', 'https://93.184.216.34/target')
+          .and_yield('content-type', 'text/html')
+      end
+
+      allow(net_http).to receive(:request).and_return(redirect_response, ok_net_response)
+
+      http.get('https://example.com/start')
+
+      expect(net_http).to have_received(:ipaddr=).with('93.184.216.34')
+    end
+
+    it 'does not pin an IP for the initial (non-redirect) request' do
+      allow(net_http).to receive(:request).and_return(ok_net_response)
+
+      http.get('https://example.com/start')
+
+      expect(net_http).not_to have_received(:ipaddr=)
+    end
+
+    it 'raises immediately when a redirect has no Location header' do
       redirect_response = instance_double(Net::HTTPFound, code: '302', body: '').tap do |r|
         allow(r).to receive(:each_header).and_yield('content-type', 'text/html')
       end
 
       allow(net_http).to receive(:request).and_return(redirect_response)
 
-      http.config.max_redirects = 1
+      expect { http.get('https://example.com/start') }
+        .to raise_error(WSDL::UnsafeRedirectError, /no Location header/)
+    end
+
+    it 'raises immediately when a redirect has a blank Location header' do
+      redirect_response = instance_double(Net::HTTPFound, code: '302', body: '').tap do |r|
+        allow(r).to receive(:each_header)
+          .and_yield('location', "  \t\n  ")
+          .and_yield('content-type', 'text/html')
+      end
+
+      allow(net_http).to receive(:request).and_return(redirect_response)
 
       expect { http.get('https://example.com/start') }
-        .to raise_error(WSDL::TooManyRedirectsError)
+        .to raise_error(WSDL::UnsafeRedirectError, /no Location header/)
+    end
+
+    it 'raises on a malformed Location header' do
+      redirect_response = instance_double(Net::HTTPFound, code: '302', body: '').tap do |r|
+        allow(r).to receive(:each_header)
+          .and_yield('location', 'http://[::1')
+          .and_yield('content-type', 'text/html')
+      end
+
+      allow(net_http).to receive(:request).and_return(redirect_response)
+
+      expect { http.get('https://example.com/start') }
+        .to raise_error(WSDL::UnsafeRedirectError, /malformed Location header/)
+    end
+
+    it 'resolves a relative path redirect against the original URI' do
+      redirect_response = instance_double(Net::HTTPFound, code: '302', body: '').tap do |r|
+        allow(r).to receive(:each_header)
+          .and_yield('location', '/new/path')
+          .and_yield('content-type', 'text/html')
+      end
+
+      allow(net_http).to receive(:request).and_return(redirect_response, ok_net_response)
+      allow(Resolv).to receive(:getaddresses).with('example.com').and_return(['93.184.216.34'])
+
+      response = http.get('https://example.com/old/path')
+
+      expect(response.status).to eq(200)
+      expect(net_http).to have_received(:request).with(
+        an_object_satisfying { |req| req.path == '/new/path' }
+      ).at_least(:once)
+    end
+
+    it 'resolves a scheme-relative redirect against the original URI' do
+      redirect_response = instance_double(Net::HTTPFound, code: '302', body: '').tap do |r|
+        allow(r).to receive(:each_header)
+          .and_yield('location', '//other.example.com/path')
+          .and_yield('content-type', 'text/html')
+      end
+
+      allow(net_http).to receive(:request).and_return(redirect_response, ok_net_response)
+      allow(Resolv).to receive(:getaddresses).with('other.example.com').and_return(['93.184.216.34'])
+
+      response = http.get('https://example.com/start')
+
+      expect(response.status).to eq(200)
+      expect(Net::HTTP).to have_received(:new).with('other.example.com', 443)
+    end
+
+    it 'changes method to GET on 301' do
+      redirect_response = instance_double(Net::HTTPMovedPermanently, code: '301', body: '').tap do |r|
+        allow(r).to receive(:each_header)
+          .and_yield('location', 'https://example.com/result')
+          .and_yield('content-type', 'text/html')
+      end
+
+      allow(net_http).to receive(:request).and_return(redirect_response, ok_net_response)
+      allow(Resolv).to receive(:getaddresses).with('example.com').and_return(['93.184.216.34'])
+
+      response = http.post('https://example.com/submit', { 'Content-Type' => 'text/xml' }, '<soap/>')
+
+      expect(response.status).to eq(200)
+      expect(net_http).to have_received(:request).with(an_instance_of(Net::HTTP::Get)).at_least(:once)
+    end
+
+    it 'preserves method on 308' do
+      redirect_response = instance_double(Net::HTTPPermanentRedirect, code: '308', body: '').tap do |r|
+        allow(r).to receive(:each_header)
+          .and_yield('location', 'https://example.com/new')
+          .and_yield('content-type', 'text/html')
+      end
+
+      allow(net_http).to receive(:request).and_return(redirect_response, ok_net_response)
+      allow(Resolv).to receive(:getaddresses).with('example.com').and_return(['93.184.216.34'])
+
+      response = http.post('https://example.com/old', { 'Content-Type' => 'text/xml' }, '<soap/>')
+
+      expect(response.status).to eq(200)
+      expect(net_http).to have_received(:request).with(an_instance_of(Net::HTTP::Post)).twice
+    end
+
+    it 'follows a chain of redirects (301 → 302 → 200)' do
+      first_redirect = instance_double(Net::HTTPMovedPermanently, code: '301', body: '').tap do |r|
+        allow(r).to receive(:each_header)
+          .and_yield('location', 'https://example.com/step2')
+          .and_yield('content-type', 'text/html')
+      end
+
+      second_redirect = instance_double(Net::HTTPFound, code: '302', body: '').tap do |r|
+        allow(r).to receive(:each_header)
+          .and_yield('location', 'https://example.com/final')
+          .and_yield('content-type', 'text/html')
+      end
+
+      allow(net_http).to receive(:request).and_return(first_redirect, second_redirect, ok_net_response)
+      allow(Resolv).to receive(:getaddresses).with('example.com').and_return(['93.184.216.34'])
+
+      response = http.get('https://example.com/start')
+
+      expect(response.status).to eq(200)
+      expect(response.body).to eq('ok')
+      expect(net_http).to have_received(:request).exactly(3).times
+    end
+
+    it 'blocks SSRF on the second redirect in a chain' do
+      public_redirect = instance_double(Net::HTTPFound, code: '302', body: '').tap do |r|
+        allow(r).to receive(:each_header)
+          .and_yield('location', 'https://evil.example.com/redir')
+          .and_yield('content-type', 'text/html')
+      end
+
+      private_redirect = instance_double(Net::HTTPFound, code: '302', body: '').tap do |r|
+        allow(r).to receive(:each_header)
+          .and_yield('location', 'https://10.0.0.1/internal')
+          .and_yield('content-type', 'text/html')
+      end
+
+      allow(net_http).to receive(:request).and_return(public_redirect, private_redirect)
+      allow(Resolv).to receive(:getaddresses).with('evil.example.com').and_return(['93.184.216.34'])
+
+      expect { http.get('https://example.com/start') }
+        .to raise_error(WSDL::UnsafeRedirectError, %r{private/reserved address blocked})
+    end
+
+    it 'follows a redirect chain mixing DNS names and IP literals' do
+      dns_redirect = instance_double(Net::HTTPFound, code: '302', body: '').tap do |r|
+        allow(r).to receive(:each_header)
+          .and_yield('location', 'https://redirect.example.com/step')
+          .and_yield('content-type', 'text/html')
+      end
+
+      ip_redirect = instance_double(Net::HTTPFound, code: '302', body: '').tap do |r|
+        allow(r).to receive(:each_header)
+          .and_yield('location', 'https://93.184.216.34/final')
+          .and_yield('content-type', 'text/html')
+      end
+
+      allow(net_http).to receive(:request).and_return(dns_redirect, ip_redirect, ok_net_response)
+      allow(Resolv).to receive(:getaddresses).with('redirect.example.com').and_return(['93.184.216.34'])
+
+      response = http.get('https://example.com/start')
+
+      expect(response.status).to eq(200)
+      expect(net_http).to have_received(:request).exactly(3).times
+    end
+
+    it 'resolves a query-only redirect against the original URI' do
+      redirect_response = instance_double(Net::HTTPFound, code: '302', body: '').tap do |r|
+        allow(r).to receive(:each_header)
+          .and_yield('location', '?param=value')
+          .and_yield('content-type', 'text/html')
+      end
+
+      allow(net_http).to receive(:request).and_return(redirect_response, ok_net_response)
+      allow(Resolv).to receive(:getaddresses).with('example.com').and_return(['93.184.216.34'])
+
+      response = http.get('https://example.com/path')
+
+      expect(response.status).to eq(200)
+      expect(net_http).to have_received(:request).with(
+        an_object_satisfying { |req| req.path == '/path?param=value' }
+      ).at_least(:once)
+    end
+  end
+
+  describe '#resolve_redirect_uri' do
+    let(:base_uri) { URI.parse('https://example.com/old/path?q=1') }
+
+    def make_response(location)
+      WSDL::HTTPResponse.new(
+        status: 302,
+        headers: location ? { 'location' => location } : {},
+        body: ''
+      )
+    end
+
+    it 'returns an absolute URL as-is' do
+      result = http.send(:resolve_redirect_uri, base_uri, make_response('https://other.com/new'))
+
+      expect(result).to eq(URI.parse('https://other.com/new'))
+    end
+
+    it 'resolves a relative path against the original URI' do
+      result = http.send(:resolve_redirect_uri, base_uri, make_response('/new/path'))
+
+      expect(result).to eq(URI.parse('https://example.com/new/path'))
+    end
+
+    it 'resolves a scheme-relative URL inheriting the original scheme' do
+      result = http.send(:resolve_redirect_uri, base_uri, make_response('//other.com/path'))
+
+      expect(result.scheme).to eq('https')
+      expect(result.host).to eq('other.com')
+      expect(result.path).to eq('/path')
+    end
+
+    it 'resolves a query-only Location against the original URI' do
+      result = http.send(:resolve_redirect_uri, base_uri, make_response('?new=2'))
+
+      expect(result.host).to eq('example.com')
+      expect(result.path).to eq('/old/path')
+      expect(result.query).to eq('new=2')
+    end
+
+    it 'raises UnsafeRedirectError when Location is missing' do
+      expect { http.send(:resolve_redirect_uri, base_uri, make_response(nil)) }
+        .to raise_error(WSDL::UnsafeRedirectError, /no Location header/)
+    end
+
+    it 'raises UnsafeRedirectError when Location is blank' do
+      expect { http.send(:resolve_redirect_uri, base_uri, make_response('   ')) }
+        .to raise_error(WSDL::UnsafeRedirectError, /no Location header/)
+    end
+
+    it 'raises UnsafeRedirectError for a malformed Location' do
+      expect { http.send(:resolve_redirect_uri, base_uri, make_response('http://[::1')) }
+        .to raise_error(WSDL::UnsafeRedirectError, /malformed Location header/)
+    end
+
+    it 'truncates long malformed Location in the error message' do
+      long_location = "http://[#{'x' * 300}"
+
+      expect { http.send(:resolve_redirect_uri, base_uri, make_response(long_location)) }
+        .to raise_error(WSDL::UnsafeRedirectError) { |error|
+          expect(error.message).to include(long_location[0, 200])
+          expect(error.message).not_to include(long_location)
+        }
+    end
+  end
+
+  describe '#strip_sensitive_headers' do
+    it 'removes sensitive headers case-insensitively' do
+      headers = {
+        'Authorization' => 'Bearer token',
+        'COOKIE' => 'session=abc',
+        'Proxy-Authorization' => 'Basic creds',
+        'Content-Type' => 'text/xml',
+        'X-Custom' => 'keep'
+      }
+
+      result = http.send(:strip_sensitive_headers, headers)
+
+      expect(result).to eq('Content-Type' => 'text/xml', 'X-Custom' => 'keep')
     end
   end
 
@@ -513,10 +735,6 @@ RSpec.describe WSDL::HTTPAdapter do
 
     it 'defines DEFAULT_REDIRECT_LIMIT' do
       expect(described_class::DEFAULT_REDIRECT_LIMIT).to eq(5)
-    end
-
-    it 'defines DNS_RESOLUTION_TIMEOUT' do
-      expect(described_class::DNS_RESOLUTION_TIMEOUT).to eq(5)
     end
   end
 end

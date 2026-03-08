@@ -44,6 +44,18 @@ module WSDL
   # - Link-local: +169.254.0.0/16+, +fe80::/10+
   # - Current network: +0.0.0.0/8+
   # - Shared address space: +100.64.0.0/10+
+  # - IETF protocol assignments: +192.0.0.0/24+
+  # - Documentation: +192.0.2.0/24+, +198.51.100.0/24+, +203.0.113.0/24+
+  # - 6to4 relay anycast: +192.88.99.0/24+
+  # - Benchmarking: +198.18.0.0/15+
+  # - Reserved/broadcast: +240.0.0.0/4+, +255.255.255.255+
+  # - IPv6 unspecified: +::/128+
+  # - NAT64: +64:ff9b::/96+, +64:ff9b:1::/48+
+  # - Discard-only: +100::/64+
+  # - Teredo: +2001::/32+
+  # - ORCHID: +2001:10::/28+
+  # - IPv6 documentation: +2001:db8::/32+
+  # - 6to4: +2002::/16+
   #
   # Both IP address literals in the URL and DNS-resolved addresses
   # are checked. HTTPS-to-HTTP scheme downgrades are also blocked.
@@ -162,8 +174,10 @@ module WSDL
     def request_with_redirects(method, uri, headers = {}, body = nil)
       redirects = 0
 
+      resolved_ip = nil
+
       loop do
-        response = perform_request(method, uri, headers, body)
+        response = perform_request(method, uri, headers, body, resolved_ip:)
 
         return response unless REDIRECT_CODES.include?(response.status)
 
@@ -172,12 +186,14 @@ module WSDL
 
         new_uri = resolve_redirect_uri(uri, response)
         validate_redirect_scheme!(uri, new_uri)
-        validate_redirect_target!(new_uri)
+        resolved_ip = validate_redirect_target!(new_uri)
 
         if REDIRECT_TO_GET_CODES.include?(response.status)
           method = :get
           headers = {}
           body = nil
+        elsif cross_origin?(uri, new_uri)
+          headers = strip_sensitive_headers(headers)
         end
 
         uri = new_uri
@@ -195,29 +211,63 @@ module WSDL
             "Too many redirects (limit: #{@config.max_redirects})"
     end
 
+    # Returns a copy of the headers hash with sensitive headers removed.
+    #
+    # Used when following cross-origin 307/308 redirects to prevent
+    # leaking credentials to a different origin.
+    #
+    # @param headers [Hash] the original request headers
+    # @return [Hash] headers with sensitive entries removed
+    def strip_sensitive_headers(headers)
+      headers.reject { |key, _| RedirectGuard::SENSITIVE_HEADERS.include?(key.downcase) }
+    end
+
     # Resolves the redirect target URI from a response's Location header.
+    #
+    # Raises if the Location header is missing, empty, or malformed.
+    # A redirect without a valid Location is a protocol violation
+    # (RFC 7231 §7.1.2) and must not silently consume redirect budget.
     #
     # @param uri [URI] the original request URI
     # @param response [HTTPResponse] the redirect response
     # @return [URI] the resolved redirect target URI
+    # @raise [UnsafeRedirectError] if the Location header is missing, empty, or unparseable
     def resolve_redirect_uri(uri, response)
       location = response.headers['location']
-      return uri if location.nil? || location.empty?
+
+      if location.nil? || location.strip.empty?
+        raise UnsafeRedirectError.new(
+          "Redirect blocked: response has no Location header (status #{response.status})",
+          target_url: uri.to_s
+        )
+      end
 
       new_uri = URI(location)
       new_uri = uri + location unless new_uri.is_a?(URI::HTTP)
       new_uri
+    rescue URI::InvalidURIError, URI::BadURIError
+      raise UnsafeRedirectError.new(
+        "Redirect blocked: malformed Location header '#{location[0, 200]}'",
+        target_url: location
+      )
     end
 
     # Performs a single HTTP request using +Net::HTTP+.
+    #
+    # When +resolved_ip+ is provided, the connection is pinned to that address
+    # via +Net::HTTP#ipaddr=+, bypassing +Net::HTTP+'s own DNS resolution.
+    # This prevents DNS rebinding attacks where an attacker returns a safe
+    # address during validation but a private address during connection.
     #
     # @param method [Symbol] the HTTP method
     # @param uri [URI] the request URI
     # @param headers [Hash] HTTP headers
     # @param body [String, nil] the request body
+    # @param resolved_ip [String, nil] a validated IP address to pin for the connection
     # @return [HTTPResponse] the response
-    def perform_request(method, uri, headers, body)
+    def perform_request(method, uri, headers, body, resolved_ip: nil)
       http = Net::HTTP.new(uri.hostname, uri.port)
+      http.ipaddr = resolved_ip if resolved_ip
       http.use_ssl = (uri.scheme == 'https')
       apply_config(http)
 
