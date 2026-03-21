@@ -12,6 +12,9 @@ gem 'benchmark' if RUBY_VERSION >= '3.4'
 # irb was removed from default gems in Ruby 4.0 (required by yard's legacy parser)
 gem 'irb' if RUBY_VERSION >= '4.0'
 
+# webrick was removed from default gems in Ruby 3.0
+gem 'webrick' if RUBY_VERSION >= '3.0'
+
 group :development do
   gem 'benchmark-ips', '~> 2.14', require: false
   gem 'equivalent-xml', '~> 0.6'

@@ -38,6 +38,10 @@ Dir[File.join(__dir__, 'support', '**', '*.rb')].each do |f|
   require f
 end
 
+Dir[File.join(__dir__, 'fixtures', 'services', '*.rb')].each do |f|
+  require f
+end
+
 RSpec.configure do |config|
   config.include SpecSupport
 
