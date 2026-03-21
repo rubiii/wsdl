@@ -45,6 +45,20 @@ module WSDL
 
     attr_reader :endpoint, :soap_version, :soap_action, :encoding
 
+    # Returns the name of the first input body element.
+    #
+    # For document/literal wrapped operations, this is the element name
+    # that appears in the SOAP body (which may differ from the operation name).
+    #
+    # @return [String, nil]
+    #
+    # @example
+    #   operation.input_element_name  # => "InitialRequest"
+    #
+    def input_element_name
+      @operation_info.input.body_parts.first&.name
+    end
+
     # Returns the output body namespace from the WSDL binding.
     #
     # For RPC/literal operations, this is the namespace used on the

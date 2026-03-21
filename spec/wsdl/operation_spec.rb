@@ -88,6 +88,22 @@ RSpec.describe WSDL::Operation do
     end
   end
 
+  describe '#input_element_name' do
+    it 'returns the input body element name' do
+      expect(operation.input_element_name).to eq('ConvertTemp')
+    end
+
+    context 'when the element name differs from the operation name' do
+      let(:parser_result) { WSDL::Parser::Result.parse fixture('wsdl/equifax'), http_mock }
+      let(:operation_info) { parser_result.operation('canadav2', 'canadaHttpPortV2', 'startTransaction') }
+
+      it 'returns the element name, not the operation name' do
+        expect(operation.name).to eq('startTransaction')
+        expect(operation.input_element_name).to eq('InitialRequest')
+      end
+    end
+  end
+
   describe '#input_style' do
     it 'returns the input style for the operation' do
       expect(operation.input_style).to eq('document/literal')
