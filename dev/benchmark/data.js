@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1772993257972,
+  "lastUpdate": 1774086501103,
   "repoUrl": "https://github.com/rubiii/wsdl",
   "entries": {
     "Benchmark": [
@@ -726,6 +726,72 @@ window.BENCHMARK_DATA = {
             "value": 120.45,
             "unit": "i/s",
             "range": "± 2.5%"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "me@rubiii.com",
+            "name": "rubiii",
+            "username": "rubiii"
+          },
+          "committer": {
+            "email": "me@rubiii.com",
+            "name": "rubiii",
+            "username": "rubiii"
+          },
+          "distinct": true,
+          "id": "eb008d08c54ba202aeb9793aa97811970699dcab",
+          "message": "Remove dead .delete(\":\") call from SKI validation\n\nRemove dead .delete(\":\") call from SKI validation.\nThe SKI value was only nil-checked, never used as a string.",
+          "timestamp": "2026-03-21T10:45:20+01:00",
+          "tree_id": "9b4a02d306df328454c525c32fd65f45874505a3",
+          "url": "https://github.com/rubiii/wsdl/commit/eb008d08c54ba202aeb9793aa97811970699dcab"
+        },
+        "date": 1774086500775,
+        "tool": "customBiggerIsBetter",
+        "benches": [
+          {
+            "name": "parse: small WSDL (blz_service, 88 lines)",
+            "value": 1933.03,
+            "unit": "i/s",
+            "range": "± 2.1%"
+          },
+          {
+            "name": "parse: large WSDL (economic, 65k lines)",
+            "value": 5.07,
+            "unit": "i/s",
+            "range": "± 0.0%"
+          },
+          {
+            "name": "request: build + serialize",
+            "value": 4374.15,
+            "unit": "i/s",
+            "range": "± 2.3%"
+          },
+          {
+            "name": "sign: X.509 SHA-256 + Timestamp",
+            "value": 672.72,
+            "unit": "i/s",
+            "range": "± 2.2%"
+          },
+          {
+            "name": "verify: signature + timestamp",
+            "value": 644.03,
+            "unit": "i/s",
+            "range": "± 3.9%"
+          },
+          {
+            "name": "response: parse small (15 lines)",
+            "value": 9762.46,
+            "unit": "i/s",
+            "range": "± 1.6%"
+          },
+          {
+            "name": "response: parse large (200 items)",
+            "value": 115.49,
+            "unit": "i/s",
+            "range": "± 1.7%"
           }
         ]
       }
