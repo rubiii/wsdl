@@ -85,7 +85,11 @@ module WSDL
         wrapper = @schema_elements.first
         return if wrapper.nil?
 
-        validate_hash(hash, wrapper, path: wrapper.name)
+        if wrapper.complex_type?
+          validate_hash(hash, wrapper, path: wrapper.name)
+        else
+          validate_parts(hash, @schema_elements)
+        end
       end
 
       private
@@ -93,6 +97,22 @@ module WSDL
       # ============================================================
       # Validation
       # ============================================================
+
+      def validate_parts(hash, schema_elements)
+        schema_by_name = schema_elements.to_h { |el| [el.name.to_sym, el] }
+
+        hash.each_key do |key|
+          next if schema_by_name.key?(key)
+
+          raise ResponseBuildError,
+                "Unknown part #{key.inspect}. Expected: #{schema_by_name.keys.inspect}"
+        end
+
+        hash.each do |key, value|
+          element = schema_by_name[key] or next
+          validate_type(value, element.base_type, key.to_s) if element.simple_type?
+        end
+      end
 
       def validate_hash(hash, schema_element, path:)
         attrs, elements = split_attributes(hash)
@@ -207,24 +227,28 @@ module WSDL
       # ============================================================
 
       def serialize(hash)
-        soap_ns = @soap_version == '1.2' ? NS::SOAP_1_2 : NS::SOAP_1_1
         doc = Nokogiri::XML::Document.new
         namespaces = {}
+        envelope = build_soap_envelope(doc, namespaces)
 
-        envelope = build_envelope_element(doc, 'Envelope', soap_ns, 'env', namespaces)
-        doc.root = envelope
-
-        envelope.add_child(build_envelope_element(doc, 'Header', soap_ns, 'env', namespaces))
-
-        body = build_envelope_element(doc, 'Body', soap_ns, 'env', namespaces)
-        envelope.add_child(body)
-
-        @schema_elements.each do |wrapper_element|
-          body.add_child(build_element(doc, wrapper_element, hash, namespaces, envelope))
+        body = envelope.at_xpath('env:Body', 'env' => envelope.namespace.href)
+        @schema_elements.each do |element|
+          content = element.complex_type? ? hash : hash[element.name.to_sym]
+          body.add_child(build_element(doc, element, content, namespaces, envelope))
         end
 
         doc.root.to_xml(save_with: Nokogiri::XML::Node::SaveOptions::AS_XML |
                                    Nokogiri::XML::Node::SaveOptions::NO_DECLARATION)
+      end
+
+      def build_soap_envelope(doc, namespaces)
+        soap_ns = @soap_version == '1.2' ? NS::SOAP_1_2 : NS::SOAP_1_1
+
+        envelope = build_envelope_element(doc, 'Envelope', soap_ns, 'env', namespaces)
+        doc.root = envelope
+        envelope.add_child(build_envelope_element(doc, 'Header', soap_ns, 'env', namespaces))
+        envelope.add_child(build_envelope_element(doc, 'Body', soap_ns, 'env', namespaces))
+        envelope
       end
 
       def build_envelope_element(doc, local_name, namespace_uri, prefix, namespaces)
