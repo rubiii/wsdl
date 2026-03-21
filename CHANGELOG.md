@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+### Response Parsing
+
+- Extract XML attributes from response elements into the parsed hash with `_`-prefixed keys (e.g., `transactionKey="TXN-123"` → `_transactionKey: "TXN-123"`). Attributes are type-coerced when schema metadata is available.
+
 ## 1.0.0 — 2026-03-06
 
 Initial public release.

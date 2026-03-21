@@ -63,16 +63,22 @@ module WSDL
 
       def convert_without_schema(node)
         children = node.element_children
-        return node.text if children.empty?
+        attrs = extract_raw_attributes(node)
+        return node.text if children.empty? && attrs.empty?
 
+        convert_children_without_schema(children, attrs)
+      end
+
+      def convert_children_without_schema(children, result)
         xml_children = group_children_by_qname(children)
         colliding_locals = find_colliding_locals(xml_children.keys)
 
-        xml_children.each_with_object({}) do |(qname, child_nodes), result|
+        xml_children.each do |qname, child_nodes|
           key = output_key(qname, colliding_locals)
           values = child_nodes.map { |child| convert_without_schema(child) }
           result[key] = child_nodes.one? ? values.first : values
         end
+        result
       end
 
       def convert_with_schema(node, schema_elements)
@@ -116,9 +122,34 @@ module WSDL
         if schema_element.simple_type?
           @coercer.coerce(xml_node.text, schema_element.base_type)
         elsif schema_element.complex_type?
-          convert_with_schema(xml_node, schema_element.children)
+          result = convert_with_schema(xml_node, schema_element.children)
+          attrs = extract_schema_attributes(xml_node, schema_element)
+          if attrs.empty?
+            result
+          elsif result.is_a?(Hash)
+            attrs.merge(result)
+          else
+            attrs
+          end
         else
           xml_node.text
+        end
+      end
+
+      def extract_schema_attributes(xml_node, schema_element)
+        schema_element.attributes.each_with_object({}) do |schema_attr, memo|
+          xml_attr = xml_node.attribute(schema_attr.name)
+          next unless xml_attr
+
+          memo[:"_#{schema_attr.name}"] = @coercer.coerce(xml_attr.value, schema_attr.base_type)
+        end
+      end
+
+      def extract_raw_attributes(node)
+        node.attributes.each_with_object({}) do |(name, attr), memo|
+          next if attr.namespace&.href == NS::XSI
+
+          memo[:"_#{name}"] = attr.value
         end
       end
 

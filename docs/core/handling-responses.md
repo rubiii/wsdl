@@ -17,6 +17,22 @@ response.envelope_hash
 
 When output schema metadata is available, response parsing performs type conversion for known XML Schema types (for example integer, boolean, decimal, date/time) and preserves array semantics for repeating elements.
 
+## XML Attributes
+
+When schema metadata is available, XML attributes on response elements are
+extracted with an underscore prefix and coerced to the appropriate Ruby type:
+
+```ruby
+response.body[:InitialResponse][:_transactionKey]  # => "TXN-98765"
+response.body[:Item][:_active]                      # => true (xsd:boolean)
+response.body[:Record][:_score]                     # => 42 (xsd:int)
+```
+
+This mirrors the convention used by `template.to_h`, which shows expected
+attributes as `_`-prefixed keys.
+
+Without schema metadata, all attributes are extracted as strings.
+
 ## XPath and XML Inspection
 
 ```ruby

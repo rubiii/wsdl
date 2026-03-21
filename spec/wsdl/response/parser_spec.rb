@@ -197,6 +197,28 @@ RSpec.describe WSDL::Response::Parser do
         })
       end
     end
+
+    it 'extracts XML attributes with underscore prefix' do
+      xml = '<Response><Item id="42" type="book">Content</Item></Response>'
+      result = described_class.parse(xml)
+
+      expect(result).to eq({ Response: { Item: { _id: '42', _type: 'book' } } })
+    end
+
+    it 'extracts attributes alongside child elements' do
+      xml = '<Response><User role="admin"><Name>John</Name></User></Response>'
+      result = described_class.parse(xml)
+
+      expect(result).to eq({ Response: { User: { _role: 'admin', Name: 'John' } } })
+    end
+
+    it 'skips xsi namespace attributes' do
+      xml = '<Response xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">' \
+            '<Item xsi:nil="true" code="ABC"/></Response>'
+      result = described_class.parse(xml)
+
+      expect(result[:Response][:Item]).to eq({ _code: 'ABC' })
+    end
   end
 
   describe '.parse with schema' do
@@ -412,6 +434,7 @@ RSpec.describe WSDL::Response::Parser do
           singular?: true,
           nillable?: false,
           children: [],
+          attributes: [],
           namespace: nil,
           form: 'qualified',
           simple_type?: false,
@@ -550,6 +573,67 @@ RSpec.describe WSDL::Response::Parser do
         result = described_class.parse(xml, schema:)
 
         expect(result[:Response][:Count]).to eq('')
+      end
+    end
+
+    context 'with XML attributes' do
+      it 'extracts and coerces attributes based on schema' do
+        xml = '<Response><User id="42"><Name>John</Name></User></Response>'
+        id_attr = schema_attribute('id', type: 'xsd:int')
+        name_child = schema_element('Name', type: 'xsd:string')
+        user_element = schema_element('User', children: [name_child], attributes: [id_attr])
+
+        result = described_class.parse(xml, schema: [user_element])
+
+        expect(result[:Response][:User][:_id]).to eq(42)
+        expect(result[:Response][:User][:_id]).to be_a(Integer)
+        expect(result[:Response][:User][:Name]).to eq('John')
+      end
+
+      it 'coerces boolean attributes' do
+        xml = '<Response><Item active="true"/></Response>'
+        active_attr = schema_attribute('active', type: 'xsd:boolean')
+        item_element = schema_element('Item', attributes: [active_attr])
+
+        result = described_class.parse(xml, schema: [item_element])
+
+        expect(result[:Response][:Item][:_active]).to be true
+      end
+
+      it 'skips attributes not present in XML' do
+        xml = '<Response><Item><Name>Widget</Name></Item></Response>'
+        id_attr = schema_attribute('id', type: 'xsd:int')
+        name_child = schema_element('Name', type: 'xsd:string')
+        item_element = schema_element('Item', children: [name_child], attributes: [id_attr])
+
+        result = described_class.parse(xml, schema: [item_element])
+
+        expect(result[:Response][:Item]).not_to have_key(:_id)
+        expect(result[:Response][:Item][:Name]).to eq('Widget')
+      end
+
+      it 'handles multiple attributes with different types' do
+        xml = '<Response><Record key="TXN-99" score="85" verified="false"/></Response>'
+        key_attr = schema_attribute('key', type: 'xsd:string')
+        score_attr = schema_attribute('score', type: 'xsd:int')
+        verified_attr = schema_attribute('verified', type: 'xsd:boolean')
+        record_element = schema_element('Record', attributes: [key_attr, score_attr, verified_attr])
+
+        result = described_class.parse(xml, schema: [record_element])
+
+        expect(result[:Response][:Record]).to eq({ _key: 'TXN-99', _score: 85, _verified: false })
+      end
+
+      it 'does not extract xsi attributes even when present in XML' do
+        xml = '<Response xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">' \
+              '<Item xsi:type="ns:CustomType" code="ABC"><Name>Widget</Name></Item></Response>'
+        code_attr = schema_attribute('code', type: 'xsd:string')
+        name_child = schema_element('Name', type: 'xsd:string')
+        item_element = schema_element('Item', children: [name_child], attributes: [code_attr])
+
+        result = described_class.parse(xml, schema: [item_element])
+
+        expect(result[:Response][:Item]).to eq({ _code: 'ABC', Name: 'Widget' })
       end
     end
   end

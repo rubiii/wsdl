@@ -431,6 +431,7 @@ RSpec.describe WSDL::Response do
             singular?: true,
             nillable?: false,
             children: [],
+            attributes: [],
             namespace: nil,
             form: 'qualified',
             simple_type?: false,

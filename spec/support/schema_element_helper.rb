@@ -27,20 +27,23 @@ module SchemaElementHelper
   # @param form [String] element form ('qualified' or 'unqualified')
   # @return [RSpec::Mocks::Double] a mock WSDL::XML::Element
   # rubocop:disable Metrics/ParameterLists
-  def schema_element(name, type: nil, singular: true, children: [], nillable: false, namespace: nil, form: 'qualified')
+  # @param [Array<Object>] attributes
+  def schema_element(name, type: nil, singular: true, children: [], attributes: [],
+                     nillable: false, namespace: nil, form: 'qualified')
     element = instance_double(
       WSDL::XML::Element,
       name: name,
       singular?: singular,
       nillable?: nillable,
       children: children,
+      attributes: attributes,
       namespace: namespace,
       form: form
     )
 
     if type
       allow(element).to receive_messages(simple_type?: true, complex_type?: false, base_type: type)
-    elsif children.any?
+    elsif children.any? || attributes.any?
       allow(element).to receive_messages(simple_type?: false, complex_type?: true, base_type: nil)
     else
       allow(element).to receive_messages(simple_type?: false, complex_type?: false, base_type: nil)
@@ -49,6 +52,22 @@ module SchemaElementHelper
     element
   end
   # rubocop:enable Metrics/ParameterLists
+
+  # Creates a mock schema attribute for testing.
+  #
+  # @param name [String] the attribute name
+  # @param type [String] the XSD type (e.g., 'xsd:string', 'xsd:int')
+  # @param use [String] 'required' or 'optional'
+  # @return [RSpec::Mocks::Double] a mock WSDL::XML::Attribute
+  def schema_attribute(name, type: 'xsd:string', use: 'required')
+    instance_double(
+      WSDL::XML::Attribute,
+      name: name,
+      base_type: type,
+      use: use,
+      optional?: use == 'optional'
+    )
+  end
 end
 
 RSpec.configure do |config|
