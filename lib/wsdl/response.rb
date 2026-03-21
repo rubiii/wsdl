@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'wsdl/xml/parser'
+require 'wsdl/response/builder'
 require 'wsdl/response/fault_parser'
 require 'wsdl/response/parser'
 require 'wsdl/response/security_context'

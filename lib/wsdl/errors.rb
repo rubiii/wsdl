@@ -427,6 +427,22 @@ module WSDL
     end
   end
 
+  # Raised when a response hash does not conform to the output schema.
+  #
+  # This error is raised by {Response::Builder} when the provided hash
+  # contains unknown elements, is missing required elements, has type
+  # mismatches, or violates cardinality constraints.
+  #
+  # @example
+  #   begin
+  #     builder.to_xml(invalid: 'data')
+  #   rescue WSDL::ResponseBuildError => e
+  #     puts e.message  # => "Unknown element :invalid at ..."
+  #   end
+  #
+  class ResponseBuildError < Error
+  end
+
   # Raised when request definition is missing or structurally incomplete.
   #
   # This error is raised when calling an operation that expects input but no
