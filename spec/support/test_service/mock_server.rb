@@ -201,10 +201,13 @@ module WSDL
 
       # Detects the operation name from the SOAPAction header or body element.
       #
-      # Prefers the SOAPAction header when it uniquely identifies an operation.
-      # Falls back to the first element name in the parsed SOAP body.
+      # Tries in order:
+      # 1. SOAPAction header (when non-empty and unique)
+      # 2. Input element name lookup (maps body element to operation)
+      # 3. Body element name directly (for RPC where element IS the operation)
       def detect_operation(request, parsed_body)
-        from_soap_action(request) || parsed_body.keys.first
+        body_element = parsed_body.keys.first
+        from_soap_action(request) || operation_map[body_element] || body_element
       end
 
       def from_soap_action(request)
@@ -214,20 +217,23 @@ module WSDL
         action = raw.delete('"')
         return nil if action.empty?
 
-        soap_action_map[action]
+        operation_map[action]
       end
 
-      def soap_action_map
-        @soap_action_map ||= build_soap_action_map
+      def operation_map
+        @operation_map ||= build_operation_map
       end
 
-      def build_soap_action_map
+      def build_operation_map
         map = {}
         @service.defined_operations.each do |op_name|
-          action = @service.resolve_operation(op_name).soap_action
-          next if action.nil? || action.empty?
+          op = @service.resolve_operation(op_name)
 
-          map[action] = op_name
+          action = op.soap_action
+          map[action] = op_name if action && !action.empty?
+
+          input_el = op.input_element_name&.to_sym
+          map[input_el] = op_name if input_el
         end
         map
       end
