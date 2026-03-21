@@ -69,4 +69,48 @@ RSpec.describe 'Integration with Temperature service' do
     expect(Nokogiri.XML(operation.to_xml))
       .to be_equivalent_to(expected).respecting_element_order
   end
+
+  context 'with a live mock service', :test_service do
+    subject(:client) { WSDL::Client.new(service.wsdl_url) }
+
+    let(:service) { WSDL::TestService[:temperature] }
+
+    before do
+      service.start
+    end
+
+    it 'converts Celsius to Fahrenheit with double precision' do
+      operation = client.operation(service_name, :ConvertTemperatureSoap, :ConvertTemp)
+
+      operation.prepare do
+        body do
+          tag('ConvertTemp') do
+            tag('Temperature', 100.0)
+            tag('FromUnit', 'degreeCelsius')
+            tag('ToUnit', 'degreeFahrenheit')
+          end
+        end
+      end
+      response = operation.invoke
+
+      expect(response.body[:ConvertTempResponse][:ConvertTempResult]).to eq(212.0)
+    end
+
+    it 'returns freezing point' do
+      operation = client.operation(service_name, :ConvertTemperatureSoap, :ConvertTemp)
+
+      operation.prepare do
+        body do
+          tag('ConvertTemp') do
+            tag('Temperature', 0.0)
+            tag('FromUnit', 'degreeCelsius')
+            tag('ToUnit', 'degreeFahrenheit')
+          end
+        end
+      end
+      response = operation.invoke
+
+      expect(response.body[:ConvertTempResponse][:ConvertTempResult]).to eq(32.0)
+    end
+  end
 end
