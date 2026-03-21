@@ -18,14 +18,17 @@ RSpec.describe 'Integration with a Document/Literal example' do
       }
     )
 
-    apply_request(op1, body: {
-      op1: {
-        in: {
-          data1: 24,
-          data2: 36
-        }
-      }
-    })
+    op1.reset!
+    op1.prepare do
+      body do
+        tag('op1') do
+          tag('in') do
+            tag('data1', 24)
+            tag('data2', 36)
+          end
+        end
+      end
+    end
 
     # The expected request.
     expected = Nokogiri.XML('
@@ -63,17 +66,20 @@ RSpec.describe 'Integration with a Document/Literal example' do
       }
     )
 
-    apply_request(op3, body: {
-      op3: {
-        DataElem: {
-          data1: 64,
-          data2: 128
-        },
-        in2: {
-          RefDataElem: 3
-        }
-      }
-    })
+    op3.reset!
+    op3.prepare do
+      body do
+        tag('op3') do
+          tag('DataElem') do
+            tag('data1', 64)
+            tag('data2', 128)
+          end
+          tag('in2') do
+            tag('RefDataElem', 3)
+          end
+        end
+      end
+    end
 
     expected = Nokogiri.XML('
       <env:Envelope

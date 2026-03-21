@@ -76,23 +76,24 @@ RSpec.describe 'Integration with Yahoo\'s AccountService' do
   it 'creates a request with multiple headers' do
     operation = client.operation(service_name, port_name, :updateStatusForManagedPublisher)
 
-    apply_request(operation,
-                  header: {
-                    Security: {
-                      UsernameToken: {
-                        Username: 'admin',
-                        Password: 'secret'
-                      }
-                    },
-                    license: 'abc-license',
-                    accountID: '23'
-                  },
-                  body: {
-                    updateStatusForManagedPublisher: {
-                      accountID: '23',
-                      accountStatus: 'closed'
-                    }
-                  })
+    operation.prepare do
+      header do
+        tag('Security') do
+          tag('UsernameToken') do
+            tag('Username', 'admin')
+            tag('Password', 'secret')
+          end
+        end
+        tag('license', 'abc-license')
+        tag('accountID', '23')
+      end
+      body do
+        tag('updateStatusForManagedPublisher') do
+          tag('accountID', '23')
+          tag('accountStatus', 'closed')
+        end
+      end
+    end
 
     expected = Nokogiri.XML('
       <env:Envelope

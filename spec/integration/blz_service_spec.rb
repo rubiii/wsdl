@@ -19,11 +19,14 @@ RSpec.describe 'Integration with BLZService' do
   it 'builds a request' do
     operation = client.operation(service_name, port_name, :getBank)
 
-    apply_request(operation, body: {
-      getBank: {
-        blz: 70_070_010
-      }
-    })
+    operation.reset!
+    operation.prepare do
+      body do
+        tag('getBank') do
+          tag('blz', 70_070_010)
+        end
+      end
+    end
 
     expected = Nokogiri.XML(%(
       <env:Envelope
@@ -40,5 +43,65 @@ RSpec.describe 'Integration with BLZService' do
 
     expect(Nokogiri.XML(operation.to_xml))
       .to be_equivalent_to(expected).respecting_element_order
+  end
+
+  context 'with a live mock service', :test_service do
+    subject(:client) { WSDL::Client.new(service.wsdl_url) }
+
+    let(:service) { WSDL::TestService[:blz_service] }
+
+    before do
+      service.start
+    end
+
+    it 'returns bank details for a known BLZ' do
+      operation = client.operation(:BLZService, :BLZServiceSOAP11port_http, :getBank)
+
+      operation.reset!
+      operation.prepare do
+        body do
+          tag('getBank') do
+            tag('blz', '70070010')
+          end
+        end
+      end
+      response = operation.invoke
+
+      expect(response.body).to eq(
+        getBankResponse: {
+          details: {
+            bezeichnung: 'Deutsche Bank',
+            bic: 'DEUTDEMM',
+            ort: 'München',
+            plz: '80271'
+          }
+        }
+      )
+    end
+
+    it 'returns different results for different inputs' do
+      operation = client.operation(:BLZService, :BLZServiceSOAP11port_http, :getBank)
+
+      operation.reset!
+      operation.prepare do
+        body do
+          tag('getBank') do
+            tag('blz', '20050550')
+          end
+        end
+      end
+      response = operation.invoke
+
+      expect(response.body).to eq(
+        getBankResponse: {
+          details: {
+            bezeichnung: 'Hamburger Sparkasse',
+            bic: 'HASPDEHHXXX',
+            ort: 'Hamburg',
+            plz: '20454'
+          }
+        }
+      )
+    end
   end
 end

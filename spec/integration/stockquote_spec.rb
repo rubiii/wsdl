@@ -19,11 +19,14 @@ RSpec.describe 'Integration with Stockquote service' do
   it 'builds a request' do
     operation = client.operation(service_name, port_name, :GetQuote)
 
-    apply_request(operation, body: {
-      GetQuote: {
-        symbol: 'AAPL'
-      }
-    })
+    operation.reset!
+    operation.prepare do
+      body do
+        tag('GetQuote') do
+          tag('symbol', 'AAPL')
+        end
+      end
+    end
 
     expected = Nokogiri.XML(%(
       <env:Envelope

@@ -84,29 +84,30 @@ RSpec.describe 'Integration with Jetairways\'s SessionCreate Service' do
   it 'creates a request with multiple headers' do
     operation = client.operation(service_name, port_name, :Logon)
 
-    apply_request(
-      operation,
-      header: {
-        MessageHeader:
-          { CPAId: '9W',
-            ConversationId: '1',
-            Service: { Service: 'Create' },
-            Action: 'CreateSession',
-            MessageData:
-              { MessageId: '0',
-                Timestamp: '2014-02-01T12:57:12.000Z'
-}
-},
-        Security:
-          { UsernameToken: {
-            Username: 'example_user',
-            Password: 'my_secret',
-            Organization: 'example_organization'
-          }
-}
-      },
-      body: { Logon: {} }
-    )
+    operation.prepare do
+      header do
+        tag('MessageHeader') do
+          tag('CPAId', '9W')
+          tag('ConversationId', '1')
+          tag('Service', 'Create')
+          tag('Action', 'CreateSession')
+          tag('MessageData') do
+            tag('MessageId', '0')
+            tag('Timestamp', '2014-02-01T12:57:12.000Z')
+          end
+        end
+        tag('Security') do
+          tag('UsernameToken') do
+            tag('Username', 'example_user')
+            tag('Password', 'my_secret')
+            tag('Organization', 'example_organization')
+          end
+        end
+      end
+      body do
+        tag('Logon')
+      end
+    end
 
     expected = Nokogiri.XML('
       <env:Envelope

@@ -249,27 +249,26 @@ RSpec.describe 'Integration with Bronto' do
   it 'creates a request with a header' do
     operation = client.operation(service_name, port_name, :addLogins)
 
-    apply_request(operation,
-                  header: {
-                    sessionHeader: {
-                      sessionId: '23'
-                    }
-                  },
-                  body: {
-                    addLogins: {
-                      accounts: [
-                        {
-                          username: 'admin',
-                          password: 'secert',
-                          contactInformation: {
-                            firstName: 'brew',
-                            email: 'brew@example.com'
-                          },
-                          permissionApi: true
-                        }
-                      ]
-                    }
-                  })
+    operation.prepare do
+      header do
+        tag('sessionHeader') do
+          tag('sessionId', '23')
+        end
+      end
+      body do
+        tag('addLogins') do
+          tag('accounts') do
+            tag('username', 'admin')
+            tag('password', 'secert')
+            tag('contactInformation') do
+              tag('firstName', 'brew')
+              tag('email', 'brew@example.com')
+            end
+            tag('permissionApi', true)
+          end
+        end
+      end
+    end
 
     expected = Nokogiri.XML('
       <env:Envelope

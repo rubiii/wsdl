@@ -79,21 +79,22 @@ RSpec.describe 'Integration with Xignite' do
   it 'creates a request with a header' do
     operation = client.operation(service_name, port_name, :GetSecurities)
 
-    apply_request(operation,
-                  header: {
-                    Header: {
-                      Username: 'test',
-                      Password: 'secret',
-                      Tracer: 'i-dont-know'
-                    }
-                  },
-                  body: {
-                    GetSecurities: {
-                      Identifiers: 'NESN.XVTX,BMW.XETR',
-                      IdentifierType: 'Symbol',
-                      AsOfDate: '6/4/2013'
-                    }
-                  })
+    operation.prepare do
+      header do
+        tag('Header') do
+          tag('Username', 'test')
+          tag('Password', 'secret')
+          tag('Tracer', 'i-dont-know')
+        end
+      end
+      body do
+        tag('GetSecurities') do
+          tag('Identifiers', 'NESN.XVTX,BMW.XETR')
+          tag('IdentifierType', 'Symbol')
+          tag('AsOfDate', '6/4/2013')
+        end
+      end
+    end
 
     expected = Nokogiri.XML('
       <env:Envelope

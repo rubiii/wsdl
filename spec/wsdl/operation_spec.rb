@@ -67,6 +67,27 @@ RSpec.describe WSDL::Operation do
     end
   end
 
+  describe '#name' do
+    it 'returns the operation name from the WSDL' do
+      expect(operation.name).to eq('ConvertTemp')
+    end
+  end
+
+  describe '#output_namespace' do
+    it 'returns nil for document/literal operations' do
+      expect(operation.output_namespace).to be_nil
+    end
+
+    context 'with an RPC/literal operation' do
+      let(:parser_result) { WSDL::Parser::Result.parse fixture('wsdl/rpc_literal'), http_mock }
+      let(:operation_info) { parser_result.operation('SampleService', 'Sample', 'op1') }
+
+      it 'returns the binding output namespace' do
+        expect(operation.output_namespace).to eq('http://apiNamespace.com')
+      end
+    end
+  end
+
   describe '#input_style' do
     it 'returns the input style for the operation' do
       expect(operation.input_style).to eq('document/literal')
@@ -199,17 +220,29 @@ RSpec.describe WSDL::Operation do
     end
 
     it 'returns true after prepare is called' do
-      apply_request(operation, body: {
-        ConvertTemp: { Temperature: 30, FromUnit: 'degreeCelsius', ToUnit: 'degreeFahrenheit' }
-      })
+      operation.prepare do
+        body do
+          tag('ConvertTemp') do
+            tag('Temperature', 30)
+            tag('FromUnit', 'degreeCelsius')
+            tag('ToUnit', 'degreeFahrenheit')
+          end
+        end
+      end
 
       expect(operation.prepared?).to be(true)
     end
 
     it 'returns false after reset!' do
-      apply_request(operation, body: {
-        ConvertTemp: { Temperature: 30, FromUnit: 'degreeCelsius', ToUnit: 'degreeFahrenheit' }
-      })
+      operation.prepare do
+        body do
+          tag('ConvertTemp') do
+            tag('Temperature', 30)
+            tag('FromUnit', 'degreeCelsius')
+            tag('ToUnit', 'degreeFahrenheit')
+          end
+        end
+      end
 
       operation.reset!
 
@@ -219,9 +252,15 @@ RSpec.describe WSDL::Operation do
 
   describe '#prepare' do
     it 'raises when called twice without reset!' do
-      apply_request(operation, body: {
-        ConvertTemp: { Temperature: 30, FromUnit: 'degreeCelsius', ToUnit: 'degreeFahrenheit' }
-      })
+      operation.prepare do
+        body do
+          tag('ConvertTemp') do
+            tag('Temperature', 30)
+            tag('FromUnit', 'degreeCelsius')
+            tag('ToUnit', 'degreeFahrenheit')
+          end
+        end
+      end
 
       expect {
         operation.prepare do
@@ -237,15 +276,27 @@ RSpec.describe WSDL::Operation do
     end
 
     it 'succeeds after reset!' do
-      apply_request(operation, body: {
-        ConvertTemp: { Temperature: 30, FromUnit: 'degreeCelsius', ToUnit: 'degreeFahrenheit' }
-      })
+      operation.prepare do
+        body do
+          tag('ConvertTemp') do
+            tag('Temperature', 30)
+            tag('FromUnit', 'degreeCelsius')
+            tag('ToUnit', 'degreeFahrenheit')
+          end
+        end
+      end
 
       operation.reset!
 
-      apply_request(operation, body: {
-        ConvertTemp: { Temperature: 100, FromUnit: 'degreeCelsius', ToUnit: 'degreeFahrenheit' }
-      })
+      operation.prepare do
+        body do
+          tag('ConvertTemp') do
+            tag('Temperature', 100)
+            tag('FromUnit', 'degreeCelsius')
+            tag('ToUnit', 'degreeFahrenheit')
+          end
+        end
+      end
 
       expect(operation.to_xml).to include('<ns0:Temperature>100</ns0:Temperature>')
     end
@@ -253,13 +304,15 @@ RSpec.describe WSDL::Operation do
 
   describe '#to_xml' do
     it 'returns an example request Hash following WSDL\'s conventions' do
-      apply_request(operation, body: {
-        ConvertTemp: {
-          Temperature: 30,
-          FromUnit: 'degreeCelsius',
-          ToUnit: 'degreeFahrenheit'
-        }
-      })
+      operation.prepare do
+        body do
+          tag('ConvertTemp') do
+            tag('Temperature', 30)
+            tag('FromUnit', 'degreeCelsius')
+            tag('ToUnit', 'degreeFahrenheit')
+          end
+        end
+      end
 
       expected = Nokogiri.XML(%(
         <env:Envelope
@@ -282,20 +335,20 @@ RSpec.describe WSDL::Operation do
 
     it 'raises in strict mode when top-level elements exceed maxOccurs' do
       expect {
-        apply_request(operation, strict_schema: true, body: {
-          ConvertTemp: [
-            {
-              Temperature: 30,
-              FromUnit: 'degreeCelsius',
-              ToUnit: 'degreeFahrenheit'
-            },
-            {
-              Temperature: 31,
-              FromUnit: 'degreeCelsius',
-              ToUnit: 'degreeFahrenheit'
-            }
-          ]
-        })
+        operation.prepare do
+          body do
+            tag('ConvertTemp') do
+              tag('Temperature', 30)
+              tag('FromUnit', 'degreeCelsius')
+              tag('ToUnit', 'degreeFahrenheit')
+            end
+            tag('ConvertTemp') do
+              tag('Temperature', 31)
+              tag('FromUnit', 'degreeCelsius')
+              tag('ToUnit', 'degreeFahrenheit')
+            end
+          end
+        end
       }.to raise_error(WSDL::RequestValidationError, /exceeds maxOccurs=1/)
     end
 
@@ -406,34 +459,41 @@ RSpec.describe WSDL::Operation do
     end
 
     it 'reflects updated body values on the next call' do
-      apply_request(operation, body: {
-        ConvertTemp: {
-          Temperature: 30,
-          FromUnit: 'degreeCelsius',
-          ToUnit: 'degreeFahrenheit'
-        }
-      })
+      operation.prepare do
+        body do
+          tag('ConvertTemp') do
+            tag('Temperature', 30)
+            tag('FromUnit', 'degreeCelsius')
+            tag('ToUnit', 'degreeFahrenheit')
+          end
+        end
+      end
       operation.to_xml
 
-      apply_request(operation, body: {
-        ConvertTemp: {
-          Temperature: 100,
-          FromUnit: 'degreeCelsius',
-          ToUnit: 'degreeFahrenheit'
-        }
-      })
+      operation.reset!
+      operation.prepare do
+        body do
+          tag('ConvertTemp') do
+            tag('Temperature', 100)
+            tag('FromUnit', 'degreeCelsius')
+            tag('ToUnit', 'degreeFahrenheit')
+          end
+        end
+      end
 
       expect(operation.to_xml).to include('<ns0:Temperature>100</ns0:Temperature>')
     end
 
     it 'reflects SOAP version changes in the next built envelope' do
-      apply_request(operation, body: {
-        ConvertTemp: {
-          Temperature: 30,
-          FromUnit: 'degreeCelsius',
-          ToUnit: 'degreeFahrenheit'
-        }
-      })
+      operation.prepare do
+        body do
+          tag('ConvertTemp') do
+            tag('Temperature', 30)
+            tag('FromUnit', 'degreeCelsius')
+            tag('ToUnit', 'degreeFahrenheit')
+          end
+        end
+      end
 
       first_namespace = Nokogiri.XML(operation.to_xml).root.namespace.href
 
@@ -445,37 +505,46 @@ RSpec.describe WSDL::Operation do
     end
 
     it 'reflects security configuration changes on the next call' do
-      apply_request(operation, body: {
-        ConvertTemp: {
-          Temperature: 30,
-          FromUnit: 'degreeCelsius',
-          ToUnit: 'degreeFahrenheit'
-        }
-      })
+      operation.prepare do
+        body do
+          tag('ConvertTemp') do
+            tag('Temperature', 30)
+            tag('FromUnit', 'degreeCelsius')
+            tag('ToUnit', 'degreeFahrenheit')
+          end
+        end
+      end
       operation.to_xml
 
-      apply_request(operation, body: {
-        ConvertTemp: {
-          Temperature: 30,
-          FromUnit: 'degreeCelsius',
-          ToUnit: 'degreeFahrenheit'
-        }
-      }) do
-        username_token('username', 'secret', digest: true)
+      operation.reset!
+      operation.prepare do
+        body do
+          tag('ConvertTemp') do
+            tag('Temperature', 30)
+            tag('FromUnit', 'degreeCelsius')
+            tag('ToUnit', 'degreeFahrenheit')
+          end
+        end
+        ws_security do
+          username_token('username', 'secret', digest: true)
+        end
       end
 
       expect(operation.to_xml).to include('UsernameToken')
     end
 
     it 'passes a serialized document directly to SecurityHeader when outbound security is configured' do
-      apply_request(operation, body: {
-        ConvertTemp: {
-          Temperature: 30,
-          FromUnit: 'degreeCelsius',
-          ToUnit: 'degreeFahrenheit'
-        }
-      }) do
-        username_token('username', 'secret')
+      operation.prepare do
+        body do
+          tag('ConvertTemp') do
+            tag('Temperature', 30)
+            tag('FromUnit', 'degreeCelsius')
+            tag('ToUnit', 'degreeFahrenheit')
+          end
+        end
+        ws_security do
+          username_token('username', 'secret')
+        end
       end
 
       security_header = instance_spy(WSDL::Security::SecurityHeader)
@@ -497,13 +566,15 @@ RSpec.describe WSDL::Operation do
       let(:compact_operation) { described_class.new(operation_info, parser_result, http_mock, config: WSDL::Config.new(format_xml: false)) }
 
       it 'returns compact XML without indentation' do
-        apply_request(compact_operation, body: {
-          ConvertTemp: {
-            Temperature: 30,
-            FromUnit: 'degreeCelsius',
-            ToUnit: 'degreeFahrenheit'
-          }
-        })
+        compact_operation.prepare do
+          body do
+            tag('ConvertTemp') do
+              tag('Temperature', 30)
+              tag('FromUnit', 'degreeCelsius')
+              tag('ToUnit', 'degreeFahrenheit')
+            end
+          end
+        end
 
         xml = compact_operation.to_xml
 
@@ -514,13 +585,15 @@ RSpec.describe WSDL::Operation do
       end
 
       it 'returns semantically equivalent XML' do
-        apply_request(compact_operation, body: {
-          ConvertTemp: {
-            Temperature: 30,
-            FromUnit: 'degreeCelsius',
-            ToUnit: 'degreeFahrenheit'
-          }
-        })
+        compact_operation.prepare do
+          body do
+            tag('ConvertTemp') do
+              tag('Temperature', 30)
+              tag('FromUnit', 'degreeCelsius')
+              tag('ToUnit', 'degreeFahrenheit')
+            end
+          end
+        end
 
         expected = Nokogiri.XML(%(
           <env:Envelope
@@ -564,13 +637,15 @@ RSpec.describe WSDL::Operation do
     it 'calls the operation with a Hash of options and returns a Response' do
       http_mock.fake_request('http://www.webservicex.net/ConvertTemperature.asmx')
 
-      apply_request(operation, body: {
-        ConvertTemp: {
-          Temperature: 30,
-          FromUnit: 'degreeCelsius',
-          ToUnit: 'degreeFahrenheit'
-        }
-      })
+      operation.prepare do
+        body do
+          tag('ConvertTemp') do
+            tag('Temperature', 30)
+            tag('FromUnit', 'degreeCelsius')
+            tag('ToUnit', 'degreeFahrenheit')
+          end
+        end
+      end
 
       response = operation.invoke
 
@@ -578,14 +653,16 @@ RSpec.describe WSDL::Operation do
     end
 
     context 'with response size limiting' do
-      let(:request_body) do
-        {
-          ConvertTemp: {
-            Temperature: 30,
-            FromUnit: 'degreeCelsius',
-            ToUnit: 'degreeFahrenheit'
-          }
-        }
+      def prepare_convert_temp(operation)
+        operation.prepare do
+          body do
+            tag('ConvertTemp') do
+              tag('Temperature', 30)
+              tag('FromUnit', 'degreeCelsius')
+              tag('ToUnit', 'degreeFahrenheit')
+            end
+          end
+        end
       end
 
       it 'raises ResourceLimitError when response exceeds max_response_size' do
@@ -601,7 +678,7 @@ RSpec.describe WSDL::Operation do
         config = WSDL::Config.new(limits:)
         op = described_class.new(operation_info, parser_result, http_mock, config:)
 
-        apply_request(op, body: request_body)
+        prepare_convert_temp(op)
 
         expect { op.invoke }.to raise_error(WSDL::ResourceLimitError) { |error|
           expect(error.limit_name).to eq(:max_response_size)
@@ -612,7 +689,7 @@ RSpec.describe WSDL::Operation do
 
       it 'does not raise when response is within the limit' do
         http_mock.fake_request('http://www.webservicex.net/ConvertTemperature.asmx')
-        apply_request(operation, body: request_body)
+        prepare_convert_temp(operation)
 
         expect { operation.invoke }.not_to raise_error
       end
@@ -628,21 +705,24 @@ RSpec.describe WSDL::Operation do
         config = WSDL::Config.new(limits:)
         op = described_class.new(operation_info, parser_result, http_mock, config:)
 
-        apply_request(op, body: request_body)
+        prepare_convert_temp(op)
 
         expect { op.invoke }.not_to raise_error
       end
     end
 
     context 'with response verification enforcement' do
-      let(:request_body) do
-        {
-          ConvertTemp: {
-            Temperature: 30,
-            FromUnit: 'degreeCelsius',
-            ToUnit: 'degreeFahrenheit'
-          }
-        }
+      def prepare_with_security(operation, &security_block)
+        operation.prepare do
+          body do
+            tag('ConvertTemp') do
+              tag('Temperature', 30)
+              tag('FromUnit', 'degreeCelsius')
+              tag('ToUnit', 'degreeFahrenheit')
+            end
+          end
+          ws_security(&security_block)
+        end
       end
 
       before do
@@ -650,7 +730,7 @@ RSpec.describe WSDL::Operation do
       end
 
       it 'raises when strict verification is required and response is unsigned' do
-        apply_request(operation, body: request_body) do
+        prepare_with_security(operation) do
           verify_response
         end
 
@@ -658,7 +738,7 @@ RSpec.describe WSDL::Operation do
       end
 
       it 'allows unsigned responses in verify_if_present mode' do
-        apply_request(operation, body: request_body) do
+        prepare_with_security(operation) do
           verify_response(mode: WSDL::Security::ResponsePolicy::MODE_IF_PRESENT)
         end
 
@@ -666,7 +746,7 @@ RSpec.describe WSDL::Operation do
       end
 
       it 'allows unsigned responses when verification is disabled' do
-        apply_request(operation, body: request_body) do
+        prepare_with_security(operation) do
           verify_response(mode: WSDL::Security::ResponsePolicy::MODE_DISABLED)
         end
 

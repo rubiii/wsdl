@@ -333,14 +333,17 @@ RSpec.describe 'Integration with RATP' do
   it 'builds a request' do
     operation = client.operation(service_name, port_name, :getStations)
 
-    apply_request(operation, body: {
-      getStations: {
-        station: {
-          id: 1975
-        },
-        limit: 1
-      }
-    })
+    operation.reset!
+    operation.prepare do
+      body do
+        tag('getStations') do
+          tag('station') do
+            tag('id', 1975)
+          end
+          tag('limit', 1)
+        end
+      end
+    end
 
     expected = Nokogiri.XML(%(
       <env:Envelope

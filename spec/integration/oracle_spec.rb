@@ -155,11 +155,6 @@ RSpec.describe 'Integration with Oracle' do
     end
 
     it 'serializes arbitrary content in elements with xs:any' do
-      builder = WSDL::XML::ElementBuilder.new(schemas)
-
-      part = { element: 'sawsoap:getJobInfoResult', namespaces: { 'xmlns:sawsoap' => namespace } }
-      elements = builder.build([part])
-
       document = WSDL::Request::Envelope.new
       context = WSDL::Request::DSLContext.new(
         document:,
@@ -167,31 +162,32 @@ RSpec.describe 'Integration with Oracle' do
         limits: WSDL.limits
       )
 
-      SpecSupport::RequestDSLHelper.emit_hash_section(context, :body, {
-        getJobInfoResult: {
-          jobInfo: {
-            jobStats: {
-              jobID: 12_345,
-              jobType: 'Report',
-              jobUser: 'admin',
-              jobState: 'Finished',
-              jobTotalMilliSec: '1500',
-              jobStartedTime: '2024-01-15T10:00:00Z',
-              jobIsCancelling: 'false'
-            },
-            detailedInfo: {
-              # Arbitrary content via xs:any
-              ReportName: 'Sales Summary',
-              ExecutionTime: '1.5s',
-              RowCount: 150,
-              CustomMetadata: {
-                Author: 'John Doe',
-                Department: 'Finance'
-              }
-            }
-          }
-        }
-      }, elements)
+      context.instance_exec do
+        body do
+          tag('getJobInfoResult') do
+            tag('jobInfo') do
+              tag('jobStats') do
+                tag('jobID', 12_345)
+                tag('jobType', 'Report')
+                tag('jobUser', 'admin')
+                tag('jobState', 'Finished')
+                tag('jobTotalMilliSec', '1500')
+                tag('jobStartedTime', '2024-01-15T10:00:00Z')
+                tag('jobIsCancelling', 'false')
+              end
+              tag('detailedInfo') do
+                tag('ReportName', 'Sales Summary')
+                tag('ExecutionTime', '1.5s')
+                tag('RowCount', 150)
+                tag('CustomMetadata') do
+                  tag('Author', 'John Doe')
+                  tag('Department', 'Finance')
+                end
+              end
+            end
+          end
+        end
+      end
 
       result = WSDL::Request::Serializer.new(document:, soap_version: '1.1', format_xml: false).serialize
 

@@ -246,21 +246,22 @@ RSpec.describe 'Integration with Interhome' do
   it 'skips optional elements in the request' do
     operation = client.operation(service_name, port_name, :Availability)
 
-    apply_request(operation,
-                  header: {
-                    ServiceAuthHeader: {
-                      Username: 'test',
-                      Password: 'secret'
-                    }
-                  },
-                  body: {
-                    Availability: {
-                      inputValue: {
-                        # Leaving out two optional elements on purpose.
-                        AccommodationCode: 'secret'
-                      }
-                    }
-                  })
+    operation.prepare do
+      header do
+        tag('ServiceAuthHeader') do
+          tag('Username', 'test')
+          tag('Password', 'secret')
+        end
+      end
+      body do
+        tag('Availability') do
+          tag('inputValue') do
+            # Leaving out two optional elements on purpose.
+            tag('AccommodationCode', 'secret')
+          end
+        end
+      end
+    end
 
     expected = Nokogiri.XML('
       <env:Envelope
@@ -284,5 +285,114 @@ RSpec.describe 'Integration with Interhome' do
 
     expect(Nokogiri.XML(operation.to_xml))
       .to be_equivalent_to(expected).respecting_element_order
+  end
+
+  context 'with a live mock service', :test_service do
+    subject(:client) { WSDL::Client.new(service.wsdl_url, strict_schema: false) }
+
+    let(:service) { WSDL::TestService[:interhome] }
+
+    before do
+      service.start
+    end
+
+    it 'returns a successful booking' do
+      operation = client.operation(service_name, port_name, :ClientBooking)
+
+      operation.prepare do
+        header do
+          tag('ServiceAuthHeader') do
+            tag('Username', 'test')
+            tag('Password', 'secret')
+          end
+        end
+        body do
+          tag('ClientBooking') do
+            tag('inputValue') do
+              tag('AccommodationCode', 'CH1000.100.1')
+              tag('CustomerName', 'Smith')
+              tag('Adults', 2)
+              tag('CheckIn', '2025-06-01')
+              tag('CheckOut', '2025-06-08')
+            end
+          end
+        end
+      end
+      response = operation.invoke
+
+      expect(response.body).to eq(
+        ClientBookingResponse: {
+          ClientBookingResult: {
+            Ok: true,
+            BookingID: 'BK-2025-98765'
+          }
+        }
+      )
+    end
+
+    it 'returns errors for an invalid accommodation' do
+      operation = client.operation(service_name, port_name, :ClientBooking)
+
+      operation.prepare do
+        header do
+          tag('ServiceAuthHeader') do
+            tag('Username', 'test')
+            tag('Password', 'secret')
+          end
+        end
+        body do
+          tag('ClientBooking') do
+            tag('inputValue') do
+              tag('AccommodationCode', 'INVALID-999')
+              tag('CustomerName', 'Test')
+              tag('Adults', 1)
+              tag('CheckIn', '2025-07-01')
+              tag('CheckOut', '2025-07-08')
+            end
+          end
+        end
+      end
+      response = operation.invoke
+
+      body = response.body[:ClientBookingResponse][:ClientBookingResult]
+      expect(body[:Ok]).to be false
+      expect(body[:Errors][:Error]).to eq([
+        { Number: 1001, Description: 'Unknown accommodation code' },
+        { Number: 1002, Description: 'Please verify your input' }
+      ])
+    end
+
+    it 'returns a booking with pending payment status' do
+      operation = client.operation(service_name, port_name, :ClientBooking)
+
+      operation.prepare do
+        header do
+          tag('ServiceAuthHeader') do
+            tag('Username', 'test')
+            tag('Password', 'secret')
+          end
+        end
+        body do
+          tag('ClientBooking') do
+            tag('inputValue') do
+              tag('AccommodationCode', 'CH1000.100.1')
+              tag('CustomerName', 'Holiday')
+              tag('Adults', 4)
+              tag('CheckIn', '2025-12-24')
+              tag('CheckOut', '2025-12-31')
+            end
+          end
+        end
+      end
+      response = operation.invoke
+
+      body = response.body[:ClientBookingResponse][:ClientBookingResult]
+      expect(body[:Ok]).to be true
+      expect(body[:BookingID]).to eq('BK-2025-XMAS')
+      expect(body[:PaymentStatus][:Ok]).to be false
+      expect(body[:PaymentStatus][:Errors][:Error]).to eq([
+        { Number: 3001, Description: 'Payment pending confirmation' }
+      ])
+    end
   end
 end

@@ -47,22 +47,22 @@ RSpec.describe 'Nillable elements' do
   end
 
   describe 'xsi:nil serialization' do
-    let(:operation) { WSDL::Operation.new(operation_info, parser_result, http_mock) }
-
-    def build_xml(operation, body)
-      # These tests use incomplete data to focus on nillable serialization behavior
-      apply_request(operation, body:, strict_schema: false)
-      operation.to_xml
-    end
+    let(:config) { WSDL::Config.new(strict_schema: false) }
+    let(:operation) { WSDL::Operation.new(operation_info, parser_result, http_mock, config:) }
 
     it 'serializes nil nillable simple elements with xsi:nil="true"' do
-      xml = build_xml(operation, {
-        CreateUser: {
-          username: 'johndoe',
-          email: nil,
-          displayName: nil
-        }
-      })
+      operation.prepare do
+        body do
+          tag('CreateUser') do
+            tag('username', 'johndoe')
+            tag('email') do
+              attribute('xsi:nil', 'true')
+            end
+            tag('displayName') { attribute('xsi:nil', 'true') }
+          end
+        end
+      end
+      xml = operation.to_xml
 
       expect(xml).to include('xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"')
       expect(xml).to include('<ns0:email xsi:nil="true"/>')
@@ -70,42 +70,53 @@ RSpec.describe 'Nillable elements' do
     end
 
     it 'serializes nil non-nillable elements as empty elements' do
-      xml = build_xml(operation, {
-        CreateUser: {
-          username: 'johndoe',
-          phoneNumber: nil,
-          displayName: 'John'
-        }
-      })
+      operation.prepare do
+        body do
+          tag('CreateUser') do
+            tag('username', 'johndoe')
+            tag('phoneNumber')
+            tag('displayName', 'John')
+          end
+        end
+      end
+      xml = operation.to_xml
 
       expect(xml).to include('<ns0:phoneNumber/>')
       expect(xml).not_to include('<ns0:phoneNumber xsi:nil')
     end
 
     it 'serializes nil nillable complex element with xsi:nil="true"' do
-      xml = build_xml(operation, {
-        CreateUser: {
-          username: 'johndoe',
-          displayName: 'John',
-          address: nil
-        }
-      })
+      operation.prepare do
+        body do
+          tag('CreateUser') do
+            tag('username', 'johndoe')
+            tag('displayName', 'John')
+            tag('address') { attribute('xsi:nil', 'true') }
+          end
+        end
+      end
+      xml = operation.to_xml
 
       expect(xml).to include('<ns0:address xsi:nil="true"/>')
     end
 
     it 'serializes nested nil values for nillable children with xsi:nil="true"' do
-      xml = build_xml(operation, {
-        CreateUser: {
-          username: 'johndoe',
-          displayName: 'John',
-          address: {
-            street: nil,
-            city: 'New York',
-            zipCode: nil
-          }
-        }
-      })
+      operation.prepare do
+        body do
+          tag('CreateUser') do
+            tag('username', 'johndoe')
+            tag('displayName', 'John')
+            tag('address') do
+              tag('street') do
+                attribute('xsi:nil', 'true')
+              end
+              tag('city', 'New York')
+              tag('zipCode') { attribute('xsi:nil', 'true') }
+            end
+          end
+        end
+      end
+      xml = operation.to_xml
 
       expect(xml).to include('<ns0:street xsi:nil="true"/>')
       expect(xml).to include('<ns0:zipCode xsi:nil="true"/>')
@@ -113,13 +124,19 @@ RSpec.describe 'Nillable elements' do
     end
 
     it 'serializes nil array entries with xsi:nil="true" for nillable arrays' do
-      xml = build_xml(operation, {
-        CreateUser: {
-          username: 'johndoe',
-          displayName: 'John',
-          tags: ['ruby', nil, 'developer', nil]
-        }
-      })
+      operation.prepare do
+        body do
+          tag('CreateUser') do
+            tag('username', 'johndoe')
+            tag('displayName', 'John')
+            tag('tags', 'ruby')
+            tag('tags') { attribute('xsi:nil', 'true') }
+            tag('tags', 'developer')
+            tag('tags') { attribute('xsi:nil', 'true') }
+          end
+        end
+      end
+      xml = operation.to_xml
 
       expect(xml.scan('<ns0:tags>ruby</ns0:tags>').length).to eq(1)
       expect(xml.scan('<ns0:tags>developer</ns0:tags>').length).to eq(1)

@@ -229,32 +229,33 @@ RSpec.describe 'Integration with Equifax' do
   end
 
   it 'creates a request with attributes' do
-    operation = client.operation(service_name, port_name, :startTransaction)
+    # Use a relaxed client — this test uses incomplete data to focus on attribute serialization
+    relaxed_client = WSDL::Client.new(fixture('wsdl/equifax'), strict_schema: false)
+    operation = relaxed_client.operation(service_name, port_name, :startTransaction)
 
-    # This test uses incomplete data to focus on attribute serialization
-    apply_request(operation, body: {
-      InitialRequest: {
-        Identity: {
-          Address: [
-            {
-              FreeFormAddress: {
-                AddressLine: ['The original', 'Abbey Road, London']
-              },
-              HybridAddress: {
-                AddressLine: ['The original', 'Abbey Road'],
-                City: 'London',
-                Province: 'Camden',
-                PostalCode: 'NW8 9BS'
-              },
-
-              # attributes are prefixed with an underscore
-              _timeAtAddress: 3,
-              _addressType: 'public'
-            }
-          ]
-        }
-      }
-    }, strict_schema: false)
+    operation.prepare do
+      body do
+        tag('InitialRequest') do
+          tag('Identity') do
+            tag('Address') do
+              attribute('timeAtAddress', 3)
+              attribute('addressType', 'public')
+              tag('FreeFormAddress') do
+                tag('AddressLine', 'The original')
+                tag('AddressLine', 'Abbey Road, London')
+              end
+              tag('HybridAddress') do
+                tag('AddressLine', 'The original')
+                tag('AddressLine', 'Abbey Road')
+                tag('City', 'London')
+                tag('Province', 'Camden')
+                tag('PostalCode', 'NW8 9BS')
+              end
+            end
+          end
+        end
+      end
+    end
 
     expected = Nokogiri.XML('
       <env:Envelope

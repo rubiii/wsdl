@@ -169,11 +169,6 @@ RSpec.describe 'Integration with Amazon' do
     end
 
     it 'serializes arbitrary content in elements with xs:any' do
-      builder = WSDL::XML::ElementBuilder.new(schemas)
-
-      part = { element: 'tns:Error', namespaces: { 'xmlns:tns' => namespace } }
-      elements = builder.build([part])
-
       document = WSDL::Request::Envelope.new
       context = WSDL::Request::DSLContext.new(
         document:,
@@ -181,19 +176,20 @@ RSpec.describe 'Integration with Amazon' do
         limits: WSDL.limits
       )
 
-      SpecSupport::RequestDSLHelper.emit_hash_section(context, :body, {
-        Error: {
-          Type: 'Sender',
-          Code: 'InvalidParameterValue',
-          Message: 'Value for parameter is invalid.',
-          Detail: {
-            # Arbitrary content via xs:any
-            Parameter: 'Amount',
-            ExpectedType: 'Decimal',
-            ReceivedValue: 'not-a-number'
-          }
-        }
-      }, elements)
+      context.instance_exec do
+        body do
+          tag('Error') do
+            tag('Type', 'Sender')
+            tag('Code', 'InvalidParameterValue')
+            tag('Message', 'Value for parameter is invalid.')
+            tag('Detail') do
+              tag('Parameter', 'Amount')
+              tag('ExpectedType', 'Decimal')
+              tag('ReceivedValue', 'not-a-number')
+            end
+          end
+        end
+      end
 
       result = WSDL::Request::Serializer.new(document:, soap_version: '1.1', format_xml: false).serialize
 

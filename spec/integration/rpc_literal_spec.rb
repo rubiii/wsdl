@@ -19,12 +19,15 @@ RSpec.describe 'Integration with an RPC/Literal example' do
 
     # Build the request. It returns a Hash without the RPC wrapper element,
     # because users just don't need to care about it.
-    apply_request(op1, body: {
-      in: {
-        data1: 24,
-        data2: 36
-      }
-    })
+    op1.reset!
+    op1.prepare do
+      body do
+        tag('in') do
+          tag('data1', 24)
+          tag('data2', 36)
+        end
+      end
+    end
 
     # The expected request.
     expected = Nokogiri.XML('
@@ -61,15 +64,18 @@ RSpec.describe 'Integration with an RPC/Literal example' do
       }
     )
 
-    apply_request(op3, body: {
-      DataElem: {
-        data1: 64,
-        data2: 128
-      },
-      in2: {
-        RefDataElem: 3
-      }
-    })
+    op3.reset!
+    op3.prepare do
+      body do
+        tag('DataElem') do
+          tag('data1', 64)
+          tag('data2', 128)
+        end
+        tag('in2') do
+          tag('RefDataElem', 3)
+        end
+      end
+    end
 
     # The expected request. Notice how the RPC wrapper element 'op3' is not
     # namespaced because the WSDL does not define a namespace for it.
@@ -95,5 +101,57 @@ RSpec.describe 'Integration with an RPC/Literal example' do
 
     expect(Nokogiri.XML(op3.to_xml))
       .to be_equivalent_to(expected).respecting_element_order
+  end
+
+  context 'with a live mock service', :test_service do
+    subject(:client) { WSDL::Client.new(service.wsdl_url) }
+
+    let(:service) { WSDL::TestService[:rpc_literal] }
+
+    before do
+      service.start
+    end
+
+    it 'routes op1 and returns the correct response' do
+      operation = client.operation(service_name, port_name, :op1)
+
+      operation.prepare do
+        body do
+          tag('in') do
+            tag('data1', 24)
+            tag('data2', 36)
+          end
+        end
+      end
+      response = operation.invoke
+
+      # RPC/literal responses are parsed without schema-aware type coercion
+      # because the op1Response RPC wrapper is not a schema element.
+      expect(response.body).to eq(
+        op1Response: {
+          op1Return: { data1: '48', data2: '72' }
+        }
+      )
+    end
+
+    it 'routes op2 separately from op1' do
+      operation = client.operation(service_name, port_name, :op2)
+
+      operation.prepare do
+        body do
+          tag('in') do
+            tag('data1', 1)
+            tag('data2', 2)
+          end
+        end
+      end
+      response = operation.invoke
+
+      expect(response.body).to eq(
+        op2Response: {
+          op2Return: { data1: '3', data2: '4' }
+        }
+      )
+    end
   end
 end

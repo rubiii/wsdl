@@ -62,12 +62,15 @@ RSpec.describe 'Integration with EmailVerification service' do
   it 'builds a request' do
     operation = client.operation(service_name, port_name, :VerifyEmail)
 
-    apply_request(operation, body: {
-      VerifyEmail: {
-        email: 'soap@example.com',
-        LicenseKey: '?'
-      }
-    })
+    operation.reset!
+    operation.prepare do
+      body do
+        tag('VerifyEmail') do
+          tag('email', 'soap@example.com')
+          tag('LicenseKey', '?')
+        end
+      end
+    end
 
     expected = Nokogiri.XML(%(
       <env:Envelope

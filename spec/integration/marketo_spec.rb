@@ -35,22 +35,23 @@ RSpec.describe 'Integration with Marketo Marketo Automation Software' do
   it 'builds a request' do
     operation = client.operation(service_name, port_name, :getLead)
 
-    apply_request(operation,
-                  header: {
-                    AuthenticationHeader: {
-                      mktowsUserId: 'bigcorp1_461839624B16E06BA2D663',
-                      requestSignature: 'ffbff4d4bef354807481e66dc7540f7890523a87',
-                      requestTimestamp: '2013-07-30T14:15:06-07:00'
-                    }
-                  },
-                  body: {
-                    paramsGetLead: {
-                      leadKey: {
-                        keyType: 'EMAIL',
-                        keyValue: 'rufus@marketo.com'
-                      }
-                    }
-                  })
+    operation.prepare do
+      header do
+        tag('AuthenticationHeader') do
+          tag('mktowsUserId', 'bigcorp1_461839624B16E06BA2D663')
+          tag('requestSignature', 'ffbff4d4bef354807481e66dc7540f7890523a87')
+          tag('requestTimestamp', '2013-07-30T14:15:06-07:00')
+        end
+      end
+      body do
+        tag('paramsGetLead') do
+          tag('leadKey') do
+            tag('keyType', 'EMAIL')
+            tag('keyValue', 'rufus@marketo.com')
+          end
+        end
+      end
+    end
 
     expected = Nokogiri.XML(%(
      <SOAP-ENV:Envelope

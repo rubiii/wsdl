@@ -40,13 +40,16 @@ RSpec.describe 'Integration with Temperature service' do
     # </s:simpleType>
     #
     # TODO: somehow expose the enumeration options through the example request.
-    apply_request(operation, body: {
-      ConvertTemp: {
-        Temperature: 30,
-        FromUnit: 'degreeCelsius',
-        ToUnit: 'degreeFahrenheit'
-      }
-    })
+    operation.reset!
+    operation.prepare do
+      body do
+        tag('ConvertTemp') do
+          tag('Temperature', 30)
+          tag('FromUnit', 'degreeCelsius')
+          tag('ToUnit', 'degreeFahrenheit')
+        end
+      end
+    end
 
     expected = Nokogiri.XML(%(
       <env:Envelope
