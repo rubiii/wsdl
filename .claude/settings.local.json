@@ -2,21 +2,22 @@
   "permissions": {
     "allow": [
       "Bash(bundle exec:*)",
-      "Bash(grep:*)",
-      "Bash(rake ci:*)",
       "Bash(DEBUG=WSDL bundle exec:*)",
+      "Bash(bundle install:*)",
+      "Bash(git status:*)",
+      "Bash(git add:*)",
+      "Bash(ruby:*)",
+      "Bash(grep:*)",
+      "Bash(ls:*)",
+      "Bash(wc:*)",
       "WebSearch",
       "WebFetch(domain:github.com)",
       "WebFetch(domain:docs.ruby-lang.org)",
       "WebFetch(domain:api.rubyonrails.org)",
-      "Bash(bundle install:*)",
-      "Bash(ruby:*)",
-      "Bash(ls:*)",
-      "Bash(wc:*)",
       "WebFetch(domain:rubygems.org)",
       "WebFetch(domain:www.cvedetails.com)",
       "WebFetch(domain:rubysec.com)",
-      "Bash(git status:*)"
+      "WebFetch(domain:www.w3.org)"
     ]
   }
 }
