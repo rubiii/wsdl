@@ -85,7 +85,7 @@ module WSDL
         wrapper = @schema_elements.first
         return if wrapper.nil?
 
-        validate_hash(hash, wrapper.children, path: wrapper.name)
+        validate_hash(hash, wrapper, path: wrapper.name)
       end
 
       private
@@ -94,12 +94,42 @@ module WSDL
       # Validation
       # ============================================================
 
-      def validate_hash(hash, schema_children, path:)
-        schema_by_name = schema_children.to_h { |el| [el.name.to_sym, el] }
+      def validate_hash(hash, schema_element, path:)
+        attrs, elements = split_attributes(hash)
+        schema_by_name = schema_element.children.to_h { |el| [el.name.to_sym, el] }
 
-        validate_no_unknown_keys(hash, schema_by_name, path)
-        validate_required_elements(schema_children, hash, path)
-        validate_child_values(hash, schema_by_name, path)
+        validate_attributes(attrs, schema_element.attributes, path)
+        validate_no_unknown_keys(elements, schema_by_name, path)
+        validate_required_elements(schema_element.children, elements, path)
+        validate_child_values(elements, schema_by_name, path)
+      end
+
+      def split_attributes(hash)
+        attrs = {}
+        elements = {}
+
+        hash.each do |key, value|
+          key_s = key.to_s
+          if key_s.start_with?('_')
+            attrs[key_s.delete_prefix('_')] = value
+          else
+            elements[key] = value
+          end
+        end
+
+        [attrs, elements]
+      end
+
+      def validate_attributes(attrs, schema_attrs, path)
+        schema_attr_names = schema_attrs.to_set(&:name)
+
+        attrs.each_key do |name|
+          next if schema_attr_names.include?(name)
+
+          raise ResponseBuildError,
+                "Unknown attribute #{name.inspect} at #{path}. " \
+                "Expected: #{schema_attr_names.to_a.inspect}"
+        end
       end
 
       def validate_no_unknown_keys(hash, schema_by_name, path)
@@ -148,7 +178,7 @@ module WSDL
 
       def validate_single_value(value, element, path)
         if element.complex_type? && value.is_a?(Hash)
-          validate_hash(value, element.children, path:)
+          validate_hash(value, element, path:)
         elsif element.simple_type?
           validate_type(value, element.base_type, path)
         end
@@ -216,7 +246,11 @@ module WSDL
         if schema_element.simple_type?
           node.content = content.to_s unless content.nil?
         elsif content.is_a?(Hash)
-          build_children(node, schema_element.children, content, doc:, namespaces:, root:)
+          attrs, elements = split_attributes(content)
+          attrs.each do |name, value|
+            node[name] = value.to_s
+          end
+          build_children(node, schema_element.children, elements, doc:, namespaces:, root:)
         end
 
         node
