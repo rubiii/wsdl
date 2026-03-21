@@ -32,7 +32,33 @@ module WSDL
       @http_header_overrides = {}
     end
 
+    # Returns the operation name from the WSDL definition.
+    #
+    # @return [String]
+    #
+    # @example
+    #   operation.name  # => "getBank"
+    #
+    def name
+      @operation_info.name
+    end
+
     attr_reader :endpoint, :soap_version, :soap_action, :encoding
+
+    # Returns the output body namespace from the WSDL binding.
+    #
+    # For RPC/literal operations, this is the namespace used on the
+    # response wrapper element. For document/literal operations this
+    # may be nil.
+    #
+    # @return [String, nil]
+    #
+    # @example
+    #   operation.output_namespace  # => "http://apiNamespace.com"
+    #
+    def output_namespace
+      @operation_info.binding_operation.output_body[:namespace]
+    end
 
     # Overrides the SOAP endpoint URL for this operation.
     #
