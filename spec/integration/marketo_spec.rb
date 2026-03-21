@@ -78,4 +78,76 @@ RSpec.describe 'Integration with Marketo Marketo Automation Software' do
     expect(Nokogiri.XML(operation.to_xml))
       .to be_equivalent_to(expected).respecting_element_order
   end
+
+  context 'with a live mock service', :test_service do
+    subject(:client) { WSDL::Client.new(service.wsdl_url) }
+
+    let(:service) { WSDL::TestService[:marketo] }
+
+    before do
+      service.start
+    end
+
+    it 'returns campaigns with headers, arrays, and integer types' do
+      operation = client.operation(service_name, port_name, :getCampaignsForSource)
+
+      operation.prepare do
+        header do
+          tag('AuthenticationHeader') do
+            tag('mktowsUserId', 'user_123')
+            tag('requestSignature', 'sig_abc')
+            tag('requestTimestamp', '2025-01-15T10:00:00Z')
+            tag('audit', '')
+            tag('mode', 1)
+          end
+        end
+        body do
+          tag('paramsGetCampaignsForSource') do
+            tag('source', 'MKTOWS')
+            tag('name', 'Welcome')
+            tag('exactName', false)
+          end
+        end
+      end
+      response = operation.invoke
+      result = response.body[:successGetCampaignsForSource][:result]
+
+      expect(result[:returnCount]).to eq(2)
+
+      campaigns = result[:campaignRecordList][:campaignRecord]
+      expect(campaigns).to be_an(Array)
+      expect(campaigns.size).to eq(2)
+      expect(campaigns[0][:id]).to eq(1001)
+      expect(campaigns[0][:name]).to eq('Welcome Email')
+      expect(campaigns[1][:id]).to eq(1002)
+    end
+
+    it 'returns empty results for no matches' do
+      operation = client.operation(service_name, port_name, :getCampaignsForSource)
+
+      operation.prepare do
+        header do
+          tag('AuthenticationHeader') do
+            tag('mktowsUserId', 'user_123')
+            tag('requestSignature', 'sig_abc')
+            tag('requestTimestamp', '2025-01-15T10:00:00Z')
+            tag('audit', '')
+            tag('mode', 1)
+          end
+        end
+        body do
+          tag('paramsGetCampaignsForSource') do
+            tag('source', 'MKTOWS')
+            tag('name', 'Nonexistent')
+            tag('exactName', true)
+          end
+        end
+      end
+      response = operation.invoke
+      result = response.body[:successGetCampaignsForSource][:result]
+
+      expect(result[:returnCount]).to eq(0)
+      expect(result[:campaignRecordList]).to eq({})
+    end
+  end
 end
