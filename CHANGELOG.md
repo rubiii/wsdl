@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - RPC/literal responses now receive schema-aware type coercion. Previously, the RPC wrapper element prevented the parser from matching schema parts, so all values were returned as strings instead of typed Ruby objects (Integer, Date, BigDecimal, etc.).
 - Documents without a root XML element (empty files, binary content, truncated XML, non-XML responses from imports) now raise `WSDL::Error` instead of `NoMethodError`.
 - Binding operations missing a required `<input>` element now raise `WSDL::UnresolvedReferenceError` instead of `NoMethodError`.
+- Binding operations not found in the referenced portType now raise `WSDL::UnresolvedReferenceError` instead of `KeyError`.
 
 ## [1.0.0] — 2026-03-06
 

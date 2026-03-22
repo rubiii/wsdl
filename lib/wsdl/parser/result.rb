@@ -164,7 +164,14 @@ module WSDL
         binding_operation = binding.operations.fetch(operation_name)
 
         port_type = binding.fetch_port_type(@documents)
-        port_type_operation = port_type.operations.fetch(operation_name)
+        port_type_operation = port_type.operations.fetch(operation_name) {
+          raise UnresolvedReferenceError.new(
+            "Binding operation #{operation_name.inspect} not found in portType #{port_type.name.inspect}",
+            reference_type: :port_type_operation,
+            reference_name: operation_name,
+            context: "portType #{port_type.name.inspect}"
+          )
+        }
 
         OperationInfo.new(operation_name, endpoint, binding_operation, port_type_operation, self)
       end

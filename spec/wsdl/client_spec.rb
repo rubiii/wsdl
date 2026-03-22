@@ -379,6 +379,42 @@ RSpec.describe WSDL::Client do
     end
   end
 
+  describe 'binding operation not in portType' do
+    it 'raises UnresolvedReferenceError when binding operation has no matching portType operation' do
+      xml = <<~WSDL
+        <definitions xmlns="http://schemas.xmlsoap.org/wsdl/"
+                     xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
+                     xmlns:tns="http://t.com" targetNamespace="http://t.com">
+          <portType name="PT"/>
+          <binding name="B" type="tns:PT">
+            <soap:binding style="document" transport="http://schemas.xmlsoap.org/soap/http"/>
+            <operation name="GhostOp">
+              <soap:operation soapAction="Op"/>
+              <input><soap:body use="literal"/></input>
+              <output><soap:body use="literal"/></output>
+            </operation>
+          </binding>
+          <service name="S">
+            <port name="P" binding="tns:B"><soap:address location="http://x.com"/></port>
+          </service>
+        </definitions>
+      WSDL
+
+      Tempfile.create(['ghost_op', '.wsdl']) do |f|
+        f.write(xml)
+        f.close
+        client = described_class.new(f.path)
+
+        # The operation is listed (it's in the binding)
+        expect(client.operations('S', 'P')).to include('GhostOp')
+
+        # But resolving it fails because the portType doesn't define it
+        expect { client.operation('S', 'P', 'GhostOp') }
+          .to raise_error(WSDL::UnresolvedReferenceError, /GhostOp.*portType/)
+      end
+    end
+  end
+
   describe 'one-way operation (no output)' do
     it 'returns empty response contract for one-way operations' do
       xml = <<~WSDL
