@@ -24,8 +24,42 @@ namespace :yard do
   end
 end
 
+namespace :lint do
+  desc 'Check markdown links point to existing files'
+  task :links do
+    errors = []
+    root = File.expand_path(__dir__)
+    md_files = Dir.glob([
+      File.join(root, '*.md'),               # Top-level markdown files
+      File.join(root, 'docs', '**', '*.md')  # Markdown files in /docs
+    ])
+
+    md_files.each do |file|
+      dir = File.dirname(file)
+      File.read(file).scan(/\[(?:[^\]]*)\]\(([^)]+)\)/).flatten.each do |link|
+        next if link.start_with?('http://', 'https://', 'mailto:')
+
+        path = link.split('#').first
+        next if path.empty?
+
+        target = File.expand_path(path, dir)
+        next if File.exist?(target)
+
+        relative = file.sub("#{root}/", '')
+        errors << "  #{relative}: #{link}"
+      end
+    end
+
+    if errors.any?
+      abort "Broken markdown links:\n#{errors.join("\n")}"
+    else
+      puts "All markdown links OK (#{md_files.size} files checked)"
+    end
+  end
+end
+
 desc 'Run linting'
-task lint: :rubocop
+task lint: %i[rubocop lint:links]
 
 desc 'Run performance benchmarks'
 task :benchmark do
