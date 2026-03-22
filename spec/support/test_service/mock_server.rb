@@ -184,12 +184,13 @@ module WSDL
         wsdl_operation = @service.resolve_operation(operation_name)
         builder = WSDL::Response::Builder.new(
           schema_elements: wsdl_operation.contract.response.body.elements,
-          soap_version: wsdl_operation.soap_version
+          soap_version: wsdl_operation.soap_version,
+          output_style: wsdl_operation.output_style,
+          operation_name: wsdl_operation.name,
+          output_namespace: wsdl_operation.output_namespace
         )
 
         xml = builder.to_xml(response_hash)
-        xml = wrap_rpc_response(xml, wsdl_operation) if wsdl_operation.output_style == 'rpc/literal'
-
         respond_with_xml(response, 200, xml, soap_version: wsdl_operation.soap_version)
       end
 
@@ -249,42 +250,6 @@ module WSDL
         return {} unless body
 
         WSDL::Response::Parser.parse(body, unwrap: true)
-      end
-
-      # Wraps builder output in an RPC response element.
-      #
-      # For RPC/literal, the SOAP body must contain a wrapper element
-      # named +operationNameResponse+ with the binding's output namespace.
-      def wrap_rpc_response(xml, wsdl_operation)
-        doc = Nokogiri::XML(xml)
-        body = find_soap_body(doc)
-        return xml unless body
-
-        wrapper = build_rpc_wrapper(doc, "#{wsdl_operation.name}Response",
-                                    wsdl_operation.output_namespace)
-
-        body.children.each do |child|
-          wrapper.add_child(child)
-        end
-        body.add_child(wrapper)
-
-        doc.root.to_xml(save_with: Nokogiri::XML::Node::SaveOptions::AS_XML |
-                                   Nokogiri::XML::Node::SaveOptions::NO_DECLARATION)
-      end
-
-      def find_soap_body(doc)
-        doc.at_xpath('//env:Body', 'env' => WSDL::NS::SOAP_1_1) ||
-          doc.at_xpath('//env:Body', 'env' => WSDL::NS::SOAP_1_2)
-      end
-
-      def build_rpc_wrapper(doc, name, namespace_uri)
-        wrapper = Nokogiri::XML::Node.new(name, doc)
-        return wrapper unless namespace_uri
-
-        ns = doc.root.add_namespace_definition(nil, namespace_uri) ||
-             doc.root.namespace_definitions.find { |n| n.href == namespace_uri }
-        wrapper.namespace = ns
-        wrapper
       end
 
       def soap_content_type(soap_version)

@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require 'base64'
 require 'nokogiri'
 
 module WSDL
@@ -33,7 +34,7 @@ module WSDL
     # @example Validating without building XML
     #   builder.validate!(details: { bezeichnung: 'Deutsche Bank' })
     #
-    class Builder
+    class Builder # rubocop:disable Metrics/ClassLength -- type-aware serialization adds essential methods
       # Maps XSD type groups to accepted Ruby classes for validation.
       #
       # @return [Hash{Symbol => Array<Class>}]
@@ -52,12 +53,24 @@ module WSDL
 
       # Creates a new builder for the given output schema.
       #
+      # For RPC/literal operations, pass +output_style+, +operation_name+, and
+      # +output_namespace+ so the builder wraps message parts in the standard
+      # +operationNameResponse+ element per SOAP 1.1 §7.1.
+      #
       # @param schema_elements [Array<WSDL::XML::Element>] the output schema elements
       #   (typically from +operation.contract.response.body.elements+)
       # @param soap_version [String] SOAP version ('1.1' or '1.2')
-      def initialize(schema_elements:, soap_version: '1.1')
+      # @param output_style [String] binding style ('document/literal' or 'rpc/literal')
+      # @param operation_name [String, nil] operation name (required for RPC/literal)
+      # @param output_namespace [String, nil] soap:body namespace for the RPC wrapper
+      def initialize(schema_elements:, soap_version: '1.1',
+                     output_style: 'document/literal',
+                     operation_name: nil, output_namespace: nil)
         @schema_elements = schema_elements
         @soap_version = soap_version
+        @output_style = output_style
+        @operation_name = operation_name
+        @output_namespace = output_namespace
       end
 
       # Validates and serializes a Ruby hash into a SOAP envelope XML string.
@@ -232,13 +245,34 @@ module WSDL
         envelope = build_soap_envelope(doc, namespaces)
 
         body = envelope.at_xpath('env:Body', 'env' => envelope.namespace.href)
+        parent = rpc_literal? ? build_rpc_wrapper(doc, body, namespaces, envelope) : body
+
         @schema_elements.each do |element|
           content = element.complex_type? ? hash : hash[element.name.to_sym]
-          body.add_child(build_element(doc, element, content, namespaces, envelope))
+          parent.add_child(build_element(doc, element, content, namespaces, envelope))
         end
 
         doc.root.to_xml(save_with: Nokogiri::XML::Node::SaveOptions::AS_XML |
                                    Nokogiri::XML::Node::SaveOptions::NO_DECLARATION)
+      end
+
+      def rpc_literal?
+        @output_style == 'rpc/literal'
+      end
+
+      # Builds the RPC response wrapper element per SOAP 1.1 §7.1.
+      #
+      # @return [Nokogiri::XML::Node] the wrapper node (already appended to body)
+      def build_rpc_wrapper(doc, body, namespaces, root)
+        wrapper = Nokogiri::XML::Node.new("#{@operation_name}Response", doc)
+
+        if @output_namespace
+          wrapper.namespace = ensure_namespace(root, resolve_prefix(@output_namespace, namespaces),
+                                               @output_namespace, namespaces)
+        end
+
+        body.add_child(wrapper)
+        wrapper
       end
 
       def build_soap_envelope(doc, namespaces)
@@ -267,13 +301,13 @@ module WSDL
         node = Nokogiri::XML::Node.new(schema_element.name, doc)
         apply_namespace(node, schema_element, namespaces, root)
 
-        if schema_element.simple_type?
-          node.content = content.to_s unless content.nil?
+        if content.nil? && schema_element.nillable?
+          apply_xsi_nil(node, root, namespaces)
+        elsif schema_element.simple_type?
+          node.content = serialize_value(content, schema_element.base_type) unless content.nil?
         elsif content.is_a?(Hash)
           attrs, elements = split_attributes(content)
-          attrs.each do |name, value|
-            node[name] = value.to_s
-          end
+          apply_attributes(node, attrs, schema_element.attributes)
           build_children(node, schema_element.children, elements, doc:, namespaces:, root:)
         end
 
@@ -292,6 +326,40 @@ module WSDL
             parent.add_child(build_element(context[:doc], child_element, item,
                                            context[:namespaces], context[:root]))
           end
+        end
+      end
+
+      def apply_xsi_nil(node, root, namespaces)
+        ensure_namespace(root, 'xsi', NS::XSI, namespaces)
+        node['xsi:nil'] = 'true'
+      end
+
+      def apply_attributes(node, attrs, schema_attrs)
+        schema_by_name = schema_attrs.to_h { |a| [a.name, a] }
+
+        attrs.each do |name, value|
+          node[name] = serialize_value(value, schema_by_name[name]&.base_type)
+        end
+      end
+
+      # Serializes a Ruby value to its XML text representation.
+      #
+      # Applies type-aware encoding for values that need it:
+      # - Time objects use xmlschema (ISO 8601 with timezone)
+      # - base64Binary values are Base64-encoded
+      # - hexBinary values are hex-encoded
+      #
+      # @param value [Object] the value to serialize
+      # @param xsd_type [String, nil] the XSD type name (e.g. 'xsd:dateTime')
+      # @return [String] the XML text representation
+      def serialize_value(value, xsd_type = nil)
+        return value.xmlschema if value.is_a?(Time)
+
+        type_local = xsd_type&.split(':')&.last
+        case type_local
+        when 'base64Binary' then Base64.strict_encode64(value.to_s)
+        when 'hexBinary' then value.to_s.unpack1('H*')
+        else value.to_s
         end
       end
 

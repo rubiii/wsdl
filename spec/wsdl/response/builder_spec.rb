@@ -96,6 +96,25 @@ RSpec.describe WSDL::Response::Builder do
         expect(bets[1].at_xpath('size').text).to eq('20.0')
       end
 
+      it 'serializes Time objects as xmlschema (ISO 8601)' do
+        xml = builder.to_xml(
+          Result: {
+            header: {
+              errorCode: 'OK', minorErrorCode: '', sessionToken: 'tok',
+              timestamp: Time.utc(2025, 6, 15, 14, 30, 0)
+            },
+            betLites: {},
+            errorCode: 'OK', minorErrorCode: '', totalRecordCount: 0
+          }
+        )
+
+        doc = Nokogiri::XML(xml)
+
+        # timestamp is unqualified so use local-name() XPath
+        expect(doc.at_xpath('//*[local-name()="timestamp"]').text)
+          .to eq('2025-06-15T14:30:00Z')
+      end
+
       it 'handles qualified and unqualified elements' do
         xml = builder.to_xml(
           Result: {
@@ -166,6 +185,59 @@ RSpec.describe WSDL::Response::Builder do
 
       doc = Nokogiri::XML(xml)
       expect(doc.root.namespace.href).to eq(WSDL::NS::SOAP_1_2)
+    end
+
+    context 'with RPC/literal style' do
+      let(:service) { :SampleService }
+      let(:port) { :Sample }
+
+      it 'wraps message parts in an operationNameResponse element' do
+        elements = schema_elements('wsdl/rpc_literal', service:, port:, operation_name: :op1)
+        builder = described_class.new(
+          schema_elements: elements, output_style: 'rpc/literal',
+          operation_name: 'op1', output_namespace: 'http://apiNamespace.com'
+        )
+
+        xml = builder.to_xml(data1: 10, data2: 20)
+        doc = Nokogiri::XML(xml)
+
+        wrapper = doc.at_xpath('//env:Body/*', 'env' => WSDL::NS::SOAP_1_1)
+        expect(wrapper.name).to eq('op1Response')
+        expect(wrapper.namespace.href).to eq('http://apiNamespace.com')
+
+        expect(wrapper.at_xpath('*[local-name()="op1Return"]/*[local-name()="data1"]').text).to eq('10')
+        expect(wrapper.at_xpath('*[local-name()="op1Return"]/*[local-name()="data2"]').text).to eq('20')
+      end
+
+      it 'handles RPC wrapper with a different namespace' do
+        elements = schema_elements('wsdl/rpc_literal', service:, port:, operation_name: :op2)
+        builder = described_class.new(
+          schema_elements: elements, output_style: 'rpc/literal',
+          operation_name: 'op2', output_namespace: 'http://op2Namespace.com'
+        )
+
+        xml = builder.to_xml(data1: 1, data2: 2)
+        doc = Nokogiri::XML(xml)
+
+        wrapper = doc.at_xpath('//env:Body/*', 'env' => WSDL::NS::SOAP_1_1)
+        expect(wrapper.name).to eq('op2Response')
+        expect(wrapper.namespace.href).to eq('http://op2Namespace.com')
+      end
+
+      it 'handles RPC wrapper without a namespace' do
+        elements = schema_elements('wsdl/rpc_literal', service:, port:, operation_name: :op3)
+        builder = described_class.new(
+          schema_elements: elements, output_style: 'rpc/literal',
+          operation_name: 'op3', output_namespace: nil
+        )
+
+        xml = builder.to_xml(RefDataElem: 42)
+        doc = Nokogiri::XML(xml)
+
+        wrapper = doc.at_xpath('//env:Body/*', 'env' => WSDL::NS::SOAP_1_1)
+        expect(wrapper.name).to eq('op3Response')
+        expect(wrapper.namespace).to be_nil
+      end
     end
   end
 

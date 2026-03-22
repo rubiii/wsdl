@@ -122,18 +122,17 @@ module WSDL
         if schema_element.simple_type?
           @coercer.coerce(xml_node.text, schema_element.base_type)
         elsif schema_element.complex_type?
-          result = convert_with_schema(xml_node, schema_element.children)
-          attrs = extract_schema_attributes(xml_node, schema_element)
-          if attrs.empty?
-            result
-          elsif result.is_a?(Hash)
-            attrs.merge(result)
-          else
-            attrs
-          end
+          convert_complex_element(xml_node, schema_element)
         else
           xml_node.text
         end
+      end
+
+      def convert_complex_element(xml_node, schema_element)
+        result = convert_with_schema(xml_node, schema_element.children)
+        result = {} if result.is_a?(String) && result.empty?
+        attrs = extract_schema_attributes(xml_node, schema_element)
+        attrs.empty? ? result : attrs.merge(result)
       end
 
       def extract_schema_attributes(xml_node, schema_element)
