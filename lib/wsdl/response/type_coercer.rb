@@ -13,10 +13,23 @@ module WSDL
     class TypeCoercer
       # XSD simple types mapped to string coercion.
       #
+      # Includes primitive string types, Gregorian date fragments (which can
+      # have timezone suffixes that would be lost if converted), duration
+      # (no stdlib Ruby type), and meta-types (anyType, anySimpleType).
+      #
       # @return [Array<String>]
       STRING_TYPES = %w[
         string normalizedString token language Name NCName ID IDREF ENTITY NMTOKEN anyURI QName
+        duration gYear gYearMonth gMonthDay gDay gMonth NOTATION anyType anySimpleType
       ].freeze
+
+      # XSD list types mapped to whitespace-split coercion.
+      #
+      # Per XSD Part 2 §3.3.1, these are lists of the singular form
+      # (IDREF, ENTITY, NMTOKEN) separated by whitespace.
+      #
+      # @return [Array<String>]
+      LIST_TYPES = %w[IDREFS ENTITIES NMTOKENS].freeze
 
       # XSD simple types mapped to integer coercion.
       #
@@ -34,6 +47,9 @@ module WSDL
         groups = {}
         STRING_TYPES.each do |type|
           groups[type] = :string
+        end
+        LIST_TYPES.each do |type|
+          groups[type] = :list
         end
         INTEGER_TYPES.each do |type|
           groups[type] = :integer
@@ -63,7 +79,8 @@ module WSDL
         datetime: ->(value) { convert_datetime(value) },
         time: ->(value) { convert_time(value) },
         base64: ->(value) { convert_base64(value) },
-        hex_binary: ->(value) { convert_hex_binary(value) }
+        hex_binary: ->(value) { convert_hex_binary(value) },
+        list: ->(value) { convert_list(value) }
       }.freeze
 
       # Matches ISO8601 timezone suffixes accepted for XSD dateTime/time parsing.
@@ -145,6 +162,10 @@ module WSDL
 
         def convert_base64(value)
           Base64.decode64(value)
+        end
+
+        def convert_list(value)
+          value.split
         end
 
         def convert_hex_binary(value)

@@ -48,7 +48,8 @@ module WSDL
         datetime: [Time, String],
         time: [Time, String],
         base64: [String],
-        hex_binary: [String]
+        hex_binary: [String],
+        list: [Array]
       }.freeze
 
       # Creates a new builder for the given output schema.
@@ -354,6 +355,7 @@ module WSDL
       # @return [String] the XML text representation
       def serialize_value(value, xsd_type = nil)
         return value.xmlschema if value.is_a?(Time)
+        return value.join(' ') if value.is_a?(Array)
 
         type_local = xsd_type&.split(':')&.last
         case type_local

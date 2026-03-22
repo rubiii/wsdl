@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `strictness:` replaces the `strict_schema` boolean with granular control over 4 validation concerns: `schema_imports`, `schema_references`, `operation_overloading`, `request_validation`. Accepts a hash (`strictness: { schema_imports: false }`), boolean (`strictness: false`), or object.
 - All `ResourceLimitError` and strictness error messages now include copy-pasteable fix examples (e.g., `limits: { max_schemas: 51 }`, `strictness: { schema_imports: false }`).
 - `limits:` now accepts a hash shorthand (`limits: { max_schemas: 200 }`) in addition to a `Limits` object.
+- All 46 XSD built-in types are now explicitly handled by `TypeCoercer`. List types (`IDREFS`, `ENTITIES`, `NMTOKENS`) are now get coerced into arrays.
 
 ### Deprecated
 

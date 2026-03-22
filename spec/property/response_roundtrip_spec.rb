@@ -90,6 +90,8 @@ module RoundtripPropertyHelpers
     when :time       then random_time(rantly)
     when :base64, :hex_binary
       rantly.sized(rantly.range(3, 10)) { rantly.string(:alpha) }
+    when :list
+      Array.new(rantly.range(1, 3)) { rantly.sized(rantly.range(3, 8)) { rantly.string(:alpha) } }
     else rantly.sized(rantly.range(3, 10)) { rantly.string(:alpha) } # rubocop:disable Lint/DuplicateBranch -- intentional fallback for unknown types
     end
   end

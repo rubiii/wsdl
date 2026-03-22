@@ -25,7 +25,8 @@ module ExhaustiveRoundtripHelpers
     datetime: Time.utc(2020, 1, 1, 0, 0, 0),
     time: Time.utc(1970, 1, 1, 0, 0, 0),
     base64: 'test',
-    hex_binary: 'test'
+    hex_binary: 'test',
+    list: %w[a b]
   }.freeze
 
   module_function

@@ -122,5 +122,66 @@ RSpec.describe WSDL::Response::TypeCoercer do
     it 'returns original value for unparseable xsd:time with timezone' do
       expect(described_class.coerce('99:99:99Z', 'xsd:time')).to eq('99:99:99Z')
     end
+
+    # Gregorian date fragment types — stay as strings per spec
+    # (timezone suffixes would be lost if converted to Integer)
+
+    it 'keeps gYear as string' do
+      expect(described_class.coerce('2024', 'xsd:gYear')).to eq('2024')
+    end
+
+    it 'keeps gYear with timezone as string' do
+      expect(described_class.coerce('2024+05:30', 'xsd:gYear')).to eq('2024+05:30')
+    end
+
+    it 'keeps gYearMonth as string' do
+      expect(described_class.coerce('2024-03', 'xsd:gYearMonth')).to eq('2024-03')
+    end
+
+    it 'keeps gMonthDay as string' do
+      expect(described_class.coerce('--03-22', 'xsd:gMonthDay')).to eq('--03-22')
+    end
+
+    it 'keeps gDay as string' do
+      expect(described_class.coerce('---22', 'xsd:gDay')).to eq('---22')
+    end
+
+    it 'keeps gMonth as string' do
+      expect(described_class.coerce('--03', 'xsd:gMonth')).to eq('--03')
+    end
+
+    it 'keeps duration as string' do
+      expect(described_class.coerce('P1Y2M3DT4H5M6S', 'xsd:duration')).to eq('P1Y2M3DT4H5M6S')
+    end
+
+    it 'keeps NOTATION as string' do
+      expect(described_class.coerce('myNotation', 'xsd:NOTATION')).to eq('myNotation')
+    end
+
+    it 'keeps anyType as string' do
+      expect(described_class.coerce('anything', 'xsd:anyType')).to eq('anything')
+    end
+
+    it 'keeps anySimpleType as string' do
+      expect(described_class.coerce('anything', 'xsd:anySimpleType')).to eq('anything')
+    end
+
+    # List types — split on whitespace into Array<String>
+
+    it 'splits IDREFS into an array' do
+      expect(described_class.coerce('id1 id2 id3', 'xsd:IDREFS')).to eq(%w[id1 id2 id3])
+    end
+
+    it 'splits ENTITIES into an array' do
+      expect(described_class.coerce('ent1 ent2', 'xsd:ENTITIES')).to eq(%w[ent1 ent2])
+    end
+
+    it 'splits NMTOKENS into an array' do
+      expect(described_class.coerce('tok1 tok2 tok3', 'xsd:NMTOKENS')).to eq(%w[tok1 tok2 tok3])
+    end
+
+    it 'returns single-element array for single list value' do
+      expect(described_class.coerce('single', 'xsd:IDREFS')).to eq(%w[single])
+    end
   end
 end
