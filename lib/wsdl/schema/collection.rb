@@ -55,10 +55,9 @@ module WSDL
       # @param namespace [String] the target namespace URI
       # @param name [String] the local name of the element
       # @return [Node, nil] the element node, or nil if not found
-      # @raise [UnresolvedReferenceError] if no schema matches the namespace
       def find_element(namespace, name)
         definition = find_by_namespace(namespace)
-        raise_missing_schema_namespace!(component: :element, namespace:, name:) unless definition
+        return nil unless definition
 
         definition.elements[name]
       end
@@ -86,10 +85,9 @@ module WSDL
       # @param namespace [String] the target namespace URI
       # @param name [String] the local name of the type
       # @return [Node, nil] the complex type node, or nil if not found
-      # @raise [UnresolvedReferenceError] if no schema matches the namespace
       def find_complex_type(namespace, name)
         definition = find_by_namespace(namespace)
-        raise_missing_schema_namespace!(component: :complex_type, namespace:, name:) unless definition
+        return nil unless definition
 
         definition.complex_types[name]
       end
@@ -117,10 +115,9 @@ module WSDL
       # @param namespace [String] the target namespace URI
       # @param name [String] the local name of the type
       # @return [Node, nil] the simple type node, or nil if not found
-      # @raise [UnresolvedReferenceError] if no schema matches the namespace
       def find_simple_type(namespace, name)
         definition = find_by_namespace(namespace)
-        raise_missing_schema_namespace!(component: :simple_type, namespace:, name:) unless definition
+        return nil unless definition
 
         definition.simple_types[name]
       end
@@ -153,7 +150,6 @@ module WSDL
       # @param namespace [String] the target namespace URI
       # @param name [String] the local name of the type
       # @return [Node, nil] the type node, or nil if not found
-      # @raise [UnresolvedReferenceError] if no schema matches the namespace
       def find_type(namespace, name)
         find_complex_type(namespace, name) || find_simple_type(namespace, name)
       end
@@ -181,10 +177,9 @@ module WSDL
       # @param namespace [String] the target namespace URI
       # @param name [String] the local name of the attribute
       # @return [Node, nil] the attribute node, or nil if not found
-      # @raise [UnresolvedReferenceError] if no schema matches the namespace
       def find_attribute(namespace, name)
         definition = find_by_namespace(namespace)
-        raise_missing_schema_namespace!(component: :attribute, namespace:, name:) unless definition
+        return nil unless definition
 
         definition.attributes[name]
       end
@@ -217,10 +212,9 @@ module WSDL
       # @param namespace [String] the target namespace URI
       # @param name [String] the local name of the attribute group
       # @return [Node, nil] the attribute group node, or nil if not found
-      # @raise [UnresolvedReferenceError] if no schema matches the namespace
       def find_attribute_group(namespace, name)
         definition = find_by_namespace(namespace)
-        raise_missing_schema_namespace!(component: :attribute_group, namespace:, name:) unless definition
+        return nil unless definition
 
         definition.attribute_groups[name]
       end

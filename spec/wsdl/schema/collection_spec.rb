@@ -134,16 +134,12 @@ RSpec.describe WSDL::Schema::Collection do
         expect(result).to be_nil
       end
 
-      it 'raises error when namespace not found' do
-        expect {
-          collection.find_element('http://unknown.com', 'User')
-        }.to raise_error(WSDL::UnresolvedReferenceError, /no schema found for namespace/)
+      it 'returns nil when namespace not found' do
+        expect(collection.find_element('http://unknown.com', 'User')).to be_nil
       end
 
-      it 'raises descriptive error for nil namespace' do
-        expect {
-          collection.find_element(nil, 'User')
-        }.to raise_error(WSDL::UnresolvedReferenceError, /no schema found for namespace nil/)
+      it 'returns nil for nil namespace' do
+        expect(collection.find_element(nil, 'User')).to be_nil
       end
     end
 
@@ -176,10 +172,8 @@ RSpec.describe WSDL::Schema::Collection do
         expect(result).to be_nil
       end
 
-      it 'raises error when namespace not found' do
-        expect {
-          collection.find_complex_type('http://unknown.com', 'UserType')
-        }.to raise_error(WSDL::UnresolvedReferenceError, /no schema found for namespace/)
+      it 'returns nil when namespace not found' do
+        expect(collection.find_complex_type('http://unknown.com', 'UserType')).to be_nil
       end
     end
 
@@ -210,10 +204,8 @@ RSpec.describe WSDL::Schema::Collection do
         expect(result).to be_nil
       end
 
-      it 'raises error when namespace not found' do
-        expect {
-          collection.find_simple_type('http://unknown.com', 'StatusType')
-        }.to raise_error(WSDL::UnresolvedReferenceError, /no schema found for namespace/)
+      it 'returns nil when namespace not found' do
+        expect(collection.find_simple_type('http://unknown.com', 'StatusType')).to be_nil
       end
     end
 
@@ -249,10 +241,8 @@ RSpec.describe WSDL::Schema::Collection do
         expect(result).to be_nil
       end
 
-      it 'raises error when namespace not found' do
-        expect {
-          collection.find_type('http://unknown.com', 'UserType')
-        }.to raise_error(WSDL::UnresolvedReferenceError, /no schema found for namespace/)
+      it 'returns nil when namespace not found' do
+        expect(collection.find_type('http://unknown.com', 'UserType')).to be_nil
       end
     end
 
@@ -288,10 +278,8 @@ RSpec.describe WSDL::Schema::Collection do
         expect(result).to be_nil
       end
 
-      it 'raises error when namespace not found' do
-        expect {
-          collection.find_attribute('http://unknown.com', 'id')
-        }.to raise_error(WSDL::UnresolvedReferenceError, /no schema found for namespace/)
+      it 'returns nil when namespace not found' do
+        expect(collection.find_attribute('http://unknown.com', 'id')).to be_nil
       end
     end
 
@@ -322,10 +310,8 @@ RSpec.describe WSDL::Schema::Collection do
         expect(result).to be_nil
       end
 
-      it 'raises error when namespace not found' do
-        expect {
-          collection.find_attribute_group('http://unknown.com', 'CommonAttrs')
-        }.to raise_error(WSDL::UnresolvedReferenceError, /no schema found for namespace/)
+      it 'returns nil when namespace not found' do
+        expect(collection.find_attribute_group('http://unknown.com', 'CommonAttrs')).to be_nil
       end
     end
 
@@ -346,25 +332,19 @@ RSpec.describe WSDL::Schema::Collection do
     end
   end
 
-  describe 'error messages' do
-    it 'includes available namespaces in error message' do
+  describe 'missing namespace behavior' do
+    it 'returns nil for unknown namespace even when other schemas exist' do
       definition = instance_double(
         WSDL::Schema::Definition,
         target_namespace: 'http://example.com/known'
       )
       collection << definition
 
-      expect {
-        collection.find_element('http://example.com/unknown', 'Test')
-      }.to raise_error(WSDL::UnresolvedReferenceError) { |error|
-        expect(error.message).to match(%r{Available namespaces:.*http://example\.com/known})
-      }
+      expect(collection.find_element('http://example.com/unknown', 'Test')).to be_nil
     end
 
-    it 'shows (none) when no schemas available' do
-      expect {
-        collection.find_element('http://example.com/test', 'Test')
-      }.to raise_error(/Available namespaces: \(none\)/)
+    it 'returns nil when no schemas available' do
+      expect(collection.find_element('http://example.com/test', 'Test')).to be_nil
     end
   end
 end

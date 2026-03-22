@@ -12,7 +12,7 @@ module WSDL
     # handles complex and simple types, and detects recursive type definitions
     # to prevent infinite loops during element building.
     #
-    class ElementBuilder
+    class ElementBuilder # rubocop:disable Metrics/ClassLength -- type-aware serialization adds essential methods
       include Log
 
       # XSD built-in simple and complex types per XML Schema Part 2 §3.
@@ -87,7 +87,10 @@ module WSDL
       # @return [Element] the built element
       # @raise [UnresolvedReferenceError] if element references cannot be resolved
       def build_element(part)
-        schema_element, namespace = resolve_part_schema_element(part)
+        result = resolve_part_schema_element(part)
+        return nil unless result
+
+        schema_element, namespace = result
         type = find_type_for_element(schema_element)
         element = instantiate_schema_element(schema_element, namespace)
 
@@ -97,11 +100,18 @@ module WSDL
 
       def resolve_part_schema_element(part)
         resolved = QName.parse(part[:element], namespaces: part[:namespaces])
-        schema_element = @schemas.fetch_element(
-          resolved.namespace,
-          resolved.local,
-          context: "message part element reference #{part[:element].inspect}"
-        )
+
+        schema_element = if @strict_schema
+          @schemas.fetch_element(
+            resolved.namespace,
+            resolved.local,
+            context: "message part element reference #{part[:element].inspect}"
+          )
+        else
+          @schemas.find_element(resolved.namespace, resolved.local)
+        end
+
+        return nil unless schema_element
 
         [schema_element, resolved.namespace]
       end
@@ -215,13 +225,13 @@ module WSDL
       # @param depth [Integer] the current nesting depth (default: 1)
       # @return [Hash] a hash with :elements (Array<Element>) and :has_any (Boolean)
       # @raise [ResourceLimitError] if nesting depth exceeds max_type_nesting_depth
-      # rubocop:disable Metrics/AbcSize, Metrics/MethodLength, Metrics/BlockLength -- cohesive element-building logic
+      # rubocop:disable Metrics/AbcSize, Metrics/MethodLength, Metrics/BlockLength, Metrics/PerceivedComplexity -- cohesive element-building logic
       def child_elements(parent, type, depth: 1)
         validate_nesting_depth!(depth, type)
         has_any = false
         elements = []
 
-        type.elements([], limits: @limits).each do |child_element|
+        resolve_schema_elements(type).each do |child_element|
           if child_element.kind == :any
             has_any = true
             next
@@ -237,6 +247,8 @@ module WSDL
 
           if child_element.ref
             child_element = find_element(child_element.ref, child_element.namespaces)
+            next unless child_element
+
             el.form = 'qualified'
           else
             el.form = child_element.form
@@ -258,7 +270,23 @@ module WSDL
 
         { elements: elements, has_any: has_any }
       end
-      # rubocop:enable Metrics/AbcSize, Metrics/MethodLength, Metrics/BlockLength
+      # rubocop:enable Metrics/AbcSize, Metrics/MethodLength, Metrics/BlockLength, Metrics/PerceivedComplexity
+
+      # Resolves child elements from a schema type node.
+      #
+      # In relaxed mode, catches UnresolvedReferenceError from Schema::Node
+      # type resolution and returns an empty array.
+      #
+      # @param type [Schema::Node] the complex type node
+      # @return [Array<Schema::Node>] the child elements
+      def resolve_schema_elements(type)
+        type.elements([], limits: @limits)
+      rescue UnresolvedReferenceError => e
+        raise if @strict_schema
+
+        logger.debug("Skipping children for unresolved type: #{e.message}")
+        []
+      end
 
       # Checks if an element's type creates a recursive definition.
       #
@@ -321,7 +349,11 @@ module WSDL
           return qname
         end
 
-        @schemas.fetch_type(resolved.namespace, resolved.local, context: "type reference #{qname.inspect}")
+        if @strict_schema
+          @schemas.fetch_type(resolved.namespace, resolved.local, context: "type reference #{qname.inspect}")
+        else
+          @schemas.find_type(resolved.namespace, resolved.local) || qname
+        end
       end
 
       def validate_xsd_builtin_type!(local_name, qname)
@@ -344,8 +376,13 @@ module WSDL
       # @return [Schema::Node] the resolved element
       def find_element(qname, namespaces, context: nil)
         resolved = QName.parse(qname, namespaces: namespaces)
-        @schemas.fetch_element(resolved.namespace, resolved.local,
-                               context: context || "element reference #{qname.inspect}")
+
+        if @strict_schema
+          @schemas.fetch_element(resolved.namespace, resolved.local,
+                                 context: context || "element reference #{qname.inspect}")
+        else
+          @schemas.find_element(resolved.namespace, resolved.local)
+        end
       end
 
       # Finds a global attribute by its qualified name.
