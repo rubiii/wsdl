@@ -31,7 +31,7 @@ WSDL toolkit for Ruby. Turn WSDL 1.1 documents into inspectable services and cal
 ## Testing
 
 - Every public method must be tested, 100% coverage is a must
-- Use existing fixtures in `spec/fixtures/` (45+ real-world WSDLs)
+- Use existing fixtures in `spec/fixtures/` (real-world WSDLs)
 - Unit tests in `spec/wsdl/` mirror `lib/wsdl/` structure
 - Acceptance tests in `spec/acceptance/` (real WSDLs, no network)
 - Integration tests in `spec/integration/` (live mock services, auto-tagged `:test_service`)

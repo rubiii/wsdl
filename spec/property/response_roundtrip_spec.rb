@@ -6,75 +6,11 @@ require 'rantly'
 require 'rantly/rspec_extensions'
 require 'bigdecimal'
 
-# Known round-trip discrepancies to investigate:
-#
-# 1. [FIXED] Empty complex elements: Parser now returns {} for empty complex
-#    elements when the schema indicates a complex type.
-#
-# 2. [FIXED] DateTime/Time serialization: Builder now uses .xmlschema for Time
-#    objects, ensuring correct round-trip through Parser and TypeCoercer.
-#
-# 3. [FIXED] base64Binary/hexBinary: Builder now encodes values, Parser decodes.
-
 module RoundtripPropertyHelpers
   module_function
 
   def type_group_for(base_type)
-    local = base_type&.split(':')&.last
-    WSDL::Response::TypeCoercer::TYPE_GROUPS[local]&.to_sym
-  end
-
-  # ============================================================
-  # Candidate discovery
-  # ============================================================
-
-  def element_unsupported?(element)
-    return true if element.recursive? || element.any_content?
-
-    element.children.any? { |child| element_unsupported?(child) }
-  end
-
-  def discover_candidates
-    fixture_dir = File.expand_path('../fixtures/wsdl', __dir__)
-    Dir.glob("#{fixture_dir}/*")
-      .select { |p| File.file?(p) || File.directory?(p) }
-      .flat_map { |path| candidates_from_wsdl(path) }
-  end
-
-  def candidates_from_wsdl(path)
-    client = WSDL::Client.new(path)
-    candidates = []
-
-    client.services.each do |service_name, service_info|
-      service_info[:ports].each_key do |port_name|
-        client.operations(service_name, port_name).each do |op_name|
-          candidate = build_candidate(client, service_name, port_name, op_name)
-          candidates << candidate if candidate
-        end
-      end
-    end
-
-    candidates
-  rescue StandardError
-    []
-  end
-
-  def build_candidate(client, service_name, port_name, op_name)
-    operation = client.operation(service_name, port_name, op_name)
-    return if operation.output_style == 'rpc/encoded'
-
-    elements = operation.contract.response.body.elements
-    return if elements.empty?
-    return if elements.any? { |el| element_unsupported?(el) }
-
-    {
-      label: "#{service_name}/#{port_name}/#{op_name}",
-      schema_elements: elements,
-      soap_version: operation.soap_version,
-      output_style: operation.output_style,
-      operation_name: operation.name,
-      output_namespace: operation.output_namespace
-    }
+    RoundtripCandidates.type_group_for(base_type)
   end
 
   # ============================================================
@@ -180,22 +116,10 @@ module RoundtripPropertyHelpers
 end
 
 RSpec.describe 'Response round-trip property' do
+  include RoundtripCandidates
+
   let(:trial_count) { Integer(ENV.fetch('PROPERTY_TRIALS', 100)) }
-  let(:candidates) { RoundtripPropertyHelpers.discover_candidates }
-
-  def extract_parse_node(xml, candidate)
-    doc = Nokogiri::XML(xml)
-    soap_ns = candidate[:soap_version] == '1.2' ? WSDL::NS::SOAP_1_2 : WSDL::NS::SOAP_1_1
-    body = doc.at_xpath('//env:Body', 'env' => soap_ns)
-
-    # For RPC, unwrap to the wrapper element so Parser sees schema parts directly
-    candidate[:output_style] == 'rpc/literal' ? body.element_children.first : body
-  end
-
-  def expected_result(hash, candidate)
-    wrapper = candidate[:schema_elements].first
-    wrapper.complex_type? ? { wrapper.name.to_sym => hash } : hash
-  end
+  let(:candidates) { RoundtripCandidates.discover_candidates }
 
   it 'parse(build(hash)) preserves the hash' do
     skip 'no suitable candidates found' if candidates.empty?

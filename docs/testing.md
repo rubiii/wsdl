@@ -47,7 +47,7 @@ end
 
 ## Acceptance Tests
 
-Acceptance tests in `spec/acceptance/` verify the full parsing pipeline (WSDL → schema resolution → element building → contracts) against 45+ real-world WSDLs. No network calls, no mock server.
+Acceptance tests in `spec/acceptance/` verify the full parsing pipeline (WSDL → schema resolution → element building → contracts) against real-world WSDLs. No network calls, no mock server.
 
 ```ruby
 RSpec.describe 'BLZService' do
