@@ -200,7 +200,7 @@ RSpec.describe WSDL::Parser::Result do
   end
 
   describe 'QName resolution across imported documents' do
-    subject(:collision_result) { described_class.parse fixture('wsdl/qname_collisions/root'), http_mock }
+    subject(:collision_result) { described_class.parse fixture('parser/qname_collisions/root'), http_mock }
 
     it 'keeps same local names from different namespaces as distinct keys' do
       shared_bindings = collision_result.documents.bindings.keys.select { |qname| qname.local == 'SharedBinding' }
@@ -221,7 +221,7 @@ RSpec.describe WSDL::Parser::Result do
 
   describe 'reference errors' do
     it 'raises UnresolvedReferenceError for missing binding references' do
-      result = described_class.parse(fixture('wsdl/unresolved_references/binding'), http_mock)
+      result = described_class.parse(fixture('parser/unresolved_references/binding'), http_mock)
 
       expect {
         result.operations('BadService', 'BadPort')
@@ -231,7 +231,7 @@ RSpec.describe WSDL::Parser::Result do
     end
 
     it 'raises UnresolvedReferenceError for missing portType references' do
-      result = described_class.parse(fixture('wsdl/unresolved_references/port_type'), http_mock)
+      result = described_class.parse(fixture('parser/unresolved_references/port_type'), http_mock)
 
       expect {
         result.operation('BadService', 'BadPort', 'Ping')
@@ -241,7 +241,7 @@ RSpec.describe WSDL::Parser::Result do
     end
 
     it 'raises UnresolvedReferenceError for missing message references' do
-      result = described_class.parse(fixture('wsdl/unresolved_references/message'), http_mock)
+      result = described_class.parse(fixture('parser/unresolved_references/message'), http_mock)
 
       expect {
         result.operation('BadService', 'BadPort', 'Ping').input
@@ -253,7 +253,7 @@ RSpec.describe WSDL::Parser::Result do
 
   describe 'duplicate definition detection' do
     it 'raises DuplicateDefinitionError for duplicate qualified definitions' do
-      result = described_class.parse(fixture('wsdl/duplicate_definitions/root'), http_mock)
+      result = described_class.parse(fixture('parser/duplicate_definitions/root'), http_mock)
 
       expect {
         result.documents.messages
@@ -304,7 +304,7 @@ RSpec.describe WSDL::Parser::Result do
     end
 
     it 'always raises PathRestrictionError regardless of policy' do
-      malicious_wsdl = fixture('wsdl/malicious/path_traversal')
+      malicious_wsdl = fixture('parser/malicious/path_traversal')
 
       expect {
         described_class.parse(malicious_wsdl, http_mock, strict_schema: false)

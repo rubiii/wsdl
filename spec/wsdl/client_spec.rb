@@ -291,7 +291,7 @@ RSpec.describe WSDL::Client do
 
     context 'path traversal protection' do
       it 'blocks path traversal attacks in schema imports' do
-        malicious_wsdl = fixture('wsdl/malicious/path_traversal')
+        malicious_wsdl = fixture('parser/malicious/path_traversal')
 
         # The WSDL contains schemaLocation="../../../../etc/passwd"
         # which should be blocked by sandbox restrictions

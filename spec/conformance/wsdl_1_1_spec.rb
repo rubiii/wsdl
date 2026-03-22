@@ -13,7 +13,7 @@ RSpec.describe 'WSDL 1.1 conformance' do
   describe 'Document Structure' do
     # https://www.w3.org/TR/wsdl#_messages
     it 'W11-NAME-1: duplicate message names across imports raise DuplicateDefinitionError' do
-      result = WSDL::Parser::Result.parse fixture('wsdl/duplicate_definitions/root'), http_mock
+      result = WSDL::Parser::Result.parse fixture('parser/duplicate_definitions/root'), http_mock
 
       expect { result.documents.messages }
         .to raise_error(WSDL::DuplicateDefinitionError) { |error|
@@ -175,7 +175,7 @@ RSpec.describe 'WSDL 1.1 conformance' do
 
     # https://www.w3.org/TR/wsdl#_bindings
     it 'W11-BIND-1: missing binding reference raises UnresolvedReferenceError' do
-      result = WSDL::Parser::Result.parse fixture('wsdl/unresolved_references/binding'), http_mock
+      result = WSDL::Parser::Result.parse fixture('parser/unresolved_references/binding'), http_mock
 
       expect { result.operations('BadService', 'BadPort') }
         .to raise_error(WSDL::UnresolvedReferenceError) { |error|
@@ -185,7 +185,7 @@ RSpec.describe 'WSDL 1.1 conformance' do
 
     # https://www.w3.org/TR/wsdl#_ports
     it 'W11-PORT-1: missing portType reference raises UnresolvedReferenceError' do
-      result = WSDL::Parser::Result.parse fixture('wsdl/unresolved_references/port_type'), http_mock
+      result = WSDL::Parser::Result.parse fixture('parser/unresolved_references/port_type'), http_mock
 
       expect { result.operation('BadService', 'BadPort', 'Ping') }
         .to raise_error(WSDL::UnresolvedReferenceError) { |error|
