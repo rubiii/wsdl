@@ -17,9 +17,17 @@ module RoundtripCandidates
   def discover_candidates
     fixture_dir = File.expand_path('../fixtures/wsdl', __dir__)
     Dir.glob("#{fixture_dir}/*")
-      .select { |p| File.file?(p) || File.directory?(p) }
+      .select { |p| File.file?(p) }
       .flat_map { |path| candidates_from_wsdl(path) }
   end
+
+  # Errors that legitimately prevent a WSDL or operation from being tested.
+  EXPECTED_ERRORS = [
+    WSDL::SchemaImportError,         # Unresolvable schema imports
+    WSDL::UnsupportedStyleError,     # rpc/encoded operations
+    WSDL::ResourceLimitError,        # Deeply nested types exceeding limits
+    WSDL::UnresolvedReferenceError   # Missing schema elements
+  ].freeze
 
   def candidates_from_wsdl(path)
     client = WSDL::Client.new(path)
@@ -35,13 +43,12 @@ module RoundtripCandidates
     end
 
     candidates
-  rescue StandardError
+  rescue *EXPECTED_ERRORS
     []
   end
 
   def build_candidate(client, service_name, port_name, op_name)
     operation = client.operation(service_name, port_name, op_name)
-    return if operation.output_style == 'rpc/encoded'
 
     elements = operation.contract.response.body.elements
     return if elements.empty?
@@ -55,6 +62,8 @@ module RoundtripCandidates
       operation_name: operation.name,
       output_namespace: operation.output_namespace
     }
+  rescue *EXPECTED_ERRORS
+    nil
   end
 
   def extract_parse_node(xml, candidate)
