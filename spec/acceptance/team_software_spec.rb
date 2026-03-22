@@ -3,7 +3,7 @@
 RSpec.describe 'TeamSoftware' do
   subject(:client) { WSDL::Client.new(wsdl_url, http: http_mock) }
 
-  let(:wsdl_url) { 'http://bydexchange.nbs-us.com/BYDExchangeServer.svc?wsdl' }
+  let(:wsdl_url) { 'https://winteamservicestest.myteamsoftware.com/Services.svc?wsdl' }
 
   before do
     http_mock.fake_request(wsdl_url, 'wsdl/team_software/team_software.wsdl')
