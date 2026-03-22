@@ -9,10 +9,10 @@ require_relative 'test_service/mock_server'
 module WSDL
   # Internal test infrastructure for running mock SOAP services backed by real WSDLs.
   #
-  # Definitions live in +spec/fixtures/services/+ and are auto-loaded by spec_helper.
-  # Each definition registers a named service whose responses are validated against
-  # the WSDL schema at load time. The shared {MockServer} provides a single WEBrick
-  # instance for full round-trip integration testing.
+  # Each integration spec defines its service inline at the top of the file.
+  # Responses are validated against the WSDL schema at definition time.
+  # The shared {MockServer} provides a single WEBrick instance for
+  # full round-trip integration testing.
   #
   # @example Defining a service
   #   WSDL::TestService.define(:blz_service, wsdl: 'wsdl/blz_service') do

@@ -26,7 +26,7 @@ spec/
 ├── integration/    # Integration tests (live mock services)
 ├── conformance/    # W3C/OASIS specification conformance
 ├── property/       # Property-based tests (Rantly)
-├── fixtures/       # WSDLs, responses, security certs, service definitions
+├── fixtures/       # WSDLs, responses, security certs
 └── support/        # Helpers, mock server, test infrastructure
 ```
 
@@ -98,7 +98,7 @@ end
 
 ## Mock Server
 
-Service definitions live in `spec/fixtures/services/` and declare operations with pattern-matched responses:
+Service definitions are declared inline at the top of each integration spec:
 
 ```ruby
 WSDL::TestService.define(:blz_service, wsdl: 'wsdl/blz_service') do
@@ -159,7 +159,6 @@ Coverage is grouped by module (Security, Parser, Request, Response, XML). View t
 | `spec/fixtures/wsdl/` | 45+ real-world WSDL documents |
 | `spec/fixtures/response/` | Sample SOAP response XML |
 | `spec/fixtures/security/` | Signed envelopes, certificates |
-| `spec/fixtures/services/` | Mock service definitions (13 services) |
 
 The `fixture()` helper resolves paths with glob matching:
 
