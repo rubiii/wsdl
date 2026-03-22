@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-RSpec.describe 'Integration with TeamSoftware' do
+RSpec.describe 'TeamSoftware' do
   subject(:client) { WSDL::Client.new(wsdl_url, http: http_mock) }
 
   let(:wsdl_url) { 'http://bydexchange.nbs-us.com/BYDExchangeServer.svc?wsdl' }

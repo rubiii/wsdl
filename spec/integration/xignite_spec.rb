@@ -1,170 +1,49 @@
 # frozen_string_literal: true
 
-RSpec.describe 'Integration with Xignite' do
-  # reference: http://www.xignite.com/product/global-security-master-data/api/GetSecurities/
-  subject(:client) { WSDL::Client.new fixture('wsdl/xignite') }
+RSpec.describe 'Xignite' do
+  subject(:client) { WSDL::Client.new(service.wsdl_url) }
 
+  let(:service) { WSDL::TestService[:xignite] }
   let(:service_name) { :XigniteGlobalMaster }
-  let(:port_name)    { :XigniteGlobalMasterSoap12 }
+  let(:soap_port) { :XigniteGlobalMasterSoap }
 
-  it 'returns a map of services and ports' do
-    expect(client.services).to eq(
-      'XigniteGlobalMaster' => {
-        ports: {
-          'XigniteGlobalMasterSoap' => {
-            type: 'http://schemas.xmlsoap.org/wsdl/soap/',
-            location: 'http://globalmaster.xignite.com/xglobalmaster.asmx'
-          },
-          'XigniteGlobalMasterSoap12' => {
-            type: 'http://schemas.xmlsoap.org/wsdl/soap12/',
-            location: 'http://globalmaster.xignite.com/xglobalmaster.asmx'
-          }
-        }
-      }
-    )
+  before do
+    service.start
   end
 
-  it 'knows the operations' do
-    operation = client.operation(service_name, port_name, :GetSecurities)
-
-    expect(operation.soap_action).to eq('http://www.xignite.com/services/GetSecurities')
-    expect(operation.endpoint).to eq('http://globalmaster.xignite.com/xglobalmaster.asmx')
-
-    namespace = 'http://www.xignite.com/services/'
-
-    expect(request_body_paths(operation)).to eq([
-      [['GetSecurities'],
-       { namespace: namespace, form: 'qualified', singular: true }
-],
-      [%w[GetSecurities Identifiers],
-       { namespace: namespace, form: 'qualified', singular: true,
-         type: 's:string'
-}
-],
-      [%w[GetSecurities IdentifierType],
-       { namespace: namespace, form: 'qualified', singular: true,
-         type: 's:string'
-}
-],
-      [%w[GetSecurities AsOfDate],
-       { namespace: namespace, form: 'qualified', singular: true, type: 's:string' }
-]
-    ])
-  end
-
-  it 'creates an example header' do
-    operation = client.operation(service_name, port_name, :GetSecurities)
-
-    expect(request_template(operation, section: :header)).to eq(
-      Header: {
-        Username: 'string',
-        Password: 'string',
-        Tracer: 'string'
-      }
-    )
-  end
-
-  it 'creates an example body' do
-    operation = client.operation(service_name, port_name, :GetSecurities)
-
-    expect(request_template(operation, section: :body)).to eq(
-      GetSecurities: {
-        Identifiers: 'string',
-        IdentifierType: 'string',
-        AsOfDate: 'string'
-      }
-    )
-  end
-
-  it 'creates a request with a header' do
-    operation = client.operation(service_name, port_name, :GetSecurities)
+  it 'returns master data with headers, arrays, and mixed types' do
+    operation = client.operation(service_name, soap_port, :GetMasterByIdentifier)
 
     operation.prepare do
       header do
         tag('Header') do
-          tag('Username', 'test')
-          tag('Password', 'secret')
-          tag('Tracer', 'i-dont-know')
+          tag('Username', 'testuser')
+          tag('Password', 'testpass')
+          tag('Tracer', '')
         end
       end
       body do
-        tag('GetSecurities') do
-          tag('Identifiers', 'NESN.XVTX,BMW.XETR')
+        tag('GetMasterByIdentifier') do
+          tag('Identifier', 'AAPL')
           tag('IdentifierType', 'Symbol')
-          tag('AsOfDate', '6/4/2013')
+          tag('StartDate', '')
+          tag('EndDate', '')
         end
       end
     end
+    response = operation.invoke
+    result = response.body[:GetMasterByIdentifierResponse][:GetMasterByIdentifierResult]
 
-    expected = Nokogiri.XML('
-      <env:Envelope
-          xmlns:ns0="http://www.xignite.com/services/"
-          xmlns:env="http://www.w3.org/2003/05/soap-envelope">
-        <env:Header>
-          <ns0:Header>
-            <ns0:Username>test</ns0:Username>
-            <ns0:Password>secret</ns0:Password>
-            <ns0:Tracer>i-dont-know</ns0:Tracer>
-          </ns0:Header>
-        </env:Header>
-        <env:Body>
-          <ns0:GetSecurities>
-            <ns0:Identifiers>NESN.XVTX,BMW.XETR</ns0:Identifiers>
-            <ns0:IdentifierType>Symbol</ns0:IdentifierType>
-            <ns0:AsOfDate>6/4/2013</ns0:AsOfDate>
-          </ns0:GetSecurities>
-        </env:Body>
-      </env:Envelope>
-    ')
+    records = result[:Record]
+    expect(records).to be_an(Array)
+    expect(records.size).to eq(1)
 
-    expect(Nokogiri.XML(operation.to_xml))
-      .to be_equivalent_to(expected).respecting_element_order
-  end
-
-  context 'with a live mock service', :test_service do
-    subject(:client) { WSDL::Client.new(service.wsdl_url) }
-
-    let(:service) { WSDL::TestService[:xignite] }
-    let(:soap_port) { :XigniteGlobalMasterSoap }
-
-    before do
-      service.start
-    end
-
-    it 'returns master data with headers, arrays, and mixed types' do
-      operation = client.operation(service_name, soap_port, :GetMasterByIdentifier)
-
-      operation.prepare do
-        header do
-          tag('Header') do
-            tag('Username', 'testuser')
-            tag('Password', 'testpass')
-            tag('Tracer', '')
-          end
-        end
-        body do
-          tag('GetMasterByIdentifier') do
-            tag('Identifier', 'AAPL')
-            tag('IdentifierType', 'Symbol')
-            tag('StartDate', '')
-            tag('EndDate', '')
-          end
-        end
-      end
-      response = operation.invoke
-      result = response.body[:GetMasterByIdentifierResponse][:GetMasterByIdentifierResult]
-
-      records = result[:Record]
-      expect(records).to be_an(Array)
-      expect(records.size).to eq(1)
-
-      record = records.first
-      expect(record[:Symbol]).to eq('AAPL')
-      expect(record[:Name]).to eq('Apple Inc.')
-      expect(record[:ISIN]).to eq('US0378331005')
-      expect(record[:Delay]).to eq(0.0)
-      expect(record[:HomeTradingPlace]).to be true
-      expect(record[:Sector]).to eq('Technology')
-    end
+    record = records.first
+    expect(record[:Symbol]).to eq('AAPL')
+    expect(record[:Name]).to eq('Apple Inc.')
+    expect(record[:ISIN]).to eq('US0378331005')
+    expect(record[:Delay]).to eq(0.0)
+    expect(record[:HomeTradingPlace]).to be true
+    expect(record[:Sector]).to eq('Technology')
   end
 end

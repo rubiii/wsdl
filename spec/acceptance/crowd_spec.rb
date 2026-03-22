@@ -1,0 +1,61 @@
+# frozen_string_literal: true
+
+RSpec.describe 'Atlassian Crowd' do
+  subject(:client) { WSDL::Client.new fixture('wsdl/crowd') }
+
+  it 'returns a map of services and ports' do
+    expect(client.services).to eq(
+      'SecurityServer' => {
+        ports: {
+          'SecurityServerHttpPort' => {
+            type: 'http://schemas.xmlsoap.org/wsdl/soap/',
+            location: 'http://magnesium:8095/crowd/services/SecurityServer'
+          }
+        }
+      }
+    )
+  end
+
+  it 'knows the operations' do
+    service = 'SecurityServer'
+    port = 'SecurityServerHttpPort'
+    operation = client.operation(service, port, 'addAttributeToGroup')
+
+    expect(operation.soap_action).to eq('')
+    expect(operation.endpoint).to eq('http://magnesium:8095/crowd/services/SecurityServer')
+
+    ns1 = 'urn:SecurityServer'
+    ns2 = 'http://authentication.integration.crowd.atlassian.com'
+    ns3 = 'http://soap.integration.crowd.atlassian.com'
+
+    expect(request_body_paths(operation)).to eq([
+      [['addAttributeToGroup'],
+       { namespace: ns1, form: 'qualified', singular: true }
+],
+      [%w[addAttributeToGroup in0],
+       { namespace: ns1, form: 'qualified', singular: true }
+],
+      [%w[addAttributeToGroup in0 name],
+       { namespace: ns2, form: 'qualified', singular: true, type: 'xsd:string' }
+],
+      [%w[addAttributeToGroup in0 token],
+       { namespace: ns2, form: 'qualified', singular: true, type: 'xsd:string' }
+],
+      [%w[addAttributeToGroup in1],
+       { namespace: ns1, form: 'qualified', singular: true, type: 'xsd:string' }
+],
+      [%w[addAttributeToGroup in2],
+       { namespace: ns1, form: 'qualified', singular: true }
+],
+      [%w[addAttributeToGroup in2 name],
+       { namespace: ns3, form: 'qualified', singular: true, type: 'xsd:string' }
+],
+      [%w[addAttributeToGroup in2 values],
+       { namespace: ns3, form: 'qualified', singular: true }
+],
+      [%w[addAttributeToGroup in2 values string],
+       { namespace: ns1, form: 'qualified', singular: false, type: 'xsd:string' }
+]
+    ])
+  end
+end

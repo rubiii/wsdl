@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-RSpec.describe 'Integration with Amazon' do
+RSpec.describe 'Amazon' do
   subject(:client) { WSDL::Client.new fixture('wsdl/amazon') }
 
   it 'returns a map of services and ports' do

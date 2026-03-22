@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-RSpec.describe 'Integration with Bronto' do
+RSpec.describe 'Bronto' do
   subject(:client) { WSDL::Client.new fixture('wsdl/bronto') }
 
   let(:service_name) { :BrontoSoapApiImplService }

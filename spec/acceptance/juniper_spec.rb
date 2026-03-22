@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-RSpec.describe 'Integration with Juniper' do
+RSpec.describe 'Juniper' do
   subject(:client) { WSDL::Client.new fixture('wsdl/juniper'), strict_schema: false }
 
   it 'skips the relative schema import to still show other information' do

@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-RSpec.describe 'Integration with DataExchange' do
+RSpec.describe 'DataExchange' do
   subject(:client) { WSDL::Client.new fixture('wsdl/data_exchange') }
 
   it 'returns a map of services and ports' do

@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-RSpec.describe 'Integration with Jetairways\'s SessionCreate Service' do
+RSpec.describe 'Jetairways\'s SessionCreate Service' do
   subject(:client) { WSDL::Client.new fixture('wsdl/jetairways') }
 
   let(:service_name) { :SessionCreate }

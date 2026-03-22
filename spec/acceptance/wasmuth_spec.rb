@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-RSpec.describe 'Integration with Wasmuth' do
+RSpec.describe 'Wasmuth' do
   subject(:client) { WSDL::Client.new(wsdl_url, http: http_mock) }
 
   let(:wsdl_url) { 'http://www3.mediaservice-wasmuth.de/online-ws-2.0/OnlineSync?wsdl' }

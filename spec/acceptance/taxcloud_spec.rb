@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-RSpec.describe 'Integration with Taxcloud' do
+RSpec.describe 'Taxcloud' do
   subject(:client) { WSDL::Client.new fixture('wsdl/taxcloud') }
 
   it 'returns a map of services and ports' do

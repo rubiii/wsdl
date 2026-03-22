@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-RSpec.describe 'Integration with a Spyne.io service' do
+RSpec.describe 'Spyne.io service' do
   subject(:client) { WSDL::Client.new fixture('wsdl/spyne') }
 
   let(:service_name) { :HelloWorldService }

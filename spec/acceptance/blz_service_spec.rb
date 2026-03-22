@@ -1,42 +1,42 @@
 # frozen_string_literal: true
 
-RSpec.describe 'Integration with Stockquote service' do
-  subject(:client) { WSDL::Client.new fixture('wsdl/stockquote') }
+RSpec.describe 'BLZService' do
+  subject(:client) { WSDL::Client.new fixture('wsdl/blz_service') }
 
-  let(:service_name) { :StockQuote }
-  let(:port_name)    { :StockQuoteSoap }
+  let(:service_name) { :BLZService }
+  let(:port_name)    { :BLZServiceSOAP11port_http }
 
   it 'creates an example request' do
-    operation = client.operation(service_name, port_name, :GetQuote)
+    operation = client.operation(service_name, port_name, :getBank)
 
     expect(request_template(operation, section: :body)).to eq(
-      GetQuote: {
-        symbol: 'string'
+      getBank: {
+        blz: 'string'
       }
     )
   end
 
   it 'builds a request' do
-    operation = client.operation(service_name, port_name, :GetQuote)
+    operation = client.operation(service_name, port_name, :getBank)
 
     operation.reset!
     operation.prepare do
       body do
-        tag('GetQuote') do
-          tag('symbol', 'AAPL')
+        tag('getBank') do
+          tag('blz', 70_070_010)
         end
       end
     end
 
     expected = Nokogiri.XML(%(
       <env:Envelope
-          xmlns:ns0="http://www.webserviceX.NET/"
+          xmlns:ns0="http://thomas-bayer.com/blz/"
           xmlns:env="http://schemas.xmlsoap.org/soap/envelope/">
         <env:Header/>
         <env:Body>
-          <ns0:GetQuote>
-            <ns0:symbol>AAPL</ns0:symbol>
-          </ns0:GetQuote>
+          <ns0:getBank>
+            <ns0:blz>70070010</ns0:blz>
+          </ns0:getBank>
         </env:Body>
       </env:Envelope>
     ))

@@ -1,95 +1,50 @@
 # frozen_string_literal: true
 
-RSpec.describe 'Integration with Authentication service' do
-  subject(:client) { WSDL::Client.new fixture('wsdl/authentication') }
+RSpec.describe 'Authentication service' do
+  subject(:client) { WSDL::Client.new(service.wsdl_url) }
 
-  it 'returns a map of services and ports' do
-    expect(client.services).to eq(
-      'AuthenticationWebServiceImplService' => {
-        ports: {
-          'AuthenticationWebServiceImplPort' => {
-            type: 'http://schemas.xmlsoap.org/wsdl/soap/',
-            location: 'http://example.com/validation/1.0/AuthenticationService'
-          }
-        }
-      }
-    )
+  let(:service) { WSDL::TestService[:authentication] }
+  let(:service_name) { :AuthenticationWebServiceImplService }
+  let(:port_name) { :AuthenticationWebServiceImplPort }
+
+  before do
+    service.start
   end
 
-  it 'knows the operations' do
-    service = 'AuthenticationWebServiceImplService'
-    port = 'AuthenticationWebServiceImplPort'
+  it 'returns a token on successful authentication' do
+    operation = client.operation(service_name, port_name, :authenticate)
 
-    operation = client.operation(service, port, 'authenticate')
+    operation.prepare do
+      body do
+        tag('authenticate') do
+          tag('user', 'admin')
+          tag('password', 'secret')
+        end
+      end
+    end
+    response = operation.invoke
+    result = response.body[:authenticateResponse][:return]
 
-    expect(operation.soap_action).to eq('')
-    expect(operation.endpoint).to eq('http://example.com/validation/1.0/AuthenticationService')
-
-    namespace = 'http://v1_0.ws.auth.order.example.com/'
-
-    expect(request_body_paths(operation)).to eq([
-      [['authenticate'],
-       { namespace: namespace, form: 'qualified', singular: true }
-],
-      [%w[authenticate user],
-       { namespace: namespace, form: 'unqualified', singular: true,
-         type: 'xs:string'
- }
-],
-      [%w[authenticate password],
-       { namespace: namespace, form: 'unqualified', singular: true,
-         type: 'xs:string'
- }
-]
-    ])
+    expect(result[:success]).to be true
+    expect(result[:authenticationValue][:token]).to eq('a68d1c97-00e4-4caf-a8d0-1d3b08ee5d3b')
+    expect(result[:authenticationValue][:client]).to eq('admin-console')
   end
 
-  context 'with a live mock service', :test_service do
-    subject(:client) { WSDL::Client.new(service.wsdl_url) }
+  it 'returns failure on wrong password' do
+    operation = client.operation(service_name, port_name, :authenticate)
 
-    let(:service) { WSDL::TestService[:authentication] }
-    let(:service_name) { :AuthenticationWebServiceImplService }
-    let(:port_name) { :AuthenticationWebServiceImplPort }
-
-    before do
-      service.start
-    end
-
-    it 'returns a token on successful authentication' do
-      operation = client.operation(service_name, port_name, :authenticate)
-
-      operation.prepare do
-        body do
-          tag('authenticate') do
-            tag('user', 'admin')
-            tag('password', 'secret')
-          end
+    operation.prepare do
+      body do
+        tag('authenticate') do
+          tag('user', 'admin')
+          tag('password', 'wrong')
         end
       end
-      response = operation.invoke
-      result = response.body[:authenticateResponse][:return]
-
-      expect(result[:success]).to be true
-      expect(result[:authenticationValue][:token]).to eq('a68d1c97-00e4-4caf-a8d0-1d3b08ee5d3b')
-      expect(result[:authenticationValue][:client]).to eq('admin-console')
     end
+    response = operation.invoke
+    result = response.body[:authenticateResponse][:return]
 
-    it 'returns failure on wrong password' do
-      operation = client.operation(service_name, port_name, :authenticate)
-
-      operation.prepare do
-        body do
-          tag('authenticate') do
-            tag('user', 'admin')
-            tag('password', 'wrong')
-          end
-        end
-      end
-      response = operation.invoke
-      result = response.body[:authenticateResponse][:return]
-
-      expect(result[:success]).to be false
-      expect(result[:authenticationValue]).to be_nil
-    end
+    expect(result[:success]).to be false
+    expect(result[:authenticationValue]).to be_nil
   end
 end

@@ -25,6 +25,11 @@ module WSDL
           WebMock.disable_net_connect!
         end
 
+        # All specs in spec/integration/ get :test_service automatically.
+        config.define_derived_metadata(file_path: %r{spec/integration/}) do |metadata|
+          metadata[:test_service] = true
+        end
+
         config.after(:suite) do
           MockServer.reset!
         end

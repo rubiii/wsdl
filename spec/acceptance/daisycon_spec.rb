@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-RSpec.describe 'Integration with Daisycon' do
+RSpec.describe 'Daisycon' do
   subject(:client) { WSDL::Client.new fixture('wsdl/daisycon') }
 
   it 'returns a map of services and ports' do

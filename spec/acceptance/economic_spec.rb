@@ -2,13 +2,11 @@
 
 require 'benchmark'
 
-RSpec.describe 'Integration with Economic' do
-  before :all do
-    @client = WSDL::Client.new fixture('wsdl/economic')
-  end
+RSpec.describe 'Economic' do
+  subject(:client) { WSDL::Client.new fixture('wsdl/economic') }
 
   it 'returns a map of services and ports' do
-    expect(@client.services).to eq(
+    expect(client.services).to eq(
       'EconomicWebService' => {
         ports: {
           'EconomicWebServiceSoap' => {
@@ -27,7 +25,7 @@ RSpec.describe 'Integration with Economic' do
   it 'knows operations with Arrays' do
     service = 'EconomicWebService'
     port = 'EconomicWebServiceSoap'
-    operation = @client.operation(service, port, 'Account_GetDataArray')
+    operation = client.operation(service, port, 'Account_GetDataArray')
 
     expect(operation.soap_action).to eq('http://e-conomic.com/Account_GetDataArray')
     expect(operation.endpoint).to eq('https://api.e-conomic.com/secure/api1/EconomicWebservice.asmx')
@@ -51,11 +49,9 @@ RSpec.describe 'Integration with Economic' do
   end
 
   it 'has an ok parse-time for huge wsdl files' do
-    # profiler = MethodProfiler.observe(Wasabi::Parser)
     parse_time = Benchmark.realtime do
-      @client.operations('EconomicWebService', 'EconomicWebServiceSoap')
+      client.operations('EconomicWebService', 'EconomicWebServiceSoap')
     end
-    # puts profiler.report
 
     # this probably needs to be increased for CI
     # but it should prevent major performance problems.

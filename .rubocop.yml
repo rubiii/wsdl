@@ -83,14 +83,6 @@ RSpec/ExampleLength:
 RSpec/MultipleExpectations:
   Enabled: false
 
-RSpec/BeforeAfterAll:
-  Exclude:
-    - 'spec/integration/**/*'
-
-RSpec/InstanceVariable:
-  Exclude:
-    - 'spec/integration/**/*'
-
 RSpec/SpecFilePathFormat:
   Enabled: false
 

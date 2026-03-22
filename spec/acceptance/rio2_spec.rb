@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-RSpec.describe 'Integration with Rio II' do
-  before :all do
+RSpec.describe 'Rio II' do
+  subject(:client) do
     wsdl_url  = 'http://193.155.1.72/MyCentral-RioII-Services/SecurityService.svc?wsdl'
     wsdl0_url = 'http://193.155.1.72/MyCentral-RioII-Services/SecurityService.svc?wsdl=wsdl0'
 
@@ -16,11 +16,11 @@ RSpec.describe 'Integration with Rio II' do
       http_mock.fake_request(url, "wsdl/rio2/rio2_#{i}.xsd")
     end
 
-    @client = WSDL::Client.new(wsdl_url, http: http_mock)
+    WSDL::Client.new(wsdl_url, http: http_mock)
   end
 
   it 'only downloads WSDL and XML Schema imports once per location' do
-    expect(@client.services).to eq(
+    expect(client.services).to eq(
       'SecurityService' => {
         ports: {
           'BasicHttpBinding_ISecurityService' => {
@@ -35,7 +35,7 @@ RSpec.describe 'Integration with Rio II' do
   it 'knows the GetSessionState operation' do
     service = :SecurityService
     port = :BasicHttpBinding_ISecurityService
-    operation = @client.operation(service, port, :GetSessionState)
+    operation = client.operation(service, port, :GetSessionState)
 
     expect(operation.input_style).to eq('document/literal')
 

@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-RSpec.describe 'Integration with Atlassian Jira' do
+RSpec.describe 'Atlassian Jira' do
   subject(:client) { WSDL::Client.new fixture('wsdl/jira') }
 
   it 'returns a map of services and ports' do

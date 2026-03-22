@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-RSpec.describe 'Integration with EmailVerification service' do
+RSpec.describe 'EmailVerification service' do
   subject(:client) { WSDL::Client.new fixture('wsdl/email_verification') }
 
   let(:service_name) { :EmailVerNoTestEmail }

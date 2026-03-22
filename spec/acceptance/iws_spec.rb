@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-RSpec.describe 'Integration with IWS' do
+RSpec.describe 'IWS' do
   subject(:client) { WSDL::Client.new fixture('wsdl/iws') }
 
   it 'returns a map of services and ports' do
