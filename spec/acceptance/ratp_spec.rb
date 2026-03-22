@@ -333,7 +333,6 @@ RSpec.describe 'RATP' do
   it 'builds a request' do
     operation = client.operation(service_name, port_name, :getStations)
 
-    operation.reset!
     operation.prepare do
       body do
         tag('getStations') do

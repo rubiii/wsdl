@@ -40,7 +40,6 @@ RSpec.describe 'Temperature service' do
     # </s:simpleType>
     #
     # TODO: somehow expose the enumeration options through the example request.
-    operation.reset!
     operation.prepare do
       body do
         tag('ConvertTemp') do

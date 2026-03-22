@@ -18,7 +18,6 @@ RSpec.describe 'Document/Literal example' do
       }
     )
 
-    op1.reset!
     op1.prepare do
       body do
         tag('op1') do
@@ -66,7 +65,6 @@ RSpec.describe 'Document/Literal example' do
       }
     )
 
-    op3.reset!
     op3.prepare do
       body do
         tag('op3') do

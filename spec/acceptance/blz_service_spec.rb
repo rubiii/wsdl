@@ -19,7 +19,6 @@ RSpec.describe 'BLZService' do
   it 'builds a request' do
     operation = client.operation(service_name, port_name, :getBank)
 
-    operation.reset!
     operation.prepare do
       body do
         tag('getBank') do

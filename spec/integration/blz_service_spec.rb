@@ -14,7 +14,6 @@ RSpec.describe 'BLZService' do
   it 'returns bank details for a known BLZ' do
     operation = client.operation(:BLZService, :BLZServiceSOAP11port_http, :getBank)
 
-    operation.reset!
     operation.prepare do
       body do
         tag('getBank') do
@@ -39,7 +38,6 @@ RSpec.describe 'BLZService' do
   it 'returns different results for different inputs' do
     operation = client.operation(:BLZService, :BLZServiceSOAP11port_http, :getBank)
 
-    operation.reset!
     operation.prepare do
       body do
         tag('getBank') do

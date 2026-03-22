@@ -40,7 +40,6 @@ RSpec.describe 'Spyne.io service' do
   it 'creates a request with attributes' do
     operation = client.operation(service_name, port_name, :say_hello)
 
-    operation.reset!
     operation.prepare do
       body do
         tag('say_hello')

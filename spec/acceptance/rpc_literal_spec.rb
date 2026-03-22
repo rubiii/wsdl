@@ -19,7 +19,6 @@ RSpec.describe 'RPC/Literal example' do
 
     # Build the request. It returns a Hash without the RPC wrapper element,
     # because users just don't need to care about it.
-    op1.reset!
     op1.prepare do
       body do
         tag('in') do
@@ -64,7 +63,6 @@ RSpec.describe 'RPC/Literal example' do
       }
     )
 
-    op3.reset!
     op3.prepare do
       body do
         tag('DataElem') do
