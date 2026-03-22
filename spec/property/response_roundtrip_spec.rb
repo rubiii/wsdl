@@ -61,7 +61,7 @@ module RoundtripPropertyHelpers
 
   def build_candidate(client, service_name, port_name, op_name)
     operation = client.operation(service_name, port_name, op_name)
-    return unless operation.output_style == 'document/literal'
+    return if operation.output_style == 'rpc/encoded'
 
     elements = operation.contract.response.body.elements
     return if elements.empty?
@@ -70,7 +70,10 @@ module RoundtripPropertyHelpers
     {
       label: "#{service_name}/#{port_name}/#{op_name}",
       schema_elements: elements,
-      soap_version: operation.soap_version
+      soap_version: operation.soap_version,
+      output_style: operation.output_style,
+      operation_name: operation.name,
+      output_namespace: operation.output_namespace
     }
   end
 
@@ -180,18 +183,21 @@ RSpec.describe 'Response round-trip property' do
   let(:trial_count) { Integer(ENV.fetch('PROPERTY_TRIALS', 100)) }
   let(:candidates) { RoundtripPropertyHelpers.discover_candidates }
 
-  def extract_body_node(xml, soap_version)
+  def extract_parse_node(xml, candidate)
     doc = Nokogiri::XML(xml)
-    soap_ns = soap_version == '1.2' ? WSDL::NS::SOAP_1_2 : WSDL::NS::SOAP_1_1
-    doc.at_xpath('//env:Body', 'env' => soap_ns)
+    soap_ns = candidate[:soap_version] == '1.2' ? WSDL::NS::SOAP_1_2 : WSDL::NS::SOAP_1_1
+    body = doc.at_xpath('//env:Body', 'env' => soap_ns)
+
+    # For RPC, unwrap to the wrapper element so Parser sees schema parts directly
+    candidate[:output_style] == 'rpc/literal' ? body.element_children.first : body
   end
 
-  def expected_result(hash, schema_elements)
-    wrapper = schema_elements.first
+  def expected_result(hash, candidate)
+    wrapper = candidate[:schema_elements].first
     wrapper.complex_type? ? { wrapper.name.to_sym => hash } : hash
   end
 
-  it 'parse(build(hash)) preserves the hash for document/literal operations' do
+  it 'parse(build(hash)) preserves the hash' do
     skip 'no suitable candidates found' if candidates.empty?
 
     # Capture for use inside property_of block (self changes to Rantly)
@@ -205,13 +211,16 @@ RSpec.describe 'Response round-trip property' do
     }.check(trial_count) do |(candidate, hash)|
       xml = WSDL::Response::Builder.new(
         schema_elements: candidate[:schema_elements],
-        soap_version: candidate[:soap_version]
+        soap_version: candidate[:soap_version],
+        output_style: candidate[:output_style],
+        operation_name: candidate[:operation_name],
+        output_namespace: candidate[:output_namespace]
       ).to_xml(hash)
 
-      body_node = extract_body_node(xml, candidate[:soap_version])
-      result = WSDL::Response::Parser.parse(body_node, schema: candidate[:schema_elements], unwrap: true)
+      node = extract_parse_node(xml, candidate)
+      result = WSDL::Response::Parser.parse(node, schema: candidate[:schema_elements], unwrap: true)
 
-      expected = expected_result(hash, candidate[:schema_elements])
+      expected = expected_result(hash, candidate)
 
       expect(result).to eq(expected), lambda {
         [

@@ -61,15 +61,18 @@ module WSDL
     #   describing the expected body structure for type-aware parsing
     # @param output_header_parts [Array<WSDL::XML::Element>, nil] optional schema elements
     #   describing the expected header structure for type-aware parsing
+    # @param output_style [String] binding style ('document/literal' or 'rpc/literal')
     # @param verification [Security::ResponseVerification] response verification options
     #   for signature and timestamp validation
     #
     def initialize(http_response:, output_body_parts: nil, output_header_parts: nil,
+                   output_style: 'document/literal',
                    verification: Security::ResponseVerification::Options.default)
       @raw_response = (http_response.body || '').freeze
       @http_response = http_response
       @output_body_parts = output_body_parts
       @output_header_parts = output_header_parts
+      @output_style = output_style
       @verification = verification
     end
 
@@ -259,11 +262,23 @@ module WSDL
       return {} unless body_node
 
       if @output_body_parts&.any?
-        Parser.parse(body_node, schema: @output_body_parts, unwrap: true)
+        node = rpc_literal? ? unwrap_rpc_response(body_node) : body_node
+        Parser.parse(node, schema: @output_body_parts, unwrap: true)
       else
         parsed_envelope = envelope_hash
         parsed_envelope.dig(:Envelope, :Body) || {}
       end
+    end
+
+    def rpc_literal?
+      @output_style == 'rpc/literal'
+    end
+
+    # For RPC/literal, the SOAP Body contains a wrapper element (operationNameResponse)
+    # whose children are the actual message parts. Pass the wrapper to the Parser
+    # so its children match the schema elements directly.
+    def unwrap_rpc_response(body_node)
+      body_node.element_children.first || body_node
     end
 
     # Parses the SOAP header using schema information if available.

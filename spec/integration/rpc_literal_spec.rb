@@ -38,12 +38,8 @@ RSpec.describe 'RPC/Literal example' do
     end
     response = operation.invoke
 
-    # RPC/literal responses are parsed without schema-aware type coercion
-    # because the op1Response RPC wrapper is not a schema element.
     expect(response.body).to eq(
-      op1Response: {
-        op1Return: { data1: '48', data2: '72' }
-      }
+      op1Return: { data1: 48, data2: 72 }
     )
   end
 
@@ -61,9 +57,7 @@ RSpec.describe 'RPC/Literal example' do
     response = operation.invoke
 
     expect(response.body).to eq(
-      op2Response: {
-        op2Return: { data1: '3', data2: '4' }
-      }
+      op2Return: { data1: 3, data2: 4 }
     )
   end
 end

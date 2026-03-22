@@ -266,6 +266,7 @@ module WSDL
         http_response:,
         output_body_parts: @operation_info.output.body_parts,
         output_header_parts: @operation_info.output.header_parts,
+        output_style:,
         verification: @security.response_verification_options
       )
 

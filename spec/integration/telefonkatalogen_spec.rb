@@ -41,7 +41,7 @@ RSpec.describe 'Telefonkatalogen' do
     end
     response = operation.invoke
 
-    expect(response.body[:sendsmsResponse][:body]).to eq('OK: Message queued')
+    expect(response.body[:body]).to eq('OK: Message queued')
   end
 
   it 'returns an error for an invalid number' do
@@ -62,6 +62,6 @@ RSpec.describe 'Telefonkatalogen' do
     end
     response = operation.invoke
 
-    expect(response.body[:sendsmsResponse][:body]).to eq('ERROR: Invalid number')
+    expect(response.body[:body]).to eq('ERROR: Invalid number')
   end
 end

@@ -607,6 +607,188 @@ RSpec.describe WSDL::Response do
     end
   end
 
+  describe 'with RPC/literal output_style' do
+    let(:rpc_opts) { { output_style: 'rpc/literal' } }
+
+    it 'unwraps the RPC wrapper and applies schema-aware type coercion' do
+      xml = <<-XML
+        <env:Envelope xmlns:env="http://schemas.xmlsoap.org/soap/envelope/">
+          <env:Header/>
+          <env:Body>
+            <ns0:op1Response xmlns:ns0="http://apiNamespace.com">
+              <op1Return>
+                <data1>48</data1>
+                <data2>72</data2>
+              </op1Return>
+            </ns0:op1Response>
+          </env:Body>
+        </env:Envelope>
+      XML
+
+      data1 = schema_element('data1', type: 'xsd:int')
+      data2 = schema_element('data2', type: 'xsd:int')
+      parts = [schema_element('op1Return', children: [data1, data2])]
+
+      response = build_response(xml, output_body_parts: parts, **rpc_opts)
+
+      expect(response.body).to eq(op1Return: { data1: 48, data2: 72 })
+      expect(response.body[:op1Return][:data1]).to be_a(Integer)
+    end
+
+    it 'handles RPC wrapper without a namespace' do
+      xml = <<-XML
+        <env:Envelope xmlns:env="http://schemas.xmlsoap.org/soap/envelope/">
+          <env:Header/>
+          <env:Body>
+            <op3Response>
+              <op3Return><data1>10</data1></op3Return>
+            </op3Response>
+          </env:Body>
+        </env:Envelope>
+      XML
+
+      data1 = schema_element('data1', type: 'xsd:int')
+      parts = [schema_element('op3Return', children: [data1])]
+
+      response = build_response(xml, output_body_parts: parts, **rpc_opts)
+
+      expect(response.body).to eq(op3Return: { data1: 10 })
+    end
+
+    it 'handles simple (non-complex) message parts' do
+      xml = <<-XML
+        <env:Envelope xmlns:env="http://schemas.xmlsoap.org/soap/envelope/">
+          <env:Header/>
+          <env:Body>
+            <sendsmsResponse>
+              <body>OK: Message queued</body>
+            </sendsmsResponse>
+          </env:Body>
+        </env:Envelope>
+      XML
+
+      parts = [schema_element('body', type: 'xsd:string')]
+
+      response = build_response(xml, output_body_parts: parts, **rpc_opts)
+
+      expect(response.body).to eq(body: 'OK: Message queued')
+    end
+
+    it 'handles multiple message parts' do
+      xml = <<-XML
+        <env:Envelope xmlns:env="http://schemas.xmlsoap.org/soap/envelope/">
+          <env:Header/>
+          <env:Body>
+            <opResponse>
+              <status>200</status>
+              <message>success</message>
+            </opResponse>
+          </env:Body>
+        </env:Envelope>
+      XML
+
+      parts = [
+        schema_element('status', type: 'xsd:int'),
+        schema_element('message', type: 'xsd:string')
+      ]
+
+      response = build_response(xml, output_body_parts: parts, **rpc_opts)
+
+      expect(response.body).to eq(status: 200, message: 'success')
+      expect(response.body[:status]).to be_a(Integer)
+    end
+
+    it 'returns empty hash for empty RPC wrapper' do
+      xml = <<-XML
+        <env:Envelope xmlns:env="http://schemas.xmlsoap.org/soap/envelope/">
+          <env:Header/>
+          <env:Body>
+            <opResponse/>
+          </env:Body>
+        </env:Envelope>
+      XML
+
+      parts = [schema_element('result', type: 'xsd:string')]
+
+      response = build_response(xml, output_body_parts: parts, **rpc_opts)
+
+      expect(response.body).to eq({})
+    end
+
+    it 'falls back gracefully when body has no element children' do
+      xml = <<-XML
+        <env:Envelope xmlns:env="http://schemas.xmlsoap.org/soap/envelope/">
+          <env:Header/>
+          <env:Body>some text but no elements</env:Body>
+        </env:Envelope>
+      XML
+
+      parts = [schema_element('result', type: 'xsd:string')]
+
+      response = build_response(xml, output_body_parts: parts, **rpc_opts)
+
+      expect(response.body).to eq({})
+    end
+
+    it 'returns empty hash when body is empty' do
+      xml = <<-XML
+        <env:Envelope xmlns:env="http://schemas.xmlsoap.org/soap/envelope/">
+          <env:Header/>
+          <env:Body/>
+        </env:Envelope>
+      XML
+
+      parts = [schema_element('result', type: 'xsd:string')]
+
+      response = build_response(xml, output_body_parts: parts, **rpc_opts)
+
+      expect(response.body).to eq({})
+    end
+
+    it 'works with SOAP 1.2 envelopes' do
+      xml = <<-XML
+        <env:Envelope xmlns:env="http://www.w3.org/2003/05/soap-envelope">
+          <env:Header/>
+          <env:Body>
+            <opResponse>
+              <result>42</result>
+            </opResponse>
+          </env:Body>
+        </env:Envelope>
+      XML
+
+      parts = [schema_element('result', type: 'xsd:int')]
+
+      response = build_response(xml, output_body_parts: parts, **rpc_opts)
+
+      expect(response.body).to eq(result: 42)
+      expect(response.body[:result]).to be_a(Integer)
+    end
+
+    it 'without output_style the RPC wrapper is not unwrapped' do
+      xml = <<-XML
+        <env:Envelope xmlns:env="http://schemas.xmlsoap.org/soap/envelope/">
+          <env:Header/>
+          <env:Body>
+            <ns0:op1Response xmlns:ns0="http://apiNamespace.com">
+              <op1Return>
+                <data1>48</data1>
+              </op1Return>
+            </ns0:op1Response>
+          </env:Body>
+        </env:Envelope>
+      XML
+
+      data1 = schema_element('data1', type: 'xsd:int')
+      parts = [schema_element('op1Return', children: [data1])]
+
+      response = build_response(xml, output_body_parts: parts)
+
+      # Parser treats op1Response as unknown, no type coercion
+      expect(response.body[:op1Response][:op1Return][:data1]).to eq('48')
+    end
+  end
+
   describe '#fault? and #fault' do
     context 'with a SOAP 1.1 fault' do
       subject(:response) { build_response(fault_xml) }
