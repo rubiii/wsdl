@@ -6,7 +6,7 @@ RSpec.describe WSDL::Config do
   describe '.new' do
     it 'has sensible defaults' do
       expect(config.format_xml).to be(true)
-      expect(config.strict_schema).to be(true)
+      expect(config.strictness).to eq(WSDL::Strictness.on)
       expect(config.sandbox_paths).to be_nil
       expect(config.limits).to eq(WSDL.limits)
     end
@@ -15,20 +15,20 @@ RSpec.describe WSDL::Config do
       custom_limits = WSDL::Limits.new(max_schemas: 200)
       config = described_class.new(
         format_xml: false,
-        strict_schema: false,
+        strictness: WSDL::Strictness.off,
         sandbox_paths: ['/tmp'],
         limits: custom_limits
       )
 
       expect(config.format_xml).to be(false)
-      expect(config.strict_schema).to be(false)
+      expect(config.strictness).to eq(WSDL::Strictness.off)
       expect(config.sandbox_paths).to eq(['/tmp'])
       expect(config.limits).to eq(custom_limits)
     end
 
-    it 'coerces strict_schema to boolean' do
-      config = described_class.new(strict_schema: nil)
-      expect(config.strict_schema).to be(false)
+    it 'accepts deprecated strict_schema: false and maps to Strictness.off' do
+      config = described_class.new(strict_schema: false)
+      expect(config.strictness).to eq(WSDL::Strictness.off)
     end
 
     it 'resolves nil limits to WSDL.limits' do
@@ -43,10 +43,10 @@ RSpec.describe WSDL::Config do
 
   describe '#with' do
     it 'returns a new Config with overridden values' do
-      modified = config.with(format_xml: false, strict_schema: false)
+      modified = config.with(format_xml: false, strictness: WSDL::Strictness.off)
 
       expect(modified.format_xml).to be(false)
-      expect(modified.strict_schema).to be(false)
+      expect(modified.strictness).to eq(WSDL::Strictness.off)
     end
 
     it 'does not mutate the original' do
@@ -82,7 +82,7 @@ RSpec.describe WSDL::Config do
 
       expect(hash).to eq(
         format_xml: true,
-        strict_schema: true,
+        strictness: WSDL::Strictness.on,
         sandbox_paths: nil,
         limits: WSDL.limits
       )

@@ -37,13 +37,13 @@ module WSDL
   #                             sandbox_paths: ['/path/to', '/other/schemas'])
   #
   # @example Reusable configuration
-  #   config = WSDL::Config.new(format_xml: false, strict_schema: false)
+  #   config = WSDL::Config.new(format_xml: false, strictness: WSDL::Strictness.off)
   #   client = WSDL::Client.new('http://example.com/service?wsdl', config:)
   #
   class Client
     # Creates a new Client instance.
     #
-    # Behavioral options (format_xml, strict_schema, sandbox_paths,
+    # Behavioral options (format_xml, strictness, sandbox_paths,
     # limits) can be passed as keyword arguments or
     # grouped into a {Config} object via the `config:` parameter.
     # When both are provided, keyword arguments take precedence.
@@ -74,7 +74,7 @@ module WSDL
         parse_options: ParseOptions.new(
           sandbox_paths: resolved_sandbox_paths,
           limits: @config.limits,
-          strict_schema: @config.strict_schema
+          strictness: @config.strictness
         )
       )
     end
@@ -161,7 +161,7 @@ module WSDL
     # @raise [ArgumentError] if the service, port, or operation does not exist,
     #   or if auto-resolution is used with multiple services/ports
     # @raise [UnsupportedStyleError] if the operation uses an unsupported style (e.g., rpc/encoded)
-    # @raise [OperationOverloadError] if overloaded and strict_schema is true
+    # @raise [OperationOverloadError] if overloaded and strictness.operation_overloading is true
     #
     def operation(service_name_or_operation_name, port_name = nil, operation_name = nil, input_name: nil)
       if port_name && !operation_name

@@ -1,7 +1,13 @@
 # frozen_string_literal: true
 
 RSpec.describe 'Juniper' do
-  subject(:client) { WSDL::Client.new fixture('wsdl/juniper'), strict_schema: false }
+  subject(:client) do
+    WSDL::Client.new fixture('wsdl/juniper'), strictness: WSDL::Strictness.new(
+      schema_imports: false,
+      schema_references: false,
+      request_validation: false
+    )
+  end
 
   it 'skips the relative schema import to still show other information' do
     expect(client.services).to eq(

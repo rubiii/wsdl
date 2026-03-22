@@ -55,7 +55,7 @@ module WSDL
           documents:,
           schemas:,
           limits: parse_options.limits,
-          strict_schema: parse_options.strict_schema,
+          strictness: parse_options.strictness,
           schema_import_errors: importer.schema_import_errors.freeze
         )
       end
@@ -68,14 +68,14 @@ module WSDL
       # @param documents [DocumentCollection] the parsed document collection
       # @param schemas [Schema::Collection] the parsed schema collection
       # @param limits [Limits] the resource limits used during parsing
-      # @param strict_schema [Boolean] whether strict schema mode was enabled
+      # @param strictness [Strictness] the strictness configuration
       # @param schema_import_errors [Array<SchemaImportError>] recoverable errors from import
       #
-      def initialize(documents:, schemas:, limits:, strict_schema:, schema_import_errors:)
+      def initialize(documents:, schemas:, limits:, strictness:, schema_import_errors:)
         @documents = documents
         @schemas = schemas
         @limits = limits
-        @strict_schema = strict_schema
+        @strictness = strictness
         @schema_import_errors = schema_import_errors
       end
 
@@ -94,10 +94,10 @@ module WSDL
       # @return [Limits] the limits instance
       attr_reader :limits
 
-      # Returns whether strict schema mode is enabled.
+      # Returns the strictness configuration.
       #
-      # @return [Boolean]
-      attr_reader :strict_schema
+      # @return [Strictness]
+      attr_reader :strictness
 
       # Recoverable schema import errors captured during import.
       #
@@ -159,7 +159,7 @@ module WSDL
       # @param input_name [String, Symbol, nil] disambiguator for overloaded operations
       # @return [OperationInfo] the operation info instance
       # @raise [ArgumentError] if the service, port, or operation does not exist
-      # @raise [OperationOverloadError] if overloaded and strict_schema is true
+      # @raise [OperationOverloadError] if overloaded and strictness.operation_overloading is true
       # rubocop:disable Metrics/AbcSize -- operation resolution requires multiple lookups
       def operation(service_name, port_name, operation_name, input_name: nil)
         verify_operation_exists!(service_name, port_name, operation_name)
@@ -170,7 +170,7 @@ module WSDL
         binding = port.fetch_binding(@documents)
         port_type = binding.fetch_port_type(@documents)
 
-        if @strict_schema && port_type.operations.overloaded_name?(operation_name)
+        if @strictness.operation_overloading && port_type.operations.overloaded_name?(operation_name)
           reject_overloading!(operation_name, port_type)
         end
 
@@ -250,8 +250,8 @@ module WSDL
         count = port_type.operations.overload_count(operation_name)
         raise OperationOverloadError.new(
           "Operation #{operation_name.inspect} is overloaded #{count} times in " \
-          "portType #{port_type.name.inspect}. Operation overloading is prohibited " \
-          'by WS-I Basic Profile R2304. Use strict_schema: false to allow it.',
+          "portType #{port_type.name.inspect}. Operation overloading is prohibited by WS-I Basic Profile R2304. " \
+          'To allow it, use: strictness: WSDL::Strictness.new(operation_overloading: false)',
           operation_name:, port_type_name: port_type.name, overload_count: count
         )
       end

@@ -19,7 +19,7 @@ RSpec.describe WSDL::Parser::CachedResult do
     parse_options = WSDL::ParseOptions.new(
       sandbox_paths: overrides.fetch(:sandbox_paths, sandbox_paths),
       limits: overrides.fetch(:limits, limits),
-      strict_schema: overrides.fetch(:strict_schema, false)
+      strictness: overrides.fetch(:strictness, WSDL::Strictness.off)
     )
 
     described_class.load(
@@ -72,7 +72,7 @@ RSpec.describe WSDL::Parser::CachedResult do
       parse_options = WSDL::ParseOptions.new(
         sandbox_paths:,
         limits:,
-        strict_schema: false
+        strictness: WSDL::Strictness.off
       )
 
       inputs = parse_inputs.new(
@@ -126,13 +126,13 @@ RSpec.describe WSDL::Parser::CachedResult do
         allow(WSDL::Parser::Result).to receive(:parse).and_return(parser_result)
 
         # Use cache: nil to force Result.parse every time (no caching)
-        result = load_cached(cache: nil, http:, strict_schema: true)
+        result = load_cached(cache: nil, http:, strictness: WSDL::Strictness.on)
 
         expect(result).to eq(parser_result)
         expected_options = WSDL::ParseOptions.new(
           sandbox_paths:,
           limits:,
-          strict_schema: true
+          strictness: WSDL::Strictness.on
         )
         expect(WSDL::Parser::Result).to have_received(:parse).with(
           wsdl,
@@ -143,11 +143,11 @@ RSpec.describe WSDL::Parser::CachedResult do
     end
 
     context 'cache key partitioning' do
-      it 'partitions by strict_schema' do
+      it 'partitions by strictness' do
         cache, count = stub_result
 
-        load_cached(cache:, strict_schema: false)
-        load_cached(cache:, strict_schema: true)
+        load_cached(cache:, strictness: WSDL::Strictness.off)
+        load_cached(cache:, strictness: WSDL::Strictness.on)
 
         expect(count.call).to eq(2)
         expect(cache.size).to eq(2)

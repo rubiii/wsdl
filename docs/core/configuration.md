@@ -18,14 +18,14 @@
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
 | `format_xml:` | `Boolean` | `true` | Format generated request XML with indentation |
-| `strict_schema:` | `Boolean` | `true` | Strict schema imports and request validation (see [Strict Schema Mode](#strict-schema-mode)) |
+| `strictness:` | `Strictness`, `nil` | `WSDL.strictness` | Validation strictness (see [Strictness](#strictness)) |
 | `sandbox_paths:`| `Array<String>`, `nil` | auto | Allowed directories for local imports (see [Sandbox Paths](#sandbox-paths)) |
 | `limits:` | `Limits`, `nil` | `WSDL.limits` | Resource limits for DoS protection (see [Limits](#limits)) |
 
 ```ruby
 client = WSDL::Client.new(
   '/app/wsdl/service.wsdl',
-  strict_schema: false,
+  strictness: WSDL::Strictness.new(schema_imports: false),
   format_xml: false
 )
 ```
@@ -36,27 +36,28 @@ client = WSDL::Client.new(
 
 ```ruby
 # Direct keyword arguments (most common)
-client = WSDL::Client.new(wsdl, format_xml: false, strict_schema: false)
+client = WSDL::Client.new(wsdl, format_xml: false, strictness: WSDL::Strictness.off)
 
 # Reusable Config object
-config = WSDL::Config.new(format_xml: false, strict_schema: false)
+config = WSDL::Config.new(format_xml: false, strictness: WSDL::Strictness.off)
 client1 = WSDL::Client.new(wsdl1, config:)
 client2 = WSDL::Client.new(wsdl2, config:)
 
 # Derive a modified copy
-relaxed = config.with(strict_schema: false)
+relaxed = config.with(strictness: WSDL::Strictness.new(schema_imports: false))
 ```
 
 Config is frozen after construction, like `Limits`.
 
 ## Global Defaults
 
-Four module-level settings apply to all new clients:
+Five module-level settings apply to all new clients:
 
 ```ruby
 WSDL.http_adapter = MyAdapterClass             # default: WSDL::HTTPAdapter
 WSDL.cache = WSDL::Cache.new(max_entries: 50)  # default: LRU cache, 50 entries
 WSDL.limits = WSDL::Limits.new                 # default: sensible defaults
+WSDL.strictness = WSDL::Strictness.off         # default: Strictness.on (all strict)
 WSDL.logger = Rails.logger                     # default: silent (NullLogger)
 ```
 
@@ -67,22 +68,34 @@ Pass `nil` to any setter to restore its default value.
 > any clients or spawning threads. Changing them after clients exist may
 > cause inconsistent behavior.
 
-## Strict Schema Mode
+## Strictness
 
-Controls how the library handles incomplete or broken schema imports and how strictly requests are validated.
+`WSDL::Strictness` controls how strictly the library enforces WSDL/XSD correctness. Each setting independently controls a validation concern:
 
-`strict_schema: true` (default):
+| Setting | Default | Controls |
+|---------|---------|----------|
+| `schema_imports` | `true` | Raise on failed schema imports vs log-and-skip |
+| `schema_references` | `true` | Raise on unresolved type/element references |
+| `operation_overloading` | `true` | Reject WS-I R2304 operation overloading |
+| `request_validation` | `true` | Validate request payloads against schema |
 
-- Recoverable schema import failures raise `SchemaImportError`.
-- Request validation is strict for known operation metadata.
+```ruby
+# All strict (default)
+WSDL::Strictness.on
 
-`strict_schema: false`:
+# All relaxed
+WSDL::Strictness.off
 
-- Recoverable import failures are logged and skipped (best effort).
-- Request validation is relaxed for unknown structure caused by incomplete schema metadata.
-- Structural WSDL reference errors (e.g. unresolved `message`/`part` in bindings) still raise.
+# Disable only one concern
+WSDL::Strictness.new(schema_imports: false)
 
-Use `strict_schema: false` for large enterprise WSDLs with external schema dependencies that are unavailable or broken.
+# Derive from existing
+WSDL::Strictness.on.with(schema_imports: false)
+```
+
+When an error is raised due to a strictness check, the error message tells you exactly which setting to disable.
+
+> **Deprecated:** `strict_schema: true/false` still works but emits a deprecation warning. It maps to `Strictness.on` / `Strictness.off` respectively.
 
 ## Cache
 
@@ -241,5 +254,5 @@ See [HTTP Adapter](http-adapter.md) for the full security model, blocked IP rang
 - [HTTP Adapter](http-adapter.md)
 - [Error Hierarchy](../reference/errors.md)
 - [Resolving Imports](resolving-imports.md)
-- [Strict Schema Fixture Matrix](../reference/strict-schema-fixture-matrix.md)
+- [Strictness Fixture Matrix](../reference/strictness-fixture-matrix.md)
 - [Specifications and References](../reference/specifications.md)

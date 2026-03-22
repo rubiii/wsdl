@@ -7,7 +7,7 @@ RSpec.describe WSDL::ParseOptions do
 
       expect(options.sandbox_paths).to be_nil
       expect(options.limits).to eq(WSDL.limits)
-      expect(options.strict_schema).to be(true)
+      expect(options.strictness).to eq(WSDL::Strictness.on)
     end
 
     it 'accepts custom sandbox_paths' do
@@ -26,19 +26,20 @@ RSpec.describe WSDL::ParseOptions do
       expect(options.limits).to eq(WSDL.limits)
     end
 
-    it 'coerces truthy strict_schema to true' do
-      options = described_class.default(strict_schema: 'yes')
-      expect(options.strict_schema).to be(true)
+    it 'stores Strictness.on correctly' do
+      options = described_class.default(strictness: WSDL::Strictness.on)
+      expect(options.strictness).to eq(WSDL::Strictness.on)
     end
 
-    it 'coerces falsy strict_schema to false' do
-      options = described_class.default(strict_schema: false)
-      expect(options.strict_schema).to be(false)
+    it 'stores Strictness.off correctly' do
+      options = described_class.default(strictness: WSDL::Strictness.off)
+      expect(options.strictness).to eq(WSDL::Strictness.off)
     end
 
-    it 'coerces nil strict_schema to false' do
-      options = described_class.default(strict_schema: nil)
-      expect(options.strict_schema).to be(false)
+    it 'stores a custom Strictness object correctly' do
+      custom = WSDL::Strictness.new(schema_imports: false, request_validation: true)
+      options = described_class.default(strictness: custom)
+      expect(options.strictness).to eq(custom)
     end
   end
 
@@ -58,8 +59,8 @@ RSpec.describe WSDL::ParseOptions do
     end
 
     it 'considers two instances with different values not equal' do
-      a = described_class.default(strict_schema: true)
-      b = described_class.default(strict_schema: false)
+      a = described_class.default(strictness: WSDL::Strictness.on)
+      b = described_class.default(strictness: WSDL::Strictness.off)
 
       expect(a).not_to eq(b)
     end

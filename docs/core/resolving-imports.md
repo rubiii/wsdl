@@ -10,21 +10,21 @@ Resolution uses the parent document location for relative paths and is constrain
 
 ## Strict vs Best-Effort Behavior
 
-Set behavior through [`strict_schema`](configuration.md#strict-schema-mode).
+Set behavior through [`strictness:`](configuration.md#strictness).
 
 ```ruby
 # Strict (default)
-WSDL::Client.new('/app/wsdl/service.wsdl', strict_schema: true)
+WSDL::Client.new('/app/wsdl/service.wsdl', strictness: Strictness.on)
 
 # Best effort
-WSDL::Client.new('/app/wsdl/service.wsdl', strict_schema: false)
+WSDL::Client.new('/app/wsdl/service.wsdl', strictness: Strictness.off)
 ```
 
-`strict_schema: true`:
+`Strictness.on`:
 
 - Recoverable schema import failures raise `WSDL::SchemaImportError`.
 
-`strict_schema: false`:
+`Strictness.off`:
 
 - Recoverable schema import failures are logged and skipped.
 - Parsing can proceed with partial schema metadata.
@@ -57,7 +57,7 @@ client = WSDL::Client.new(
 
 ## Common Recovery Steps
 
-1. Switch to `strict_schema: false` for a quick best-effort parse.
+1. Switch to `strictness: Strictness.off` for a quick best-effort parse.
 2. Configure missing sandbox paths for local relative imports.
 3. Confirm import URLs are reachable.
 4. Fix malformed external XSD sources or vendor-provided schema bundles.
@@ -74,4 +74,4 @@ Strict request validation depends on operation-relevant schema completeness.
 - [Getting Started](../getting_started.md)
 - [Error Hierarchy](../reference/errors.md)
 - [Configuration](configuration.md)
-- [Strict Schema Fixture Matrix](../reference/strict-schema-fixture-matrix.md)
+- [Strictness Fixture Matrix](../reference/strictness-fixture-matrix.md)

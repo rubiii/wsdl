@@ -4,9 +4,14 @@ module WSDL
   module Request
     # Schema-aware validator for request envelope documents.
     class Validator
-      def initialize(contract:, strict_schema:, schema_complete:)
+      # Creates a new Validator.
+      #
+      # @param contract [Contract::OperationContract] the operation contract
+      # @param strictness [Strictness] the strictness configuration
+      # @param schema_complete [Boolean] whether schema metadata is complete
+      def initialize(contract:, strictness:, schema_complete:)
         @contract = contract
-        @strict_schema = strict_schema
+        @strictness = strictness
         @schema_complete = schema_complete
       end
 
@@ -22,7 +27,7 @@ module WSDL
       private
 
       def validate_schema_completeness!
-        return unless @strict_schema
+        return unless @strictness.request_validation
         return if @schema_complete
 
         raise RequestValidationError,
@@ -45,7 +50,7 @@ module WSDL
             next
           end
 
-          next unless @strict_schema
+          next unless @strictness.request_validation
 
           raise_namespace_mismatch_if_known_name!(node, expected_elements, context: "in #{section}")
           raise_unknown_section_element!(node, section:)
@@ -60,7 +65,7 @@ module WSDL
       end
 
       def validate_required_elements!(counts, expected_elements, section:)
-        return unless @strict_schema
+        return unless @strictness.request_validation
 
         expected_elements.each do |expected|
           min = expected.min_occurs.to_i
@@ -139,7 +144,7 @@ module WSDL
             next
           end
 
-          next unless @strict_schema && !wildcard
+          next unless @strictness.request_validation && !wildcard
 
           raise_namespace_mismatch_if_known_name!(child, expected_children, context: "under #{node.name.inspect}")
           raise_unknown_child!(child, node)
@@ -158,14 +163,14 @@ module WSDL
           return
         end
 
-        return unless @strict_schema && !xsi_nil_attribute?(attribute)
+        return unless @strictness.request_validation && !xsi_nil_attribute?(attribute)
 
         raise RequestValidationError,
               "Unknown attribute #{attribute.name.inspect} on element #{node.name.inspect}"
       end
 
       def validate_required_attributes!(expected_attributes, present, node)
-        return unless @strict_schema
+        return unless @strictness.request_validation
 
         expected_attributes.each do |expected_attribute|
           next if expected_attribute.optional?
@@ -185,7 +190,7 @@ module WSDL
 
       def validate_child_order!(child, expected_child, expected_children, last_known_index, node)
         index = expected_children.index(expected_child)
-        if @strict_schema && index && index < last_known_index
+        if @strictness.request_validation && index && index < last_known_index
           raise RequestValidationError,
                 "Element order mismatch under #{node.name.inspect}: received #{child.name.inspect} out of order"
         end
@@ -236,7 +241,7 @@ module WSDL
       end
 
       def validate_expected_child_counts!(expected_children, counts, node)
-        return unless @strict_schema
+        return unless @strictness.request_validation
 
         expected_children.each do |expected_child|
           validate_child_min_occurs!(expected_child, counts, node)

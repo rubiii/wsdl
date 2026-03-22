@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 RSpec.describe WSDL::Operation do
-  let(:client) { WSDL::Client.new(fixture('wsdl/temperature'), strict_schema: false) }
+  let(:client) { WSDL::Client.new(fixture('wsdl/temperature'), strictness: WSDL::Strictness.off) }
   let(:operation) { client.operation('ConvertTemperature', 'ConvertTemperatureSoap12', 'ConvertTemp') }
 
   describe '#contract' do

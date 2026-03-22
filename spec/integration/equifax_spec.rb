@@ -91,7 +91,7 @@ WSDL::TestService.define(:equifax, wsdl: 'wsdl/equifax') do
 end
 
 RSpec.describe 'Equifax' do
-  subject(:client) { WSDL::Client.new(service.wsdl_url, strict_schema: false) }
+  subject(:client) { WSDL::Client.new(service.wsdl_url) }
 
   let(:service) { WSDL::TestService[:equifax] }
   let(:service_name) { :canadav2 }
@@ -110,8 +110,24 @@ RSpec.describe 'Equifax' do
           tag('Identity') do
             tag('Name') do
               tag('FirstName', 'John')
+              tag('MiddleName', '')
+              tag('MiddleInitial', '')
               tag('LastName', 'Smith')
             end
+            tag('Address', addressType: 'Current') do
+              tag('FreeFormAddress') do
+                tag('AddressLine', '123 Main St, Toronto ON M5V 2H1')
+              end
+              tag('HybridAddress') do
+                tag('AddressLine', '123 Main St')
+                tag('City', 'Toronto')
+                tag('Province', 'ON')
+                tag('PostalCode', 'M5V 2H1')
+              end
+            end
+          end
+          tag('ProcessingOptions') do
+            tag('Language', 'en')
           end
         end
       end

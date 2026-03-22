@@ -173,7 +173,7 @@ module WSDL
 
       Request::Validator.new(
         contract: validation_contract,
-        strict_schema: @config.strict_schema,
+        strictness: @config.strictness,
         schema_complete: schema_complete_for_validation?
       ).validate!(document)
 
@@ -339,14 +339,14 @@ module WSDL
     def request_validation_contract
       contract
     rescue UnresolvedReferenceError => e
-      raise if @config.strict_schema
+      raise if @config.strictness.schema_references
       raise unless schema_unresolved_reference?(e)
 
       fallback_validation_contract
     end
 
     def schema_complete_for_validation?
-      return true unless @config.strict_schema
+      return true unless @config.strictness.request_validation
 
       @parser_result.schema_complete_for_operation?(@operation_info)
     end

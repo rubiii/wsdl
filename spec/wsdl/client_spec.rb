@@ -145,7 +145,7 @@ RSpec.describe WSDL::Client do
         expect(custom_cache.size).to eq(2)
       end
 
-      it 'partitions cache entries by strict_schema policy' do
+      it 'partitions cache entries by strictness' do
         custom_cache = WSDL::Cache.new
         definition_count = 0
         allow(WSDL::Parser::Result).to receive(:parse) do |_, _|
@@ -153,8 +153,8 @@ RSpec.describe WSDL::Client do
           instance_double(WSDL::Parser::Result, services: {}, operations: [])
         end
 
-        described_class.new(wsdl, cache: custom_cache, strict_schema: false)
-        described_class.new(wsdl, cache: custom_cache, strict_schema: true)
+        described_class.new(wsdl, cache: custom_cache, strictness: WSDL::Strictness.off)
+        described_class.new(wsdl, cache: custom_cache, strictness: WSDL::Strictness.on)
 
         expect(definition_count).to eq(2)
         expect(custom_cache.size).to eq(2)
@@ -386,7 +386,7 @@ RSpec.describe WSDL::Client do
       Tempfile.create(['unknown_type', '.wsdl']) do |f|
         f.write(wsdl_with_unknown_type)
         f.close
-        client = described_class.new(f.path, strict_schema: true)
+        client = described_class.new(f.path, strictness: WSDL::Strictness.on)
 
         expect { client.operation('S', 'P', 'Op').contract }
           .to raise_error(WSDL::UnresolvedReferenceError, /Unknown XSD built-in type/)
@@ -397,7 +397,7 @@ RSpec.describe WSDL::Client do
       Tempfile.create(['unknown_type', '.wsdl']) do |f|
         f.write(wsdl_with_unknown_type)
         f.close
-        client = described_class.new(f.path, strict_schema: false)
+        client = described_class.new(f.path, strictness: WSDL::Strictness.off)
 
         expect { client.operation('S', 'P', 'Op').contract }.not_to raise_error
       end
@@ -510,35 +510,35 @@ RSpec.describe WSDL::Client do
     let(:overloaded_wsdl) { fixture('parser/operation_overloading') }
 
     it 'raises OperationOverloadError in strict mode' do
-      client = described_class.new(overloaded_wsdl, strict_schema: true)
+      client = described_class.new(overloaded_wsdl, strictness: WSDL::Strictness.on)
 
       expect { client.operation('LookupService', 'LookupPort', 'Lookup') }
         .to raise_error(WSDL::OperationOverloadError, /overloaded.*R2304/)
     end
 
     it 'resolves overloaded operation by input_name in relaxed mode' do
-      client = described_class.new(overloaded_wsdl, strict_schema: false)
+      client = described_class.new(overloaded_wsdl, strictness: WSDL::Strictness.off)
       op = client.operation('LookupService', 'LookupPort', 'Lookup', input_name: :LookupById)
 
       expect(op.contract.request.body.paths.first[:path]).to eq(['LookupByIdReq'])
     end
 
     it 'resolves the other overload by its input_name' do
-      client = described_class.new(overloaded_wsdl, strict_schema: false)
+      client = described_class.new(overloaded_wsdl, strictness: WSDL::Strictness.off)
       op = client.operation('LookupService', 'LookupPort', 'Lookup', input_name: :LookupByName)
 
       expect(op.contract.request.body.paths.first[:path]).to eq(['LookupByNameReq'])
     end
 
     it 'raises ArgumentError without input_name for overloaded operation' do
-      client = described_class.new(overloaded_wsdl, strict_schema: false)
+      client = described_class.new(overloaded_wsdl, strictness: WSDL::Strictness.off)
 
       expect { client.operation('LookupService', 'LookupPort', 'Lookup') }
         .to raise_error(ArgumentError, /Provide input_name.*LookupById.*LookupByName/)
     end
 
     it 'returns overloaded name once in operations list' do
-      client = described_class.new(overloaded_wsdl, strict_schema: false)
+      client = described_class.new(overloaded_wsdl, strictness: WSDL::Strictness.off)
 
       expect(client.operations('LookupService', 'LookupPort').count('Lookup')).to eq(1)
     end
@@ -560,31 +560,31 @@ RSpec.describe WSDL::Client do
       }.to raise_error(WSDL::SchemaImportError)
     end
 
-    it 'tolerates recoverable schema import failures when strict_schema: false' do
+    it 'tolerates recoverable schema import failures when strictness is off' do
       expect {
-        described_class.new(wsdl_with_missing_schema_import, http: http_mock, cache: false, strict_schema: false)
+        described_class.new(wsdl_with_missing_schema_import, http: http_mock, cache: false, strictness: WSDL::Strictness.off)
       }.not_to raise_error
     end
 
-    it 'passes strict_schema: true to parser' do
+    it 'passes Strictness.on to parser' do
       parser_result = instance_double(WSDL::Parser::Result, services: {})
       allow(WSDL::Parser::Result).to receive(:parse).and_return(parser_result)
 
-      described_class.new(wsdl, http: http_mock, strict_schema: true)
+      described_class.new(wsdl, http: http_mock, strictness: WSDL::Strictness.on)
 
       expect(WSDL::Parser::Result).to have_received(:parse).with(
-        wsdl, anything, having_attributes(strict_schema: true)
+        wsdl, anything, having_attributes(strictness: WSDL::Strictness.on)
       )
     end
 
-    it 'passes strict_schema: false to parser' do
+    it 'passes Strictness.off to parser' do
       parser_result = instance_double(WSDL::Parser::Result, services: {})
       allow(WSDL::Parser::Result).to receive(:parse).and_return(parser_result)
 
-      described_class.new(wsdl, http: http_mock, strict_schema: false)
+      described_class.new(wsdl, http: http_mock, strictness: WSDL::Strictness.off)
 
       expect(WSDL::Parser::Result).to have_received(:parse).with(
-        wsdl, anything, having_attributes(strict_schema: false)
+        wsdl, anything, having_attributes(strictness: WSDL::Strictness.off)
       )
     end
   end
@@ -651,14 +651,14 @@ RSpec.describe WSDL::Client do
     end
   end
 
-  describe '#config.strict_schema' do
-    it 'defaults to true' do
-      expect(client.config.strict_schema).to be(true)
+  describe '#config.strictness' do
+    it 'defaults to Strictness.on' do
+      expect(client.config.strictness).to eq(WSDL::Strictness.on)
     end
 
-    it 'returns false when configured with strict_schema: false' do
-      relaxed_client = described_class.new(wsdl, http: http_mock, cache: false, strict_schema: false)
-      expect(relaxed_client.config.strict_schema).to be(false)
+    it 'returns Strictness.off when configured with strictness: Strictness.off' do
+      relaxed_client = described_class.new(wsdl, http: http_mock, cache: false, strictness: WSDL::Strictness.off)
+      expect(relaxed_client.config.strictness).to eq(WSDL::Strictness.off)
     end
   end
 
@@ -758,7 +758,7 @@ RSpec.describe WSDL::Client do
       end
 
       it 'raises when the WSDL has multiple services' do
-        multi_service_client = described_class.new(fixture('wsdl/oracle'), http: http_mock, strict_schema: false)
+        multi_service_client = described_class.new(fixture('wsdl/oracle'), http: http_mock, strictness: WSDL::Strictness.off)
 
         expect { multi_service_client.operations }
           .to raise_error(ArgumentError, /Cannot auto-resolve service: expected 1, found \d+/)
@@ -822,7 +822,7 @@ RSpec.describe WSDL::Client do
       end
 
       it 'raises when the WSDL has multiple services' do
-        multi_service_client = described_class.new(fixture('wsdl/oracle'), http: http_mock, strict_schema: false)
+        multi_service_client = described_class.new(fixture('wsdl/oracle'), http: http_mock, strictness: WSDL::Strictness.off)
 
         expect { multi_service_client.operation(:SomeOperation) }
           .to raise_error(ArgumentError, /Cannot auto-resolve service: expected 1, found \d+/)

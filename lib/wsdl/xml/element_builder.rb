@@ -36,11 +36,11 @@ module WSDL
       # @param schemas [Schema::Collection] the schema collection for resolving types
       # @param limits [Limits, nil] resource limits for DoS protection.
       #   If nil, uses {WSDL.limits}.
-      # @param strict_schema [Boolean] whether to validate XSD built-in type references
-      def initialize(schemas, limits: nil, strict_schema: true)
+      # @param strictness [Strictness] the strictness configuration
+      def initialize(schemas, limits: nil, strictness: WSDL.strictness)
         @schemas = schemas
         @limits = limits || WSDL.limits
-        @strict_schema = strict_schema
+        @strictness = strictness
       end
 
       # Builds Element trees from WSDL message parts.
@@ -101,7 +101,7 @@ module WSDL
       def resolve_part_schema_element(part)
         resolved = QName.parse(part[:element], namespaces: part[:namespaces])
 
-        schema_element = if @strict_schema
+        schema_element = if @strictness.schema_references
           @schemas.fetch_element(
             resolved.namespace,
             resolved.local,
@@ -282,7 +282,7 @@ module WSDL
       def resolve_schema_elements(type)
         type.elements([], limits: @limits)
       rescue UnresolvedReferenceError => e
-        raise if @strict_schema
+        raise if @strictness.schema_references
 
         logger.debug("Skipping children for unresolved type: #{e.message}")
         []
@@ -345,11 +345,11 @@ module WSDL
         return qname unless resolved.namespace
 
         if resolved.namespace == NS::XSD
-          validate_xsd_builtin_type!(resolved.local, qname) if @strict_schema
+          validate_xsd_builtin_type!(resolved.local, qname) if @strictness.schema_references
           return qname
         end
 
-        if @strict_schema
+        if @strictness.schema_references
           @schemas.fetch_type(resolved.namespace, resolved.local, context: "type reference #{qname.inspect}")
         else
           @schemas.find_type(resolved.namespace, resolved.local) || qname
@@ -360,7 +360,9 @@ module WSDL
         return if XSD_BUILTIN_TYPES.include?(local_name)
 
         raise UnresolvedReferenceError.new(
-          "Unknown XSD built-in type #{qname.inspect}",
+          "Unknown XSD built-in type #{qname.inspect}. " \
+          'To allow unresolved type references, use: ' \
+          'strictness: WSDL::Strictness.new(schema_references: false)',
           reference_type: :type,
           reference_name: qname,
           namespace: NS::XSD,
@@ -377,7 +379,7 @@ module WSDL
       def find_element(qname, namespaces, context: nil)
         resolved = QName.parse(qname, namespaces: namespaces)
 
-        if @strict_schema
+        if @strictness.schema_references
           @schemas.fetch_element(resolved.namespace, resolved.local,
                                  context: context || "element reference #{qname.inspect}")
         else

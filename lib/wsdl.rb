@@ -41,6 +41,9 @@ module WSDL
     # @return [Limits] the default limits instance
     attr_reader :limits
 
+    # @return [Strictness] the default strictness settings
+    attr_reader :strictness
+
     # Returns the logger for the WSDL library.
     #
     # Defaults to a silent {Log::NullLogger} that discards all output.
@@ -97,6 +100,20 @@ module WSDL
     def limits=(value)
       @limits = value || Limits.new
     end
+
+    # Sets the default strictness settings. Pass +nil+ to restore defaults.
+    #
+    # This is a global setting. Set it once at boot time, before creating
+    # any clients or spawning threads.
+    #
+    # @example
+    #   WSDL.strictness = WSDL::Strictness.off
+    #
+    # @param value [Strictness, nil] a strictness instance, or +nil+ to reset
+    # @see Strictness
+    def strictness=(value)
+      @strictness = value || Strictness.new
+    end
   end
 
   # Load core components
@@ -106,6 +123,7 @@ module WSDL
   require 'wsdl/qname'
   require 'wsdl/formatting'
   require 'wsdl/limits'
+  require 'wsdl/strictness'
   require 'wsdl/parse_options'
   require 'wsdl/source'
   require 'wsdl/cache'
@@ -147,5 +165,6 @@ module WSDL
   @http_adapter = HTTPAdapter
   @cache        = Cache.new(max_entries: 50)
   @limits       = Limits.new
+  @strictness   = Strictness.new
   @logger       = Log::NullLogger.new
 end

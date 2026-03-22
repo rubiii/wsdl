@@ -45,7 +45,7 @@ WSDL::TestService.define(:interhome, wsdl: 'wsdl/interhome') do
 end
 
 RSpec.describe 'Interhome' do
-  subject(:client) { WSDL::Client.new(service.wsdl_url, strict_schema: false) }
+  subject(:client) { WSDL::Client.new(service.wsdl_url) }
 
   let(:service) { WSDL::TestService[:interhome] }
   let(:service_name) { :WebService }
@@ -69,10 +69,15 @@ RSpec.describe 'Interhome' do
         tag('ClientBooking') do
           tag('inputValue') do
             tag('AccommodationCode', 'CH1000.100.1')
+            tag('CustomerSalutationType', 'Mr')
             tag('CustomerName', 'Smith')
             tag('Adults', 2)
+            tag('Babies', 0)
+            tag('Children', 0)
             tag('CheckIn', '2025-06-01')
             tag('CheckOut', '2025-06-08')
+            tag('PaymentType', 'CreditCard')
+            tag('CreditCardType', 'Visa')
           end
         end
       end
@@ -103,10 +108,15 @@ RSpec.describe 'Interhome' do
         tag('ClientBooking') do
           tag('inputValue') do
             tag('AccommodationCode', 'INVALID-999')
+            tag('CustomerSalutationType', 'Mr')
             tag('CustomerName', 'Test')
             tag('Adults', 1)
+            tag('Babies', 0)
+            tag('Children', 0)
             tag('CheckIn', '2025-07-01')
             tag('CheckOut', '2025-07-08')
+            tag('PaymentType', 'CreditCard')
+            tag('CreditCardType', 'Visa')
           end
         end
       end
@@ -135,10 +145,15 @@ RSpec.describe 'Interhome' do
         tag('ClientBooking') do
           tag('inputValue') do
             tag('AccommodationCode', 'CH1000.100.1')
+            tag('CustomerSalutationType', 'Mr')
             tag('CustomerName', 'Holiday')
             tag('Adults', 4)
+            tag('Babies', 0)
+            tag('Children', 0)
             tag('CheckIn', '2025-12-24')
             tag('CheckOut', '2025-12-31')
+            tag('PaymentType', 'CreditCard')
+            tag('CreditCardType', 'Visa')
           end
         end
       end

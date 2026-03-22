@@ -152,15 +152,15 @@ operation.prepared?  # => false
 
 ## Validation Timing and Strictness
 
-Validation runs immediately when the `prepare` block finishes. See [Strict Schema Mode](configuration.md#strict-schema-mode) for full details.
+Validation runs immediately when the `prepare` block finishes. See [Strictness](configuration.md#strictness) for full details.
 
-`strict_schema: true` (default):
+`strictness.request_validation` enabled (default):
 
 - Enforces operation-relevant schema completeness.
 - Rejects unknown elements/attributes unless wildcard-permitted.
 - Enforces required elements, order, and cardinality where known.
 
-`strict_schema: false`:
+`strictness.request_validation` disabled:
 
 - Tolerates recoverable import failures.
 - Validates known structure where available.

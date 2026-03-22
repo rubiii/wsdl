@@ -12,6 +12,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Extract XML attributes from response elements into the parsed hash with `_`-prefixed keys (e.g., `transactionKey="TXN-123"` → `_transactionKey: "TXN-123"`). Attributes are type-coerced when schema metadata is available.
 - One-way operations (no `<output>` message) are now supported. Response contract returns empty elements and `output_style` returns `nil`.
 - Operation overloading support per WSDL 1.1 §2.4.5. Same-named operations with different input/output messages are stored correctly and disambiguated via `client.operation(:Svc, :Port, :Op, input_name: :InputName)`. WS-I Basic Profile R2304 validation in strict mode raises `OperationOverloadError`.
+- `WSDL::Strictness` value object replaces the `strict_schema` boolean with granular control over 4 validation concerns: `schema_imports`, `schema_references`, `operation_overloading`, `request_validation`. Error messages now include the specific setting to disable.
+
+### Deprecated
+
+- `strict_schema:` keyword on `Client.new` and `Config.new`. Use `strictness: WSDL::Strictness.new(...)` instead.
 
 ### Fixed
 

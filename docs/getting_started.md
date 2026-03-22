@@ -24,7 +24,7 @@ This is the docs entrypoint.
 
 - [Error Hierarchy](reference/errors.md)
 - [Unsupported Features](reference/unsupported-features.md)
-- [Strict Schema Fixture Matrix](reference/strict-schema-fixture-matrix.md)
+- [Strictness Fixture Matrix](reference/strictness-fixture-matrix.md)
 - [Specifications and References](reference/specifications.md)
 
 ## Recommended Path
@@ -44,7 +44,7 @@ require 'wsdl'
 client = WSDL::Client.new('http://example.com/service?wsdl')
 ```
 
-[`strict_schema`](core/configuration.md#strict-schema-mode) is enabled by default. Set `strict_schema: false` when you need best-effort parsing for incomplete enterprise WSDLs.
+[`strictness:`](core/configuration.md#strictness) is enabled by default. Set `strictness: Strictness.off` when you need best-effort parsing for incomplete enterprise WSDLs.
 
 ## 2. Discover Services and Operations
 

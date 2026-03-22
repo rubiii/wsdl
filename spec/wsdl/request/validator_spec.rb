@@ -61,8 +61,8 @@ RSpec.describe WSDL::Request::Validator do
     Data.define(:request, :style).new(request:, style:)
   end
 
-  def validator(contract:, strict_schema: true, schema_complete: true)
-    described_class.new(contract:, strict_schema:, schema_complete:)
+  def validator(contract:, strictness: WSDL::Strictness.on, schema_complete: true)
+    described_class.new(contract:, strictness:, schema_complete:)
   end
 
   # -- shared schema elements -------------------------------------------------
@@ -77,17 +77,17 @@ RSpec.describe WSDL::Request::Validator do
     let(:contract) { build_contract }
 
     it 'raises in strict mode when schema is incomplete' do
-      v = validator(contract:, strict_schema: true, schema_complete: false)
+      v = validator(contract:, strictness: WSDL::Strictness.on, schema_complete: false)
       expect { v.validate!(build_document) }.to raise_error(WSDL::RequestValidationError, /complete/)
     end
 
     it 'passes in strict mode when schema is complete' do
-      v = validator(contract:, strict_schema: true, schema_complete: true)
+      v = validator(contract:, strictness: WSDL::Strictness.on, schema_complete: true)
       expect { v.validate!(build_document) }.not_to raise_error
     end
 
     it 'skips check in relaxed mode even when schema is incomplete' do
-      v = validator(contract:, strict_schema: false, schema_complete: false)
+      v = validator(contract:, strictness: WSDL::Strictness.off, schema_complete: false)
       expect { v.validate!(build_document) }.not_to raise_error
     end
   end
@@ -113,7 +113,7 @@ RSpec.describe WSDL::Request::Validator do
       end
 
       it 'silently skips unknown elements in relaxed mode' do
-        v = validator(contract:, strict_schema: false)
+        v = validator(contract:, strictness: WSDL::Strictness.off)
         expect { v.validate!(doc) }.not_to raise_error
       end
     end
@@ -129,7 +129,7 @@ RSpec.describe WSDL::Request::Validator do
       end
 
       it 'skips required check in relaxed mode' do
-        v = validator(contract:, strict_schema: false)
+        v = validator(contract:, strictness: WSDL::Strictness.off)
         expect { v.validate!(empty_doc) }.not_to raise_error
       end
     end
@@ -163,7 +163,7 @@ RSpec.describe WSDL::Request::Validator do
 
       it 'passes in relaxed mode when namespace is wrong' do
         doc = build_document(body: [build_node('Item', namespace_uri: ns_other)])
-        expect { validator(contract:, strict_schema: false).validate!(doc) }.not_to raise_error
+        expect { validator(contract:, strictness: WSDL::Strictness.off).validate!(doc) }.not_to raise_error
       end
     end
 
@@ -262,7 +262,7 @@ RSpec.describe WSDL::Request::Validator do
         build_request_attribute('bogus', 'x')
       ])
       doc = build_document(body: [node])
-      expect { validator(contract:, strict_schema: false).validate!(doc) }.not_to raise_error
+      expect { validator(contract:, strictness: WSDL::Strictness.off).validate!(doc) }.not_to raise_error
     end
 
     it 'always allows xsi:nil attribute even in strict mode' do
@@ -277,7 +277,7 @@ RSpec.describe WSDL::Request::Validator do
     it 'skips required attribute check in relaxed mode' do
       node = build_node('Item', namespace_uri: ns_example)
       doc = build_document(body: [node])
-      expect { validator(contract:, strict_schema: false).validate!(doc) }.not_to raise_error
+      expect { validator(contract:, strictness: WSDL::Strictness.off).validate!(doc) }.not_to raise_error
     end
 
     it 'raises for missing required attribute even when optional and xsi:nil are present' do
@@ -338,7 +338,7 @@ RSpec.describe WSDL::Request::Validator do
         build_node('A', namespace_uri: ns_example)
       ])
       doc = build_document(body: [node])
-      expect { validator(contract:, strict_schema: false).validate!(doc) }.not_to raise_error
+      expect { validator(contract:, strictness: WSDL::Strictness.off).validate!(doc) }.not_to raise_error
     end
 
     it 'raises when required child is missing' do
@@ -391,7 +391,7 @@ RSpec.describe WSDL::Request::Validator do
         build_node('A', namespace_uri: ns_example)
       ])
       doc = build_document(body: [node])
-      expect { validator(contract:, strict_schema: false).validate!(doc) }.not_to raise_error
+      expect { validator(contract:, strictness: WSDL::Strictness.off).validate!(doc) }.not_to raise_error
     end
 
     context 'with wildcard (any_content)' do
@@ -448,7 +448,7 @@ RSpec.describe WSDL::Request::Validator do
 
       it 'skips maxOccurs check in relaxed mode' do
         doc = build_document(body: Array.new(5) { build_node('Item', namespace_uri: ns_example) })
-        expect { validator(contract:, strict_schema: false).validate!(doc) }.not_to raise_error
+        expect { validator(contract:, strictness: WSDL::Strictness.off).validate!(doc) }.not_to raise_error
       end
 
       it 'raises when count exceeds maxOccurs' do
@@ -609,7 +609,7 @@ RSpec.describe WSDL::Request::Validator do
         ])
         root_node = build_node('Root', namespace_uri: ns_example, children: [field])
         doc = build_document(body: [root_node])
-        expect { validator(contract:, strict_schema: false).validate!(doc) }.not_to raise_error
+        expect { validator(contract:, strictness: WSDL::Strictness.off).validate!(doc) }.not_to raise_error
       end
 
       it 'validates all nested levels in strict mode' do

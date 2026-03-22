@@ -47,7 +47,7 @@ RSpec.describe 'Nillable elements' do
   end
 
   describe 'xsi:nil serialization' do
-    let(:config) { WSDL::Config.new(strict_schema: false) }
+    let(:config) { WSDL::Config.new(strictness: WSDL::Strictness.off) }
     let(:operation) { WSDL::Operation.new(operation_info, parser_result, http_mock, config:) }
 
     it 'serializes nil nillable simple elements with xsi:nil="true"' do

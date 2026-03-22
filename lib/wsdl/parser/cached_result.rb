@@ -89,7 +89,7 @@ module WSDL
             source: normalize_source(inputs.wsdl),
             sandbox_paths: normalize_sandbox_paths(opts.sandbox_paths),
             limits: normalize_limits(opts.limits),
-            strict_schema: opts.strict_schema ? true : false,
+            strictness: normalize_strictness(opts.strictness),
             http_identity: normalize_http_identity(inputs.http)
           }
 
@@ -138,6 +138,15 @@ module WSDL
             'class' => http.class.name,
             'value' => http.cache_key.to_s
           }
+        end
+
+        # Normalizes strictness to a stable hash.
+        #
+        # @param strictness [Strictness] strictness configuration
+        # @return [Hash{String => Object}] normalized strictness hash
+        #
+        def normalize_strictness(strictness)
+          normalize_hash(strictness.to_h)
         end
 
         # Converts a hash into a stable string-keyed representation.

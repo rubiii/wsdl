@@ -9,22 +9,22 @@ module WSDL
   #   @return [Array<String>, nil] directories where file access is allowed
   # @!attribute [r] limits
   #   @return [Limits] resource limits for DoS protection (always resolved, never nil)
-  # @!attribute [r] strict_schema
-  #   @return [Boolean] strict schema handling and request validation mode
+  # @!attribute [r] strictness
+  #   @return [Strictness] strictness settings for schema/request validation
   #
-  ParseOptions = Data.define(:sandbox_paths, :limits, :strict_schema) {
+  ParseOptions = Data.define(:sandbox_paths, :limits, :strictness) {
     # Constructs a {ParseOptions} with sensible defaults.
     #
     # @param sandbox_paths [Array<String>, nil] sandbox paths (default: `nil`, auto-resolved by Source)
     # @param limits [Limits, nil] resource limits (default: {WSDL.limits})
-    # @param strict_schema [Boolean] strict schema mode (default: `true`)
+    # @param strictness [Strictness, nil] strictness settings (default: {WSDL.strictness})
     # @return [ParseOptions]
     #
-    def self.default(sandbox_paths: nil, limits: nil, strict_schema: true)
+    def self.default(sandbox_paths: nil, limits: nil, strictness: nil)
       new(
-        sandbox_paths: sandbox_paths,
+        sandbox_paths:,
         limits: limits || WSDL.limits,
-        strict_schema: strict_schema ? true : false
+        strictness: strictness || WSDL.strictness
       )
     end
   }

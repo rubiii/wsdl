@@ -24,7 +24,7 @@ Implementation targets these standards and profiles:
 
 ## Notes
 
-1. [`strict_schema`](../core/configuration.md#strict-schema-mode) governs import strictness and request-validation strictness.
+1. [`strictness:`](../core/configuration.md#strictness) governs import and request validation strictness.
 2. Request generation is DSL -> Envelope -> XML with no Hash adapter layer.
 3. See [Unsupported Features](unsupported-features.md) for features explicitly out of scope (WSDL 2.0, RPC/encoded, EncryptedKey, WS-SecurityPolicy, SwA/MTOM, XML Encryption).
 

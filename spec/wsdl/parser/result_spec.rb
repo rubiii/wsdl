@@ -63,14 +63,14 @@ RSpec.describe WSDL::Parser::Result do
     end
   end
 
-  describe '#strict_schema' do
-    it 'defaults to true' do
-      expect(parser_result.strict_schema).to be(true)
+  describe '#strictness' do
+    it 'defaults to Strictness.on' do
+      expect(parser_result.strictness).to eq(WSDL::Strictness.on)
     end
 
-    it 'accepts strict_schema: false' do
-      result = described_class.parse(fixture('wsdl/authentication'), http_mock, strict_schema: false)
-      expect(result.strict_schema).to be(false)
+    it 'accepts strictness: Strictness.off' do
+      result = described_class.parse(fixture('wsdl/authentication'), http_mock, strictness: WSDL::Strictness.off)
+      expect(result.strictness).to eq(WSDL::Strictness.off)
     end
   end
 
@@ -90,7 +90,7 @@ RSpec.describe WSDL::Parser::Result do
     end
 
     it 'returns true when import failures are unrelated to operation input namespaces' do
-      result = described_class.parse(fixture('wsdl/authentication'), http_mock, strict_schema: false)
+      result = described_class.parse(fixture('wsdl/authentication'), http_mock, strictness: WSDL::Strictness.off)
       operation_info = build_operation_info(
         header_parts: [build_element(namespace: 'urn:operation')],
         body_parts: []
@@ -109,7 +109,7 @@ RSpec.describe WSDL::Parser::Result do
     end
 
     it 'returns false when import failures affect an operation input namespace' do
-      result = described_class.parse(fixture('wsdl/authentication'), http_mock, strict_schema: false)
+      result = described_class.parse(fixture('wsdl/authentication'), http_mock, strictness: WSDL::Strictness.off)
       operation_info = build_operation_info(
         header_parts: [],
         body_parts: [build_element(namespace: 'urn:operation')]
@@ -130,7 +130,7 @@ RSpec.describe WSDL::Parser::Result do
     end
 
     it 'returns false for non-empty operations when an import error has no base location' do
-      result = described_class.parse(fixture('wsdl/authentication'), http_mock, strict_schema: false)
+      result = described_class.parse(fixture('wsdl/authentication'), http_mock, strictness: WSDL::Strictness.off)
       operation_info = build_operation_info(
         header_parts: [],
         body_parts: [build_element(namespace: 'urn:operation')]
@@ -145,7 +145,7 @@ RSpec.describe WSDL::Parser::Result do
     end
 
     it 'returns true for empty-input operations even when import errors are present' do
-      result = described_class.parse(fixture('wsdl/authentication'), http_mock, strict_schema: false)
+      result = described_class.parse(fixture('wsdl/authentication'), http_mock, strictness: WSDL::Strictness.off)
       operation_info = build_operation_info(header_parts: [], body_parts: [])
 
       result.instance_variable_set(
@@ -287,15 +287,15 @@ RSpec.describe WSDL::Parser::Result do
   describe 'schema import failure policy' do
     let(:wsdl_with_missing_schema_import) { fixture('wsdl/juniper') }
 
-    it 'continues on non-security schema import failures when strict_schema is false' do
+    it 'continues on non-security schema import failures when strictness is off' do
       expect {
-        described_class.parse(wsdl_with_missing_schema_import, http_mock, strict_schema: false)
+        described_class.parse(wsdl_with_missing_schema_import, http_mock, strictness: WSDL::Strictness.off)
       }.not_to raise_error
     end
 
     it 'raises non-security schema import failures in strict mode' do
       expect {
-        described_class.parse(wsdl_with_missing_schema_import, http_mock, strict_schema: true)
+        described_class.parse(wsdl_with_missing_schema_import, http_mock, strictness: WSDL::Strictness.on)
       }.to raise_error(WSDL::SchemaImportError) { |error|
         expect(error.cause).to be_a(Errno::ENOENT)
         expect(error.location).to eq('SystemService?xsd=xsd0.xsd')
@@ -307,11 +307,11 @@ RSpec.describe WSDL::Parser::Result do
       malicious_wsdl = fixture('parser/malicious/path_traversal')
 
       expect {
-        described_class.parse(malicious_wsdl, http_mock, strict_schema: false)
+        described_class.parse(malicious_wsdl, http_mock, strictness: WSDL::Strictness.off)
       }.to raise_error(WSDL::PathRestrictionError)
 
       expect {
-        described_class.parse(malicious_wsdl, http_mock, strict_schema: true)
+        described_class.parse(malicious_wsdl, http_mock, strictness: WSDL::Strictness.on)
       }.to raise_error(WSDL::PathRestrictionError)
     end
 
@@ -342,11 +342,11 @@ RSpec.describe WSDL::Parser::Result do
         XML
 
         expect {
-          described_class.parse(wsdl_path, http_mock, strict_schema: false)
+          described_class.parse(wsdl_path, http_mock, strictness: WSDL::Strictness.off)
         }.to raise_error(WSDL::XMLSecurityError)
 
         expect {
-          described_class.parse(wsdl_path, http_mock, strict_schema: true)
+          described_class.parse(wsdl_path, http_mock, strictness: WSDL::Strictness.on)
         }.to raise_error(WSDL::XMLSecurityError)
       end
     end

@@ -229,14 +229,18 @@ RSpec.describe 'Equifax' do
   end
 
   it 'creates a request with attributes' do
-    # Use a relaxed client — this test uses incomplete data to focus on attribute serialization
-    relaxed_client = WSDL::Client.new(fixture('wsdl/equifax'), strict_schema: false)
-    operation = relaxed_client.operation(service_name, port_name, :startTransaction)
+    operation = client.operation(service_name, port_name, :startTransaction)
 
     operation.prepare do
       body do
         tag('InitialRequest') do
           tag('Identity') do
+            tag('Name') do
+              tag('FirstName', 'John')
+              tag('MiddleName', '')
+              tag('MiddleInitial', '')
+              tag('LastName', 'Lennon')
+            end
             tag('Address') do
               attribute('timeAtAddress', 3)
               attribute('addressType', 'public')
@@ -253,6 +257,9 @@ RSpec.describe 'Equifax' do
               end
             end
           end
+          tag('ProcessingOptions') do
+            tag('Language', 'en')
+          end
         end
       end
     end
@@ -261,11 +268,16 @@ RSpec.describe 'Equifax' do
       <env:Envelope
           xmlns:ns0="http://eid.equifax.com/soap/schema/canada/v2"
           xmlns:env="http://schemas.xmlsoap.org/soap/envelope/">
-        <env:Header>
-        </env:Header>
+        <env:Header/>
         <env:Body>
           <ns0:InitialRequest>
             <ns0:Identity>
+              <ns0:Name>
+                <ns0:FirstName>John</ns0:FirstName>
+                <ns0:MiddleName></ns0:MiddleName>
+                <ns0:MiddleInitial></ns0:MiddleInitial>
+                <ns0:LastName>Lennon</ns0:LastName>
+              </ns0:Name>
               <ns0:Address timeAtAddress="3" addressType="public">
                 <ns0:FreeFormAddress>
                   <ns0:AddressLine>The original</ns0:AddressLine>
@@ -280,6 +292,9 @@ RSpec.describe 'Equifax' do
                 </ns0:HybridAddress>
               </ns0:Address>
             </ns0:Identity>
+            <ns0:ProcessingOptions>
+              <ns0:Language>en</ns0:Language>
+            </ns0:ProcessingOptions>
           </ns0:InitialRequest>
         </env:Body>
       </env:Envelope>

@@ -25,7 +25,7 @@ module WSDL
   #
   # @example
   #   begin
-  #     client = WSDL::Client.new(wsdl, strict_schema: false)
+  #     client = WSDL::Client.new(wsdl, strictness: WSDL::Strictness.off)
   #   rescue WSDL::FatalError => e
   #     logger.error("Fatal WSDL error: #{e.message}")
   #   end
@@ -38,8 +38,8 @@ module WSDL
   # This error wraps recoverable schema import failures (for example missing
   # files, network timeouts, or malformed imported XSD documents).
   #
-  # In `strict_schema: false` mode these errors are logged and skipped.
-  # In `strict_schema: true` mode they are raised.
+  # When +strictness.schema_imports+ is false, these errors are logged and skipped.
+  # When true (default), they are raised.
   #
   class SchemaImportError < Error
     # @return [String, nil] schema location that failed
@@ -431,7 +431,7 @@ module WSDL
   # different input/output messages) and strict schema mode is enabled.
   #
   # WS-I Basic Profile 1.1 Rule R2304 prohibits operation overloading.
-  # Disable strict mode (+strict_schema: false+) to allow overloading
+  # Disable with +strictness: WSDL::Strictness.new(operation_overloading: false)+ to allow overloading
   # with disambiguation via the +input_name:+ keyword.
   #
   class OperationOverloadError < Error

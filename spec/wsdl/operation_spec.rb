@@ -453,7 +453,7 @@ RSpec.describe WSDL::Operation do
       end
 
       it 'allows namespaced unqualified elements in relaxed mode' do
-        op = WSDL::Client.new(fixture('wsdl/document_literal_wrapped'), strict_schema: false)
+        op = WSDL::Client.new(fixture('wsdl/document_literal_wrapped'), strictness: WSDL::Strictness.off)
           .operation('SampleService', 'Sample', 'op1')
 
         op.prepare do
@@ -631,12 +631,12 @@ RSpec.describe WSDL::Operation do
       end
     end
 
-    context 'with strict_schema: false fallback behavior' do
+    context 'with Strictness.off fallback behavior' do
       it 'still raises for non-schema unresolved references' do
         parser_result = parse_result(header_missing_part_wsdl)
         operation_info = parser_result.operation('TestService', 'TestPort', 'TestOp')
         relaxed_operation = described_class.new(operation_info, parser_result, http_mock,
-                                                config: WSDL::Config.new(strict_schema: false))
+                                                config: WSDL::Config.new(strictness: WSDL::Strictness.off))
 
         expect {
           relaxed_operation.prepare do

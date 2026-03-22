@@ -47,7 +47,7 @@ module WSDL
         @documents = documents
         @schemas = schemas
         @limits = parse_options.limits
-        @strict_schema = parse_options.strict_schema
+        @strictness = parse_options.strictness
         @schema_count = 0
         @schema_import_errors = []
       end
@@ -221,7 +221,8 @@ module WSDL
       rescue *RECOVERABLE_SCHEMA_IMPORT_ERRORS => e
         raise SchemaImportError.new(
           "Failed to resolve XML Schema #{action} #{schema_location.inspect} " \
-          "(base: #{base.inspect}): #{e.class}: #{e.message}",
+          "(base: #{base.inspect}): #{e.class}: #{e.message}\n" \
+          'To allow incomplete schema imports, use: strictness: WSDL::Strictness.new(schema_imports: false)',
           location: schema_location,
           base_location: base,
           action:
@@ -255,7 +256,8 @@ module WSDL
       # @raise [SchemaImportError] when strict schema mode is enabled
       def handle_schema_import_error(error)
         @schema_import_errors << error
-        raise error if @strict_schema
+
+        raise error if @strictness.schema_imports
 
         logger.warn(error.message)
       end

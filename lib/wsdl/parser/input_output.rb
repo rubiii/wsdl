@@ -57,7 +57,7 @@ module WSDL
 
         builder = XML::ElementBuilder.new(@parser_result.schemas,
                                           limits: @parser_result.limits,
-                                          strict_schema: @parser_result.strict_schema)
+                                          strictness: @parser_result.strictness)
         @header_parts = builder.build(header_parts)
         @body_parts = builder.build(body_parts)
       end
