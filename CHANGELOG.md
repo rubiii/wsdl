@@ -1,13 +1,24 @@
 # Changelog
 
-## Unreleased
+All notable changes to this project will be documented in this file.
 
-### Response Parsing
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-- **Fix:** RPC/literal responses now receive schema-aware type coercion. Previously, the RPC wrapper element prevented the parser from matching schema parts, so all values were returned as strings instead of typed Ruby objects (Integer, Date, BigDecimal, etc.).
+## [Unreleased]
+
+### Added
+
 - Extract XML attributes from response elements into the parsed hash with `_`-prefixed keys (e.g., `transactionKey="TXN-123"` → `_transactionKey: "TXN-123"`). Attributes are type-coerced when schema metadata is available.
+- One-way operations (no `<output>` message) are now supported. Response contract returns empty elements and `output_style` returns `nil`.
 
-## 1.0.0 — 2026-03-06
+### Fixed
+
+- RPC/literal responses now receive schema-aware type coercion. Previously, the RPC wrapper element prevented the parser from matching schema parts, so all values were returned as strings instead of typed Ruby objects (Integer, Date, BigDecimal, etc.).
+- Documents without a root XML element (empty files, binary content, truncated XML, non-XML responses from imports) now raise `WSDL::Error` instead of `NoMethodError`.
+- Binding operations missing a required `<input>` element now raise `WSDL::UnresolvedReferenceError` instead of `NoMethodError`.
+
+## [1.0.0] — 2026-03-06
 
 Initial public release.
 
@@ -86,3 +97,6 @@ Initial public release.
 - **nokogiri** (>= 1.19.1) for XML parsing and C14N
 - **base64** for encoding/decoding
 - All cryptography delegated to Ruby's built-in **OpenSSL**
+
+[Unreleased]: https://github.com/rubiii/wsdl/compare/v1.0.0...HEAD
+[1.0.0]: https://github.com/rubiii/wsdl/releases/tag/v1.0.0
