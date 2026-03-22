@@ -69,3 +69,7 @@ task :benchmark do
 end
 
 task ci: %i[lint yard:audit spec]
+
+task :default do
+  system 'rake -T'
+end
