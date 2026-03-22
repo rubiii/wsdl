@@ -19,6 +19,7 @@ module WSDL
         @document = document
         @schemas = schemas
 
+        reject_empty_document!
         reject_unsupported_version!
 
         @messages = {}
@@ -92,10 +93,17 @@ module WSDL
       # @raise [WSDL::UnsupportedWSDLVersionError] if the document uses WSDL 2.0
       # @return [void]
       def reject_unsupported_version!
-        return unless @document.root&.namespace&.href == NS::WSDL_2_0
+        return unless @document.root.namespace&.href == NS::WSDL_2_0
 
         raise UnsupportedWSDLVersionError,
               'WSDL 2.0 is not supported. This library only supports WSDL 1.1 documents.'
+      end
+
+      def reject_empty_document!
+        return if @document.root
+
+        raise Error, 'The document could not be parsed as WSDL. ' \
+                     'Expected an XML document with a root element.'
       end
 
       # Collects sections from the WSDL document and stores them in their respective collections.

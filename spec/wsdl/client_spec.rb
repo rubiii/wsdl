@@ -319,6 +319,38 @@ RSpec.describe WSDL::Client do
     end
   end
 
+  describe 'unparseable WSDL input' do
+    it 'raises WSDL::Error for an empty file' do
+      Tempfile.create(['empty', '.wsdl']) do |f|
+        expect { described_class.new(f.path) }.to raise_error(WSDL::Error, /could not be parsed/)
+      end
+    end
+
+    it 'raises WSDL::Error for binary garbage' do
+      Tempfile.create(['garbage', '.wsdl']) do |f|
+        f.write((0..200).map { rand(0..255).chr(Encoding::BINARY) }.join)
+        f.close
+        expect { described_class.new(f.path) }.to raise_error(WSDL::Error, /could not be parsed/)
+      end
+    end
+
+    it 'raises WSDL::Error for JSON content' do
+      Tempfile.create(['json', '.wsdl']) do |f|
+        f.write('{"service": "test"}')
+        f.close
+        expect { described_class.new(f.path) }.to raise_error(WSDL::Error, /could not be parsed/)
+      end
+    end
+
+    it 'raises WSDL::Error for truncated XML' do
+      Tempfile.create(['truncated', '.wsdl']) do |f|
+        f.write(File.read(fixture('wsdl/blz_service'))[0...10])
+        f.close
+        expect { described_class.new(f.path) }.to raise_error(WSDL::Error, /could not be parsed/)
+      end
+    end
+  end
+
   describe 'strict schema mode' do
     let(:wsdl_with_missing_schema_import) { fixture('wsdl/juniper') }
 
