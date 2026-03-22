@@ -18,14 +18,14 @@
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
 | `format_xml:` | `Boolean` | `true` | Format generated request XML with indentation |
-| `strictness:` | `Strictness`, `nil` | `WSDL.strictness` | Validation strictness (see [Strictness](#strictness)) |
+| `strictness:` | `Hash`, `Boolean` | all strict | Validation strictness (see [Strictness](#strictness)) |
 | `sandbox_paths:`| `Array<String>`, `nil` | auto | Allowed directories for local imports (see [Sandbox Paths](#sandbox-paths)) |
-| `limits:` | `Limits`, `nil` | `WSDL.limits` | Resource limits for DoS protection (see [Limits](#limits)) |
+| `limits:` | `Hash`, `nil` | `WSDL.limits` | Resource limits for DoS protection (see [Limits](#limits)) |
 
 ```ruby
 client = WSDL::Client.new(
   '/app/wsdl/service.wsdl',
-  strictness: WSDL::Strictness.new(schema_imports: false),
+  strictness: { schema_imports: false },
   format_xml: false
 )
 ```
@@ -36,15 +36,15 @@ client = WSDL::Client.new(
 
 ```ruby
 # Direct keyword arguments (most common)
-client = WSDL::Client.new(wsdl, format_xml: false, strictness: WSDL::Strictness.off)
+client = WSDL::Client.new(wsdl, format_xml: false, strictness: false)
 
 # Reusable Config object
-config = WSDL::Config.new(format_xml: false, strictness: WSDL::Strictness.off)
+config = WSDL::Config.new(format_xml: false, strictness: false)
 client1 = WSDL::Client.new(wsdl1, config:)
 client2 = WSDL::Client.new(wsdl2, config:)
 
 # Derive a modified copy
-relaxed = config.with(strictness: WSDL::Strictness.new(schema_imports: false))
+relaxed = config.with(strictness: { schema_imports: false })
 ```
 
 Config is frozen after construction, like `Limits`.
@@ -56,8 +56,8 @@ Five module-level settings apply to all new clients:
 ```ruby
 WSDL.http_adapter = MyAdapterClass             # default: WSDL::HTTPAdapter
 WSDL.cache = WSDL::Cache.new(max_entries: 50)  # default: LRU cache, 50 entries
-WSDL.limits = WSDL::Limits.new                 # default: sensible defaults
-WSDL.strictness = WSDL::Strictness.off         # default: Strictness.on (all strict)
+WSDL.limits = { max_schemas: 200 }             # default: sensible defaults
+WSDL.strictness = false                        # default: all strict (true)
 WSDL.logger = Rails.logger                     # default: silent (NullLogger)
 ```
 
@@ -70,7 +70,7 @@ Pass `nil` to any setter to restore its default value.
 
 ## Strictness
 
-`WSDL::Strictness` controls how strictly the library enforces WSDL/XSD correctness. Each setting independently controls a validation concern:
+Controls how strictly the library enforces WSDL/XSD correctness. Each setting independently controls a validation concern:
 
 | Setting | Default | Controls |
 |---------|---------|----------|
@@ -81,21 +81,21 @@ Pass `nil` to any setter to restore its default value.
 
 ```ruby
 # All strict (default)
-WSDL::Strictness.on
+strictness: true
 
 # All relaxed
-WSDL::Strictness.off
+strictness: false
 
 # Disable only one concern
-WSDL::Strictness.new(schema_imports: false)
+strictness: { schema_imports: false }
 
-# Derive from existing
-WSDL::Strictness.on.with(schema_imports: false)
+# Disable multiple concerns
+strictness: { schema_imports: false, schema_references: false }
 ```
 
 When an error is raised due to a strictness check, the error message tells you exactly which setting to disable.
 
-> **Deprecated:** `strict_schema: true/false` still works but emits a deprecation warning. It maps to `Strictness.on` / `Strictness.off` respectively.
+> **Deprecated:** `strict_schema: true/false` still works but emits a deprecation warning.
 
 ## Cache
 

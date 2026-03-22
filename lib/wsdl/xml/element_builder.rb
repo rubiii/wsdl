@@ -362,7 +362,7 @@ module WSDL
         raise UnresolvedReferenceError.new(
           "Unknown XSD built-in type #{qname.inspect}. " \
           'To allow unresolved type references, use: ' \
-          'strictness: WSDL::Strictness.new(schema_references: false)',
+          'strictness: { schema_references: false }',
           reference_type: :type,
           reference_name: qname,
           namespace: NS::XSD,
@@ -410,8 +410,8 @@ module WSDL
 
         raise ResourceLimitError.new(
           "Type nesting depth #{depth} exceeds limit of #{@limits.max_type_nesting_depth} " \
-          "while processing type #{type.name.inspect}. This may indicate a recursive type definition " \
-          'or an unusually deep type hierarchy.',
+          "while processing type #{type.name.inspect}." \
+          "\nTo increase, use: limits: { max_type_nesting_depth: #{depth} }",
           limit_name: :max_type_nesting_depth,
           limit_value: @limits.max_type_nesting_depth,
           actual_value: depth

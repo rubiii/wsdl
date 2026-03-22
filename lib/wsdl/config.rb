@@ -12,16 +12,17 @@ module WSDL
   #   config = WSDL::Config.new
   #
   # @example Override specific settings
-  #   config = WSDL::Config.new(strictness: WSDL::Strictness.new(schema_imports: false))
+  #   config = WSDL::Config.new(strictness: { schema_imports: false })
   #
   # @example Derive a modified copy
-  #   relaxed = config.with(strictness: WSDL::Strictness.off)
+  #   relaxed = config.with(strictness: false)
   #
   class Config
     # @param format_xml [Boolean] whether to format XML output with indentation.
     #   Set to `false` for whitespace-sensitive SOAP servers. Defaults to `true`.
-    # @param strictness [Strictness, nil] strictness settings for schema/request validation.
-    #   If nil, uses {WSDL.strictness}. See {Strictness} for individual settings.
+    # @param strictness [Strictness, Hash, Boolean, nil] strictness settings.
+    #   Accepts a Strictness object, a Hash of settings, +true+ (all strict),
+    #   +false+ (all relaxed), or nil (uses {WSDL.strictness}).
     # @param strict_schema [Boolean, nil] **deprecated** — use +strictness:+ instead.
     #   +true+ maps to {Strictness.on}, +false+ to {Strictness.off}.
     # @param sandbox_paths [Array<String>, nil] directories where file access is allowed.
@@ -34,7 +35,7 @@ module WSDL
       @format_xml = format_xml
       @strictness = resolve_strictness(strictness, strict_schema)
       @sandbox_paths = sandbox_paths
-      @limits = limits || WSDL.limits
+      @limits = Limits.resolve(limits) || WSDL.limits
 
       freeze
     end
@@ -55,14 +56,14 @@ module WSDL
     #
     # @param options [Hash] the settings to override
     # @option options [Boolean] :format_xml
-    # @option options [Strictness] :strictness
+    # @option options [Strictness, Hash, Boolean] :strictness
     # @option options [Boolean] :strict_schema **deprecated**
     # @option options [Array<String>, nil] :sandbox_paths
     # @option options [Limits, nil] :limits
     # @return [Config] a new Config instance with the specified changes
     #
     # @example
-    #   relaxed = config.with(strictness: WSDL::Strictness.off)
+    #   relaxed = config.with(strictness: false)
     #
     def with(**options)
       self.class.new(
@@ -108,9 +109,11 @@ module WSDL
     private
 
     def resolve_strictness(strictness, strict_schema)
-      raise ArgumentError, 'Cannot specify both strictness: and strict_schema:' if strictness && !strict_schema.nil?
+      resolved = Strictness.resolve(strictness)
 
-      return strictness || WSDL.strictness if strict_schema.nil?
+      raise ArgumentError, 'Cannot specify both strictness: and strict_schema:' if resolved && !strict_schema.nil?
+
+      return resolved || WSDL.strictness if strict_schema.nil?
 
       Kernel.warn '[WSDL] strict_schema is deprecated. ' \
                   "Use strictness: WSDL::Strictness.#{strict_schema ? 'on' : 'off'} instead.",

@@ -8,13 +8,13 @@ module WSDL
   # WSDLs rather than turning everything off.
   #
   # @example Disable only schema import strictness
-  #   WSDL::Client.new(wsdl, strictness: WSDL::Strictness.new(schema_imports: false))
+  #   WSDL::Client.new(wsdl, strictness: { schema_imports: false })
   #
   # @example Disable all strictness
-  #   WSDL::Client.new(wsdl, strictness: WSDL::Strictness.off)
+  #   WSDL::Client.new(wsdl, strictness: false)
   #
   # @example Derive with one setting changed
-  #   relaxed_imports = WSDL::Strictness.on.with(schema_imports: false)
+  #   WSDL.strictness.with(schema_imports: false)
   #
   class Strictness
     # @param schema_imports [Boolean] raise on failed schema imports (default: true).
@@ -47,6 +47,25 @@ module WSDL
 
     # @return [Boolean] whether request payloads are validated against schema
     attr_reader :request_validation
+
+    # Coerces a value into a Strictness instance.
+    #
+    # Accepts a Strictness object (returned as-is), a Hash of settings
+    # (forwarded to {.new}), +true+ ({.on}), +false+ ({.off}), or +nil+.
+    #
+    # @param value [Strictness, Hash, Boolean, nil] the value to coerce
+    # @return [Strictness, nil] the resolved Strictness, or nil if value is nil
+    # @raise [ArgumentError] if the value type is not recognized
+    def self.resolve(value)
+      case value
+      when Strictness then value
+      when Hash then new(**value)
+      when true then on
+      when false then off
+      when nil then nil
+      else raise ArgumentError, "Cannot coerce #{value.inspect} into a Strictness"
+      end
+    end
 
     # Returns a new Strictness with all checks enabled.
     #

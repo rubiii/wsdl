@@ -916,7 +916,7 @@ RSpec.describe WSDL::Schema::Node do
         }
       end
 
-      it 'mentions XML Attribute Blowup attack in error message' do
+      it 'includes a hint to increase the limit in error message' do
         limits = WSDL::Limits.new(max_attributes_per_element: 2)
 
         xml = <<~XML
@@ -935,7 +935,7 @@ RSpec.describe WSDL::Schema::Node do
 
         expect {
           node.attributes([], limits:)
-        }.to raise_error(WSDL::ResourceLimitError, /WASC-41/)
+        }.to raise_error(WSDL::ResourceLimitError, /limits: \{ max_attributes_per_element: 3 \}/)
       end
 
       it 'allows attributes when count is within limit' do

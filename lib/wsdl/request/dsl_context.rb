@@ -279,7 +279,8 @@ module WSDL
         return if count <= limit
 
         ::Kernel.raise ::WSDL::ResourceLimitError.new(
-          "Request element count #{count} exceeds limit of #{limit}",
+          "Request element count #{count} exceeds limit of #{limit}" \
+          "\nTo increase, use: limits: { max_request_elements: #{count} }",
           limit_name: :max_request_elements,
           limit_value: limit,
           actual_value: count
@@ -292,7 +293,8 @@ module WSDL
         return if count <= limit
 
         ::Kernel.raise ::WSDL::ResourceLimitError.new(
-          "Request attribute count #{count} exceeds limit of #{limit}",
+          "Request attribute count #{count} exceeds limit of #{limit}" \
+          "\nTo increase, use: limits: { max_request_attributes: #{count} }",
           limit_name: :max_request_attributes,
           limit_value: limit,
           actual_value: count
@@ -305,7 +307,8 @@ module WSDL
         return if depth <= limit
 
         ::Kernel.raise ::WSDL::ResourceLimitError.new(
-          "Request depth #{depth} exceeds limit of #{limit}",
+          "Request depth #{depth} exceeds limit of #{limit}" \
+          "\nTo increase, use: limits: { max_request_depth: #{depth} }",
           limit_name: :max_request_depth,
           limit_value: limit,
           actual_value: depth

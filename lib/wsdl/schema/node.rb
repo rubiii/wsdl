@@ -410,8 +410,8 @@ module WSDL
         return if count <= limits.max_elements_per_type
 
         raise ResourceLimitError.new(
-          "Element count #{count} in type #{name.inspect} exceeds limit of #{limits.max_elements_per_type}. " \
-          'This may indicate a malicious WSDL or an unusually complex type definition.',
+          "Element count #{count} in type #{name.inspect} exceeds limit of #{limits.max_elements_per_type}." \
+          "\nTo increase, use: limits: { max_elements_per_type: #{count} }",
           limit_name: :max_elements_per_type,
           limit_value: limits.max_elements_per_type,
           actual_value: count
@@ -429,7 +429,8 @@ module WSDL
 
         raise ResourceLimitError.new(
           "Attribute count #{count} in element #{name.inspect} exceeds limit of " \
-          "#{limits.max_attributes_per_element}. This may indicate an XML Attribute Blowup attack (WASC-41).",
+          "#{limits.max_attributes_per_element}." \
+          "\nTo increase, use: limits: { max_attributes_per_element: #{count} }",
           limit_name: :max_attributes_per_element,
           limit_value: limits.max_attributes_per_element,
           actual_value: count

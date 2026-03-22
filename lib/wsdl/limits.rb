@@ -58,6 +58,23 @@ module WSDL
     # Default maximum size for a SOAP response body (10 MB).
     DEFAULT_MAX_RESPONSE_SIZE = 10 * 1024 * 1024
 
+    # Coerces a value into a Limits instance.
+    #
+    # Accepts a Limits object (returned as-is), a Hash of settings
+    # (forwarded to {.new}), or +nil+.
+    #
+    # @param value [Limits, Hash, nil] the value to coerce
+    # @return [Limits, nil] the resolved Limits, or nil if value is nil
+    # @raise [ArgumentError] if the value type is not recognized
+    def self.resolve(value)
+      case value
+      when Limits then value
+      when Hash then new(**value)
+      when nil then nil
+      else raise ArgumentError, "Cannot coerce #{value.inspect} into a Limits"
+      end
+    end
+
     # Creates a new Limits instance with the specified resource limits.
     #
     # @param max_document_size [Integer, nil] maximum size in bytes for a single WSDL/schema

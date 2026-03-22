@@ -67,7 +67,7 @@ RSpec.describe 'Strictness fixture matrix' do
       }.to raise_error(strict_error), "expected Strictness.on to fail for #{fixture_key}"
 
       expect {
-        WSDL::Client.new(wsdl_path, cache: false, strictness: WSDL::Strictness.new(schema_imports: false))
+        WSDL::Client.new(wsdl_path, cache: false, strictness: { schema_imports: false })
       }.not_to raise_error, "expected schema_imports: false to parse #{fixture_key}"
     end
   end

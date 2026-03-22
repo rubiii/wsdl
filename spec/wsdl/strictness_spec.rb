@@ -37,6 +37,35 @@ RSpec.describe WSDL::Strictness do
     end
   end
 
+  describe '.resolve' do
+    it 'returns a Strictness as-is' do
+      original = described_class.on
+      expect(described_class.resolve(original)).to equal(original)
+    end
+
+    it 'coerces a Hash into a Strictness' do
+      result = described_class.resolve(schema_imports: false)
+      expect(result.schema_imports).to be(false)
+      expect(result.schema_references).to be(true)
+    end
+
+    it 'coerces true to Strictness.on' do
+      expect(described_class.resolve(true)).to eq(described_class.on)
+    end
+
+    it 'coerces false to Strictness.off' do
+      expect(described_class.resolve(false)).to eq(described_class.off)
+    end
+
+    it 'returns nil for nil' do
+      expect(described_class.resolve(nil)).to be_nil
+    end
+
+    it 'raises ArgumentError for unsupported types' do
+      expect { described_class.resolve(42) }.to raise_error(ArgumentError, /Cannot coerce/)
+    end
+  end
+
   describe '.on' do
     it 'returns a strictness with all settings enabled' do
       expect(described_class.on).to eq(described_class.new)

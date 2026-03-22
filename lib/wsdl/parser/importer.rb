@@ -222,7 +222,7 @@ module WSDL
         raise SchemaImportError.new(
           "Failed to resolve XML Schema #{action} #{schema_location.inspect} " \
           "(base: #{base.inspect}): #{e.class}: #{e.message}\n" \
-          'To allow incomplete schema imports, use: strictness: WSDL::Strictness.new(schema_imports: false)',
+          'To allow incomplete schema imports, use: strictness: { schema_imports: false }',
           location: schema_location,
           base_location: base,
           action:
@@ -291,8 +291,8 @@ module WSDL
         return if @schema_count <= @limits.max_schemas
 
         raise ResourceLimitError.new(
-          "Schema count #{@schema_count} exceeds limit of #{@limits.max_schemas}. " \
-          'Consider increasing limits or reviewing the WSDL for excessive imports.',
+          "Schema count #{@schema_count} exceeds limit of #{@limits.max_schemas}." \
+          "\nTo increase, use: limits: { max_schemas: #{@schema_count} }",
           limit_name: :max_schemas,
           limit_value: @limits.max_schemas,
           actual_value: @schema_count

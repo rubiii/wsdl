@@ -95,10 +95,10 @@ module WSDL
     # @example
     #   WSDL.limits = WSDL::Limits.new(max_schemas: 200)
     #
-    # @param value [Limits, nil] a limits instance, or +nil+ to reset
+    # @param value [Limits, Hash, nil] a limits instance, hash of settings, or +nil+ to reset
     # @see Limits
     def limits=(value)
-      @limits = value || Limits.new
+      @limits = Limits.resolve(value) || Limits.new
     end
 
     # Sets the default strictness settings. Pass +nil+ to restore defaults.
@@ -107,12 +107,12 @@ module WSDL
     # any clients or spawning threads.
     #
     # @example
-    #   WSDL.strictness = WSDL::Strictness.off
+    #   WSDL.strictness = { schema_imports: false }
     #
-    # @param value [Strictness, nil] a strictness instance, or +nil+ to reset
+    # @param value [Strictness, Hash, Boolean, nil] a strictness instance, hash, boolean, or +nil+ to reset
     # @see Strictness
     def strictness=(value)
-      @strictness = value || Strictness.new
+      @strictness = Strictness.resolve(value) || Strictness.new
     end
   end
 

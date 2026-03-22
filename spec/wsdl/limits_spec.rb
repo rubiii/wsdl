@@ -361,4 +361,25 @@ RSpec.describe WSDL::Limits do
       expect(described_class::DEFAULT_MAX_RESPONSE_SIZE).to eq(10 * 1024 * 1024)
     end
   end
+
+  describe '.resolve' do
+    it 'returns a Limits as-is' do
+      original = described_class.new
+      expect(described_class.resolve(original)).to equal(original)
+    end
+
+    it 'coerces a Hash into a Limits' do
+      result = described_class.resolve(max_schemas: 200)
+      expect(result.max_schemas).to eq(200)
+      expect(result.max_document_size).to eq(described_class::DEFAULT_MAX_DOCUMENT_SIZE)
+    end
+
+    it 'returns nil for nil' do
+      expect(described_class.resolve(nil)).to be_nil
+    end
+
+    it 'raises ArgumentError for unsupported types' do
+      expect { described_class.resolve(42) }.to raise_error(ArgumentError, /Cannot coerce/)
+    end
+  end
 end

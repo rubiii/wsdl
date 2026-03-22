@@ -72,7 +72,6 @@ See [Getting Started](docs/getting_started.md) for the documentation entrypoint 
 
 ## Features
 
-- **WSDL 1.1 Only** — WSDL 2.0 documents are detected and rejected with a clear error
 - **WSDL/XSD Parsing** — Full support for imports, includes, and multiple schema documents
 - **Service Discovery** — Inspect services, ports, and operations programmatically
 - **Contract Introspection** — Explore request/response structure with flat paths or tree views

@@ -431,7 +431,7 @@ module WSDL
   # different input/output messages) and strict schema mode is enabled.
   #
   # WS-I Basic Profile 1.1 Rule R2304 prohibits operation overloading.
-  # Disable with +strictness: WSDL::Strictness.new(operation_overloading: false)+ to allow overloading
+  # Disable with +strictness: { operation_overloading: false }+ to allow overloading
   # with disambiguation via the +input_name:+ keyword.
   #
   class OperationOverloadError < Error

@@ -304,7 +304,8 @@ module WSDL
       return unless actual > max
 
       raise ResourceLimitError.new(
-        "Response size #{Formatting.format_bytes(actual)} exceeds limit of #{Formatting.format_bytes(max)}",
+        "Response size #{Formatting.format_bytes(actual)} exceeds limit of #{Formatting.format_bytes(max)}" \
+        "\nTo increase, use: limits: { max_response_size: #{actual} }",
         limit_name: :max_response_size,
         limit_value: max,
         actual_value: actual

@@ -233,7 +233,8 @@ module WSDL
 
         raise ResourceLimitError.new(
           "File size #{Formatting.format_bytes(file_size)} exceeds limit of " \
-          "#{Formatting.format_bytes(@limits.max_document_size)}: #{path}",
+          "#{Formatting.format_bytes(@limits.max_document_size)}: #{path}" \
+          "\nTo increase, use: limits: { max_document_size: #{file_size} }",
           limit_name: :max_document_size,
           limit_value: @limits.max_document_size,
           actual_value: file_size
@@ -269,7 +270,8 @@ module WSDL
 
         raise ResourceLimitError.new(
           "Document size #{Formatting.format_bytes(size)} exceeds limit of " \
-          "#{Formatting.format_bytes(@limits.max_document_size)}: #{source}",
+          "#{Formatting.format_bytes(@limits.max_document_size)}: #{source}" \
+          "\nTo increase, use: limits: { max_document_size: #{size} }",
           limit_name: :max_document_size,
           limit_value: @limits.max_document_size,
           actual_value: size
@@ -296,7 +298,8 @@ module WSDL
 
         raise ResourceLimitError.new(
           "Total download size #{Formatting.format_bytes(@total_bytes_downloaded)} exceeds limit of " \
-          "#{Formatting.format_bytes(@limits.max_total_download_size)}",
+          "#{Formatting.format_bytes(@limits.max_total_download_size)}" \
+          "\nTo increase, use: limits: { max_total_download_size: #{@total_bytes_downloaded} }",
           limit_name: :max_total_download_size,
           limit_value: @limits.max_total_download_size,
           actual_value: @total_bytes_downloaded

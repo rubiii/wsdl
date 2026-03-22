@@ -251,7 +251,7 @@ module WSDL
         raise OperationOverloadError.new(
           "Operation #{operation_name.inspect} is overloaded #{count} times in " \
           "portType #{port_type.name.inspect}. Operation overloading is prohibited by WS-I Basic Profile R2304. " \
-          'To allow it, use: strictness: WSDL::Strictness.new(operation_overloading: false)',
+          'To allow it, use: strictness: { operation_overloading: false }',
           operation_name:, port_type_name: port_type.name, overload_count: count
         )
       end
