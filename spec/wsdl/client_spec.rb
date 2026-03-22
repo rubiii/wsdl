@@ -351,6 +351,59 @@ RSpec.describe WSDL::Client do
     end
   end
 
+  describe 'unknown XSD built-in type in strict mode' do
+    let(:wsdl_with_unknown_type) do
+      <<~WSDL
+        <definitions xmlns="http://schemas.xmlsoap.org/wsdl/"
+                     xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+                     xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
+                     xmlns:tns="http://t.com" targetNamespace="http://t.com">
+          <types>
+            <xsd:schema targetNamespace="http://t.com">
+              <xsd:element name="Req" type="xsd:nonExistentType"/>
+            </xsd:schema>
+          </types>
+          <message name="M"><part name="p" element="tns:Req"/></message>
+          <portType name="PT">
+            <operation name="Op"><input message="tns:M"/><output message="tns:M"/></operation>
+          </portType>
+          <binding name="B" type="tns:PT">
+            <soap:binding style="document" transport="http://schemas.xmlsoap.org/soap/http"/>
+            <operation name="Op">
+              <soap:operation soapAction="Op"/>
+              <input><soap:body use="literal"/></input>
+              <output><soap:body use="literal"/></output>
+            </operation>
+          </binding>
+          <service name="S">
+            <port name="P" binding="tns:B"><soap:address location="http://x.com"/></port>
+          </service>
+        </definitions>
+      WSDL
+    end
+
+    it 'raises UnresolvedReferenceError in strict mode' do
+      Tempfile.create(['unknown_type', '.wsdl']) do |f|
+        f.write(wsdl_with_unknown_type)
+        f.close
+        client = described_class.new(f.path, strict_schema: true)
+
+        expect { client.operation('S', 'P', 'Op').contract }
+          .to raise_error(WSDL::UnresolvedReferenceError, /Unknown XSD built-in type/)
+      end
+    end
+
+    it 'allows unknown types in relaxed mode' do
+      Tempfile.create(['unknown_type', '.wsdl']) do |f|
+        f.write(wsdl_with_unknown_type)
+        f.close
+        client = described_class.new(f.path, strict_schema: false)
+
+        expect { client.operation('S', 'P', 'Op').contract }.not_to raise_error
+      end
+    end
+  end
+
   describe 'binding operation with missing input' do
     it 'raises WSDL::Error when binding operation has no input element' do
       xml = <<~WSDL

@@ -55,7 +55,9 @@ module WSDL
           header_part_names.include? part[:name]
         end
 
-        builder = XML::ElementBuilder.new(@parser_result.schemas, limits: @parser_result.limits)
+        builder = XML::ElementBuilder.new(@parser_result.schemas,
+                                          limits: @parser_result.limits,
+                                          strict_schema: @parser_result.strict_schema)
         @header_parts = builder.build(header_parts)
         @body_parts = builder.build(body_parts)
       end

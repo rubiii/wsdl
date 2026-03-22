@@ -15,14 +15,32 @@ module WSDL
     class ElementBuilder
       include Log
 
+      # XSD built-in simple and complex types per XML Schema Part 2 §3.
+      #
+      # @return [Set<String>]
+      XSD_BUILTIN_TYPES = Set.new(%w[
+        anyType anySimpleType
+        string normalizedString token language Name NCName ID IDREF IDREFS
+        ENTITY ENTITIES NMTOKEN NMTOKENS
+        boolean
+        decimal integer nonPositiveInteger negativeInteger long int short byte
+        nonNegativeInteger unsignedLong unsignedInt unsignedShort unsignedByte positiveInteger
+        float double
+        duration dateTime time date gYearMonth gYear gMonthDay gDay gMonth
+        hexBinary base64Binary
+        anyURI QName NOTATION
+      ]).freeze
+
       # Creates a new ElementBuilder instance.
       #
       # @param schemas [Schema::Collection] the schema collection for resolving types
       # @param limits [Limits, nil] resource limits for DoS protection.
       #   If nil, uses {WSDL.limits}.
-      def initialize(schemas, limits: nil)
+      # @param strict_schema [Boolean] whether to validate XSD built-in type references
+      def initialize(schemas, limits: nil, strict_schema: true)
         @schemas = schemas
         @limits = limits || WSDL.limits
+        @strict_schema = strict_schema
       end
 
       # Builds Element trees from WSDL message parts.
@@ -297,9 +315,25 @@ module WSDL
         resolved = QName.parse(qname, namespaces: namespaces)
 
         return qname unless resolved.namespace
-        return qname if resolved.namespace == NS::XSD
+
+        if resolved.namespace == NS::XSD
+          validate_xsd_builtin_type!(resolved.local, qname) if @strict_schema
+          return qname
+        end
 
         @schemas.fetch_type(resolved.namespace, resolved.local, context: "type reference #{qname.inspect}")
+      end
+
+      def validate_xsd_builtin_type!(local_name, qname)
+        return if XSD_BUILTIN_TYPES.include?(local_name)
+
+        raise UnresolvedReferenceError.new(
+          "Unknown XSD built-in type #{qname.inspect}",
+          reference_type: :type,
+          reference_name: qname,
+          namespace: NS::XSD,
+          context: 'XSD built-in type validation'
+        )
       end
 
       # Finds a global element by its qualified name.

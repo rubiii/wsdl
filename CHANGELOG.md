@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Documents without a root XML element (empty files, binary content, truncated XML, non-XML responses from imports) now raise `WSDL::Error` instead of `NoMethodError`.
 - Binding operations missing a required `<input>` element now raise `WSDL::UnresolvedReferenceError` instead of `NoMethodError`.
 - Binding operations not found in the referenced portType now raise `WSDL::UnresolvedReferenceError` instead of `KeyError`.
+- Unknown XSD built-in types (e.g., `xsd:nonExistentType`) now raise `WSDL::UnresolvedReferenceError` in strict schema mode instead of being silently treated as simple types.
 
 ## [1.0.0] — 2026-03-06
 
