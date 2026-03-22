@@ -6,7 +6,7 @@ require 'rubocop/rake_task'
 require 'yard'
 
 RSpec::Core::RakeTask.new
-RuboCop::RakeTask.new
+RuboCop::RakeTask.new('lint:ruby')
 YARD::Rake::YardocTask.new
 
 namespace :yard do
@@ -57,11 +57,14 @@ namespace :lint do
       puts "All markdown links OK (#{md_files.size} files checked)"
     end
   end
+
+  desc 'Autofix RuboCop offenses (safe and unsafe)'
+  task fix: 'lint:ruby:autocorrect_all'
 end
 # rubocop:enable Metrics/BlockLength
 
 desc 'Run linting'
-task lint: %i[rubocop lint:links]
+task lint: %i[lint:ruby lint:links]
 
 desc 'Run performance benchmarks'
 task :benchmark do

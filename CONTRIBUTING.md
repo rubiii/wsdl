@@ -19,7 +19,7 @@ Requirements: Ruby 3.3+ and Bundler.
 git clone https://github.com/rubiii/wsdl.git
 cd wsdl
 bundle install
-bundle exec rake ci   # Run all checks (RuboCop + YARD + RSpec)
+bundle exec rake ci   # Run all checks (Linting + Docs + Specs)
 ```
 
 ## How to Contribute

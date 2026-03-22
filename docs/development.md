@@ -7,9 +7,10 @@ Coding standards and conventions for the WSDL library. These apply to all contri
 Code style is enforced by RuboCop. See [`.rubocop.yml`](../.rubocop.yml) for the full configuration.
 
 ```sh
-bundle exec rubocop      # Check for offenses
-bundle exec rubocop -a   # Autofix safe offenses
-bundle exec rubocop -A   # Autofix all offenses (safe + unsafe)
+bundle exec rake lint                        # Runs all linting tasks
+bundle exec rake lint:ruby                   # Runs RuboCop
+bundle exec rake lint:ruby:autocorrect       # Autofix safe RuboCop offenses
+bundle exec rake lint:ruby:autocorrect_all   # Autofix all RuboCop offenses (safe + unsafe)
 ```
 
 When a linting rule conflicts with clear code:
