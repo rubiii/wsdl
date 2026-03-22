@@ -116,7 +116,7 @@ module WSDL
 
         output_body = {}
 
-        if (body_node = find_output_child_nodes('body').first)
+        if (body_node = find_output_child_nodes('body')&.first)
           output_body = {
             encoding_style: body_node['encodingStyle'],
             namespace: body_node['namespace'],
@@ -132,10 +132,20 @@ module WSDL
       # Finds child nodes of a specific type within the input element.
       #
       # @param child_name [String] the name of the child element to find
-      # @return [Array<Nokogiri::XML::Node>, nil] the matching child nodes
+      # @return [Array<Nokogiri::XML::Node>] the matching child nodes
+      # @raise [Error] if the binding operation has no input element
       def find_input_child_nodes(child_name)
         input_node = @operation_node.element_children.find { |node| node.name == 'input' }
-        return unless input_node
+
+        unless input_node
+          op_name = @operation_node['name']
+          raise UnresolvedReferenceError.new(
+            "Binding operation #{op_name.inspect} is missing a required <input> element",
+            reference_type: :input,
+            reference_name: 'input',
+            context: "binding operation #{op_name.inspect}"
+          )
+        end
 
         input_node.element_children.select { |node| node.name == child_name }
       end

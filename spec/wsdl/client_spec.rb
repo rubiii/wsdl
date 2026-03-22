@@ -351,6 +351,34 @@ RSpec.describe WSDL::Client do
     end
   end
 
+  describe 'binding operation with missing input' do
+    it 'raises WSDL::Error when binding operation has no input element' do
+      xml = <<~WSDL
+        <definitions xmlns="http://schemas.xmlsoap.org/wsdl/"
+                     xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
+                     xmlns:tns="http://t.com" targetNamespace="http://t.com">
+          <portType name="PT"><operation name="Op"/></portType>
+          <binding name="B" type="tns:PT">
+            <soap:binding style="document" transport="http://schemas.xmlsoap.org/soap/http"/>
+            <operation name="Op"><soap:operation soapAction="Op"/></operation>
+          </binding>
+          <service name="S">
+            <port name="P" binding="tns:B"><soap:address location="http://x.com"/></port>
+          </service>
+        </definitions>
+      WSDL
+
+      Tempfile.create(['no_input', '.wsdl']) do |f|
+        f.write(xml)
+        f.close
+        client = described_class.new(f.path)
+        expect {
+          client.operation('S', 'P', 'Op')
+        }.to raise_error(WSDL::UnresolvedReferenceError, /missing a required <input>/)
+      end
+    end
+  end
+
   describe 'strict schema mode' do
     let(:wsdl_with_missing_schema_import) { fixture('wsdl/juniper') }
 
