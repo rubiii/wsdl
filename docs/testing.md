@@ -26,7 +26,7 @@ spec/
 ├── integration/    # Integration tests (live mock services)
 ├── conformance/    # W3C/OASIS specification conformance
 ├── property/       # Property-based tests (Rantly)
-├── fixtures/       # WSDLs, responses, security certs
+├── fixtures/       # WSDLs, responses, security certs, parser edge cases
 └── support/        # Helpers, mock server, test infrastructure
 ```
 
@@ -63,7 +63,9 @@ RSpec.describe 'BLZService' do
 end
 ```
 
-These tests cover service discovery, contract shapes, request XML generation, and edge cases across diverse WSDL patterns.
+This includes the exhaustive schema round-trip test (`exhaustive_roundtrip_spec.rb`) which auto-generates one test per operation across all fixture WSDLs, verifying `parse(build(hash)) == hash` with full hashes and nillable elements.
+
+Multi-file WSDLs (with HTTP imports) are loaded via `manifest.yml` files that map import URLs to local fixture files.
 
 ## Integration Tests
 
@@ -156,9 +158,10 @@ Coverage is grouped by module (Security, Parser, Request, Response, XML). View t
 
 | Directory | Contents |
 |-----------|----------|
-| `spec/fixtures/wsdl/` | 45+ real-world WSDL documents |
+| `spec/fixtures/wsdl/` | 45+ real-world WSDL documents (single-file and multi-file with `manifest.yml`) |
 | `spec/fixtures/response/` | Sample SOAP response XML |
 | `spec/fixtures/security/` | Signed envelopes, certificates |
+| `spec/fixtures/parser/` | Parser edge-case fixtures (malicious payloads, duplicate definitions, QName collisions, unresolved references) |
 
 The `fixture()` helper resolves paths with glob matching:
 
@@ -166,7 +169,7 @@ The `fixture()` helper resolves paths with glob matching:
 fixture('wsdl/blz_service')  # => spec/fixtures/wsdl/blz_service.wsdl
 ```
 
-Edge-case fixtures include `malicious/` (attack payloads), `duplicate_definitions/` (conflicting imports), `qname_collisions/` (namespace ambiguity), and `nillable_elements/` (xsi:nil handling).
+Multi-file WSDLs use a `manifest.yml` that maps HTTP import URLs to local files, used by both acceptance specs and the exhaustive round-trip test.
 
 ## Test Helpers
 
@@ -178,6 +181,7 @@ Edge-case fixtures include `malicious/` (attack payloads), `duplicate_definition
 | `request_body_paths(op)` | `spec/support/contract_helper.rb` | Inspect request contract paths |
 | `request_template(op)` | `spec/support/contract_helper.rb` | Inspect request contract template |
 | `http_mock` | `spec/support/http_mock.rb` | WebMock-based HTTP stubbing |
+| `RoundtripCandidates` | `spec/support/roundtrip_candidates.rb` | Shared candidate discovery and manifest loading for round-trip tests |
 
 ## See also
 

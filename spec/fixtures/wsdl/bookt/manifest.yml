@@ -1,0 +1,22 @@
+# Source: http://connect.bookt.com/svc/connect.svc?wsdl
+entry_url: http://connect.bookt.com/svc/connect.svc?wsdl
+mappings:
+  http://connect.bookt.com/svc/connect.svc?wsdl: bookt.wsdl
+  http://connect.bookt.com/svc/connect.svc?wsdl=wsdl1: bookt2.wsdl
+  http://connect.bookt.com/svc/connect.svc?wsdl=wsdl0: bookt3.wsdl
+  http://connect.bookt.com/svc/connect.svc?xsd=xsd0: bookt0.xsd
+  http://connect.bookt.com/svc/connect.svc?xsd=xsd1: bookt1.xsd
+  http://connect.bookt.com/svc/connect.svc?xsd=xsd2: bookt2.xsd
+  http://connect.bookt.com/svc/connect.svc?xsd=xsd3: bookt3.xsd
+  http://connect.bookt.com/svc/connect.svc?xsd=xsd4: bookt4.xsd
+  http://connect.bookt.com/svc/connect.svc?xsd=xsd5: bookt5.xsd
+  http://connect.bookt.com/svc/connect.svc?xsd=xsd6: bookt6.xsd
+  http://connect.bookt.com/svc/connect.svc?xsd=xsd7: bookt7.xsd
+  http://connect.bookt.com/svc/connect.svc?xsd=xsd8: bookt8.xsd
+  http://connect.bookt.com/svc/connect.svc?xsd=xsd9: bookt9.xsd
+  http://connect.bookt.com/svc/connect.svc?xsd=xsd10: bookt10.xsd
+  http://connect.bookt.com/svc/connect.svc?xsd=xsd11: bookt11.xsd
+  http://connect.bookt.com/svc/connect.svc?xsd=xsd12: bookt12.xsd
+  http://connect.bookt.com/svc/connect.svc?xsd=xsd13: bookt13.xsd
+  http://connect.bookt.com/svc/connect.svc?xsd=xsd14: bookt14.xsd
+  http://connect.bookt.com/svc/connect.svc?xsd=xsd15: bookt15.xsd

@@ -1,23 +1,7 @@
 # frozen_string_literal: true
 
 RSpec.describe 'TeamSoftware' do
-  subject(:client) { WSDL::Client.new(wsdl_url, http: http_mock) }
-
-  let(:wsdl_url) { 'https://winteamservicestest.myteamsoftware.com/Services.svc?wsdl' }
-
-  before do
-    http_mock.fake_request(wsdl_url, 'wsdl/team_software/team_software.wsdl')
-
-    # 4 schemas to import.
-    #
-    # XXX: actually some of the imported schemas import some of the other schemas,
-    #      but it seems like we're not following those?!
-    schema_import_base = 'https://winteamservicestest.myteamsoftware.com/Services.svc?xsd=xsd%d'
-    (0..3).each do |i|
-      url = schema_import_base % i
-      http_mock.fake_request(url, "wsdl/team_software/team_software#{i}.xsd")
-    end
-  end
+  subject(:client) { RoundtripCandidates.mock_client_from_manifest(fixture('wsdl/team_software/manifest'), http_mock) }
 
   it 'returns a map of services and ports' do
     expect(client.services).to eq(

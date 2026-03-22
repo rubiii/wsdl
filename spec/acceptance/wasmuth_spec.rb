@@ -1,18 +1,7 @@
 # frozen_string_literal: true
 
 RSpec.describe 'Wasmuth' do
-  subject(:client) { WSDL::Client.new(wsdl_url, http: http_mock) }
-
-  let(:wsdl_url) { 'http://www3.mediaservice-wasmuth.de/online-ws-2.0/OnlineSync?wsdl' }
-
-  before do
-    http_mock.fake_request(wsdl_url, 'wsdl/wasmuth/wasmuth.wsdl')
-
-    # 2 schemas to import.
-    schema_import_base = 'http://www3.mediaservice-wasmuth.de:80/online-ws-2.0/OnlineSync?xsd=%d'
-    http_mock.fake_request(schema_import_base % 1, 'wsdl/wasmuth/wasmuth1.xsd')
-    http_mock.fake_request(schema_import_base % 2, 'wsdl/wasmuth/wasmuth2.xsd')
-  end
+  subject(:client) { RoundtripCandidates.mock_client_from_manifest(fixture('wsdl/wasmuth/manifest'), http_mock) }
 
   it 'returns a map of services and ports' do
     expect(client.services).to eq(

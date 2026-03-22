@@ -1,0 +1,3 @@
+# Source: Local file-based WSDL with relative imports (Issue #5)
+entry_path: system_v32_0/System.wsdl
+sandbox: true

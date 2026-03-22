@@ -1,0 +1,6 @@
+# Source: http://www3.mediaservice-wasmuth.de/online-ws-2.0/OnlineSync?wsdl
+entry_url: http://www3.mediaservice-wasmuth.de/online-ws-2.0/OnlineSync?wsdl
+mappings:
+  http://www3.mediaservice-wasmuth.de/online-ws-2.0/OnlineSync?wsdl: wasmuth.wsdl
+  http://www3.mediaservice-wasmuth.de:80/online-ws-2.0/OnlineSync?xsd=1: wasmuth1.xsd
+  http://www3.mediaservice-wasmuth.de:80/online-ws-2.0/OnlineSync?xsd=2: wasmuth2.xsd

@@ -1,22 +1,7 @@
 # frozen_string_literal: true
 
 RSpec.describe 'BYDExchange' do
-  subject(:client) { WSDL::Client.new(wsdl_url, http: http_mock) }
-
-  let(:wsdl_url)  { 'http://bydexchange.nbs-us.com/BYDExchangeServer.svc?wsdl' }
-  let(:wsdl2_url) { 'http://bydexchange.nbs-us.com/BYDExchangeServer.svc?wsdl=wsdl0' }
-
-  before do
-    http_mock.fake_request(wsdl_url, 'wsdl/bydexchange/bydexchange.wsdl')
-    http_mock.fake_request(wsdl2_url, 'wsdl/bydexchange/bydexchange2.wsdl')
-
-    # 8 schemas to import
-    schema_import_base = 'http://bydexchange.nbs-us.com/BYDExchangeServer.svc?xsd=xsd%d'
-    (0..8).each do |i|
-      url = schema_import_base % i
-      http_mock.fake_request(url, "wsdl/bydexchange/bydexchange#{i}.xsd")
-    end
-  end
+  subject(:client) { RoundtripCandidates.mock_client_from_manifest(fixture('wsdl/bydexchange/manifest'), http_mock) }
 
   it 'returns a map of services and ports' do
     expect(client.services).to eq(

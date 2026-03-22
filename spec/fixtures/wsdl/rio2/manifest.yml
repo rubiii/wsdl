@@ -1,0 +1,9 @@
+# Source: http://193.155.1.72/MyCentral-RioII-Services/SecurityService.svc?wsdl
+entry_url: http://193.155.1.72/MyCentral-RioII-Services/SecurityService.svc?wsdl
+mappings:
+  http://193.155.1.72/MyCentral-RioII-Services/SecurityService.svc?wsdl: rio2.wsdl
+  http://193.155.1.72/MyCentral-RioII-Services/SecurityService.svc?wsdl=wsdl0: rio2_0.wsdl
+  http://193.155.1.72/MyCentral-RioII-Services/SecurityService.svc?xsd=xsd0: rio2_0.xsd
+  http://193.155.1.72/MyCentral-RioII-Services/SecurityService.svc?xsd=xsd1: rio2_1.xsd
+  http://193.155.1.72/MyCentral-RioII-Services/SecurityService.svc?xsd=xsd2: rio2_2.xsd
+  http://193.155.1.72/MyCentral-RioII-Services/SecurityService.svc?xsd=xsd3: rio2_3.xsd

@@ -1,23 +1,7 @@
 # frozen_string_literal: true
 
 RSpec.describe 'Rio II' do
-  subject(:client) do
-    wsdl_url  = 'http://193.155.1.72/MyCentral-RioII-Services/SecurityService.svc?wsdl'
-    wsdl0_url = 'http://193.155.1.72/MyCentral-RioII-Services/SecurityService.svc?wsdl=wsdl0'
-
-    # mock wsdl imports
-    http_mock.fake_request(wsdl_url,  'wsdl/rio2/rio2.wsdl')
-    http_mock.fake_request(wsdl0_url, 'wsdl/rio2/rio2_0.wsdl')
-
-    # mock schema imports
-    schema_import_base = 'http://193.155.1.72/MyCentral-RioII-Services/SecurityService.svc?xsd=xsd%d'
-    (0..3).each do |i|
-      url = schema_import_base % i
-      http_mock.fake_request(url, "wsdl/rio2/rio2_#{i}.xsd")
-    end
-
-    WSDL::Client.new(wsdl_url, http: http_mock)
-  end
+  subject(:client) { RoundtripCandidates.mock_client_from_manifest(fixture('wsdl/rio2/manifest'), http_mock) }
 
   it 'only downloads WSDL and XML Schema imports once per location' do
     expect(client.services).to eq(

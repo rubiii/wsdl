@@ -1,0 +1,8 @@
+# Source: https://winteamservicestest.myteamsoftware.com/Services.svc?wsdl
+entry_url: https://winteamservicestest.myteamsoftware.com/Services.svc?wsdl
+mappings:
+  https://winteamservicestest.myteamsoftware.com/Services.svc?wsdl: team_software.wsdl
+  https://winteamservicestest.myteamsoftware.com/Services.svc?xsd=xsd0: team_software0.xsd
+  https://winteamservicestest.myteamsoftware.com/Services.svc?xsd=xsd1: team_software1.xsd
+  https://winteamservicestest.myteamsoftware.com/Services.svc?xsd=xsd2: team_software2.xsd
+  https://winteamservicestest.myteamsoftware.com/Services.svc?xsd=xsd3: team_software3.xsd

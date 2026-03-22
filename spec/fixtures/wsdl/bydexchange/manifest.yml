@@ -1,0 +1,14 @@
+# Source: http://bydexchange.nbs-us.com/BYDExchangeServer.svc?wsdl
+entry_url: http://bydexchange.nbs-us.com/BYDExchangeServer.svc?wsdl
+mappings:
+  http://bydexchange.nbs-us.com/BYDExchangeServer.svc?wsdl: bydexchange.wsdl
+  http://bydexchange.nbs-us.com/BYDExchangeServer.svc?wsdl=wsdl0: bydexchange2.wsdl
+  http://bydexchange.nbs-us.com/BYDExchangeServer.svc?xsd=xsd0: bydexchange0.xsd
+  http://bydexchange.nbs-us.com/BYDExchangeServer.svc?xsd=xsd1: bydexchange1.xsd
+  http://bydexchange.nbs-us.com/BYDExchangeServer.svc?xsd=xsd2: bydexchange2.xsd
+  http://bydexchange.nbs-us.com/BYDExchangeServer.svc?xsd=xsd3: bydexchange3.xsd
+  http://bydexchange.nbs-us.com/BYDExchangeServer.svc?xsd=xsd4: bydexchange4.xsd
+  http://bydexchange.nbs-us.com/BYDExchangeServer.svc?xsd=xsd5: bydexchange5.xsd
+  http://bydexchange.nbs-us.com/BYDExchangeServer.svc?xsd=xsd6: bydexchange6.xsd
+  http://bydexchange.nbs-us.com/BYDExchangeServer.svc?xsd=xsd7: bydexchange7.xsd
+  http://bydexchange.nbs-us.com/BYDExchangeServer.svc?xsd=xsd8: bydexchange8.xsd

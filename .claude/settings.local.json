@@ -4,6 +4,7 @@
       "Bash(bundle exec:*)",
       "Bash(DEBUG=WSDL bundle exec:*)",
       "Bash(bundle install:*)",
+      "Bash(git diff:*)",
       "Bash(git status:*)",
       "Bash(git add:*)",
       "Bash(ruby:*)",

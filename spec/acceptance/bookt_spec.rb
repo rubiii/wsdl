@@ -1,24 +1,7 @@
 # frozen_string_literal: true
 
 RSpec.describe 'Bookt' do
-  subject(:client) { WSDL::Client.new(wsdl_url, http: http_mock) }
-
-  let(:wsdl_url)  { 'http://connect.bookt.com/svc/connect.svc?wsdl' }
-  let(:wsdl2_url) { 'http://connect.bookt.com/svc/connect.svc?wsdl=wsdl1' }
-  let(:wsdl3_url) { 'http://connect.bookt.com/svc/connect.svc?wsdl=wsdl0' }
-
-  before do
-    http_mock.fake_request(wsdl_url,  'wsdl/bookt/bookt.wsdl')
-    http_mock.fake_request(wsdl2_url, 'wsdl/bookt/bookt2.wsdl')
-    http_mock.fake_request(wsdl3_url, 'wsdl/bookt/bookt3.wsdl')
-
-    # 16 schemas to import
-    schema_import_base = 'http://connect.bookt.com/svc/connect.svc?xsd=xsd%d'
-    (0..15).each do |i|
-      url = schema_import_base % i
-      http_mock.fake_request(url, "wsdl/bookt/bookt#{i}.xsd")
-    end
-  end
+  subject(:client) { RoundtripCandidates.mock_client_from_manifest(fixture('wsdl/bookt/manifest'), http_mock) }
 
   it 'returns a map of services and ports' do
     expect(client.services).to eq(

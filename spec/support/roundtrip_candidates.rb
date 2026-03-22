@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require 'yaml'
+
 module RoundtripCandidates
   module_function
 
@@ -14,13 +16,6 @@ module RoundtripCandidates
     element.children.any? { |child| element_unsupported?(child) }
   end
 
-  def discover_candidates
-    fixture_dir = File.expand_path('../fixtures/wsdl', __dir__)
-    Dir.glob("#{fixture_dir}/*")
-      .select { |p| File.file?(p) }
-      .flat_map { |path| candidates_from_wsdl(path) }
-  end
-
   # Errors that legitimately prevent a WSDL or operation from being tested.
   EXPECTED_ERRORS = [
     WSDL::SchemaImportError,         # Unresolvable schema imports
@@ -29,8 +24,59 @@ module RoundtripCandidates
     WSDL::UnresolvedReferenceError   # Missing schema elements
   ].freeze
 
-  def candidates_from_wsdl(path)
-    client = WSDL::Client.new(path)
+  # ============================================================
+  # Candidate discovery
+  # ============================================================
+
+  def discover_candidates
+    discover_local_candidates + discover_remote_candidates
+  end
+
+  def discover_local_candidates
+    fixture_dir = File.expand_path('../fixtures/wsdl', __dir__)
+    Dir.glob("#{fixture_dir}/*")
+      .select { |p| File.file?(p) }
+      .flat_map { |path| candidates_from_local(path) }
+  end
+
+  def candidates_from_local(path)
+    candidates_from_client(WSDL::Client.new(path))
+  rescue *EXPECTED_ERRORS
+    []
+  end
+
+  def discover_remote_candidates
+    fixture_dir = File.expand_path('../fixtures/wsdl', __dir__)
+    Dir.glob("#{fixture_dir}/*/manifest.yml")
+      .flat_map { |path| candidates_from_manifest(path) }
+  end
+
+  def candidates_from_manifest(manifest_path)
+    client = mock_client_from_manifest(manifest_path, SpecSupport::HTTPMock.new)
+    candidates_from_client(client)
+  rescue *EXPECTED_ERRORS
+    []
+  end
+
+  def mock_client_from_manifest(manifest_path, http_mock)
+    config = YAML.safe_load_file(manifest_path)
+    dir = File.dirname(manifest_path)
+    fixture_name = File.basename(dir)
+
+    if config['mappings']
+      config['mappings'].each do |url, file|
+        http_mock.fake_request(url, "wsdl/#{fixture_name}/#{file}")
+      end
+      WSDL::Client.new(config['entry_url'], http: http_mock)
+    else
+      entry = File.join(dir, config['entry_path'])
+      options = { http: http_mock }
+      options[:sandbox_paths] = [dir] if config['sandbox']
+      WSDL::Client.new(entry, **options)
+    end
+  end
+
+  def candidates_from_client(client)
     candidates = []
 
     client.services.each do |service_name, service_info|
@@ -65,6 +111,10 @@ module RoundtripCandidates
   rescue *EXPECTED_ERRORS
     nil
   end
+
+  # ============================================================
+  # Round-trip helpers
+  # ============================================================
 
   def extract_parse_node(xml, candidate)
     doc = Nokogiri::XML(xml)
