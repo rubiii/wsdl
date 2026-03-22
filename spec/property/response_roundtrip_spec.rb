@@ -35,7 +35,7 @@ module RoundtripPropertyHelpers
   end
 
   def discover_candidates
-    fixture_dir = File.expand_path('../../fixtures/wsdl', __dir__)
+    fixture_dir = File.expand_path('../fixtures/wsdl', __dir__)
     Dir.glob("#{fixture_dir}/*")
       .select { |p| File.file?(p) || File.directory?(p) }
       .flat_map { |path| candidates_from_wsdl(path) }
