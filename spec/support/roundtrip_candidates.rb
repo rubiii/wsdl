@@ -21,7 +21,8 @@ module RoundtripCandidates
     WSDL::SchemaImportError,         # Unresolvable schema imports
     WSDL::UnsupportedStyleError,     # rpc/encoded operations
     WSDL::ResourceLimitError,        # Deeply nested types exceeding limits
-    WSDL::UnresolvedReferenceError   # Missing schema elements
+    WSDL::UnresolvedReferenceError,  # Missing schema elements
+    WSDL::OperationOverloadError     # Overloaded operations (strict mode)
   ].freeze
 
   # ============================================================

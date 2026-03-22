@@ -27,7 +27,7 @@ module WSDL
 
       # Returns the operations defined in this port type.
       #
-      # @return [Hash{String => PortTypeOperation}] a hash of operation names to port type operations
+      # @return [OperationMap] the operations indexed by name
       def operations
         @operations ||= operations!
       end
@@ -36,20 +36,17 @@ module WSDL
 
       # Parses and returns all operations from the port type node.
       #
-      # @return [Hash{String => PortTypeOperation}] the parsed operations
+      # @return [OperationMap] the parsed operations
       def operations!
-        operations = {}
+        map = OperationMap.new
 
         @port_type_node.element_children.each do |operation_node|
           next unless operation_node.name == 'operation'
 
-          operation_name = operation_node['name']
-          operation = PortTypeOperation.new(operation_node)
-
-          operations[operation_name] = operation
+          map.add(operation_node['name'], PortTypeOperation.new(operation_node))
         end
 
-        operations
+        map
       end
     end
   end

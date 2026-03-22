@@ -427,6 +427,37 @@ module WSDL
     end
   end
 
+  # Raised when a portType contains overloaded operations (same name,
+  # different input/output messages) and strict schema mode is enabled.
+  #
+  # WS-I Basic Profile 1.1 Rule R2304 prohibits operation overloading.
+  # Disable strict mode (+strict_schema: false+) to allow overloading
+  # with disambiguation via the +input_name:+ keyword.
+  #
+  class OperationOverloadError < Error
+    # @return [String, nil] the overloaded operation name
+    attr_reader :operation_name
+
+    # @return [String, nil] the portType containing the overloaded operations
+    attr_reader :port_type_name
+
+    # @return [Integer, nil] number of overloaded definitions
+    attr_reader :overload_count
+
+    # Creates a new OperationOverloadError.
+    #
+    # @param message [String] error message
+    # @param operation_name [String, nil] the overloaded operation name
+    # @param port_type_name [String, nil] the portType name
+    # @param overload_count [Integer, nil] number of overloaded definitions
+    def initialize(message = nil, operation_name: nil, port_type_name: nil, overload_count: nil)
+      @operation_name = operation_name
+      @port_type_name = port_type_name
+      @overload_count = overload_count
+      super(message)
+    end
+  end
+
   # Raised when a response hash does not conform to the output schema.
   #
   # This error is raised by {Response::Builder} when the provided hash

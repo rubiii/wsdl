@@ -21,6 +21,7 @@ module WSDL
     require 'wsdl/parser/input_output'
     require 'wsdl/parser/message_info'
     require 'wsdl/parser/operation_info'
+    require 'wsdl/parser/operation_map'
     require 'wsdl/parser/port'
     require 'wsdl/parser/port_type'
     require 'wsdl/parser/port_type_operation'

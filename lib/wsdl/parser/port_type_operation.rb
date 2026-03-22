@@ -26,6 +26,15 @@ module WSDL
       # @return [String] the name of this operation
       attr_reader :name
 
+      # Returns the name attribute of the input element.
+      #
+      # Used by {OperationMap} for overload disambiguation.
+      #
+      # @return [String, nil] the input name, or nil if not specified
+      def input_name
+        input&.name
+      end
+
       # Returns the input message definition for this operation.
       #
       # @return [MessageReference] parsed message reference

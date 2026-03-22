@@ -144,23 +144,26 @@ module WSDL
 
     # Returns an Operation instance for calling a SOAP operation.
     #
-    # @overload operation(service_name, port_name, operation_name)
+    # @overload operation(service_name, port_name, operation_name, input_name: nil)
     #   Returns an operation for the specified service, port, and operation.
     #   @param service_name [String, Symbol] the name of the service
     #   @param port_name [String, Symbol] the name of the port
     #   @param operation_name [String, Symbol] the name of the operation
+    #   @param input_name [String, Symbol, nil] disambiguator for overloaded operations
     #
-    # @overload operation(operation_name)
+    # @overload operation(operation_name, input_name: nil)
     #   Returns an operation by name, auto-resolving the only service and port.
     #   Requires exactly one service with exactly one port.
     #   @param operation_name [String, Symbol] the name of the operation
+    #   @param input_name [String, Symbol, nil] disambiguator for overloaded operations
     #
     # @return [Operation] the operation instance
     # @raise [ArgumentError] if the service, port, or operation does not exist,
     #   or if auto-resolution is used with multiple services/ports
     # @raise [UnsupportedStyleError] if the operation uses an unsupported style (e.g., rpc/encoded)
+    # @raise [OperationOverloadError] if overloaded and strict_schema is true
     #
-    def operation(service_name_or_operation_name, port_name = nil, operation_name = nil)
+    def operation(service_name_or_operation_name, port_name = nil, operation_name = nil, input_name: nil)
       if port_name && !operation_name
         raise ArgumentError,
               'Pass 1 argument (operation_name) or 3 arguments (service_name, port_name, operation_name).'
@@ -173,7 +176,8 @@ module WSDL
         service_name, port_name = resolve_service_and_port(nil, nil)
       end
 
-      operation_info = @parser_result.operation(service_name.to_s, port_name.to_s, operation_name.to_s)
+      operation_info = @parser_result.operation(service_name.to_s, port_name.to_s, operation_name.to_s,
+                                                input_name: input_name&.to_s)
       verify_operation_style!(operation_info)
 
       Operation.new(

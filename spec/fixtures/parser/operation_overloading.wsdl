@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://schemas.xmlsoap.org/wsdl/"
+             xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+             xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
+             xmlns:tns="http://example.com/lookup"
+             targetNamespace="http://example.com/lookup"
+             name="LookupService">
+  <types>
+    <xsd:schema targetNamespace="http://example.com/lookup">
+      <xsd:element name="LookupByIdReq" type="xsd:int"/>
+      <xsd:element name="LookupByNameReq" type="xsd:string"/>
+      <xsd:element name="LookupResp" type="xsd:string"/>
+    </xsd:schema>
+  </types>
+
+  <message name="LookupByIdMsg">
+    <part name="parameters" element="tns:LookupByIdReq"/>
+  </message>
+  <message name="LookupByNameMsg">
+    <part name="parameters" element="tns:LookupByNameReq"/>
+  </message>
+  <message name="LookupRespMsg">
+    <part name="parameters" element="tns:LookupResp"/>
+  </message>
+
+  <portType name="LookupPortType">
+    <operation name="Lookup">
+      <input name="LookupById" message="tns:LookupByIdMsg"/>
+      <output name="LookupByIdResp" message="tns:LookupRespMsg"/>
+    </operation>
+    <operation name="Lookup">
+      <input name="LookupByName" message="tns:LookupByNameMsg"/>
+      <output name="LookupByNameResp" message="tns:LookupRespMsg"/>
+    </operation>
+  </portType>
+
+  <binding name="LookupBinding" type="tns:LookupPortType">
+    <soap:binding style="document" transport="http://schemas.xmlsoap.org/soap/http"/>
+    <operation name="Lookup">
+      <soap:operation soapAction="LookupById"/>
+      <input name="LookupById">
+        <soap:body use="literal"/>
+      </input>
+      <output name="LookupByIdResp">
+        <soap:body use="literal"/>
+      </output>
+    </operation>
+    <operation name="Lookup">
+      <soap:operation soapAction="LookupByName"/>
+      <input name="LookupByName">
+        <soap:body use="literal"/>
+      </input>
+      <output name="LookupByNameResp">
+        <soap:body use="literal"/>
+      </output>
+    </operation>
+  </binding>
+
+  <service name="LookupService">
+    <port name="LookupPort" binding="tns:LookupBinding">
+      <soap:address location="http://example.com/lookup"/>
+    </port>
+  </service>
+</definitions>

@@ -149,22 +149,33 @@ module WSDL
 
       # Returns an OperationInfo for a given service, port, and operation name.
       #
+      # For overloaded operations (same name, different input/output messages),
+      # pass +input_name:+ to disambiguate. In strict mode, overloading raises
+      # {OperationOverloadError} per WS-I Basic Profile R2304.
+      #
       # @param service_name [String] the name of the service
       # @param port_name [String] the name of the port
       # @param operation_name [String] the name of the operation
+      # @param input_name [String, Symbol, nil] disambiguator for overloaded operations
       # @return [OperationInfo] the operation info instance
       # @raise [ArgumentError] if the service, port, or operation does not exist
-      def operation(service_name, port_name, operation_name)
+      # @raise [OperationOverloadError] if overloaded and strict_schema is true
+      # rubocop:disable Metrics/AbcSize -- operation resolution requires multiple lookups
+      def operation(service_name, port_name, operation_name, input_name: nil)
         verify_operation_exists!(service_name, port_name, operation_name)
 
         port = @documents.service_port(service_name, port_name)
         endpoint = port.location
 
         binding = port.fetch_binding(@documents)
-        binding_operation = binding.operations.fetch(operation_name)
-
         port_type = binding.fetch_port_type(@documents)
-        port_type_operation = port_type.operations.fetch(operation_name) {
+
+        if @strict_schema && port_type.operations.overloaded_name?(operation_name)
+          reject_overloading!(operation_name, port_type)
+        end
+
+        binding_operation = binding.operations.fetch(operation_name, input_name:)
+        port_type_operation = port_type.operations.fetch(operation_name, input_name:) {
           raise UnresolvedReferenceError.new(
             "Binding operation #{operation_name.inspect} not found in portType #{port_type.name.inspect}",
             reference_type: :port_type_operation,
@@ -175,6 +186,7 @@ module WSDL
 
         OperationInfo.new(operation_name, endpoint, binding_operation, port_type_operation, self)
       end
+      # rubocop:enable Metrics/AbcSize
 
       # Returns whether schema metadata is complete for the given operation.
       #
@@ -227,6 +239,21 @@ module WSDL
 
           memo << definition.target_namespace
         end.uniq
+      end
+
+      # Raises if a portType has overloaded operations in strict mode.
+      #
+      # @param operation_name [String] the overloaded operation name
+      # @param port_type [PortType] the portType containing the overloads
+      # @raise [OperationOverloadError]
+      def reject_overloading!(operation_name, port_type)
+        count = port_type.operations.overload_count(operation_name)
+        raise OperationOverloadError.new(
+          "Operation #{operation_name.inspect} is overloaded #{count} times in " \
+          "portType #{port_type.name.inspect}. Operation overloading is prohibited " \
+          'by WS-I Basic Profile R2304. Use strict_schema: false to allow it.',
+          operation_name:, port_type_name: port_type.name, overload_count: count
+        )
       end
 
       # Raises a useful error if the operation does not exist.

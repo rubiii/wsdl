@@ -62,7 +62,7 @@ module WSDL
 
       # Returns the operations defined in this binding.
       #
-      # @return [Hash{String => BindingOperation}] a hash of operation names to binding operations
+      # @return [OperationMap] the operations indexed by name
       def operations
         @operations ||= operations!
       end
@@ -71,20 +71,17 @@ module WSDL
 
       # Parses and returns all operations from the binding node.
       #
-      # @return [Hash{String => BindingOperation}] the parsed operations
+      # @return [OperationMap] the parsed operations
       def operations!
-        operations = {}
+        map = OperationMap.new
 
         @binding_node.element_children.each do |operation_node|
           next unless operation_node.name == 'operation'
 
-          operation_name = operation_node['name']
-          operation = BindingOperation.new(operation_node, style: @style)
-
-          operations[operation_name] = operation
+          map.add(operation_node['name'], BindingOperation.new(operation_node, style: @style))
         end
 
-        operations
+        map
       end
 
       # Finds the SOAP binding element within this binding.

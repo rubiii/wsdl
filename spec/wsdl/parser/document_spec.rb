@@ -86,7 +86,7 @@ RSpec.describe WSDL::Parser::Document do
 
       # port type operation
 
-      port_type_operation = port_type.operations['moveIBot']
+      port_type_operation = port_type.operations.fetch('moveIBot')
       expect(port_type_operation.name).to eq('moveIBot')
 
       expect(port_type_operation.input).to be_a(WSDL::Parser::MessageReference)
@@ -126,7 +126,7 @@ RSpec.describe WSDL::Parser::Document do
 
       # binding operation
 
-      binding_operation = binding.operations['getAccounts']
+      binding_operation = binding.operations.fetch('getAccounts')
       expect(binding_operation.name).to eq('getAccounts')
 
       expect(binding_operation.soap_action).to eq('#getAccounts')

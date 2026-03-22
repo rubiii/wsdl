@@ -506,6 +506,51 @@ RSpec.describe WSDL::Client do
     end
   end
 
+  describe 'operation overloading' do
+    let(:overloaded_wsdl) { fixture('parser/operation_overloading') }
+
+    it 'raises OperationOverloadError in strict mode' do
+      client = described_class.new(overloaded_wsdl, strict_schema: true)
+
+      expect { client.operation('LookupService', 'LookupPort', 'Lookup') }
+        .to raise_error(WSDL::OperationOverloadError, /overloaded.*R2304/)
+    end
+
+    it 'resolves overloaded operation by input_name in relaxed mode' do
+      client = described_class.new(overloaded_wsdl, strict_schema: false)
+      op = client.operation('LookupService', 'LookupPort', 'Lookup', input_name: :LookupById)
+
+      expect(op.contract.request.body.paths.first[:path]).to eq(['LookupByIdReq'])
+    end
+
+    it 'resolves the other overload by its input_name' do
+      client = described_class.new(overloaded_wsdl, strict_schema: false)
+      op = client.operation('LookupService', 'LookupPort', 'Lookup', input_name: :LookupByName)
+
+      expect(op.contract.request.body.paths.first[:path]).to eq(['LookupByNameReq'])
+    end
+
+    it 'raises ArgumentError without input_name for overloaded operation' do
+      client = described_class.new(overloaded_wsdl, strict_schema: false)
+
+      expect { client.operation('LookupService', 'LookupPort', 'Lookup') }
+        .to raise_error(ArgumentError, /Provide input_name.*LookupById.*LookupByName/)
+    end
+
+    it 'returns overloaded name once in operations list' do
+      client = described_class.new(overloaded_wsdl, strict_schema: false)
+
+      expect(client.operations('LookupService', 'LookupPort').count('Lookup')).to eq(1)
+    end
+
+    it 'ignores input_name for non-overloaded operations' do
+      client = described_class.new(fixture('wsdl/blz_service'))
+
+      expect { client.operation(:BLZService, :BLZServiceSOAP11port_http, :getBank, input_name: :anything) }
+        .not_to raise_error
+    end
+  end
+
   describe 'strict schema mode' do
     let(:wsdl_with_missing_schema_import) { fixture('wsdl/juniper') }
 

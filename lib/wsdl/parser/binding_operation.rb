@@ -27,6 +27,11 @@ module WSDL
           @soap_action = node['soapAction']
           @style = node['style'] || defaults[:style]
         end
+
+        @input_wrapper = find_wrapper_node('input')
+        @output_wrapper = find_wrapper_node('output')
+        @input_name = @input_wrapper&.[]('name')
+        @output_name = @output_wrapper&.[]('name')
       end
 
       # @return [String, nil] the SOAPAction HTTP header value
@@ -37,6 +42,12 @@ module WSDL
 
       # @return [String] the SOAP namespace URI (1.1 or 1.2)
       attr_reader :soap_namespace
+
+      # @return [String, nil] the name attribute of the input wrapper element
+      attr_reader :input_name
+
+      # @return [String, nil] the name attribute of the output wrapper element
+      attr_reader :output_name
 
       # Returns the name of this operation.
       #
@@ -135,9 +146,7 @@ module WSDL
       # @return [Array<Nokogiri::XML::Node>] the matching child nodes
       # @raise [Error] if the binding operation has no input element
       def find_input_child_nodes(child_name)
-        input_node = @operation_node.element_children.find { |node| node.name == 'input' }
-
-        unless input_node
+        unless @input_wrapper
           op_name = @operation_node['name']
           raise UnresolvedReferenceError.new(
             "Binding operation #{op_name.inspect} is missing a required <input> element",
@@ -147,7 +156,7 @@ module WSDL
           )
         end
 
-        input_node.element_children.select { |node| node.name == child_name }
+        @input_wrapper.element_children.select { |node| node.name == child_name }
       end
 
       # Finds child nodes of a specific type within the output element.
@@ -155,10 +164,17 @@ module WSDL
       # @param child_name [String] the name of the child element to find
       # @return [Array<Nokogiri::XML::Node>, nil] the matching child nodes
       def find_output_child_nodes(child_name)
-        output_node = @operation_node.element_children.find { |node| node.name == 'output' }
-        return unless output_node
+        return unless @output_wrapper
 
-        output_node.element_children.select { |node| node.name == child_name }
+        @output_wrapper.element_children.select { |node| node.name == child_name }
+      end
+
+      # Finds a wrapper node (input or output) within the operation element.
+      #
+      # @param direction [String] 'input' or 'output'
+      # @return [Nokogiri::XML::Node, nil] the wrapper node
+      def find_wrapper_node(direction)
+        @operation_node.element_children.find { |n| n.name == direction }
       end
 
       # Builds normalized header metadata from SOAP header nodes.

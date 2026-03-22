@@ -25,6 +25,7 @@ WSDL::Error
 ├── WSDL::InvalidHTTPAdapterError
 ├── WSDL::UnresolvedReferenceError
 ├── WSDL::DuplicateDefinitionError
+├── WSDL::OperationOverloadError
 ├── WSDL::RequestDefinitionError
 ├── WSDL::RequestValidationError
 ├── WSDL::RequestDslError
@@ -67,6 +68,7 @@ WSDL::Error
 | `UnsupportedStyleError` | Operation uses unsupported SOAP style (e.g. rpc/encoded) |
 | `UnresolvedReferenceError` | Binding, portType, message, or schema reference cannot be resolved |
 | `DuplicateDefinitionError` | Two imported documents define the same component key |
+| `OperationOverloadError` | PortType has overloaded operations in strict mode (WS-I R2304) |
 
 ### Security Verification Errors (fatal)
 

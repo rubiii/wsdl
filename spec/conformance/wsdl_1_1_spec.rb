@@ -239,4 +239,23 @@ RSpec.describe 'WSDL 1.1 conformance' do
       expect(body_parts.size).to be >= 2
     end
   end
+
+  # --------------------------------------------------------------------------
+  # WS-I Basic Profile R2304
+  # --------------------------------------------------------------------------
+
+  describe 'WS-I Basic Profile' do
+    # http://www.ws-i.org/Profiles/BasicProfile-1.1-2004-08-24.html#R2304
+    it 'WSI-R2304: overloaded portType operations rejected in strict mode' do
+      result = WSDL::Parser::Result.parse fixture('parser/operation_overloading'), http_mock,
+                                          strict_schema: true
+
+      expect { result.operation('LookupService', 'LookupPort', 'Lookup') }
+        .to raise_error(WSDL::OperationOverloadError) { |error|
+          expect(error.operation_name).to eq('Lookup')
+          expect(error.port_type_name).to eq('LookupPortType')
+          expect(error.overload_count).to eq(2)
+        }
+    end
+  end
 end

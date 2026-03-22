@@ -45,6 +45,6 @@ RSpec.describe WSDL::Parser::BindingOperation do
     parser_result = WSDL::Parser::Result.parse(fixture(fixture_path), http_mock)
     document = parser_result.documents.first
     _, binding = document.bindings.find { |qname, _| qname.local == binding_name }
-    binding.operations[operation_name]
+    binding.operations.fetch(operation_name)
   end
 end
