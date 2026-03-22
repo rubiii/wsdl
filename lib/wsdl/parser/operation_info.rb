@@ -71,11 +71,14 @@ module WSDL
       # Returns the output message definition for this operation.
       #
       # The output contains the header and body parts that define the
-      # structure of response messages.
+      # structure of response messages. Returns nil for one-way operations
+      # that have no output message.
       #
-      # @return [Output] the output message definition
+      # @return [Output, nil] the output message definition, or nil for one-way operations
       def output
-        @output ||= Output.new(@binding_operation, @port_type_operation, @parser_result)
+        return @output if defined?(@output)
+
+        @output = Output.new(@binding_operation, @port_type_operation, @parser_result) if @port_type_operation.output
       end
 
       # Returns the input style for this operation.
@@ -91,11 +94,15 @@ module WSDL
       # Returns the output style for this operation.
       #
       # The style is a combination of the binding style and use attribute,
-      # such as 'document/literal' or 'rpc/literal'.
+      # such as 'document/literal' or 'rpc/literal'. Returns nil for
+      # one-way operations that have no output message.
       #
-      # @return [String] the output style (e.g., 'document/literal')
+      # @return [String, nil] the output style, or nil for one-way operations
       def output_style
-        "#{@binding_operation.style}/#{@binding_operation.output_body[:use]}"
+        use = @binding_operation.output_body[:use]
+        return unless use
+
+        "#{@binding_operation.style}/#{use}"
       end
     end
   end

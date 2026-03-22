@@ -379,6 +379,44 @@ RSpec.describe WSDL::Client do
     end
   end
 
+  describe 'one-way operation (no output)' do
+    it 'returns empty response contract for one-way operations' do
+      xml = <<~WSDL
+        <definitions xmlns="http://schemas.xmlsoap.org/wsdl/"
+                     xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+                     xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
+                     xmlns:tns="http://t.com" targetNamespace="http://t.com">
+          <message name="M"><part name="p" type="xsd:string"/></message>
+          <portType name="PT">
+            <operation name="Op"><input message="tns:M"/></operation>
+          </portType>
+          <binding name="B" type="tns:PT">
+            <soap:binding style="document" transport="http://schemas.xmlsoap.org/soap/http"/>
+            <operation name="Op">
+              <soap:operation soapAction="Op"/>
+              <input><soap:body use="literal"/></input>
+            </operation>
+          </binding>
+          <service name="S">
+            <port name="P" binding="tns:B"><soap:address location="http://x.com"/></port>
+          </service>
+        </definitions>
+      WSDL
+
+      Tempfile.create(['one_way', '.wsdl']) do |f|
+        f.write(xml)
+        f.close
+        client = described_class.new(f.path)
+        operation = client.operation('S', 'P', 'Op')
+
+        expect(operation.contract.response.body.elements).to eq([])
+        expect(operation.contract.response.header.elements).to eq([])
+        expect(operation.contract.request.body.elements).not_to be_empty
+        expect(operation.output_style).to be_nil
+      end
+    end
+  end
+
   describe 'strict schema mode' do
     let(:wsdl_with_missing_schema_import) { fixture('wsdl/juniper') }
 

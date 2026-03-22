@@ -47,7 +47,7 @@ module WSDL
       def output
         return @output if defined? @output
 
-        @output = parse_node(@output_node)
+        @output = @output_node ? parse_node(@output_node) : nil
       end
 
       private

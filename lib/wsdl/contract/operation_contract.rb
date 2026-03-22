@@ -11,9 +11,10 @@ module WSDL
           header: PartContract.new(@operation_info.input.header_parts, section: :header),
           body: PartContract.new(@operation_info.input.body_parts, section: :body)
         )
+        output = @operation_info.output
         @response = MessageContract.new(
-          header: PartContract.new(@operation_info.output.header_parts, section: :header),
-          body: PartContract.new(@operation_info.output.body_parts, section: :body)
+          header: PartContract.new(output&.header_parts || [], section: :header),
+          body: PartContract.new(output&.body_parts || [], section: :body)
         )
         freeze
       end
