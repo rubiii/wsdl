@@ -2,6 +2,8 @@
 
 WSDL toolkit for Ruby. Turn WSDL 1.1 documents into inspectable services and callable operations.
 
+@docs/development.md
+
 ## Getting Started
 
 ```sh
@@ -32,67 +34,18 @@ bundle exec yard            # Generate YARD documentation
 
 4. **Update documentation after every change.** Check if YARD docs, `docs/` folder, `AGENTS.md`, or `README.md` need updates. Run `bundle exec yard` to verify.
 
-## Code Style
-
-- Ruby 3.3+ with modern idioms (shorthand hash syntax, Data classes)
-- `# frozen_string_literal: true` at the top of every file
-- Single quotes for strings, 120 character max line length
-- Semantic blocks: `do...end` for side effects, `{...}` for return values
-- Readability comes first. When a linting rule conflicts with clear code:
-  1. Try refactoring — extract a method, simplify logic, etc.
-  2. If the code is already clean, add an inline `rubocop:disable` comment.
-  3. If inline disables accumulate for the same rule, relax it in `.rubocop.yml`.
-- Never degrade code quality (shorten docs, remove blank lines, merge logic) just to satisfy a metric.
+5. **Capture full test output.** Never pipe test or CI commands through `grep`, `tail`, or `head`. Property-based tests include randomized inputs in failure output — filtering loses them permanently.
 
 ## Testing
 
 - Every public method must be tested, 100% coverage is a must
 - Use existing fixtures in `spec/fixtures/` (45+ real-world WSDLs)
 - Unit tests in `spec/wsdl/` mirror `lib/wsdl/` structure
-- Integration tests in `spec/integration/`
-
-## Documentation
-
-- Complete YARD docs for all public methods (enforced by `rubocop-yard`)
-- Use proper YARD type syntax: `Hash{String => String}` not `Hash<String, String>`
-- Use the latest YARD version and features where possible; review updates in `https://rubydoc.info/gems/yard/file/docs/WhatsNew.md`
-- Detailed docs live in `docs/` folder; keep README brief
-
-## Error Handling
-
-Exception definitions and the current hierarchy are in `lib/wsdl/errors.rb` (source of truth).
-
-General guidance:
-
-- Use `WSDL::Error` for recoverable domain errors that callers may reasonably handle and continue from.
-- Use `WSDL::FatalError` for non-recoverable conditions, especially security violations or hard safety constraints that must not be ignored.
-- New custom exceptions should inherit from one of these two base classes and be defined in `lib/wsdl/errors.rb`.
-
-## Naming Conventions
-
-- Class/module names should match their role (`*Parser`, `*Validator`, `*Resolver`, `*Contract`, `*Policy`, `*Context`, `*Builder` when actually building structures).
-- Keep namespaces and file paths aligned (e.g., `WSDL::Parser::Result` in `lib/wsdl/parser/result.rb`).
-- Predicate methods: `?` suffix and boolean return values (e.g., `configured?`).
-- Bang methods: `!` suffix for strict/raising or state-changing variants (e.g., `validate!`, `verify!`, `seal!`).
-- Exception classes: `*Error` suffix and inheritance from `WSDL::Error` or `WSDL::FatalError`.
-- Avoid generic names like `Helper`, `Manager`, or `Utils` unless the scope is very narrow and explicit.
-
-## Security
-
-WS-Security docs: `docs/security/ws-security*.md`
-
-Key points:
-- Never log or expose private keys, passwords, or tokens
-- Use constants from `WSDL::Security::Constants` — never hardcode namespace URIs
-- SHA-256 is the default for X.509 signatures
-- UsernameToken digest uses SHA-1 (spec-mandated, not a bug)
-
-## Common Pitfalls
-
-- **XML Namespaces** — Use constants (`WSDL::NS::SOAP_1_1`, `WSDL::Security::Constants::NS::Security::WSSE`), never hardcode URIs
-- **WSDL Variability** — Test against multiple fixtures; don't assume consistent structure
-- **SOAP Versions** — 1.1 and 1.2 use different namespaces; the WSDL determines which to use
-- **Import Resolution** — Relative imports require a base location; see `UnresolvableImportError`
+- Acceptance tests in `spec/acceptance/` (real WSDLs, no network)
+- Integration tests in `spec/integration/` (live mock services, auto-tagged `:test_service`)
+- Conformance tests in `spec/conformance/` (W3C/OASIS spec assertions)
+- Property-based tests in `spec/property/` use Rantly (`PROPERTY_TRIALS` env var, default 100)
+- See [Testing docs](docs/testing.md) for full details
 
 ## Quick Links
 
@@ -102,6 +55,8 @@ Key points:
 | Error definitions | `lib/wsdl/errors.rb` |
 | Namespace constants | `lib/wsdl/ns.rb` |
 | Security constants | `lib/wsdl/security/constants.rb` |
+| Development guidelines | `docs/development.md` |
 | WS-Security docs | `docs/security/ws-security.md` |
 | Specifications | `docs/reference/specifications.md` |
 | Benchmarks | `docs/reference/benchmarks.md` |
+| Testing docs | `docs/testing.md` |

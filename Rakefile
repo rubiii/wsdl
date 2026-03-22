@@ -24,6 +24,7 @@ namespace :yard do
   end
 end
 
+# rubocop:disable Metrics/BlockLength
 namespace :lint do
   desc 'Check markdown links point to existing files'
   task :links do
@@ -57,6 +58,7 @@ namespace :lint do
     end
   end
 end
+# rubocop:enable Metrics/BlockLength
 
 desc 'Run linting'
 task lint: %i[rubocop lint:links]
