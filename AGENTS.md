@@ -2,18 +2,10 @@
 
 WSDL toolkit for Ruby. Turn WSDL 1.1 documents into inspectable services and callable operations.
 
-@docs/development.md
 
 ## Getting Started
 
-```sh
-bundle install              # Install dependencies
-bundle exec rspec           # Run tests
-bundle exec rubocop         # Run linter
-bundle exec rake ci         # Run all checks (CI task)
-bundle exec rake benchmark  # Run performance benchmarks
-bundle exec yard            # Generate YARD documentation
-```
+@docs/development.md
 
 ## Key Concepts
 
