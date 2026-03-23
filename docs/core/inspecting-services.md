@@ -59,29 +59,93 @@ contract.response.header
 contract.response.body
 ```
 
-Each section is a `PartContract`.
+Each section is a `PartContract` with three views: `paths`, `tree`, and `template`.
 
 ### Flat Paths
+
+`paths` returns a flat array of hashes — one per element in the tree. Useful for quick inspection and searching by path.
 
 ```ruby
 contract.request.body.paths
 # => [
 #      {
-#        path: ["CreateOrder", "customerId"],
+#        path: ["CreateOrder"],
+#        kind: :complex,
 #        namespace: "http://example.com/orders",
+#        form: "qualified",
 #        singular: true,
 #        min_occurs: "1",
 #        max_occurs: "1",
-#        type: "xsd:string"
+#        attributes: [
+#          { name: "priority", type: "xsd:int", required: false, list: false }
+#        ],
+#        wildcard: false
+#      },
+#      {
+#        path: ["CreateOrder", "customerId"],
+#        kind: :simple,
+#        namespace: "http://example.com/orders",
+#        form: "qualified",
+#        singular: true,
+#        min_occurs: "1",
+#        max_occurs: "1",
+#        type: "xsd:string",
+#        list: false
 #      }
 #    ]
 ```
 
 ### Tree Shape
 
+`tree` returns the same information as `paths` but in a nested structure. Each node has `children` and `attributes` arrays.
+
 ```ruby
 contract.request.body.tree
-# => [{ name: "CreateOrder", children: [...], attributes: [...], wildcard: false, ... }]
+# => [
+#      {
+#        name: "CreateOrder",
+#        kind: :complex,
+#        namespace: "http://example.com/orders",
+#        form: "qualified",
+#        min_occurs: "1",
+#        max_occurs: "1",
+#        required: true,
+#        nillable: false,
+#        singular: true,
+#        attributes: [
+#          { name: "priority", type: "xsd:int", required: false, list: false }
+#        ],
+#        children: [
+#          {
+#            name: "customerId",
+#            kind: :simple,
+#            type: "xsd:string",
+#            list: false,
+#            ...
+#          }
+#        ],
+#        wildcard: false
+#      }
+#    ]
+```
+
+### Element Kinds
+
+Every element in `paths` and `tree` includes a `kind` field:
+
+| Kind | Description | Type-specific fields |
+|------|-------------|---------------------|
+| `:simple` | Text content with a base type | `type`, `list` |
+| `:complex` | Contains child elements | `wildcard`, `children` (tree only) |
+| `:recursive` | Self-referencing type (traversal stopped) | `recursive_type` |
+
+### Attribute Metadata
+
+Attributes on complex elements are represented as arrays of hashes with `name`, `type`, `required`, and `list`. This format is identical in both `paths` and `tree`.
+
+```ruby
+# xs:list-derived attributes parse as whitespace-separated arrays:
+# <Record tags="ruby xml soap"/> => { _tags: ["ruby", "xml", "soap"] }
 ```
 
 ### Request Templates
