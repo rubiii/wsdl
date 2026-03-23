@@ -17,8 +17,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `limits:` now accepts a hash shorthand (`limits: { max_schemas: 200 }`) in addition to a `Limits` object.
 - All 46 XSD built-in types are now explicitly handled by `TypeCoercer`. List types (`IDREFS`, `ENTITIES`, `NMTOKENS`) are now get coerced into arrays.
 - `xs:group` (model group) references are now resolved and their elements expanded, mirroring the existing `xs:attributeGroup` support.
-- `xs:list` simpleType derivation is now supported. List elements are parsed by splitting on whitespace, with per-item type coercion based on the `itemType`. Built by joining array values with spaces.
-- `xs:union` simpleType derivation is now supported. The first `memberType` is used as the base type for coercion.
+- `xs:list` simpleType derivation is now supported for both elements and attributes. List values are parsed by splitting on whitespace, with per-item type coercion based on the `itemType`. Built by joining array values with spaces.
+- `xs:union` simpleType derivation is now supported for both elements and attributes. The first `memberType` is used as the base type for coercion.
+- `Element#kind` returns `:simple`, `:complex`, or `:recursive` for programmatic dispatch. Included in both `paths` and `tree` contract output.
+- `Attribute#to_h` provides a consistent hash representation. Contract `paths` and `tree` now return identical attribute metadata including `name`, `type`, `required`, and `list`.
 
 ### Deprecated
 

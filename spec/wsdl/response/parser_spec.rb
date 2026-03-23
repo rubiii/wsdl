@@ -576,6 +576,53 @@ RSpec.describe WSDL::Response::Parser do
       end
     end
 
+    context 'with list elements' do
+      it 'splits list elements on whitespace with per-item coercion' do
+        xml = '<Response><Tags>ruby xml soap</Tags></Response>'
+        tags_element = schema_element('Tags', type: 'xsd:string', list: true)
+
+        result = described_class.parse(xml, schema: [tags_element])
+
+        expect(result[:Response][:Tags]).to eq %w[ruby xml soap]
+      end
+
+      it 'coerces each item in a list element to its itemType' do
+        xml = '<Response><Scores>10 20 30</Scores></Response>'
+        scores_element = schema_element('Scores', type: 'xsd:int', list: true)
+
+        result = described_class.parse(xml, schema: [scores_element])
+
+        expect(result[:Response][:Scores]).to eq [10, 20, 30]
+      end
+
+      it 'collapses whitespace per XSD list spec' do
+        xml = "<Response><Tags>  ruby   xml  \t soap  </Tags></Response>"
+        tags_element = schema_element('Tags', type: 'xsd:string', list: true)
+
+        result = described_class.parse(xml, schema: [tags_element])
+
+        expect(result[:Response][:Tags]).to eq %w[ruby xml soap]
+      end
+
+      it 'returns empty array for empty list element' do
+        xml = '<Response><Tags></Tags></Response>'
+        tags_element = schema_element('Tags', type: 'xsd:string', list: true)
+
+        result = described_class.parse(xml, schema: [tags_element])
+
+        expect(result[:Response][:Tags]).to eq []
+      end
+
+      it 'returns empty array for whitespace-only list element' do
+        xml = '<Response><Tags>   </Tags></Response>'
+        tags_element = schema_element('Tags', type: 'xsd:string', list: true)
+
+        result = described_class.parse(xml, schema: [tags_element])
+
+        expect(result[:Response][:Tags]).to eq []
+      end
+    end
+
     context 'with XML attributes' do
       it 'extracts and coerces attributes based on schema' do
         xml = '<Response><User id="42"><Name>John</Name></User></Response>'
@@ -622,6 +669,48 @@ RSpec.describe WSDL::Response::Parser do
         result = described_class.parse(xml, schema: [record_element])
 
         expect(result[:Response][:Record]).to eq({ _key: 'TXN-99', _score: 85, _verified: false })
+      end
+
+      it 'splits list-typed attributes on whitespace with per-item coercion' do
+        xml = '<Response><Event tags="ruby xml soap" scores="10 20 30"/></Response>'
+        tags_attr = schema_attribute('tags', type: 'xsd:string', list: true)
+        scores_attr = schema_attribute('scores', type: 'xsd:int', list: true)
+        event_element = schema_element('Event', attributes: [tags_attr, scores_attr])
+
+        result = described_class.parse(xml, schema: [event_element])
+
+        expect(result[:Response][:Event][:_tags]).to eq %w[ruby xml soap]
+        expect(result[:Response][:Event][:_scores]).to eq [10, 20, 30]
+      end
+
+      it 'returns empty array for empty list attribute value' do
+        xml = '<Response><Event tags=""/></Response>'
+        tags_attr = schema_attribute('tags', type: 'xsd:string', list: true)
+        event_element = schema_element('Event', attributes: [tags_attr])
+
+        result = described_class.parse(xml, schema: [event_element])
+
+        expect(result[:Response][:Event][:_tags]).to eq []
+      end
+
+      it 'collapses whitespace in list attributes per XSD list spec' do
+        xml = '<Response><Event tags="  ruby   xml  "/></Response>'
+        tags_attr = schema_attribute('tags', type: 'xsd:string', list: true)
+        event_element = schema_element('Event', attributes: [tags_attr])
+
+        result = described_class.parse(xml, schema: [event_element])
+
+        expect(result[:Response][:Event][:_tags]).to eq %w[ruby xml]
+      end
+
+      it 'does not split non-list attributes' do
+        xml = '<Response><Event code="hello world"/></Response>'
+        code_attr = schema_attribute('code', type: 'xsd:string')
+        event_element = schema_element('Event', attributes: [code_attr])
+
+        result = described_class.parse(xml, schema: [event_element])
+
+        expect(result[:Response][:Event][:_code]).to eq 'hello world'
       end
 
       it 'does not extract xsi attributes even when present in XML' do

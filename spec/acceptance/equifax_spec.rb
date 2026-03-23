@@ -53,11 +53,12 @@ RSpec.describe 'Equifax' do
        { namespace: ns1, form: 'qualified', singular: true, type: 'string' }
 ],
 
-      [%w[InitialRequest Identity Address], { namespace: ns1, form: 'qualified', singular: false,
-                                              attributes: {
-                                                'timeAtAddress' => { optional: true },
-                                                'addressType' => { optional: false }
-                                              }
+      [%w[InitialRequest Identity Address],
+       { namespace: ns1, form: 'qualified', singular: false,
+         attributes: [
+           { name: 'timeAtAddress', type: 'nonNegativeInteger', required: false, list: false },
+           { name: 'addressType', type: 'string', required: true, list: false }
+         ]
 }
 ],
 
@@ -104,10 +105,11 @@ RSpec.describe 'Equifax' do
  }
 ],
 
-      [%w[InitialRequest Identity DriversLicense], { namespace: ns1, form: 'qualified', singular: true,
-                                                     attributes: {
-                                                       'driversLicenseAddressType' => { optional: true }
-                                                     }
+      [%w[InitialRequest Identity DriversLicense],
+       { namespace: ns1, form: 'qualified', singular: true,
+         attributes: [
+           { name: 'driversLicenseAddressType', type: 'string', required: false, list: false }
+         ]
 }
 ],
 
@@ -118,10 +120,11 @@ RSpec.describe 'Equifax' do
        { namespace: ns1, form: 'qualified', singular: true, type: 'string' }
 ],
 
-      [%w[InitialRequest Identity PhoneNumber], { namespace: ns1, form: 'qualified', singular: false,
-                                                  attributes: {
-                                                    'phoneType' => { optional: true }
-                                                  }
+      [%w[InitialRequest Identity PhoneNumber],
+       { namespace: ns1, form: 'qualified', singular: false,
+         attributes: [
+           { name: 'phoneType', type: 'string', required: false, list: false }
+         ]
 }
 ],
 

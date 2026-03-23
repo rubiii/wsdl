@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://schemas.xmlsoap.org/wsdl/"
+             xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+             xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
+             xmlns:tns="http://example.com/attrtypes"
+             targetNamespace="http://example.com/attrtypes"
+             name="EventService">
+  <types>
+    <xsd:schema targetNamespace="http://example.com/attrtypes"
+                elementFormDefault="qualified">
+      <xsd:simpleType name="TagList">
+        <xsd:list itemType="xsd:string"/>
+      </xsd:simpleType>
+
+      <xsd:simpleType name="ScoreList">
+        <xsd:list itemType="xsd:int"/>
+      </xsd:simpleType>
+
+      <xsd:simpleType name="StringOrInt">
+        <xsd:union memberTypes="xsd:string xsd:int"/>
+      </xsd:simpleType>
+
+      <xsd:element name="GetEventRequest">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element name="id" type="xsd:int"/>
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+
+      <xsd:element name="GetEventResponse">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element name="title" type="xsd:string"/>
+          </xsd:sequence>
+          <xsd:attribute name="tags" type="tns:TagList"/>
+          <xsd:attribute name="scores" type="tns:ScoreList"/>
+          <xsd:attribute name="code" type="tns:StringOrInt"/>
+          <xsd:attribute name="status" type="xsd:string"/>
+        </xsd:complexType>
+      </xsd:element>
+    </xsd:schema>
+  </types>
+
+  <message name="GetEventInput">
+    <part name="parameters" element="tns:GetEventRequest"/>
+  </message>
+  <message name="GetEventOutput">
+    <part name="parameters" element="tns:GetEventResponse"/>
+  </message>
+
+  <portType name="EventPortType">
+    <operation name="GetEvent">
+      <input message="tns:GetEventInput"/>
+      <output message="tns:GetEventOutput"/>
+    </operation>
+  </portType>
+
+  <binding name="EventBinding" type="tns:EventPortType">
+    <soap:binding style="document" transport="http://schemas.xmlsoap.org/soap/http"/>
+    <operation name="GetEvent">
+      <soap:operation soapAction="GetEvent"/>
+      <input><soap:body use="literal"/></input>
+      <output><soap:body use="literal"/></output>
+    </operation>
+  </binding>
+
+  <service name="EventService">
+    <port name="EventPort" binding="tns:EventBinding">
+      <soap:address location="http://example.com/events"/>
+    </port>
+  </service>
+</definitions>

@@ -59,6 +59,23 @@ module WSDL
       #   @return [String] the element form
       attr_accessor :form
 
+      # Returns the kind of this element.
+      #
+      # Provides a three-way classification for introspection.
+      # Note: recursive elements are a subset of complex types.
+      # Use {#simple_type?} and {#complex_type?} for binary dispatch.
+      #
+      # @return [Symbol] :recursive, :simple, or :complex
+      def kind
+        if recursive?
+          :recursive
+        elsif base_type
+          :simple
+        else
+          :complex
+        end
+      end
+
       # Returns whether this element is a simple type.
       #
       # Simple types have a base type and contain only text content,
@@ -72,6 +89,7 @@ module WSDL
       # Returns whether this element is a complex type.
       #
       # Complex types contain child elements rather than simple text content.
+      # Recursive elements are also considered complex types.
       #
       # @return [Boolean] true if this is a complex type element
       def complex_type?
@@ -206,7 +224,7 @@ module WSDL
       #   #      [["user", "name"], { namespace: nil, form: "unqualified", singular: true, type: "xsd:string" }]
       #   #    ]
       #
-      # rubocop:disable Metrics/AbcSize, Metrics/PerceivedComplexity, Metrics/CyclomaticComplexity -- straightforward tree traversal, splitting would hurt readability
+      # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity -- straightforward tree traversal with kind dispatch
       def to_a(memo = [], stack = [])
         new_stack = stack + [name]
         data = {
@@ -217,34 +235,25 @@ module WSDL
           max_occurs: max_occurs
         }
 
-        unless attributes.empty?
-          data[:attributes] = attributes.to_h { |attribute|
-            [attribute.name, { optional: attribute.optional? }]
-          }
-        end
+        data[:kind] = kind
+        data[:attributes] = attributes.map(&:to_h) unless attributes.empty?
 
-        if recursive?
+        case kind
+        when :recursive
           data[:recursive_type] = recursive_type
-          memo << [new_stack, data]
-
-        elsif simple_type?
+        when :simple
           data[:type] = base_type
-          data[:list] = true if list?
-          memo << [new_stack, data]
-
-        elsif complex_type?
-          data[:any_content] = true if any_content?
-          memo << [new_stack, data]
-
-          children.each do |child|
-            child.to_a(memo, new_stack)
-          end
-
+          data[:list] = list?
+        when :complex
+          data[:any_content] = any_content?
         end
+
+        memo << [new_stack, data]
+        children.each { |child| child.to_a(memo, new_stack) } if kind == :complex
 
         memo
       end
-      # rubocop:enable Metrics/AbcSize, Metrics/PerceivedComplexity, Metrics/CyclomaticComplexity
+      # rubocop:enable Metrics/AbcSize, Metrics/CyclomaticComplexity
     end
   end
 end

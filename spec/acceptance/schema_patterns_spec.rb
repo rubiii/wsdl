@@ -60,7 +60,7 @@ RSpec.describe 'Schema pattern coverage' do
     it 'flattens attribute group into element attributes' do
       paths = operation.contract.response.body.paths
       response_root = paths.find { |p| p[:path] == %w[GetRecordResponse] }
-      attr_names = response_root[:attributes].keys
+      attr_names = response_root[:attributes].map { |a| a[:name] }
 
       expect(attr_names).to contain_exactly('createdBy', 'createdAt', 'modifiedBy')
     end
@@ -79,6 +79,49 @@ RSpec.describe 'Schema pattern coverage' do
       expect(result[:GetRecordResponse][:name]).to eq 'Test Record'
       expect(result[:GetRecordResponse][:_createdBy]).to eq 'admin'
       expect(result[:GetRecordResponse][:_modifiedBy]).to eq 'editor'
+    end
+  end
+
+  describe 'attribute simpleType derivations' do
+    subject(:client) { WSDL::Client.new fixture('parser/attribute_types') }
+
+    let(:operation) { client.operation(:GetEvent) }
+
+    it 'sets list flag and itemType on list-derived attributes' do
+      elements = operation.contract.response.body.elements
+      tags = elements.first.attributes.find { |a| a.name == 'tags' }
+      scores = elements.first.attributes.find { |a| a.name == 'scores' }
+
+      expect(tags.list?).to be true
+      expect(tags.base_type).to eq 'xsd:string'
+      expect(scores.list?).to be true
+      expect(scores.base_type).to eq 'xsd:int'
+    end
+
+    it 'uses first memberType for union-derived attributes' do
+      elements = operation.contract.response.body.elements
+      code = elements.first.attributes.find { |a| a.name == 'code' }
+
+      expect(code.list?).to be false
+      expect(code.base_type).to eq 'xsd:string'
+    end
+
+    it 'round-trips list attributes with whitespace splitting and type coercion' do
+      hash = {
+        _tags: %w[ruby xml soap],
+        _scores: [10, 20, 30],
+        _code: 'ABC',
+        _status: 'active',
+        title: 'Test Event'
+      }
+
+      result = roundtrip(operation, hash)
+      resp = result[:GetEventResponse]
+
+      expect(resp[:_tags]).to eq %w[ruby xml soap]
+      expect(resp[:_scores]).to eq [10, 20, 30]
+      expect(resp[:_code]).to eq 'ABC'
+      expect(resp[:_status]).to eq 'active'
     end
   end
 

@@ -129,11 +129,7 @@ module WSDL
       end
 
       def convert_simple_element(xml_node, schema_element)
-        if schema_element.list?
-          xml_node.text.split.map { |item| @coercer.coerce(item, schema_element.base_type) }
-        else
-          @coercer.coerce(xml_node.text, schema_element.base_type)
-        end
+        coerce_value(xml_node.text, schema_element)
       end
 
       def convert_complex_element(xml_node, schema_element)
@@ -148,7 +144,24 @@ module WSDL
           xml_attr = xml_node.attribute(schema_attr.name)
           next unless xml_attr
 
-          memo[:"_#{schema_attr.name}"] = @coercer.coerce(xml_attr.value, schema_attr.base_type)
+          memo[:"_#{schema_attr.name}"] = coerce_value(xml_attr.value, schema_attr)
+        end
+      end
+
+      # Coerces a text value using schema type information.
+      #
+      # For list types, splits on whitespace and coerces each item individually.
+      # Works with both Element and Attribute schema objects (duck-typed via
+      # list? and base_type).
+      #
+      # @param text [String] the XML text value
+      # @param schema [Element, Attribute] the schema definition with type info
+      # @return [Object, Array] the coerced value
+      def coerce_value(text, schema)
+        if schema.list?
+          text.split.map { |item| @coercer.coerce(item, schema.base_type) }
+        else
+          @coercer.coerce(text, schema.base_type)
         end
       end
 

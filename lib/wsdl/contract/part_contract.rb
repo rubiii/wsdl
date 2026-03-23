@@ -28,20 +28,20 @@ module WSDL
       # @return [Array<Hash{Symbol => Object}>]
       def paths
         @elements.flat_map(&:to_a).map do |path, data|
-          result = {
+          {
             path: path,
+            kind: data[:kind],
             namespace: data[:namespace],
             form: data[:form],
             singular: data[:singular],
             min_occurs: data[:min_occurs],
             max_occurs: data[:max_occurs],
             type: data[:type],
+            list: data[:list],
             recursive_type: data[:recursive_type],
             attributes: data[:attributes],
-            wildcard: data[:any_content] ? true : false
-          }
-          result[:list] = true if data[:list]
-          result.compact
+            wildcard: data[:any_content]
+          }.compact
         end
       end
 
@@ -65,9 +65,11 @@ module WSDL
 
       private
 
+      # rubocop:disable Metrics/AbcSize -- straightforward property extraction
       def element_tree(element)
-        {
+        result = {
           name: element.name,
+          kind: element.kind,
           namespace: element.namespace,
           form: element.form,
           min_occurs: element.min_occurs,
@@ -76,19 +78,14 @@ module WSDL
           nillable: element.nillable?,
           singular: element.singular?,
           type: element.base_type,
-          wildcard: element.any_content?,
-          attributes: element.attributes.map { |attr| attribute_tree(attr) },
+          attributes: element.attributes.map(&:to_h),
           children: element.children.map { |child| element_tree(child) }
-        }.compact
-      end
-
-      def attribute_tree(attribute)
-        {
-          name: attribute.name,
-          type: attribute.base_type,
-          required: !attribute.optional?
         }
+        result[:list] = element.list? if element.simple_type?
+        result[:wildcard] = element.any_content? if element.complex_type?
+        result.compact
       end
+      # rubocop:enable Metrics/AbcSize
     end
   end
 end

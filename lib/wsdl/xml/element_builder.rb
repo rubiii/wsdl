@@ -167,38 +167,38 @@ module WSDL
         end
       end
 
-      # Applies type information to an attribute.
-      #
-      # @param attribute [Attribute] the attribute to configure
-      # @param type [Schema::Node, String] the type information
-      # @return [void]
-      def handle_simple_type(attribute, type)
-        case type
-        when Schema::Node
-          attribute.base_type = type.restriction_base if type.kind == :simpleType
-        when String
-          attribute.base_type = type
-        end
-      end
-
-      # Applies simple type information to an element.
+      # Applies simple type information to an element or attribute.
       #
       # Handles three derivation methods:
       # - Restriction: Uses the base type directly
-      # - List: Sets base_type to the itemType and marks element as a list
+      # - List: Sets base_type to the itemType and marks as a list
       # - Union: Uses the first member type as the base type
       #
-      # @param element [Element] the element to configure
+      # @param target [Element, Attribute] the element or attribute to configure
       # @param type [Schema::Node] the simpleType node
       # @return [void]
-      def apply_simple_type(element, type)
+      def apply_simple_type(target, type)
         if (item_type = type.list_item_type)
-          element.base_type = item_type
-          element.list = true
+          target.base_type = item_type
+          target.list = true
         elsif (member_types = type.union_member_types)
-          element.base_type = member_types.split.first
+          target.base_type = member_types.split.first
         else
-          element.base_type = type.restriction_base
+          target.base_type = type.restriction_base
+        end
+      end
+
+      # Applies type information to an attribute.
+      #
+      # @param attribute [Attribute] the attribute to configure
+      # @param type [Schema::Node, String, nil] the type information
+      # @return [void]
+      def apply_attribute_type(attribute, type)
+        case type
+        when Schema::Node
+          apply_simple_type(attribute, type) if type.kind == :simpleType
+        when String
+          attribute.base_type = type
         end
       end
 
@@ -216,7 +216,7 @@ module WSDL
           end
 
           attr_type = find_type_for_element(schema_attr)
-          handle_simple_type(attr, attr_type)
+          apply_attribute_type(attr, attr_type)
 
           attr.name = schema_attr.name
           attr.use = schema_attr.use

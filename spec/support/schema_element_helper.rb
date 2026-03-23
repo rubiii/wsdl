@@ -22,14 +22,15 @@ module SchemaElementHelper
   # @param type [String, nil] the XSD type (e.g., 'xsd:string', 'xsd:int')
   # @param singular [Boolean] whether maxOccurs is 1 (true) or > 1 (false)
   # @param children [Array] child elements for complex types
+  # @param attributes [Array<Object>] attribute definitions
   # @param nillable [Boolean] whether the element is nillable
   # @param namespace [String, nil] namespace URI of the element
   # @param form [String] element form ('qualified' or 'unqualified')
+  # @param list [Boolean] whether this is an xs:list-derived type
   # @return [RSpec::Mocks::Double] a mock WSDL::XML::Element
   # rubocop:disable Metrics/ParameterLists
-  # @param [Array<Object>] attributes
   def schema_element(name, type: nil, singular: true, children: [], attributes: [],
-                     nillable: false, namespace: nil, form: 'qualified')
+                     nillable: false, namespace: nil, form: 'qualified', list: false)
     element = instance_double(
       WSDL::XML::Element,
       name: name,
@@ -41,7 +42,7 @@ module SchemaElementHelper
       form: form
     )
 
-    allow(element).to receive(:list?).and_return(false)
+    allow(element).to receive(:list?).and_return(list)
 
     if type
       allow(element).to receive_messages(simple_type?: true, complex_type?: false, base_type: type)
@@ -60,14 +61,16 @@ module SchemaElementHelper
   # @param name [String] the attribute name
   # @param type [String] the XSD type (e.g., 'xsd:string', 'xsd:int')
   # @param use [String] 'required' or 'optional'
+  # @param list [Boolean] whether this is an xs:list-derived type
   # @return [RSpec::Mocks::Double] a mock WSDL::XML::Attribute
-  def schema_attribute(name, type: 'xsd:string', use: 'required')
+  def schema_attribute(name, type: 'xsd:string', use: 'required', list: false)
     instance_double(
       WSDL::XML::Attribute,
       name: name,
       base_type: type,
       use: use,
-      optional?: use == 'optional'
+      optional?: use == 'optional',
+      list?: list
     )
   end
 end

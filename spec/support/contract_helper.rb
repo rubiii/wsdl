@@ -17,10 +17,10 @@ module SpecSupport
     def contract_paths(part_contract)
       part_contract.paths.map do |entry|
         path = entry.fetch(:path)
-        data = entry.except(:path, :min_occurs, :max_occurs)
+        data = entry.except(:path, :kind, :min_occurs, :max_occurs)
         data[:namespace] = nil unless data.key?(:namespace)
         data[:any_content] = true if data.delete(:wildcard)
-        data.delete(:attributes) if data[:attributes] && data[:attributes].empty?
+        data.delete(:list) if data[:list] == false
         [path, data]
       end
     end
