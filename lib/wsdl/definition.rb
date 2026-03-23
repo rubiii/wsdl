@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'wsdl/definition/element_hash'
+require 'wsdl/definition/operation_proxy'
 
 module WSDL
   # Abstract representation of a parsed WSDL service.
