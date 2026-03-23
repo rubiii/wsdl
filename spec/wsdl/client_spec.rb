@@ -498,9 +498,9 @@ RSpec.describe WSDL::Client do
         client = described_class.new(f.path)
         operation = client.operation('S', 'P', 'Op')
 
-        expect(operation.contract.response.body.elements).to eq([])
-        expect(operation.contract.response.header.elements).to eq([])
-        expect(operation.contract.request.body.elements).not_to be_empty
+        expect(operation.contract.response.body.paths).to eq([])
+        expect(operation.contract.response.header.paths).to eq([])
+        expect(operation.contract.request.body.paths).not_to be_empty
         expect(operation.output_style).to be_nil
       end
     end

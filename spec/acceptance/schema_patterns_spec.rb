@@ -88,22 +88,24 @@ RSpec.describe 'Schema pattern coverage' do
     let(:operation) { client.operation(:GetEvent) }
 
     it 'sets list flag and itemType on list-derived attributes' do
-      elements = operation.contract.response.body.elements
-      tags = elements.first.attributes.find { |a| a.name == 'tags' }
-      scores = elements.first.attributes.find { |a| a.name == 'scores' }
+      paths = operation.contract.response.body.paths
+      root = paths.find { |p| p[:path].size == 1 }
+      tags = root[:attributes].find { |a| a[:name] == 'tags' }
+      scores = root[:attributes].find { |a| a[:name] == 'scores' }
 
-      expect(tags.list?).to be true
-      expect(tags.base_type).to eq 'xsd:string'
-      expect(scores.list?).to be true
-      expect(scores.base_type).to eq 'xsd:int'
+      expect(tags[:list]).to be true
+      expect(tags[:type]).to eq 'xsd:string'
+      expect(scores[:list]).to be true
+      expect(scores[:type]).to eq 'xsd:int'
     end
 
     it 'uses first memberType for union-derived attributes' do
-      elements = operation.contract.response.body.elements
-      code = elements.first.attributes.find { |a| a.name == 'code' }
+      paths = operation.contract.response.body.paths
+      root = paths.find { |p| p[:path].size == 1 }
+      code = root[:attributes].find { |a| a[:name] == 'code' }
 
-      expect(code.list?).to be false
-      expect(code.base_type).to eq 'xsd:string'
+      expect(code[:list]).to be false
+      expect(code[:type]).to eq 'xsd:string'
     end
 
     it 'round-trips list attributes with whitespace splitting and type coercion' do
@@ -167,10 +169,10 @@ RSpec.describe 'Schema pattern coverage' do
     let(:operation) { client.operation(:GetMeasurement) }
 
     it 'uses first member type as base_type' do
-      elements = operation.contract.response.body.elements
-      value_el = elements.first.children.find { |c| c.name == 'value' }
+      paths = operation.contract.response.body.paths
+      value = paths.find { |p| p[:path].last == 'value' }
 
-      expect(value_el.base_type).to eq 'xsd:string'
+      expect(value[:type]).to eq 'xsd:string'
     end
 
     it 'round-trips response data' do
@@ -188,11 +190,11 @@ RSpec.describe 'Schema pattern coverage' do
     let(:operation) { client.operation(:GetTags) }
 
     it 'marks list elements with list flag' do
-      elements = operation.contract.response.body.elements
-      tags = elements.first.children.find { |c| c.name == 'tags' }
+      paths = operation.contract.response.body.paths
+      tags = paths.find { |p| p[:path].last == 'tags' }
 
-      expect(tags.list?).to be true
-      expect(tags.base_type).to eq 'xsd:string'
+      expect(tags[:list]).to be true
+      expect(tags[:type]).to eq 'xsd:string'
     end
 
     it 'round-trips string list values' do

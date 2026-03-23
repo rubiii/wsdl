@@ -14,9 +14,7 @@ module WSDL
 
       # Returns the frozen collection of elements for this part.
       #
-      # The array itself is frozen; individual elements should be treated as
-      # read-only introspection objects.
-      #
+      # @api private
       # @return [Array<WSDL::XML::Element>]
       attr_reader :elements
 
