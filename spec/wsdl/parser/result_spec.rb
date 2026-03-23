@@ -158,6 +158,73 @@ RSpec.describe WSDL::Parser::Result do
     end
   end
 
+  describe '#provenance' do
+    it 'records resolved sources with SHA-256 digests' do
+      provenance = parser_result.provenance
+
+      expect(provenance).not_to be_empty
+      expect(provenance).to all(include(status: :resolved))
+      expect(provenance.first).to include(
+        location: a_kind_of(String),
+        status: :resolved,
+        digest: a_string_matching(/\A[a-f0-9]{64}\z/),
+        error: nil
+      )
+    end
+
+    it 'is frozen' do
+      expect(parser_result.provenance).to be_frozen
+    end
+
+    it 'records multiple sources for WSDLs with imports' do
+      wsdl_path = fixture('wsdl/travelport/system_v32_0/System')
+      sandbox_paths = [File.dirname(fixture('wsdl/travelport/manifest'))]
+
+      result = described_class.parse(wsdl_path, http_mock, sandbox_paths:)
+      locations = result.provenance.map { |s| s[:location] }
+
+      expect(locations.size).to be > 1
+      expect(locations).to all(be_a(String))
+      expect(result.provenance).to all(include(status: :resolved))
+    end
+
+    it 'records failed sources in lenient mode' do
+      result = described_class.parse(
+        fixture('wsdl/juniper'), http_mock, strictness: WSDL::Strictness.off
+      )
+
+      failed = result.provenance.select { |s| s[:status] == :failed }
+      expect(failed).not_to be_empty
+      expect(failed.first).to include(
+        status: :failed,
+        digest: nil,
+        error: a_kind_of(String)
+      )
+    end
+
+    it 'produces stable digests for the same content' do
+      result_a = described_class.parse(fixture('wsdl/authentication'), http_mock)
+      result_b = described_class.parse(fixture('wsdl/authentication'), http_mock)
+
+      digests_a = result_a.provenance.map { |s| s[:digest] }
+      digests_b = result_b.provenance.map { |s| s[:digest] }
+
+      expect(digests_a).to eq(digests_b)
+    end
+
+    it 'defaults to empty when not provided' do
+      result = described_class.new(
+        documents: WSDL::Parser::DocumentCollection.new,
+        schemas: WSDL::Schema::Collection.new,
+        limits: WSDL.limits,
+        strictness: WSDL::Strictness.on,
+        schema_import_errors: []
+      )
+
+      expect(result.provenance).to eq([])
+    end
+  end
+
   describe 'resource limit enforcement' do
     context 'with max_schemas limit' do
       it 'raises ResourceLimitError when schema count exceeds limit' do

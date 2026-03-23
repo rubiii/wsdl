@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require 'digest'
 require 'timeout'
 require 'uri'
 require 'wsdl/xml/parser'
@@ -50,12 +51,24 @@ module WSDL
         @strictness = parse_options.strictness
         @schema_count = 0
         @schema_import_errors = []
+        @provenance = []
       end
 
       # Recoverable schema import errors captured during import.
       #
       # @return [Array<SchemaImportError>]
       attr_reader :schema_import_errors
+
+      # Source provenance collected during import.
+      #
+      # Each entry records the location, resolution status, content digest,
+      # and any error for a fetched document. This provides transparency
+      # into what was resolved and enables fingerprint computation.
+      #
+      # @return [Array<Hash{Symbol => Object}>] provenance entries with
+      #   +:location+, +:status+ (:resolved or :failed), +:digest+ (SHA-256, or nil),
+      #   and +:error+ (String, or nil)
+      attr_reader :provenance
 
       # Imports a WSDL document and all its dependencies.
       #
@@ -98,6 +111,7 @@ module WSDL
 
         xml = @resolver.resolve(location, base: base)
         @import_locations << resolved_location
+        record_resolved_source(resolved_location, xml)
 
         parsed = XML::Parser.parse_with_logging(xml, strict: false)
         document = Document.new(parsed, @schemas)
@@ -199,6 +213,7 @@ module WSDL
 
         xml = load_schema_xml(schema_location, base, action)
         @import_locations << resolved_location
+        record_resolved_source(resolved_location, xml)
 
         parsed = parse_schema_xml(xml, schema_location, base, action)
         document = Document.new(parsed, @schemas)
@@ -256,6 +271,7 @@ module WSDL
       # @raise [SchemaImportError] when strict schema mode is enabled
       def handle_schema_import_error(error)
         @schema_import_errors << error
+        record_failed_source(error)
 
         raise error if @strictness.schema_imports
 
@@ -278,6 +294,33 @@ module WSDL
           # For imports, add as separate schemas
           @schemas.push(new_schemas)
         end
+      end
+
+      # Records a successfully resolved source in the provenance log.
+      #
+      # @param location [String] the resolved absolute location
+      # @param xml [String] the raw XML content
+      # @return [void]
+      def record_resolved_source(location, xml)
+        @provenance << {
+          location: location,
+          status: :resolved,
+          digest: Digest::SHA256.hexdigest(xml),
+          error: nil
+        }
+      end
+
+      # Records a failed source in the provenance log.
+      #
+      # @param error [SchemaImportError] the import error
+      # @return [void]
+      def record_failed_source(error)
+        @provenance << {
+          location: error.location,
+          status: :failed,
+          digest: nil,
+          error: error.message
+        }
       end
 
       # Tracks schema count and validates against limit.

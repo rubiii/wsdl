@@ -39,6 +39,7 @@ module WSDL
       #   When omitted, {ParseOptions.default} is used.
       # @return [Result] the parsed result
       #
+      # rubocop:disable Metrics/AbcSize -- straightforward factory: validate, import, construct
       def self.parse(wsdl, http, parse_options = nil, **)
         parse_options ||= ParseOptions.default(**)
 
@@ -56,9 +57,11 @@ module WSDL
           schemas:,
           limits: parse_options.limits,
           strictness: parse_options.strictness,
-          schema_import_errors: importer.schema_import_errors.freeze
+          schema_import_errors: importer.schema_import_errors.freeze,
+          provenance: importer.provenance.freeze
         )
       end
+      # rubocop:enable Metrics/AbcSize
 
       # Creates a new Result with pre-computed data.
       #
@@ -70,14 +73,18 @@ module WSDL
       # @param limits [Limits] the resource limits used during parsing
       # @param strictness [Strictness] the strictness configuration
       # @param schema_import_errors [Array<SchemaImportError>] recoverable errors from import
+      # @param provenance [Array<Hash>] source provenance from import (location, status, digest, error)
       #
-      def initialize(documents:, schemas:, limits:, strictness:, schema_import_errors:)
+      # rubocop:disable Metrics/ParameterLists -- provenance is an additive field with a default
+      def initialize(documents:, schemas:, limits:, strictness:, schema_import_errors:, provenance: [])
         @documents = documents
         @schemas = schemas
         @limits = limits
         @strictness = strictness
         @schema_import_errors = schema_import_errors
+        @provenance = provenance
       end
+      # rubocop:enable Metrics/ParameterLists
 
       # The collection of parsed WSDL documents.
       #
@@ -103,6 +110,14 @@ module WSDL
       #
       # @return [Array<SchemaImportError>]
       attr_reader :schema_import_errors
+
+      # Source provenance collected during import.
+      #
+      # Each entry records the location, resolution status, content digest,
+      # and any error for a fetched document.
+      #
+      # @return [Array<Hash{Symbol => Object}>] provenance entries
+      attr_reader :provenance
 
       # Returns the name of the primary service.
       #
