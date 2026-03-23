@@ -163,7 +163,7 @@ module WSDL
           element.any_content = children_and_wildcards[:has_any]
           element.attributes = element_attributes(type)
         when :simpleType
-          element.base_type = type.restriction_base
+          apply_simple_type(element, type)
         end
       end
 
@@ -181,26 +181,38 @@ module WSDL
         end
       end
 
+      # Applies simple type information to an element.
+      #
+      # Handles three derivation methods:
+      # - Restriction: Uses the base type directly
+      # - List: Sets base_type to the itemType and marks element as a list
+      # - Union: Uses the first member type as the base type
+      #
+      # @param element [Element] the element to configure
+      # @param type [Schema::Node] the simpleType node
+      # @return [void]
+      def apply_simple_type(element, type)
+        if (item_type = type.list_item_type)
+          element.base_type = item_type
+          element.list = true
+        elsif (member_types = type.union_member_types)
+          element.base_type = member_types.split.first
+        else
+          element.base_type = type.restriction_base
+        end
+      end
+
       # Builds Attribute objects from a complex type's attribute definitions.
       #
       # @param type [Schema::Node] the complex type to extract attributes from
       # @return [Array<Attribute>] the built attribute objects
-      # rubocop:disable Metrics/AbcSize -- linear attribute construction logic
       def element_attributes(type)
-        type.attributes([], limits: @limits).filter_map { |schema_attr|
+        type.attributes([], limits: @limits, strict: @strictness.schema_references).filter_map { |schema_attr|
           attr = Attribute.new
 
           if schema_attr.ref
-            begin
-              schema_attr = find_attribute(
-                schema_attr.ref,
-                schema_attr.namespaces,
-                context: "attribute@ref #{schema_attr.ref.inspect} on type #{type.name.inspect}"
-              )
-            rescue UnresolvedReferenceError => e
-              logger.debug("Unable to resolve attribute@ref #{schema_attr.ref.inspect}: #{e.message}")
-              next
-            end
+            schema_attr = find_attribute(schema_attr.ref, schema_attr.namespaces)
+            next unless schema_attr
           end
 
           attr_type = find_type_for_element(schema_attr)
@@ -212,7 +224,6 @@ module WSDL
           attr.freeze
         }
       end
-      # rubocop:enable Metrics/AbcSize
 
       # Builds child Element objects from a complex type's element definitions.
       #
@@ -274,18 +285,13 @@ module WSDL
 
       # Resolves child elements from a schema type node.
       #
-      # In relaxed mode, catches UnresolvedReferenceError from Schema::Node
-      # type resolution and returns an empty array.
+      # Passes the strictness setting to Schema::Node so it can use
+      # find (returns nil) vs fetch (raises) for reference resolution.
       #
       # @param type [Schema::Node] the complex type node
       # @return [Array<Schema::Node>] the child elements
       def resolve_schema_elements(type)
-        type.elements([], limits: @limits)
-      rescue UnresolvedReferenceError => e
-        raise if @strictness.schema_references
-
-        logger.debug("Skipping children for unresolved type: #{e.message}")
-        []
+        type.elements([], limits: @limits, strict: @strictness.schema_references)
       end
 
       # Checks if an element's type creates a recursive definition.
@@ -389,14 +395,16 @@ module WSDL
 
       # Finds a global attribute by its qualified name.
       #
+      # Always uses find (returns nil) rather than fetch (raises) because
+      # attribute refs are best-effort — a missing attribute doesn't break
+      # the message structure, only omits metadata.
+      #
       # @param qname [String] the qualified attribute name (prefix:localName)
       # @param namespaces [Hash] namespace declarations in scope
-      # @param context [String, nil] additional context for lookup failures
-      # @return [Schema::Node] the resolved attribute
-      def find_attribute(qname, namespaces, context: nil)
+      # @return [Schema::Node, nil] the resolved attribute, or nil if not found
+      def find_attribute(qname, namespaces)
         resolved = QName.parse(qname, namespaces: namespaces)
-        @schemas.fetch_attribute(resolved.namespace, resolved.local,
-                                 context: context || "attribute reference #{qname.inspect}")
+        @schemas.find_attribute(resolved.namespace, resolved.local)
       end
 
       # Validates nesting depth against limits.

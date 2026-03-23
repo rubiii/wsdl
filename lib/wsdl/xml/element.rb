@@ -35,6 +35,7 @@ module WSDL
         @max_occurs  = '1'
         @any_content = false
         @nillable    = false
+        @list        = false
       end
 
       # @!attribute [rw] parent
@@ -81,6 +82,12 @@ module WSDL
       #   The base type name for simple type elements (e.g., 'xsd:string').
       #   @return [String, nil] the base type name, or nil for complex types
       attr_accessor :base_type
+
+      # @!attribute [rw] list
+      #   Whether this element is an xs:list type (whitespace-separated values).
+      #   @return [Boolean] true for list-derived simple types
+      attr_accessor :list
+      alias list? list
 
       # @!attribute [rw] singular
       #   Whether this element appears at most once (singular) or can repeat (array).
@@ -222,6 +229,7 @@ module WSDL
 
         elsif simple_type?
           data[:type] = base_type
+          data[:list] = true if list?
           memo << [new_stack, data]
 
         elsif complex_type?

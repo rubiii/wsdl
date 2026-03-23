@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://schemas.xmlsoap.org/wsdl/"
+             xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+             xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
+             xmlns:tns="http://example.com/xsgroup"
+             targetNamespace="http://example.com/xsgroup"
+             name="ContactService">
+  <types>
+    <xsd:schema targetNamespace="http://example.com/xsgroup"
+                elementFormDefault="qualified">
+      <xsd:group name="AddressGroup">
+        <xsd:sequence>
+          <xsd:element name="street" type="xsd:string"/>
+          <xsd:element name="city" type="xsd:string"/>
+          <xsd:element name="zip" type="xsd:string"/>
+        </xsd:sequence>
+      </xsd:group>
+
+      <xsd:element name="GetContactRequest">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element name="id" type="xsd:int"/>
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+
+      <xsd:element name="GetContactResponse">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element name="name" type="xsd:string"/>
+            <xsd:element name="email" type="xsd:string"/>
+            <xsd:group ref="tns:AddressGroup"/>
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+    </xsd:schema>
+  </types>
+
+  <message name="GetContactInput">
+    <part name="parameters" element="tns:GetContactRequest"/>
+  </message>
+  <message name="GetContactOutput">
+    <part name="parameters" element="tns:GetContactResponse"/>
+  </message>
+
+  <portType name="ContactPortType">
+    <operation name="GetContact">
+      <input message="tns:GetContactInput"/>
+      <output message="tns:GetContactOutput"/>
+    </operation>
+  </portType>
+
+  <binding name="ContactBinding" type="tns:ContactPortType">
+    <soap:binding style="document" transport="http://schemas.xmlsoap.org/soap/http"/>
+    <operation name="GetContact">
+      <soap:operation soapAction="GetContact"/>
+      <input><soap:body use="literal"/></input>
+      <output><soap:body use="literal"/></output>
+    </operation>
+  </binding>
+
+  <service name="ContactService">
+    <port name="ContactPort" binding="tns:ContactBinding">
+      <soap:address location="http://example.com/contact"/>
+    </port>
+  </service>
+</definitions>

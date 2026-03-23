@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://schemas.xmlsoap.org/wsdl/"
+             xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+             xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
+             xmlns:tns="http://example.com/xslist"
+             targetNamespace="http://example.com/xslist"
+             name="TagService">
+  <types>
+    <xsd:schema targetNamespace="http://example.com/xslist"
+                elementFormDefault="qualified">
+      <xsd:simpleType name="StringList">
+        <xsd:list itemType="xsd:string"/>
+      </xsd:simpleType>
+
+      <xsd:simpleType name="IntList">
+        <xsd:list itemType="xsd:int"/>
+      </xsd:simpleType>
+
+      <xsd:element name="GetTagsRequest">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element name="articleId" type="xsd:int"/>
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+
+      <xsd:element name="GetTagsResponse">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element name="tags" type="tns:StringList"/>
+            <xsd:element name="scores" type="tns:IntList"/>
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+    </xsd:schema>
+  </types>
+
+  <message name="GetTagsInput">
+    <part name="parameters" element="tns:GetTagsRequest"/>
+  </message>
+  <message name="GetTagsOutput">
+    <part name="parameters" element="tns:GetTagsResponse"/>
+  </message>
+
+  <portType name="TagPortType">
+    <operation name="GetTags">
+      <input message="tns:GetTagsInput"/>
+      <output message="tns:GetTagsOutput"/>
+    </operation>
+  </portType>
+
+  <binding name="TagBinding" type="tns:TagPortType">
+    <soap:binding style="document" transport="http://schemas.xmlsoap.org/soap/http"/>
+    <operation name="GetTags">
+      <soap:operation soapAction="GetTags"/>
+      <input><soap:body use="literal"/></input>
+      <output><soap:body use="literal"/></output>
+    </operation>
+  </binding>
+
+  <service name="TagService">
+    <port name="TagPort" binding="tns:TagBinding">
+      <soap:address location="http://example.com/tags"/>
+    </port>
+  </service>
+</definitions>

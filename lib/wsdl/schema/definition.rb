@@ -34,6 +34,7 @@ module WSDL
         @simple_types = {}
         @attributes = {}
         @attribute_groups = {}
+        @groups = {}
         @imports = {}
         @includes = []
 
@@ -64,6 +65,9 @@ module WSDL
       # @return [Hash{String => Node}] attribute group definitions
       attr_reader :attribute_groups
 
+      # @return [Hash{String => Node}] model group definitions
+      attr_reader :groups
+
       # @return [Hash{String => String}] namespace to schemaLocation mappings
       attr_reader :imports
 
@@ -87,6 +91,7 @@ module WSDL
         merge_with_conflict_detection(@simple_types, other.simple_types, :simple_type)
         merge_with_conflict_detection(@attributes, other.attributes, :attribute)
         merge_with_conflict_detection(@attribute_groups, other.attribute_groups, :attribute_group)
+        merge_with_conflict_detection(@groups, other.groups, :group)
         @imports.merge!(other.imports)
         @includes.concat(other.includes)
       end
@@ -130,6 +135,7 @@ module WSDL
           when 'simpleType'     then store(@simple_types, child)
           when 'attribute'      then store(@attributes, child)
           when 'attributeGroup' then store(@attribute_groups, child)
+          when 'group'          then store(@groups, child)
           when 'import'         then parse_import(child)
           when 'include'        then parse_include(child)
           end

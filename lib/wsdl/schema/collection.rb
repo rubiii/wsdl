@@ -207,6 +207,36 @@ module WSDL
         )
       end
 
+      # Finds a model group by namespace and name.
+      #
+      # @param namespace [String] the target namespace URI
+      # @param name [String] the local name of the group
+      # @return [Node, nil] the group node, or nil if not found
+      def find_group(namespace, name)
+        definition = find_by_namespace(namespace)
+        return nil unless definition
+
+        definition.groups[name]
+      end
+
+      # Fetches a model group by namespace and name.
+      #
+      # Unlike {#find_group}, this raises when the group itself is missing.
+      #
+      # @param namespace [String] the target namespace URI
+      # @param name [String] the local name of the group
+      # @param context [String, nil] additional context for error messages
+      # @return [Node] the group node
+      # @raise [UnresolvedReferenceError] if schema or group cannot be resolved
+      def fetch_group(namespace, name, context: nil)
+        definition = fetch_schema_definition!(:group, namespace, name, context:)
+        group = definition.groups[name]
+        return group if group
+
+        raise_missing_component!(component: :group, namespace:, name:,
+                                 available_components: definition.groups.keys, context:)
+      end
+
       # Finds an attribute group by namespace and name.
       #
       # @param namespace [String] the target namespace URI

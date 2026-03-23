@@ -120,11 +120,19 @@ module WSDL
         return nil if xsi_nil?(xml_node)
 
         if schema_element.simple_type?
-          @coercer.coerce(xml_node.text, schema_element.base_type)
+          convert_simple_element(xml_node, schema_element)
         elsif schema_element.complex_type?
           convert_complex_element(xml_node, schema_element)
         else
           xml_node.text
+        end
+      end
+
+      def convert_simple_element(xml_node, schema_element)
+        if schema_element.list?
+          xml_node.text.split.map { |item| @coercer.coerce(item, schema_element.base_type) }
+        else
+          @coercer.coerce(xml_node.text, schema_element.base_type)
         end
       end
 

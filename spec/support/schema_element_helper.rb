@@ -41,6 +41,8 @@ module SchemaElementHelper
       form: form
     )
 
+    allow(element).to receive(:list?).and_return(false)
+
     if type
       allow(element).to receive_messages(simple_type?: true, complex_type?: false, base_type: type)
     elsif children.any? || attributes.any?

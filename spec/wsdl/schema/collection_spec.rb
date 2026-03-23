@@ -106,6 +106,7 @@ RSpec.describe WSDL::Schema::Collection do
     let(:simple_type_node) { instance_double(WSDL::Schema::Node, kind: :simpleType, name: 'StatusType') }
     let(:attribute_node) { instance_double(WSDL::Schema::Node, kind: :attribute, name: 'id') }
     let(:attribute_group_node) { instance_double(WSDL::Schema::Node, kind: :attributeGroup, name: 'CommonAttrs') }
+    let(:group_node) { instance_double(WSDL::Schema::Node, kind: :group, name: 'AddressGroup') }
 
     let(:definition) do
       instance_double(
@@ -115,7 +116,8 @@ RSpec.describe WSDL::Schema::Collection do
         complex_types: { 'UserType' => complex_type_node },
         simple_types: { 'StatusType' => simple_type_node },
         attributes: { 'id' => attribute_node },
-        attribute_groups: { 'CommonAttrs' => attribute_group_node }
+        attribute_groups: { 'CommonAttrs' => attribute_group_node },
+        groups: { 'AddressGroup' => group_node }
       )
     end
 
@@ -330,6 +332,38 @@ RSpec.describe WSDL::Schema::Collection do
         }
       end
     end
+
+    describe '#find_group' do
+      it 'returns the group when found' do
+        result = collection.find_group('http://example.com/test', 'AddressGroup')
+        expect(result).to eq(group_node)
+      end
+
+      it 'returns nil when group not found in schema' do
+        result = collection.find_group('http://example.com/test', 'NonExistent')
+        expect(result).to be_nil
+      end
+
+      it 'returns nil when namespace not found' do
+        expect(collection.find_group('http://unknown.com', 'AddressGroup')).to be_nil
+      end
+    end
+
+    describe '#fetch_group' do
+      it 'returns the group when found' do
+        result = collection.fetch_group('http://example.com/test', 'AddressGroup')
+        expect(result).to eq(group_node)
+      end
+
+      it 'raises typed error when group is missing in schema' do
+        expect {
+          collection.fetch_group('http://example.com/test', 'NonExistent')
+        }.to raise_error(WSDL::UnresolvedReferenceError) { |error|
+          expect(error.reference_type).to eq(:group)
+          expect(error.reference_name).to eq('NonExistent')
+        }
+      end
+    end
   end
 
   describe 'missing namespace behavior' do
@@ -470,6 +504,25 @@ RSpec.describe WSDL::Schema::Definition do
       expect(definition.attribute_groups.keys).to contain_exactly('CommonAttrs')
       expect(definition.attribute_groups['CommonAttrs']).to be_a(WSDL::Schema::Node)
       expect(definition.attribute_groups['CommonAttrs'].kind).to eq(:attributeGroup)
+    end
+  end
+
+  describe '#groups' do
+    it 'parses model group definitions' do
+      definition = new_definition('
+        <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+          <xs:group name="AddressGroup">
+            <xs:sequence>
+              <xs:element name="street" type="xs:string"/>
+              <xs:element name="city" type="xs:string"/>
+            </xs:sequence>
+          </xs:group>
+        </xs:schema>
+      ')
+
+      expect(definition.groups.keys).to contain_exactly('AddressGroup')
+      expect(definition.groups['AddressGroup']).to be_a(WSDL::Schema::Node)
+      expect(definition.groups['AddressGroup'].kind).to eq(:group)
     end
   end
 

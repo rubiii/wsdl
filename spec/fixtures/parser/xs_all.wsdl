@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://schemas.xmlsoap.org/wsdl/"
+             xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+             xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
+             xmlns:tns="http://example.com/xsall"
+             targetNamespace="http://example.com/xsall"
+             name="AddressService">
+  <types>
+    <xsd:schema targetNamespace="http://example.com/xsall"
+                elementFormDefault="qualified">
+      <xsd:element name="GetAddressRequest">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element name="id" type="xsd:int"/>
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+
+      <xsd:element name="GetAddressResponse">
+        <xsd:complexType>
+          <xsd:all>
+            <xsd:element name="street" type="xsd:string"/>
+            <xsd:element name="city" type="xsd:string"/>
+            <xsd:element name="state" type="xsd:string" minOccurs="0"/>
+            <xsd:element name="zip" type="xsd:string"/>
+          </xsd:all>
+        </xsd:complexType>
+      </xsd:element>
+    </xsd:schema>
+  </types>
+
+  <message name="GetAddressInput">
+    <part name="parameters" element="tns:GetAddressRequest"/>
+  </message>
+  <message name="GetAddressOutput">
+    <part name="parameters" element="tns:GetAddressResponse"/>
+  </message>
+
+  <portType name="AddressPortType">
+    <operation name="GetAddress">
+      <input message="tns:GetAddressInput"/>
+      <output message="tns:GetAddressOutput"/>
+    </operation>
+  </portType>
+
+  <binding name="AddressBinding" type="tns:AddressPortType">
+    <soap:binding style="document" transport="http://schemas.xmlsoap.org/soap/http"/>
+    <operation name="GetAddress">
+      <soap:operation soapAction="GetAddress"/>
+      <input><soap:body use="literal"/></input>
+      <output><soap:body use="literal"/></output>
+    </operation>
+  </binding>
+
+  <service name="AddressService">
+    <port name="AddressPort" binding="tns:AddressBinding">
+      <soap:address location="http://example.com/address"/>
+    </port>
+  </service>
+</definitions>

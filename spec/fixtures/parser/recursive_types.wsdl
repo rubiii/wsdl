@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://schemas.xmlsoap.org/wsdl/"
+             xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+             xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
+             xmlns:tns="http://example.com/recursive"
+             targetNamespace="http://example.com/recursive"
+             name="RecursiveService">
+  <types>
+    <xsd:schema targetNamespace="http://example.com/recursive"
+                elementFormDefault="qualified">
+      <xsd:element name="GetTreeRequest">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element name="rootId" type="xsd:string"/>
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+
+      <xsd:element name="GetTreeResponse">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element name="node" type="tns:TreeNode"/>
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+
+      <xsd:complexType name="TreeNode">
+        <xsd:sequence>
+          <xsd:element name="id" type="xsd:string"/>
+          <xsd:element name="label" type="xsd:string"/>
+          <xsd:element name="children" type="tns:TreeNode" minOccurs="0" maxOccurs="unbounded"/>
+        </xsd:sequence>
+      </xsd:complexType>
+    </xsd:schema>
+  </types>
+
+  <message name="GetTreeInput">
+    <part name="parameters" element="tns:GetTreeRequest"/>
+  </message>
+  <message name="GetTreeOutput">
+    <part name="parameters" element="tns:GetTreeResponse"/>
+  </message>
+
+  <portType name="TreePortType">
+    <operation name="GetTree">
+      <input message="tns:GetTreeInput"/>
+      <output message="tns:GetTreeOutput"/>
+    </operation>
+  </portType>
+
+  <binding name="TreeBinding" type="tns:TreePortType">
+    <soap:binding style="document" transport="http://schemas.xmlsoap.org/soap/http"/>
+    <operation name="GetTree">
+      <soap:operation soapAction="GetTree"/>
+      <input><soap:body use="literal"/></input>
+      <output><soap:body use="literal"/></output>
+    </operation>
+  </binding>
+
+  <service name="TreeService">
+    <port name="TreePort" binding="tns:TreeBinding">
+      <soap:address location="http://example.com/tree"/>
+    </port>
+  </service>
+</definitions>

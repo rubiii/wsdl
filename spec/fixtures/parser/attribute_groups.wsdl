@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://schemas.xmlsoap.org/wsdl/"
+             xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+             xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
+             xmlns:tns="http://example.com/attrgroups"
+             targetNamespace="http://example.com/attrgroups"
+             name="AttrGroupService">
+  <types>
+    <xsd:schema targetNamespace="http://example.com/attrgroups"
+                elementFormDefault="qualified">
+      <xsd:attributeGroup name="AuditAttributes">
+        <xsd:attribute name="createdBy" type="xsd:string"/>
+        <xsd:attribute name="createdAt" type="xsd:dateTime"/>
+        <xsd:attribute name="modifiedBy" type="xsd:string"/>
+      </xsd:attributeGroup>
+
+      <xsd:element name="GetRecordRequest">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element name="id" type="xsd:int"/>
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+
+      <xsd:element name="GetRecordResponse">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element name="name" type="xsd:string"/>
+            <xsd:element name="value" type="xsd:string"/>
+          </xsd:sequence>
+          <xsd:attributeGroup ref="tns:AuditAttributes"/>
+        </xsd:complexType>
+      </xsd:element>
+    </xsd:schema>
+  </types>
+
+  <message name="GetRecordInput">
+    <part name="parameters" element="tns:GetRecordRequest"/>
+  </message>
+  <message name="GetRecordOutput">
+    <part name="parameters" element="tns:GetRecordResponse"/>
+  </message>
+
+  <portType name="RecordPortType">
+    <operation name="GetRecord">
+      <input message="tns:GetRecordInput"/>
+      <output message="tns:GetRecordOutput"/>
+    </operation>
+  </portType>
+
+  <binding name="RecordBinding" type="tns:RecordPortType">
+    <soap:binding style="document" transport="http://schemas.xmlsoap.org/soap/http"/>
+    <operation name="GetRecord">
+      <soap:operation soapAction="GetRecord"/>
+      <input><soap:body use="literal"/></input>
+      <output><soap:body use="literal"/></output>
+    </operation>
+  </binding>
+
+  <service name="RecordService">
+    <port name="RecordPort" binding="tns:RecordBinding">
+      <soap:address location="http://example.com/records"/>
+    </port>
+  </service>
+</definitions>

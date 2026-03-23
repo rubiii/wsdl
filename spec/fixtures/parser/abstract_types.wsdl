@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://schemas.xmlsoap.org/wsdl/"
+             xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+             xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
+             xmlns:tns="http://example.com/abstract"
+             targetNamespace="http://example.com/abstract"
+             name="ShapeService">
+  <types>
+    <xsd:schema targetNamespace="http://example.com/abstract"
+                elementFormDefault="qualified">
+      <xsd:complexType name="Shape" abstract="true">
+        <xsd:sequence>
+          <xsd:element name="color" type="xsd:string"/>
+          <xsd:element name="lineWidth" type="xsd:int"/>
+        </xsd:sequence>
+      </xsd:complexType>
+
+      <xsd:complexType name="Circle">
+        <xsd:complexContent>
+          <xsd:extension base="tns:Shape">
+            <xsd:sequence>
+              <xsd:element name="radius" type="xsd:double"/>
+            </xsd:sequence>
+          </xsd:extension>
+        </xsd:complexContent>
+      </xsd:complexType>
+
+      <xsd:complexType name="Rectangle">
+        <xsd:complexContent>
+          <xsd:extension base="tns:Shape">
+            <xsd:sequence>
+              <xsd:element name="width" type="xsd:double"/>
+              <xsd:element name="height" type="xsd:double"/>
+            </xsd:sequence>
+          </xsd:extension>
+        </xsd:complexContent>
+      </xsd:complexType>
+
+      <xsd:element name="GetShapeRequest">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element name="id" type="xsd:int"/>
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+
+      <xsd:element name="GetShapeResponse">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element name="circle" type="tns:Circle"/>
+            <xsd:element name="rectangle" type="tns:Rectangle"/>
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+    </xsd:schema>
+  </types>
+
+  <message name="GetShapeInput">
+    <part name="parameters" element="tns:GetShapeRequest"/>
+  </message>
+  <message name="GetShapeOutput">
+    <part name="parameters" element="tns:GetShapeResponse"/>
+  </message>
+
+  <portType name="ShapePortType">
+    <operation name="GetShape">
+      <input message="tns:GetShapeInput"/>
+      <output message="tns:GetShapeOutput"/>
+    </operation>
+  </portType>
+
+  <binding name="ShapeBinding" type="tns:ShapePortType">
+    <soap:binding style="document" transport="http://schemas.xmlsoap.org/soap/http"/>
+    <operation name="GetShape">
+      <soap:operation soapAction="GetShape"/>
+      <input><soap:body use="literal"/></input>
+      <output><soap:body use="literal"/></output>
+    </operation>
+  </binding>
+
+  <service name="ShapeService">
+    <port name="ShapePort" binding="tns:ShapeBinding">
+      <soap:address location="http://example.com/shape"/>
+    </port>
+  </service>
+</definitions>

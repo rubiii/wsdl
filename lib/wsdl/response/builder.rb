@@ -204,6 +204,7 @@ module WSDL
 
       def validate_cardinality(value, element, path)
         return unless element.singular? && value.is_a?(Array)
+        return if element.list?
 
         raise ResponseBuildError,
               "Singular element #{element.name.inspect} at #{path} received an Array. " \
@@ -321,7 +322,7 @@ module WSDL
           next unless content_hash.key?(child_key)
 
           child_value = content_hash[child_key]
-          items = child_value.is_a?(Array) ? child_value : [child_value]
+          items = child_value.is_a?(Array) && !child_element.list? ? child_value : [child_value]
 
           items.each do |item|
             parent.add_child(build_element(context[:doc], child_element, item,

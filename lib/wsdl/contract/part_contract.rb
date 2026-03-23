@@ -28,7 +28,7 @@ module WSDL
       # @return [Array<Hash{Symbol => Object}>]
       def paths
         @elements.flat_map(&:to_a).map do |path, data|
-          {
+          result = {
             path: path,
             namespace: data[:namespace],
             form: data[:form],
@@ -39,7 +39,9 @@ module WSDL
             recursive_type: data[:recursive_type],
             attributes: data[:attributes],
             wildcard: data[:any_content] ? true : false
-          }.compact
+          }
+          result[:list] = true if data[:list]
+          result.compact
         end
       end
 

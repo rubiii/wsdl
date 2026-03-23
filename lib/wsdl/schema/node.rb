@@ -26,7 +26,7 @@ module WSDL
     #     puts "Complex type with #{node.elements.count} elements"
     #   end
     #
-    class Node
+    class Node # rubocop:disable Metrics/ClassLength -- unified schema node needs methods for all XSD constructs
       # Node kinds that terminate element collection (contain no child elements).
       ELEMENT_TERMINATORS = Set[
         :attribute,
@@ -172,19 +172,23 @@ module WSDL
       #
       # @param memo [Array<Node>] accumulator for recursive traversal
       # @param limits [Limits, nil] resource limits for validation
+      # @param strict [Boolean] when true, raises on unresolved references;
+      #   when false, skips unresolvable refs and continues collecting
       # @return [Array<Node>] all element definitions found
       # @raise [ResourceLimitError] if element count exceeds max_elements_per_type
-      def elements(memo = [], limits: nil)
+      # @raise [UnresolvedReferenceError] if strict and a reference cannot be resolved
+      def elements(memo = [], limits: nil, strict: true)
         return memo if ELEMENT_TERMINATORS.include?(kind)
+        return resolve_group_ref(memo, limits:, strict:) if kind == :group && ref
 
-        include_base_type_elements(memo, limits:) if kind == :extension
+        include_base_type_elements(memo, limits:, strict:) if kind == :extension
 
         children.each do |child|
           if ELEMENT_KINDS.include?(child.kind)
             memo << child
             validate_element_count!(memo.size, limits)
           else
-            memo = child.elements(memo, limits:)
+            memo = child.elements(memo, limits:, strict:)
           end
         end
 
@@ -198,19 +202,22 @@ module WSDL
       #
       # @param memo [Array<Node>] accumulator for recursive traversal
       # @param limits [Limits, nil] resource limits for validation
+      # @param strict [Boolean] when true, raises on unresolved references;
+      #   when false, skips unresolvable refs and continues collecting
       # @return [Array<Node>] all attribute definitions found
       # @raise [ResourceLimitError] if attribute count exceeds max_attributes_per_element
-      def attributes(memo = [], limits: nil)
+      # @raise [UnresolvedReferenceError] if strict and a reference cannot be resolved
+      def attributes(memo = [], limits: nil, strict: true)
         return memo if ATTRIBUTE_TERMINATORS.include?(kind)
 
-        return resolve_attribute_group_ref(memo, limits:) if kind == :attributeGroup && ref
+        return resolve_attribute_group_ref(memo, limits:, strict:) if kind == :attributeGroup && ref
 
         children.each do |child|
           if ATTRIBUTE_KINDS.include?(child.kind)
             memo << child
             validate_attribute_count!(memo.size, limits)
           else
-            memo = child.attributes(memo, limits:)
+            memo = child.attributes(memo, limits:, strict:)
           end
         end
 
@@ -237,6 +244,22 @@ module WSDL
       def restriction_base
         restriction = children.find { |c| c.kind == :restriction }
         restriction&.base
+      end
+
+      # Returns the item type from a list derivation.
+      #
+      # @return [String, nil] the itemType attribute value
+      def list_item_type
+        list = children.find { |c| c.kind == :list }
+        list&.[]('itemType')
+      end
+
+      # Returns the member types from a union derivation.
+      #
+      # @return [String, nil] the memberTypes attribute value
+      def union_member_types
+        union = children.find { |c| c.kind == :union }
+        union&.[]('memberTypes')
       end
 
       # Returns a unique identifier for this type.
@@ -356,48 +379,92 @@ module WSDL
       #
       # @param memo [Array<Node>] accumulator for elements
       # @param limits [Limits, nil] resource limits for validation
+      # @param strict [Boolean] when true, raises on unresolved base type
       # @return [void]
-      def include_base_type_elements(memo, limits: nil)
+      def include_base_type_elements(memo, limits: nil, strict: true)
         return unless base
 
-        base_type = resolve_type(base)
-        base_type&.elements(memo, limits:)
+        base_type = resolve_type(base, strict:)
+        base_type&.elements(memo, limits:, strict:)
+      end
+
+      # Resolves model group reference and returns its elements.
+      #
+      # @param memo [Array<Node>] accumulator for elements
+      # @param limits [Limits, nil] resource limits for validation
+      # @param strict [Boolean] when true, raises on unresolved group
+      # @return [Array<Node>] elements from the referenced group
+      def resolve_group_ref(memo, limits: nil, strict: true)
+        group = resolve_group(ref, strict:)
+        group ? group.elements(memo, limits:, strict:) : memo
+      end
+
+      # Resolves a qualified model group name to a Node.
+      #
+      # @param qname [String] qualified name (prefix:localName)
+      # @param strict [Boolean] when true, raises if not found
+      # @return [Node, nil] the resolved group node
+      def resolve_group(qname, strict: true)
+        resolved = QName.parse(qname, namespaces: @namespaces, default_namespace: @context[:target_namespace])
+
+        if strict
+          @collection&.fetch_group(
+            resolved.namespace,
+            resolved.local,
+            context: "group reference #{qname.inspect} on schema node #{name.inspect}"
+          )
+        else
+          @collection&.find_group(resolved.namespace, resolved.local)
+        end
       end
 
       # Resolves attribute group reference and returns its attributes.
       #
       # @param memo [Array<Node>] accumulator for attributes
       # @param limits [Limits, nil] resource limits for validation
+      # @param strict [Boolean] when true, raises on unresolved group
       # @return [Array<Node>] attributes from the referenced group
-      def resolve_attribute_group_ref(memo, limits: nil)
-        group = resolve_attribute_group(ref)
-        group ? memo + group.attributes([], limits:) : memo
+      def resolve_attribute_group_ref(memo, limits: nil, strict: true)
+        group = resolve_attribute_group(ref, strict:)
+        group ? memo + group.attributes([], limits:, strict:) : memo
       end
 
       # Resolves a qualified type name to a Node.
       #
       # @param qname [String] qualified name (prefix:localName)
+      # @param strict [Boolean] when true, raises if not found
       # @return [Node, nil] the resolved type node
-      def resolve_type(qname)
+      def resolve_type(qname, strict: true)
         resolved = QName.parse(qname, namespaces: @namespaces, default_namespace: @context[:target_namespace])
-        @collection&.fetch_type(
-          resolved.namespace,
-          resolved.local,
-          context: "base type reference #{qname.inspect} on schema node #{name.inspect}"
-        )
+
+        if strict
+          @collection&.fetch_type(
+            resolved.namespace,
+            resolved.local,
+            context: "base type reference #{qname.inspect} on schema node #{name.inspect}"
+          )
+        else
+          @collection&.find_type(resolved.namespace, resolved.local)
+        end
       end
 
       # Resolves a qualified attribute group name to a Node.
       #
       # @param qname [String] qualified name (prefix:localName)
+      # @param strict [Boolean] when true, raises if not found
       # @return [Node, nil] the resolved attribute group node
-      def resolve_attribute_group(qname)
+      def resolve_attribute_group(qname, strict: true)
         resolved = QName.parse(qname, namespaces: @namespaces, default_namespace: @context[:target_namespace])
-        @collection&.fetch_attribute_group(
-          resolved.namespace,
-          resolved.local,
-          context: "attributeGroup reference #{qname.inspect} on schema node #{name.inspect}"
-        )
+
+        if strict
+          @collection&.fetch_attribute_group(
+            resolved.namespace,
+            resolved.local,
+            context: "attributeGroup reference #{qname.inspect} on schema node #{name.inspect}"
+          )
+        else
+          @collection&.find_attribute_group(resolved.namespace, resolved.local)
+        end
       end
 
       # Validates element count against limits.

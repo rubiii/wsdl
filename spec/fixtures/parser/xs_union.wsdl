@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://schemas.xmlsoap.org/wsdl/"
+             xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+             xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
+             xmlns:tns="http://example.com/xsunion"
+             targetNamespace="http://example.com/xsunion"
+             name="MeasurementService">
+  <types>
+    <xsd:schema targetNamespace="http://example.com/xsunion"
+                elementFormDefault="qualified">
+      <xsd:simpleType name="StringOrInt">
+        <xsd:union memberTypes="xsd:string xsd:int"/>
+      </xsd:simpleType>
+
+      <xsd:element name="GetMeasurementRequest">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element name="sensorId" type="xsd:string"/>
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+
+      <xsd:element name="GetMeasurementResponse">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element name="value" type="tns:StringOrInt"/>
+            <xsd:element name="unit" type="xsd:string"/>
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+    </xsd:schema>
+  </types>
+
+  <message name="GetMeasurementInput">
+    <part name="parameters" element="tns:GetMeasurementRequest"/>
+  </message>
+  <message name="GetMeasurementOutput">
+    <part name="parameters" element="tns:GetMeasurementResponse"/>
+  </message>
+
+  <portType name="MeasurementPortType">
+    <operation name="GetMeasurement">
+      <input message="tns:GetMeasurementInput"/>
+      <output message="tns:GetMeasurementOutput"/>
+    </operation>
+  </portType>
+
+  <binding name="MeasurementBinding" type="tns:MeasurementPortType">
+    <soap:binding style="document" transport="http://schemas.xmlsoap.org/soap/http"/>
+    <operation name="GetMeasurement">
+      <soap:operation soapAction="GetMeasurement"/>
+      <input><soap:body use="literal"/></input>
+      <output><soap:body use="literal"/></output>
+    </operation>
+  </binding>
+
+  <service name="MeasurementService">
+    <port name="MeasurementPort" binding="tns:MeasurementBinding">
+      <soap:address location="http://example.com/measurement"/>
+    </port>
+  </service>
+</definitions>

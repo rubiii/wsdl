@@ -416,6 +416,107 @@ RSpec.describe WSDL::Schema::Node do
         }.to raise_error(WSDL::UnresolvedReferenceError, /missing type/)
       end
     end
+
+    context 'with group references' do
+      let(:group) do
+        new_node('
+          <xs:group name="AddressGroup" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+            <xs:sequence>
+              <xs:element name="street" type="xs:string"/>
+              <xs:element name="city" type="xs:string"/>
+            </xs:sequence>
+          </xs:group>
+        ')
+      end
+
+      let(:collection) do
+        instance_double(WSDL::Schema::Collection).tap do |c|
+          allow(c).to receive(:fetch_group)
+            .with('http://example.com', 'AddressGroup', context: anything)
+            .and_return(group)
+        end
+      end
+
+      it 'resolves group references and expands their elements' do
+        context = { target_namespace: 'http://example.com' }
+        node = new_node('
+          <xs:complexType name="Contact" xmlns:xs="http://www.w3.org/2001/XMLSchema"
+                                          xmlns:tns="http://example.com">
+            <xs:sequence>
+              <xs:element name="name" type="xs:string"/>
+              <xs:group ref="tns:AddressGroup"/>
+            </xs:sequence>
+          </xs:complexType>
+        ', collection, context)
+
+        elements = node.elements
+        expect(elements.count).to eq(3)
+        expect(elements.map(&:name)).to eq(%w[name street city])
+      end
+    end
+
+    context 'with strict: false' do
+      let(:missing_collection) do
+        instance_double(WSDL::Schema::Collection).tap do |c|
+          allow(c).to receive_messages(find_group: nil, find_type: nil)
+        end
+      end
+
+      it 'skips unresolvable group refs and preserves sibling elements' do
+        context = { target_namespace: 'http://example.com' }
+        node = new_node('
+          <xs:complexType xmlns:xs="http://www.w3.org/2001/XMLSchema"
+                          xmlns:tns="http://example.com">
+            <xs:sequence>
+              <xs:element name="name" type="xs:string"/>
+              <xs:group ref="tns:Missing"/>
+              <xs:element name="email" type="xs:string"/>
+            </xs:sequence>
+          </xs:complexType>
+        ', missing_collection, context)
+
+        elements = node.elements([], strict: false)
+        expect(elements.map(&:name)).to eq(%w[name email])
+      end
+
+      it 'preserves extension elements when base type is unresolvable' do
+        context = { target_namespace: 'http://example.com' }
+        node = new_node('
+          <xs:complexType xmlns:xs="http://www.w3.org/2001/XMLSchema"
+                          xmlns:tns="http://example.com">
+            <xs:complexContent>
+              <xs:extension base="tns:MissingBase">
+                <xs:sequence>
+                  <xs:element name="ownField" type="xs:string"/>
+                </xs:sequence>
+              </xs:extension>
+            </xs:complexContent>
+          </xs:complexType>
+        ', missing_collection, context)
+
+        elements = node.elements([], strict: false)
+        expect(elements.map(&:name)).to eq(%w[ownField])
+      end
+
+      it 'raises in strict mode for unresolvable group refs' do
+        strict_collection = instance_double(WSDL::Schema::Collection)
+        allow(strict_collection).to receive(:fetch_group)
+          .and_raise(WSDL::UnresolvedReferenceError.new('missing', reference_type: :group, reference_name: 'Missing'))
+
+        context = { target_namespace: 'http://example.com' }
+        node = new_node('
+          <xs:complexType xmlns:xs="http://www.w3.org/2001/XMLSchema"
+                          xmlns:tns="http://example.com">
+            <xs:sequence>
+              <xs:element name="name" type="xs:string"/>
+              <xs:group ref="tns:Missing"/>
+            </xs:sequence>
+          </xs:complexType>
+        ', strict_collection, context)
+
+        expect { node.elements }.to raise_error(WSDL::UnresolvedReferenceError)
+      end
+    end
   end
 
   describe '#attributes' do
@@ -495,7 +596,7 @@ RSpec.describe WSDL::Schema::Node do
         expect(attributes.map(&:name)).to eq(%w[id class])
       end
 
-      it 'raises typed error when attributeGroup cannot be resolved' do
+      it 'raises typed error when attributeGroup cannot be resolved in strict mode' do
         unresolved_collection = instance_double(WSDL::Schema::Collection)
         allow(unresolved_collection).to receive(:fetch_attribute_group)
           .with('http://example.com', 'MissingGroup', context: anything)
@@ -516,6 +617,24 @@ RSpec.describe WSDL::Schema::Node do
         expect {
           node.attributes
         }.to raise_error(WSDL::UnresolvedReferenceError, /missing group/)
+      end
+
+      it 'skips unresolvable attributeGroup refs in relaxed mode' do
+        relaxed_collection = instance_double(WSDL::Schema::Collection)
+        allow(relaxed_collection).to receive(:find_attribute_group).and_return(nil)
+
+        context = { target_namespace: 'http://example.com' }
+        node = new_node('
+          <xs:complexType xmlns:xs="http://www.w3.org/2001/XMLSchema"
+                          xmlns:tns="http://example.com">
+            <xs:attribute name="id" type="xs:int"/>
+            <xs:attributeGroup ref="tns:MissingGroup"/>
+            <xs:attribute name="status" type="xs:string"/>
+          </xs:complexType>
+        ', relaxed_collection, context)
+
+        attributes = node.attributes([], strict: false)
+        expect(attributes.map(&:name)).to eq(%w[id status])
       end
     end
   end
@@ -595,6 +714,50 @@ RSpec.describe WSDL::Schema::Node do
     it 'returns nil when no restriction child' do
       node = new_node('<xs:element name="test" xmlns:xs="http://www.w3.org/2001/XMLSchema"/>')
       expect(node.restriction_base).to be_nil
+    end
+  end
+
+  describe '#list_item_type' do
+    it 'returns itemType from list child' do
+      node = new_node('
+        <xs:simpleType name="StringList" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+          <xs:list itemType="xs:string"/>
+        </xs:simpleType>
+      ')
+
+      expect(node.list_item_type).to eq('xs:string')
+    end
+
+    it 'returns nil when no list child' do
+      node = new_node('
+        <xs:simpleType name="Status" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+          <xs:restriction base="xs:string"/>
+        </xs:simpleType>
+      ')
+
+      expect(node.list_item_type).to be_nil
+    end
+  end
+
+  describe '#union_member_types' do
+    it 'returns memberTypes from union child' do
+      node = new_node('
+        <xs:simpleType name="StringOrInt" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+          <xs:union memberTypes="xs:string xs:int"/>
+        </xs:simpleType>
+      ')
+
+      expect(node.union_member_types).to eq('xs:string xs:int')
+    end
+
+    it 'returns nil when no union child' do
+      node = new_node('
+        <xs:simpleType name="Status" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+          <xs:restriction base="xs:string"/>
+        </xs:simpleType>
+      ')
+
+      expect(node.union_member_types).to be_nil
     end
   end
 

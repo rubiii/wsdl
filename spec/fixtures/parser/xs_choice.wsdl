@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://schemas.xmlsoap.org/wsdl/"
+             xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+             xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
+             xmlns:tns="http://example.com/xschoice"
+             targetNamespace="http://example.com/xschoice"
+             name="PaymentService">
+  <types>
+    <xsd:schema targetNamespace="http://example.com/xschoice"
+                elementFormDefault="qualified">
+      <xsd:element name="ProcessPaymentRequest">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element name="amount" type="xsd:decimal"/>
+            <xsd:element name="paymentMethod">
+              <xsd:complexType>
+                <xsd:choice>
+                  <xsd:element name="creditCard" type="xsd:string"/>
+                  <xsd:element name="bankTransfer" type="xsd:string"/>
+                  <xsd:element name="paypal" type="xsd:string"/>
+                </xsd:choice>
+              </xsd:complexType>
+            </xsd:element>
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+
+      <xsd:element name="ProcessPaymentResponse">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element name="transactionId" type="xsd:string"/>
+            <xsd:element name="status" type="xsd:string"/>
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+    </xsd:schema>
+  </types>
+
+  <message name="ProcessPaymentInput">
+    <part name="parameters" element="tns:ProcessPaymentRequest"/>
+  </message>
+  <message name="ProcessPaymentOutput">
+    <part name="parameters" element="tns:ProcessPaymentResponse"/>
+  </message>
+
+  <portType name="PaymentPortType">
+    <operation name="ProcessPayment">
+      <input message="tns:ProcessPaymentInput"/>
+      <output message="tns:ProcessPaymentOutput"/>
+    </operation>
+  </portType>
+
+  <binding name="PaymentBinding" type="tns:PaymentPortType">
+    <soap:binding style="document" transport="http://schemas.xmlsoap.org/soap/http"/>
+    <operation name="ProcessPayment">
+      <soap:operation soapAction="ProcessPayment"/>
+      <input><soap:body use="literal"/></input>
+      <output><soap:body use="literal"/></output>
+    </operation>
+  </binding>
+
+  <service name="PaymentService">
+    <port name="PaymentPort" binding="tns:PaymentBinding">
+      <soap:address location="http://example.com/payment"/>
+    </port>
+  </service>
+</definitions>
