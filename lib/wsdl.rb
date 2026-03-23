@@ -150,6 +150,9 @@ module WSDL
   # Load security module
   require 'wsdl/security'
 
+  # Load definition IR
+  require 'wsdl/definition'
+
   # Load operation contract and request pipeline
   require 'wsdl/contract'
   require 'wsdl/request'
