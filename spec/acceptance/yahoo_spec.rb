@@ -29,20 +29,36 @@ RSpec.describe 'Yahoo\'s AccountService' do
 
     namespace = 'http://apt.yahooapis.com/V10'
 
-    expect(request_body_paths(operation)).to eq([
-      [['updateStatusForManagedPublisher'],
-       { namespace: namespace, form: 'qualified', singular: true }
-],
-      [%w[updateStatusForManagedPublisher accountID],
-       { namespace: namespace, form: 'qualified', singular: true,
-         type: 'xsd:string'
+    expect(operation.contract.request.body.paths).to eq([
+      { path: ['updateStatusForManagedPublisher'],
+        kind: :complex,
+        namespace: namespace,
+        form: 'qualified',
+        singular: true,
+        min_occurs: '1',
+        max_occurs: '1',
+        wildcard: false
+},
+      { path: %w[updateStatusForManagedPublisher accountID],
+        kind: :simple,
+        namespace: namespace,
+        form: 'qualified',
+        singular: true,
+        min_occurs: '0',
+        max_occurs: '1',
+        type: 'xsd:string',
+        list: false
+},
+      { path: %w[updateStatusForManagedPublisher accountStatus],
+        kind: :simple,
+        namespace: namespace,
+        form: 'qualified',
+        singular: true,
+        min_occurs: '0',
+        max_occurs: '1',
+        type: 'xsd:string',
+        list: false
 }
-],
-      [%w[updateStatusForManagedPublisher accountStatus],
-       { namespace: namespace, form: 'qualified', singular: true,
-         type: 'xsd:string'
-}
-]
     ])
   end
 

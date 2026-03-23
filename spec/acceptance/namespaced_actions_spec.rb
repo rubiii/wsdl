@@ -26,22 +26,36 @@ RSpec.describe 'Namespaced actions example' do
     expect(operation.soap_action).to eq('http://api.example.com/api/Client.Delete')
     expect(operation.endpoint).to eq('https://api.example.com/api/api.asmx')
 
-    expect(request_body_paths(operation)).to eq([
-      [['Client.Delete'],
-       { namespace: 'http://api.example.com/api/', form: 'qualified',
-         singular: true
+    expect(operation.contract.request.body.paths).to eq([
+      { path: ['Client.Delete'],
+        kind: :complex,
+        namespace: 'http://api.example.com/api/',
+        form: 'qualified',
+        singular: true,
+        min_occurs: '1',
+        max_occurs: '1',
+        wildcard: false
+},
+      { path: %w[Client.Delete ApiKey],
+        kind: :simple,
+        namespace: 'http://api.example.com/api/',
+        form: 'qualified',
+        singular: true,
+        min_occurs: '0',
+        max_occurs: '1',
+        type: 's:string',
+        list: false
+},
+      { path: %w[Client.Delete ClientID],
+        kind: :simple,
+        namespace: 'http://api.example.com/api/',
+        form: 'qualified',
+        singular: true,
+        min_occurs: '0',
+        max_occurs: '1',
+        type: 's:string',
+        list: false
 }
-],
-      [['Client.Delete', 'ApiKey'],
-       { namespace: 'http://api.example.com/api/', form: 'qualified', singular: true,
-         type: 's:string'
-}
-],
-      [['Client.Delete', 'ClientID'],
-       { namespace: 'http://api.example.com/api/', form: 'qualified', singular: true,
-         type: 's:string'
-}
-]
     ])
   end
 end

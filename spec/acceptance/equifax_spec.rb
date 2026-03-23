@@ -27,140 +27,362 @@ RSpec.describe 'Equifax' do
 
     ns1 = 'http://eid.equifax.com/soap/schema/canada/v2'
 
-    expect(request_body_paths(operation)).to eq([
-      [['InitialRequest'],
-       { namespace: ns1, form: 'qualified', singular: true }
+    expect(operation.contract.request.body.paths).to eq([
+      { path: ['InitialRequest'],
+        kind: :complex,
+        namespace: ns1,
+        form: 'qualified',
+        singular: true,
+        min_occurs: '1',
+        max_occurs: '1',
+        wildcard: false
+},
+      { path: %w[InitialRequest Identity],
+        kind: :complex,
+        namespace: ns1,
+        form: 'qualified',
+        singular: true,
+        min_occurs: '1',
+        max_occurs: '1',
+        wildcard: false
+},
+      { path: %w[InitialRequest Identity Name],
+        kind: :complex,
+        namespace: ns1,
+        form: 'qualified',
+        singular: true,
+        min_occurs: '1',
+        max_occurs: '1',
+        wildcard: false
+},
+      { path: %w[InitialRequest Identity Name FirstName],
+        kind: :simple,
+        namespace: ns1,
+        form: 'qualified',
+        singular: true,
+        min_occurs: '1',
+        max_occurs: '1',
+        type: 'string',
+        list: false
+},
+      { path: %w[InitialRequest Identity Name MiddleName],
+        kind: :simple,
+        namespace: ns1,
+        form: 'qualified',
+        singular: true,
+        min_occurs: '1',
+        max_occurs: '1',
+        type: 'string',
+        list: false
+},
+      { path: %w[InitialRequest Identity Name MiddleInitial],
+        kind: :simple,
+        namespace: ns1,
+        form: 'qualified',
+        singular: true,
+        min_occurs: '1',
+        max_occurs: '1',
+        type: 'string',
+        list: false
+},
+      { path: %w[InitialRequest Identity Name LastName],
+        kind: :simple,
+        namespace: ns1,
+        form: 'qualified',
+        singular: true,
+        min_occurs: '1',
+        max_occurs: '1',
+        type: 'string',
+        list: false
+},
+      { path: %w[InitialRequest Identity Name Suffix],
+        kind: :simple,
+        namespace: ns1,
+        form: 'qualified',
+        singular: true,
+        min_occurs: '0',
+        max_occurs: '1',
+        type: 'string',
+        list: false
+},
+      { path: %w[InitialRequest Identity Address],
+        kind: :complex,
+        namespace: ns1,
+        form: 'qualified',
+        singular: false,
+        min_occurs: '1',
+        max_occurs: '3',
+        attributes: [{ name: 'timeAtAddress', type: 'nonNegativeInteger', required: false, list: false },
+                     { name: 'addressType', type: 'string', required: true, list: false }
 ],
-      [%w[InitialRequest Identity],
-       { namespace: ns1, form: 'qualified', singular: true }
-],
-      [%w[InitialRequest Identity Name],
-       { namespace: ns1, form: 'qualified', singular: true }
-],
-      [%w[InitialRequest Identity Name FirstName],
-       { namespace: ns1, form: 'qualified', singular: true, type: 'string' }
-],
-      [%w[InitialRequest Identity Name MiddleName],
-       { namespace: ns1, form: 'qualified', singular: true, type: 'string' }
-],
-      [%w[InitialRequest Identity Name MiddleInitial],
-       { namespace: ns1, form: 'qualified', singular: true, type: 'string' }
-],
-      [%w[InitialRequest Identity Name LastName],
-       { namespace: ns1, form: 'qualified', singular: true, type: 'string' }
-],
-      [%w[InitialRequest Identity Name Suffix],
-       { namespace: ns1, form: 'qualified', singular: true, type: 'string' }
-],
-
-      [%w[InitialRequest Identity Address],
-       { namespace: ns1, form: 'qualified', singular: false,
-         attributes: [
-           { name: 'timeAtAddress', type: 'nonNegativeInteger', required: false, list: false },
-           { name: 'addressType', type: 'string', required: true, list: false }
-         ]
+        wildcard: false
+},
+      { path: %w[InitialRequest Identity Address FreeFormAddress],
+        kind: :complex,
+        namespace: ns1,
+        form: 'qualified',
+        singular: true,
+        min_occurs: '1',
+        max_occurs: '1',
+        wildcard: false
+},
+      { path: %w[InitialRequest Identity Address FreeFormAddress AddressLine],
+        kind: :simple,
+        namespace: ns1,
+        form: 'qualified',
+        singular: false,
+        min_occurs: '1',
+        max_occurs: '6',
+        type: 'string',
+        list: false
+},
+      { path: %w[InitialRequest Identity Address HybridAddress],
+        kind: :complex,
+        namespace: ns1,
+        form: 'qualified',
+        singular: true,
+        min_occurs: '1',
+        max_occurs: '1',
+        wildcard: false
+},
+      { path: %w[InitialRequest Identity Address HybridAddress AddressLine],
+        kind: :simple,
+        namespace: ns1,
+        form: 'qualified',
+        singular: false,
+        min_occurs: '1',
+        max_occurs: '6',
+        type: 'string',
+        list: false
+},
+      { path: %w[InitialRequest Identity Address HybridAddress City],
+        kind: :simple,
+        namespace: ns1,
+        form: 'qualified',
+        singular: true,
+        min_occurs: '1',
+        max_occurs: '1',
+        type: 'string',
+        list: false
+},
+      { path: %w[InitialRequest Identity Address HybridAddress Province],
+        kind: :simple,
+        namespace: ns1,
+        form: 'qualified',
+        singular: true,
+        min_occurs: '1',
+        max_occurs: '1',
+        type: 'string',
+        list: false
+},
+      { path: %w[InitialRequest Identity Address HybridAddress PostalCode],
+        kind: :simple,
+        namespace: ns1,
+        form: 'qualified',
+        singular: true,
+        min_occurs: '1',
+        max_occurs: '1',
+        type: 'string',
+        list: false
+},
+      { path: %w[InitialRequest Identity SIN],
+        kind: :simple,
+        namespace: ns1,
+        form: 'qualified',
+        singular: true,
+        min_occurs: '0',
+        max_occurs: '1',
+        type: 'string',
+        list: false
+},
+      { path: %w[InitialRequest Identity DateOfBirth],
+        kind: :complex,
+        namespace: ns1,
+        form: 'qualified',
+        singular: true,
+        min_occurs: '0',
+        max_occurs: '1',
+        wildcard: false
+},
+      { path: %w[InitialRequest Identity DateOfBirth Day],
+        kind: :simple,
+        namespace: ns1,
+        form: 'qualified',
+        singular: true,
+        min_occurs: '1',
+        max_occurs: '1',
+        type: 'positiveInteger',
+        list: false
+},
+      { path: %w[InitialRequest Identity DateOfBirth Month],
+        kind: :simple,
+        namespace: ns1,
+        form: 'qualified',
+        singular: true,
+        min_occurs: '1',
+        max_occurs: '1',
+        type: 'positiveInteger',
+        list: false
+},
+      { path: %w[InitialRequest Identity DateOfBirth Year],
+        kind: :simple,
+        namespace: ns1,
+        form: 'qualified',
+        singular: true,
+        min_occurs: '1',
+        max_occurs: '1',
+        type: 'positiveInteger',
+        list: false
+},
+      { path: %w[InitialRequest Identity DriversLicense],
+        kind: :complex,
+        namespace: ns1,
+        form: 'qualified',
+        singular: true,
+        min_occurs: '0',
+        max_occurs: '1',
+        attributes: [{ name: 'driversLicenseAddressType', type: 'string', required: false, list: false }],
+        wildcard: false
+},
+      { path: %w[InitialRequest Identity DriversLicense Number],
+        kind: :simple,
+        namespace: ns1,
+        form: 'qualified',
+        singular: true,
+        min_occurs: '1',
+        max_occurs: '1',
+        type: 'string',
+        list: false
+},
+      { path: %w[InitialRequest Identity DriversLicense Province],
+        kind: :simple,
+        namespace: ns1,
+        form: 'qualified',
+        singular: true,
+        min_occurs: '1',
+        max_occurs: '1',
+        type: 'string',
+        list: false
+},
+      { path: %w[InitialRequest Identity PhoneNumber],
+        kind: :complex,
+        namespace: ns1,
+        form: 'qualified',
+        singular: false,
+        min_occurs: '0',
+        max_occurs: '3',
+        attributes: [{ name: 'phoneType', type: 'string', required: false, list: false }],
+        wildcard: false
+},
+      { path: %w[InitialRequest Identity PhoneNumber AreaCode],
+        kind: :simple,
+        namespace: ns1,
+        form: 'qualified',
+        singular: true,
+        min_occurs: '1',
+        max_occurs: '1',
+        type: 'string',
+        list: false
+},
+      { path: %w[InitialRequest Identity PhoneNumber Exchange],
+        kind: :simple,
+        namespace: ns1,
+        form: 'qualified',
+        singular: true,
+        min_occurs: '1',
+        max_occurs: '1',
+        type: 'string',
+        list: false
+},
+      { path: %w[InitialRequest Identity PhoneNumber Number],
+        kind: :simple,
+        namespace: ns1,
+        form: 'qualified',
+        singular: true,
+        min_occurs: '1',
+        max_occurs: '1',
+        type: 'string',
+        list: false
+},
+      { path: %w[InitialRequest Identity PhoneNumber PhoneNumber],
+        kind: :simple,
+        namespace: ns1,
+        form: 'qualified',
+        singular: true,
+        min_occurs: '1',
+        max_occurs: '1',
+        type: 'string',
+        list: false
+},
+      { path: %w[InitialRequest Identity Email],
+        kind: :simple,
+        namespace: ns1,
+        form: 'qualified',
+        singular: true,
+        min_occurs: '0',
+        max_occurs: '1',
+        type: 'string',
+        list: false
+},
+      { path: %w[InitialRequest Identity IPAddress],
+        kind: :simple,
+        namespace: ns1,
+        form: 'qualified',
+        singular: true,
+        min_occurs: '0',
+        max_occurs: '1',
+        type: 'string',
+        list: false
+},
+      { path: %w[InitialRequest Identity CreditCardNumber],
+        kind: :simple,
+        namespace: ns1,
+        form: 'qualified',
+        singular: true,
+        min_occurs: '0',
+        max_occurs: '1',
+        type: 'string',
+        list: false
+},
+      { path: %w[InitialRequest Identity CustomerId],
+        kind: :simple,
+        namespace: ns1,
+        form: 'qualified',
+        singular: true,
+        min_occurs: '0',
+        max_occurs: '1',
+        type: 'string',
+        list: false
+},
+      { path: %w[InitialRequest ProcessingOptions],
+        kind: :complex,
+        namespace: ns1,
+        form: 'qualified',
+        singular: true,
+        min_occurs: '1',
+        max_occurs: '1',
+        wildcard: false
+},
+      { path: %w[InitialRequest ProcessingOptions Language],
+        kind: :simple,
+        namespace: ns1,
+        form: 'qualified',
+        singular: true,
+        min_occurs: '1',
+        max_occurs: '1',
+        type: 'string',
+        list: false
+},
+      { path: %w[InitialRequest ProcessingOptions EnvironmentOverride],
+        kind: :simple,
+        namespace: ns1,
+        form: 'qualified',
+        singular: true,
+        min_occurs: '0',
+        max_occurs: '1',
+        type: 'string',
+        list: false
 }
-],
-
-      [%w[InitialRequest Identity Address FreeFormAddress],
-       { namespace: ns1, form: 'qualified', singular: true }
-],
-      [%w[InitialRequest Identity Address FreeFormAddress AddressLine],
-       { namespace: ns1, form: 'qualified', singular: false, type: 'string' }
-],
-      [%w[InitialRequest Identity Address HybridAddress],
-       { namespace: ns1, form: 'qualified', singular: true }
-],
-      [%w[InitialRequest Identity Address HybridAddress AddressLine],
-       { namespace: ns1, form: 'qualified', singular: false, type: 'string' }
-],
-      [%w[InitialRequest Identity Address HybridAddress City],
-       { namespace: ns1, form: 'qualified', singular: true, type: 'string' }
-],
-      [%w[InitialRequest Identity Address HybridAddress Province],
-       { namespace: ns1, form: 'qualified', singular: true, type: 'string' }
-],
-      [%w[InitialRequest Identity Address HybridAddress PostalCode],
-       { namespace: ns1, form: 'qualified', singular: true, type: 'string' }
-],
-      [%w[InitialRequest Identity SIN],
-       { namespace: ns1, form: 'qualified', singular: true, type: 'string' }
-],
-      [%w[InitialRequest Identity DateOfBirth],
-       { namespace: ns1, form: 'qualified', singular: true }
-],
-      [%w[InitialRequest Identity DateOfBirth Day],
-       { namespace: ns1, form: 'qualified', singular: true,
-         type: 'positiveInteger'
- }
-],
-      [%w[InitialRequest Identity DateOfBirth Month],
-       { namespace: ns1, form: 'qualified', singular: true,
-         type: 'positiveInteger'
- }
-],
-      [%w[InitialRequest Identity DateOfBirth Year],
-       { namespace: ns1, form: 'qualified', singular: true,
-         type: 'positiveInteger'
- }
-],
-
-      [%w[InitialRequest Identity DriversLicense],
-       { namespace: ns1, form: 'qualified', singular: true,
-         attributes: [
-           { name: 'driversLicenseAddressType', type: 'string', required: false, list: false }
-         ]
-}
-],
-
-      [%w[InitialRequest Identity DriversLicense Number],
-       { namespace: ns1, form: 'qualified', singular: true, type: 'string' }
-],
-      [%w[InitialRequest Identity DriversLicense Province],
-       { namespace: ns1, form: 'qualified', singular: true, type: 'string' }
-],
-
-      [%w[InitialRequest Identity PhoneNumber],
-       { namespace: ns1, form: 'qualified', singular: false,
-         attributes: [
-           { name: 'phoneType', type: 'string', required: false, list: false }
-         ]
-}
-],
-
-      [%w[InitialRequest Identity PhoneNumber AreaCode],
-       { namespace: ns1, form: 'qualified', singular: true, type: 'string' }
-],
-      [%w[InitialRequest Identity PhoneNumber Exchange],
-       { namespace: ns1, form: 'qualified', singular: true, type: 'string' }
-],
-      [%w[InitialRequest Identity PhoneNumber Number],
-       { namespace: ns1, form: 'qualified', singular: true, type: 'string' }
-],
-      [%w[InitialRequest Identity PhoneNumber PhoneNumber],
-       { namespace: ns1, form: 'qualified', singular: true, type: 'string' }
-],
-      [%w[InitialRequest Identity Email],
-       { namespace: ns1, form: 'qualified', singular: true, type: 'string' }
-],
-      [%w[InitialRequest Identity IPAddress],
-       { namespace: ns1, form: 'qualified', singular: true, type: 'string' }
-],
-      [%w[InitialRequest Identity CreditCardNumber],
-       { namespace: ns1, form: 'qualified', singular: true, type: 'string' }
-],
-      [%w[InitialRequest Identity CustomerId],
-       { namespace: ns1, form: 'qualified', singular: true, type: 'string' }
-],
-      [%w[InitialRequest ProcessingOptions],
-       { namespace: ns1, form: 'qualified', singular: true }
-],
-      [%w[InitialRequest ProcessingOptions Language],
-       { namespace: ns1, form: 'qualified', singular: true, type: 'string' }
-],
-      [%w[InitialRequest ProcessingOptions EnvironmentOverride],
-       { namespace: ns1, form: 'qualified', singular: true, type: 'string' }
-]
     ])
   end
 

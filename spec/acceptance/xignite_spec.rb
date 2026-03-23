@@ -32,23 +32,46 @@ RSpec.describe 'Xignite' do
 
     namespace = 'http://www.xignite.com/services/'
 
-    expect(request_body_paths(operation)).to eq([
-      [['GetSecurities'],
-       { namespace: namespace, form: 'qualified', singular: true }
-],
-      [%w[GetSecurities Identifiers],
-       { namespace: namespace, form: 'qualified', singular: true,
-         type: 's:string'
+    expect(operation.contract.request.body.paths).to eq([
+      { path: ['GetSecurities'],
+        kind: :complex,
+        namespace: namespace,
+        form: 'qualified',
+        singular: true,
+        min_occurs: '1',
+        max_occurs: '1',
+        wildcard: false
+},
+      { path: %w[GetSecurities Identifiers],
+        kind: :simple,
+        namespace: namespace,
+        form: 'qualified',
+        singular: true,
+        min_occurs: '0',
+        max_occurs: '1',
+        type: 's:string',
+        list: false
+},
+      { path: %w[GetSecurities IdentifierType],
+        kind: :simple,
+        namespace: namespace,
+        form: 'qualified',
+        singular: true,
+        min_occurs: '1',
+        max_occurs: '1',
+        type: 's:string',
+        list: false
+},
+      { path: %w[GetSecurities AsOfDate],
+        kind: :simple,
+        namespace: namespace,
+        form: 'qualified',
+        singular: true,
+        min_occurs: '0',
+        max_occurs: '1',
+        type: 's:string',
+        list: false
 }
-],
-      [%w[GetSecurities IdentifierType],
-       { namespace: namespace, form: 'qualified', singular: true,
-         type: 's:string'
-}
-],
-      [%w[GetSecurities AsOfDate],
-       { namespace: namespace, form: 'qualified', singular: true, type: 's:string' }
-]
     ])
   end
 

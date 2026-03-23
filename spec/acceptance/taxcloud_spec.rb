@@ -30,43 +30,86 @@ RSpec.describe 'Taxcloud' do
 
     namespace = 'http://taxcloud.net'
 
-    expect(request_body_paths(operation)).to eq([
-      [['VerifyAddress'],
-       { namespace: namespace, form: 'qualified', singular: true }
-],
-      [%w[VerifyAddress uspsUserID],
-       { namespace: namespace, form: 'qualified', singular: true,
-         type: 's:string'
+    expect(operation.contract.request.body.paths).to eq([
+      { path: ['VerifyAddress'],
+        kind: :complex,
+        namespace: namespace,
+        form: 'qualified',
+        singular: true,
+        min_occurs: '1',
+        max_occurs: '1',
+        wildcard: false
+},
+      { path: %w[VerifyAddress uspsUserID],
+        kind: :simple,
+        namespace: namespace,
+        form: 'qualified',
+        singular: true,
+        min_occurs: '0',
+        max_occurs: '1',
+        type: 's:string',
+        list: false
+},
+      { path: %w[VerifyAddress address1],
+        kind: :simple,
+        namespace: namespace,
+        form: 'qualified',
+        singular: true,
+        min_occurs: '0',
+        max_occurs: '1',
+        type: 's:string',
+        list: false
+},
+      { path: %w[VerifyAddress address2],
+        kind: :simple,
+        namespace: namespace,
+        form: 'qualified',
+        singular: true,
+        min_occurs: '0',
+        max_occurs: '1',
+        type: 's:string',
+        list: false
+},
+      { path: %w[VerifyAddress city],
+        kind: :simple,
+        namespace: namespace,
+        form: 'qualified',
+        singular: true,
+        min_occurs: '0',
+        max_occurs: '1',
+        type: 's:string',
+        list: false
+},
+      { path: %w[VerifyAddress state],
+        kind: :simple,
+        namespace: namespace,
+        form: 'qualified',
+        singular: true,
+        min_occurs: '0',
+        max_occurs: '1',
+        type: 's:string',
+        list: false
+},
+      { path: %w[VerifyAddress zip5],
+        kind: :simple,
+        namespace: namespace,
+        form: 'qualified',
+        singular: true,
+        min_occurs: '0',
+        max_occurs: '1',
+        type: 's:string',
+        list: false
+},
+      { path: %w[VerifyAddress zip4],
+        kind: :simple,
+        namespace: namespace,
+        form: 'qualified',
+        singular: true,
+        min_occurs: '0',
+        max_occurs: '1',
+        type: 's:string',
+        list: false
 }
-],
-      [%w[VerifyAddress address1],
-       { namespace: namespace, form: 'qualified', singular: true,
-         type: 's:string'
-}
-],
-      [%w[VerifyAddress address2],
-       { namespace: namespace, form: 'qualified', singular: true,
-         type: 's:string'
-}
-],
-      [%w[VerifyAddress city],
-       { namespace: namespace, form: 'qualified', singular: true,
-         type: 's:string'
-}
-],
-      [%w[VerifyAddress state],
-       { namespace: namespace, form: 'qualified', singular: true,
-         type: 's:string'
-}
-],
-      [%w[VerifyAddress zip5],
-       { namespace: namespace, form: 'qualified', singular: true,
-         type: 's:string'
-}
-],
-      [%w[VerifyAddress zip4],
-       { namespace: namespace, form: 'qualified', singular: true, type: 's:string' }
-]
     ])
   end
 end

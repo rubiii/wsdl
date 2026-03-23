@@ -24,25 +24,46 @@ RSpec.describe 'Wasmuth' do
 
     namespace = 'http://ws.online.msw/'
 
-    expect(request_body_paths(operation)).to eq([
-      [['getStTables'],
-       { namespace: namespace, form: 'qualified', singular: true }
-],
-      [%w[getStTables username],
-       { namespace: namespace, form: 'unqualified', singular: true,
-         type: 'xs:string'
+    expect(operation.contract.request.body.paths).to eq([
+      { path: ['getStTables'],
+        kind: :complex,
+        namespace: namespace,
+        form: 'qualified',
+        singular: true,
+        min_occurs: '1',
+        max_occurs: '1',
+        wildcard: false
+},
+      { path: %w[getStTables username],
+        kind: :simple,
+        namespace: namespace,
+        form: 'unqualified',
+        singular: true,
+        min_occurs: '0',
+        max_occurs: '1',
+        type: 'xs:string',
+        list: false
+},
+      { path: %w[getStTables password],
+        kind: :simple,
+        namespace: namespace,
+        form: 'unqualified',
+        singular: true,
+        min_occurs: '0',
+        max_occurs: '1',
+        type: 'xs:string',
+        list: false
+},
+      { path: %w[getStTables version],
+        kind: :simple,
+        namespace: namespace,
+        form: 'unqualified',
+        singular: true,
+        min_occurs: '0',
+        max_occurs: '1',
+        type: 'xs:string',
+        list: false
 }
-],
-      [%w[getStTables password],
-       { namespace: namespace, form: 'unqualified', singular: true,
-         type: 'xs:string'
-}
-],
-      [%w[getStTables version],
-       { namespace: namespace, form: 'unqualified', singular: true,
-         type: 'xs:string'
-}
-]
     ])
   end
 end

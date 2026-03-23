@@ -58,143 +58,300 @@ RSpec.describe 'AWSE' do
 
     namespace = 'http://webservices.amazon.com/AWSECommerceService/2011-08-01'
 
-    expect(request_body_paths(operation)).to eq([
-      [['CartAdd'],
-       { namespace: namespace, form: 'qualified', singular: true }
-],
-      [%w[CartAdd MarketplaceDomain],
-       { namespace: namespace, form: 'qualified', singular: true,
-         type: 'xs:string'
- }
-],
-      [%w[CartAdd AWSAccessKeyId],
-       { namespace: namespace, form: 'qualified', singular: true,
-         type: 'xs:string'
- }
-],
-      [%w[CartAdd AssociateTag],
-       { namespace: namespace, form: 'qualified', singular: true,
-         type: 'xs:string'
- }
-],
-      [%w[CartAdd Validate],
-       { namespace: namespace, form: 'qualified', singular: true,
-         type: 'xs:string'
- }
-],
-      [%w[CartAdd XMLEscaping],
-       { namespace: namespace, form: 'qualified', singular: true,
-         type: 'xs:string'
- }
-],
-      [%w[CartAdd Shared],
-       { namespace: namespace, form: 'qualified', singular: true }
-],
-      [%w[CartAdd Shared CartId],
-       { namespace: namespace, form: 'qualified', singular: true,
-         type: 'xs:string'
- }
-],
-      [%w[CartAdd Shared HMAC],
-       { namespace: namespace, form: 'qualified', singular: true,
-         type: 'xs:string'
- }
-],
-      [%w[CartAdd Shared MergeCart],
-       { namespace: namespace, form: 'qualified', singular: true,
-         type: 'xs:string'
- }
-],
-      [%w[CartAdd Shared Items],
-       { namespace: namespace, form: 'qualified', singular: true }
-],
-      [%w[CartAdd Shared Items Item],
-       { namespace: namespace, form: 'qualified', singular: false }
-],
-      [%w[CartAdd Shared Items Item ASIN],
-       { namespace: namespace, form: 'qualified', singular: true,
-         type: 'xs:string'
- }
-],
-      [%w[CartAdd Shared Items Item OfferListingId],
-       { namespace: namespace, form: 'qualified', singular: true,
-         type: 'xs:string'
- }
-],
-      [%w[CartAdd Shared Items Item Quantity],
-       { namespace: namespace, form: 'qualified', singular: true,
-         type: 'xs:positiveInteger'
- }
-],
-      [%w[CartAdd Shared Items Item AssociateTag],
-       { namespace: namespace, form: 'qualified', singular: true,
-         type: 'xs:string'
- }
-],
-      [%w[CartAdd Shared Items Item ListItemId],
-       { namespace: namespace, form: 'qualified', singular: true,
-         type: 'xs:string'
- }
-],
-      [%w[CartAdd Shared ResponseGroup],
-       { namespace: namespace, form: 'qualified', singular: false,
-         type: 'xs:string'
- }
-],
-      [%w[CartAdd Request],
-       { namespace: namespace, form: 'qualified', singular: false }
-],
-      [%w[CartAdd Request CartId],
-       { namespace: namespace, form: 'qualified', singular: true,
-         type: 'xs:string'
- }
-],
-      [%w[CartAdd Request HMAC],
-       { namespace: namespace, form: 'qualified', singular: true,
-         type: 'xs:string'
- }
-],
-      [%w[CartAdd Request MergeCart],
-       { namespace: namespace, form: 'qualified', singular: true,
-         type: 'xs:string'
- }
-],
-      [%w[CartAdd Request Items],
-       { namespace: namespace, form: 'qualified', singular: true }
-],
-      [%w[CartAdd Request Items Item],
-       { namespace: namespace, form: 'qualified', singular: false }
-],
-      [%w[CartAdd Request Items Item ASIN],
-       { namespace: namespace, form: 'qualified', singular: true,
-         type: 'xs:string'
- }
-],
-      [%w[CartAdd Request Items Item OfferListingId],
-       { namespace: namespace, form: 'qualified', singular: true,
-         type: 'xs:string'
- }
-],
-      [%w[CartAdd Request Items Item Quantity],
-       { namespace: namespace, form: 'qualified', singular: true,
-         type: 'xs:positiveInteger'
- }
-],
-      [%w[CartAdd Request Items Item AssociateTag],
-       { namespace: namespace, form: 'qualified', singular: true,
-         type: 'xs:string'
- }
-],
-      [%w[CartAdd Request Items Item ListItemId],
-       { namespace: namespace, form: 'qualified', singular: true,
-         type: 'xs:string'
- }
-],
-      [%w[CartAdd Request ResponseGroup],
-       { namespace: namespace, form: 'qualified', singular: false,
-         type: 'xs:string'
- }
-]
+    expect(operation.contract.request.body.paths).to eq([
+      { path: ['CartAdd'],
+        kind: :complex,
+        namespace: namespace,
+        form: 'qualified',
+        singular: true,
+        min_occurs: '1',
+        max_occurs: '1',
+        wildcard: false
+},
+      { path: %w[CartAdd MarketplaceDomain],
+        kind: :simple,
+        namespace: namespace,
+        form: 'qualified',
+        singular: true,
+        min_occurs: '0',
+        max_occurs: '1',
+        type: 'xs:string',
+        list: false
+},
+      { path: %w[CartAdd AWSAccessKeyId],
+        kind: :simple,
+        namespace: namespace,
+        form: 'qualified',
+        singular: true,
+        min_occurs: '0',
+        max_occurs: '1',
+        type: 'xs:string',
+        list: false
+},
+      { path: %w[CartAdd AssociateTag],
+        kind: :simple,
+        namespace: namespace,
+        form: 'qualified',
+        singular: true,
+        min_occurs: '0',
+        max_occurs: '1',
+        type: 'xs:string',
+        list: false
+},
+      { path: %w[CartAdd Validate],
+        kind: :simple,
+        namespace: namespace,
+        form: 'qualified',
+        singular: true,
+        min_occurs: '0',
+        max_occurs: '1',
+        type: 'xs:string',
+        list: false
+},
+      { path: %w[CartAdd XMLEscaping],
+        kind: :simple,
+        namespace: namespace,
+        form: 'qualified',
+        singular: true,
+        min_occurs: '0',
+        max_occurs: '1',
+        type: 'xs:string',
+        list: false
+},
+      { path: %w[CartAdd Shared],
+        kind: :complex,
+        namespace: namespace,
+        form: 'qualified',
+        singular: true,
+        min_occurs: '0',
+        max_occurs: '1',
+        wildcard: false
+},
+      { path: %w[CartAdd Shared CartId],
+        kind: :simple,
+        namespace: namespace,
+        form: 'qualified',
+        singular: true,
+        min_occurs: '0',
+        max_occurs: '1',
+        type: 'xs:string',
+        list: false
+},
+      { path: %w[CartAdd Shared HMAC],
+        kind: :simple,
+        namespace: namespace,
+        form: 'qualified',
+        singular: true,
+        min_occurs: '0',
+        max_occurs: '1',
+        type: 'xs:string',
+        list: false
+},
+      { path: %w[CartAdd Shared MergeCart],
+        kind: :simple,
+        namespace: namespace,
+        form: 'qualified',
+        singular: true,
+        min_occurs: '0',
+        max_occurs: '1',
+        type: 'xs:string',
+        list: false
+},
+      { path: %w[CartAdd Shared Items],
+        kind: :complex,
+        namespace: namespace,
+        form: 'qualified',
+        singular: true,
+        min_occurs: '0',
+        max_occurs: '1',
+        wildcard: false
+},
+      { path: %w[CartAdd Shared Items Item],
+        kind: :complex,
+        namespace: namespace,
+        form: 'qualified',
+        singular: false,
+        min_occurs: '0',
+        max_occurs: 'unbounded',
+        wildcard: false
+},
+      { path: %w[CartAdd Shared Items Item ASIN],
+        kind: :simple,
+        namespace: namespace,
+        form: 'qualified',
+        singular: true,
+        min_occurs: '0',
+        max_occurs: '1',
+        type: 'xs:string',
+        list: false
+},
+      { path: %w[CartAdd Shared Items Item OfferListingId],
+        kind: :simple,
+        namespace: namespace,
+        form: 'qualified',
+        singular: true,
+        min_occurs: '0',
+        max_occurs: '1',
+        type: 'xs:string',
+        list: false
+},
+      { path: %w[CartAdd Shared Items Item Quantity],
+        kind: :simple,
+        namespace: namespace,
+        form: 'qualified',
+        singular: true,
+        min_occurs: '0',
+        max_occurs: '1',
+        type: 'xs:positiveInteger',
+        list: false
+},
+      { path: %w[CartAdd Shared Items Item AssociateTag],
+        kind: :simple,
+        namespace: namespace,
+        form: 'qualified',
+        singular: true,
+        min_occurs: '0',
+        max_occurs: '1',
+        type: 'xs:string',
+        list: false
+},
+      { path: %w[CartAdd Shared Items Item ListItemId],
+        kind: :simple,
+        namespace: namespace,
+        form: 'qualified',
+        singular: true,
+        min_occurs: '0',
+        max_occurs: '1',
+        type: 'xs:string',
+        list: false
+},
+      { path: %w[CartAdd Shared ResponseGroup],
+        kind: :simple,
+        namespace: namespace,
+        form: 'qualified',
+        singular: false,
+        min_occurs: '0',
+        max_occurs: 'unbounded',
+        type: 'xs:string',
+        list: false
+},
+      { path: %w[CartAdd Request],
+        kind: :complex,
+        namespace: namespace,
+        form: 'qualified',
+        singular: false,
+        min_occurs: '0',
+        max_occurs: 'unbounded',
+        wildcard: false
+},
+      { path: %w[CartAdd Request CartId],
+        kind: :simple,
+        namespace: namespace,
+        form: 'qualified',
+        singular: true,
+        min_occurs: '0',
+        max_occurs: '1',
+        type: 'xs:string',
+        list: false
+},
+      { path: %w[CartAdd Request HMAC],
+        kind: :simple,
+        namespace: namespace,
+        form: 'qualified',
+        singular: true,
+        min_occurs: '0',
+        max_occurs: '1',
+        type: 'xs:string',
+        list: false
+},
+      { path: %w[CartAdd Request MergeCart],
+        kind: :simple,
+        namespace: namespace,
+        form: 'qualified',
+        singular: true,
+        min_occurs: '0',
+        max_occurs: '1',
+        type: 'xs:string',
+        list: false
+},
+      { path: %w[CartAdd Request Items],
+        kind: :complex,
+        namespace: namespace,
+        form: 'qualified',
+        singular: true,
+        min_occurs: '0',
+        max_occurs: '1',
+        wildcard: false
+},
+      { path: %w[CartAdd Request Items Item],
+        kind: :complex,
+        namespace: namespace,
+        form: 'qualified',
+        singular: false,
+        min_occurs: '0',
+        max_occurs: 'unbounded',
+        wildcard: false
+},
+      { path: %w[CartAdd Request Items Item ASIN],
+        kind: :simple,
+        namespace: namespace,
+        form: 'qualified',
+        singular: true,
+        min_occurs: '0',
+        max_occurs: '1',
+        type: 'xs:string',
+        list: false
+},
+      { path: %w[CartAdd Request Items Item OfferListingId],
+        kind: :simple,
+        namespace: namespace,
+        form: 'qualified',
+        singular: true,
+        min_occurs: '0',
+        max_occurs: '1',
+        type: 'xs:string',
+        list: false
+},
+      { path: %w[CartAdd Request Items Item Quantity],
+        kind: :simple,
+        namespace: namespace,
+        form: 'qualified',
+        singular: true,
+        min_occurs: '0',
+        max_occurs: '1',
+        type: 'xs:positiveInteger',
+        list: false
+},
+      { path: %w[CartAdd Request Items Item AssociateTag],
+        kind: :simple,
+        namespace: namespace,
+        form: 'qualified',
+        singular: true,
+        min_occurs: '0',
+        max_occurs: '1',
+        type: 'xs:string',
+        list: false
+},
+      { path: %w[CartAdd Request Items Item ListItemId],
+        kind: :simple,
+        namespace: namespace,
+        form: 'qualified',
+        singular: true,
+        min_occurs: '0',
+        max_occurs: '1',
+        type: 'xs:string',
+        list: false
+},
+      { path: %w[CartAdd Request ResponseGroup],
+        kind: :simple,
+        namespace: namespace,
+        form: 'qualified',
+        singular: false,
+        min_occurs: '0',
+        max_occurs: 'unbounded',
+        type: 'xs:string',
+        list: false
+}
     ])
   end
 end

@@ -25,34 +25,88 @@ RSpec.describe 'Telefonkatalogen' do
     # notice how this contains 9 parts with one element each.
     # it does not include the rpc wrapper.
 
-    expect(request_body_paths(operation)).to eq([
-      [['sender'],
-       { namespace: nil, form: 'unqualified', singular: true, type: 'xsd:string' }
-],
-      [['cellular'],
-       { namespace: nil, form: 'unqualified', singular: true, type: 'xsd:string' }
-],
-      [['msg'],
-       { namespace: nil, form: 'unqualified', singular: true, type: 'xsd:string' }
-],
-      [['smsnumgroup'],
-       { namespace: nil, form: 'unqualified', singular: true, type: 'xsd:string' }
-],
-      [['emailaddr'],
-       { namespace: nil, form: 'unqualified', singular: true, type: 'xsd:string' }
-],
-      [['udh'],
-       { namespace: nil, form: 'unqualified', singular: true, type: 'xsd:string' }
-],
-      [['datetime'],
-       { namespace: nil, form: 'unqualified', singular: true, type: 'xsd:string' }
-],
-      [['format'],
-       { namespace: nil, form: 'unqualified', singular: true, type: 'xsd:string' }
-],
-      [['dlrurl'],
-       { namespace: nil, form: 'unqualified', singular: true, type: 'xsd:string' }
-]
+    expect(operation.contract.request.body.paths).to eq([
+      { path: ['sender'],
+        kind: :simple,
+        form: 'unqualified',
+        singular: true,
+        min_occurs: '1',
+        max_occurs: '1',
+        type: 'xsd:string',
+        list: false
+},
+      { path: ['cellular'],
+        kind: :simple,
+        form: 'unqualified',
+        singular: true,
+        min_occurs: '1',
+        max_occurs: '1',
+        type: 'xsd:string',
+        list: false
+},
+      { path: ['msg'],
+        kind: :simple,
+        form: 'unqualified',
+        singular: true,
+        min_occurs: '1',
+        max_occurs: '1',
+        type: 'xsd:string',
+        list: false
+},
+      { path: ['smsnumgroup'],
+        kind: :simple,
+        form: 'unqualified',
+        singular: true,
+        min_occurs: '1',
+        max_occurs: '1',
+        type: 'xsd:string',
+        list: false
+},
+      { path: ['emailaddr'],
+        kind: :simple,
+        form: 'unqualified',
+        singular: true,
+        min_occurs: '1',
+        max_occurs: '1',
+        type: 'xsd:string',
+        list: false
+},
+      { path: ['udh'],
+        kind: :simple,
+        form: 'unqualified',
+        singular: true,
+        min_occurs: '1',
+        max_occurs: '1',
+        type: 'xsd:string',
+        list: false
+},
+      { path: ['datetime'],
+        kind: :simple,
+        form: 'unqualified',
+        singular: true,
+        min_occurs: '1',
+        max_occurs: '1',
+        type: 'xsd:string',
+        list: false
+},
+      { path: ['format'],
+        kind: :simple,
+        form: 'unqualified',
+        singular: true,
+        min_occurs: '1',
+        max_occurs: '1',
+        type: 'xsd:string',
+        list: false
+},
+      { path: ['dlrurl'],
+        kind: :simple,
+        form: 'unqualified',
+        singular: true,
+        min_occurs: '1',
+        max_occurs: '1',
+        type: 'xsd:string',
+        list: false
+}
     ])
   end
 end

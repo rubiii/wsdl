@@ -53,17 +53,17 @@ RSpec.describe 'Travelport' do
 
     # The operation should be able to resolve the body parts
     # This will fail if includes or relative imports aren't working
-    body_parts = request_body_paths(ping_operation)
+    body_parts = ping_operation.contract.request.body.paths
 
     expect(body_parts).to be_an(Array)
     expect(body_parts).not_to be_empty
 
     # The first element should be PingReq
-    expect(body_parts.first.first).to eq(['PingReq'])
+    expect(body_parts.first[:path]).to eq(['PingReq'])
 
     # Should include elements from Common.xsd (loaded via include)
     # BillingPointOfSaleInfo is defined in Common.xsd and referenced in BaseReq
-    element_paths = body_parts.map(&:first)
+    element_paths = body_parts.map { |h| h[:path] }
     expect(element_paths).to include(%w[PingReq BillingPointOfSaleInfo])
   end
 

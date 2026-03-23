@@ -32,19 +32,44 @@ RSpec.describe 'Economic' do
 
     namespace = 'http://e-conomic.com'
 
-    expect(request_body_paths(operation)).to eq([
-      [['Account_GetDataArray'],
-       { namespace: namespace, form: 'qualified', singular: true }
-],
-      [%w[Account_GetDataArray entityHandles],
-       { namespace: namespace, form: 'qualified', singular: true }
-],
-      [%w[Account_GetDataArray entityHandles AccountHandle],
-       { namespace: namespace, form: 'qualified', singular: false }
-],
-      [%w[Account_GetDataArray entityHandles AccountHandle Number],
-       { namespace: namespace, form: 'qualified', type: 's:int', singular: true }
-]
+    expect(operation.contract.request.body.paths).to eq([
+      { path: ['Account_GetDataArray'],
+        kind: :complex,
+        namespace: namespace,
+        form: 'qualified',
+        singular: true,
+        min_occurs: '1',
+        max_occurs: '1',
+        wildcard: false
+},
+      { path: %w[Account_GetDataArray entityHandles],
+        kind: :complex,
+        namespace: namespace,
+        form: 'qualified',
+        singular: true,
+        min_occurs: '0',
+        max_occurs: '1',
+        wildcard: false
+},
+      { path: %w[Account_GetDataArray entityHandles AccountHandle],
+        kind: :complex,
+        namespace: namespace,
+        form: 'qualified',
+        singular: false,
+        min_occurs: '0',
+        max_occurs: 'unbounded',
+        wildcard: false
+},
+      { path: %w[Account_GetDataArray entityHandles AccountHandle Number],
+        kind: :simple,
+        namespace: namespace,
+        form: 'qualified',
+        singular: true,
+        min_occurs: '1',
+        max_occurs: '1',
+        type: 's:int',
+        list: false
+}
     ])
   end
 

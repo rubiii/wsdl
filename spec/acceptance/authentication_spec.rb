@@ -27,20 +27,36 @@ RSpec.describe 'Authentication service' do
 
     namespace = 'http://v1_0.ws.auth.order.example.com/'
 
-    expect(request_body_paths(operation)).to eq([
-      [['authenticate'],
-       { namespace: namespace, form: 'qualified', singular: true }
-],
-      [%w[authenticate user],
-       { namespace: namespace, form: 'unqualified', singular: true,
-         type: 'xs:string'
- }
-],
-      [%w[authenticate password],
-       { namespace: namespace, form: 'unqualified', singular: true,
-         type: 'xs:string'
- }
-]
+    expect(operation.contract.request.body.paths).to eq([
+      { path: ['authenticate'],
+        kind: :complex,
+        namespace: namespace,
+        form: 'qualified',
+        singular: true,
+        min_occurs: '1',
+        max_occurs: '1',
+        wildcard: false
+},
+      { path: %w[authenticate user],
+        kind: :simple,
+        namespace: namespace,
+        form: 'unqualified',
+        singular: true,
+        min_occurs: '0',
+        max_occurs: '1',
+        type: 'xs:string',
+        list: false
+},
+      { path: %w[authenticate password],
+        kind: :simple,
+        namespace: namespace,
+        form: 'unqualified',
+        singular: true,
+        min_occurs: '0',
+        max_occurs: '1',
+        type: 'xs:string',
+        list: false
+}
     ])
   end
 end

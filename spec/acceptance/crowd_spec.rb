@@ -28,34 +28,93 @@ RSpec.describe 'Atlassian Crowd' do
     ns2 = 'http://authentication.integration.crowd.atlassian.com'
     ns3 = 'http://soap.integration.crowd.atlassian.com'
 
-    expect(request_body_paths(operation)).to eq([
-      [['addAttributeToGroup'],
-       { namespace: ns1, form: 'qualified', singular: true }
-],
-      [%w[addAttributeToGroup in0],
-       { namespace: ns1, form: 'qualified', singular: true }
-],
-      [%w[addAttributeToGroup in0 name],
-       { namespace: ns2, form: 'qualified', singular: true, type: 'xsd:string' }
-],
-      [%w[addAttributeToGroup in0 token],
-       { namespace: ns2, form: 'qualified', singular: true, type: 'xsd:string' }
-],
-      [%w[addAttributeToGroup in1],
-       { namespace: ns1, form: 'qualified', singular: true, type: 'xsd:string' }
-],
-      [%w[addAttributeToGroup in2],
-       { namespace: ns1, form: 'qualified', singular: true }
-],
-      [%w[addAttributeToGroup in2 name],
-       { namespace: ns3, form: 'qualified', singular: true, type: 'xsd:string' }
-],
-      [%w[addAttributeToGroup in2 values],
-       { namespace: ns3, form: 'qualified', singular: true }
-],
-      [%w[addAttributeToGroup in2 values string],
-       { namespace: ns1, form: 'qualified', singular: false, type: 'xsd:string' }
-]
+    expect(operation.contract.request.body.paths).to eq([
+      { path: ['addAttributeToGroup'],
+        kind: :complex,
+        namespace: ns1,
+        form: 'qualified',
+        singular: true,
+        min_occurs: '1',
+        max_occurs: '1',
+        wildcard: false
+},
+      { path: %w[addAttributeToGroup in0],
+        kind: :complex,
+        namespace: ns1,
+        form: 'qualified',
+        singular: true,
+        min_occurs: '1',
+        max_occurs: '1',
+        wildcard: false
+},
+      { path: %w[addAttributeToGroup in0 name],
+        kind: :simple,
+        namespace: ns2,
+        form: 'qualified',
+        singular: true,
+        min_occurs: '0',
+        max_occurs: '1',
+        type: 'xsd:string',
+        list: false
+},
+      { path: %w[addAttributeToGroup in0 token],
+        kind: :simple,
+        namespace: ns2,
+        form: 'qualified',
+        singular: true,
+        min_occurs: '0',
+        max_occurs: '1',
+        type: 'xsd:string',
+        list: false
+},
+      { path: %w[addAttributeToGroup in1],
+        kind: :simple,
+        namespace: ns1,
+        form: 'qualified',
+        singular: true,
+        min_occurs: '1',
+        max_occurs: '1',
+        type: 'xsd:string',
+        list: false
+},
+      { path: %w[addAttributeToGroup in2],
+        kind: :complex,
+        namespace: ns1,
+        form: 'qualified',
+        singular: true,
+        min_occurs: '1',
+        max_occurs: '1',
+        wildcard: false
+},
+      { path: %w[addAttributeToGroup in2 name],
+        kind: :simple,
+        namespace: ns3,
+        form: 'qualified',
+        singular: true,
+        min_occurs: '0',
+        max_occurs: '1',
+        type: 'xsd:string',
+        list: false
+},
+      { path: %w[addAttributeToGroup in2 values],
+        kind: :complex,
+        namespace: ns3,
+        form: 'qualified',
+        singular: true,
+        min_occurs: '0',
+        max_occurs: '1',
+        wildcard: false
+},
+      { path: %w[addAttributeToGroup in2 values string],
+        kind: :simple,
+        namespace: ns1,
+        form: 'qualified',
+        singular: false,
+        min_occurs: '0',
+        max_occurs: 'unbounded',
+        type: 'xsd:string',
+        list: false
+}
     ])
   end
 end

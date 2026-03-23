@@ -25,10 +25,16 @@ RSpec.describe 'Spyne.io service' do
     expect(operation.soap_action).to eq('say_hello')
     expect(operation.endpoint).to eq('http://localhost:8000/')
 
-    expect(request_body_paths(operation)).to eq([
-      [['say_hello'],
-       { namespace: 'spyne.examples.hello', form: 'qualified', singular: true }
-]
+    expect(operation.contract.request.body.paths).to eq([
+      { path: ['say_hello'],
+        kind: :complex,
+        namespace: 'spyne.examples.hello',
+        form: 'qualified',
+        singular: true,
+        min_occurs: '1',
+        max_occurs: '1',
+        wildcard: false
+}
     ])
   end
 

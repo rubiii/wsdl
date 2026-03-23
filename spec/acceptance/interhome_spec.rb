@@ -31,186 +31,393 @@ RSpec.describe 'Interhome' do
 
     namespace = 'http://www.interhome.com/webservice'
 
-    expect(request_body_paths(operation)).to eq([
-      [['ClientBooking'],
-       { namespace: namespace, form: 'qualified', singular: true }
-],
-      [%w[ClientBooking inputValue],
-       { namespace: namespace, form: 'qualified', singular: true }
-],
-      [%w[ClientBooking inputValue SalesOfficeCode],
-       { namespace: namespace, form: 'qualified', singular: true,
-         type: 's:string'
- }
-],
-      [%w[ClientBooking inputValue AccommodationCode],
-       { namespace: namespace, form: 'qualified', singular: true,
-         type: 's:string'
- }
-],
-
-      [%w[ClientBooking inputValue AdditionalServices],
-       { namespace: namespace, form: 'qualified', singular: true }
-],
-      [%w[ClientBooking inputValue AdditionalServices AdditionalServiceInputItem],
-       { namespace: namespace, form: 'qualified', singular: false }
-],
-      [%w[ClientBooking inputValue AdditionalServices AdditionalServiceInputItem Code],
-       { namespace: namespace, form: 'qualified', singular: true,
-         type: 's:string'
- }
-],
-      [%w[ClientBooking inputValue AdditionalServices AdditionalServiceInputItem Count],
-       { namespace: namespace, form: 'qualified', singular: true, type: 's:int' }
-],
-
-      [%w[ClientBooking inputValue CustomerSalutationType],
-       { namespace: namespace, form: 'qualified', singular: true,
-         type: 's:string'
- }
-],
-      [%w[ClientBooking inputValue CustomerName],
-       { namespace: namespace, form: 'qualified', singular: true,
-         type: 's:string'
- }
-],
-      [%w[ClientBooking inputValue CustomerFirstName],
-       { namespace: namespace, form: 'qualified', singular: true,
-         type: 's:string'
- }
-],
-      [%w[ClientBooking inputValue CustomerPhone],
-       { namespace: namespace, form: 'qualified', singular: true,
-         type: 's:string'
- }
-],
-      [%w[ClientBooking inputValue CustomerFax],
-       { namespace: namespace, form: 'qualified', singular: true,
-         type: 's:string'
- }
-],
-      [%w[ClientBooking inputValue CustomerEmail],
-       { namespace: namespace, form: 'qualified', singular: true,
-         type: 's:string'
- }
-],
-      [%w[ClientBooking inputValue CustomerAddressStreet],
-       { namespace: namespace, form: 'qualified', singular: true,
-         type: 's:string'
- }
-],
-      [%w[ClientBooking inputValue CustomerAddressAdditionalStreet],
-       { namespace: namespace, form: 'qualified', singular: true,
-         type: 's:string'
- }
-],
-      [%w[ClientBooking inputValue CustomerAddressZIP],
-       { namespace: namespace, form: 'qualified', singular: true,
-         type: 's:string'
- }
-],
-      [%w[ClientBooking inputValue CustomerAddressPlace],
-       { namespace: namespace, form: 'qualified', singular: true,
-         type: 's:string'
- }
-],
-      [%w[ClientBooking inputValue CustomerAddressState],
-       { namespace: namespace, form: 'qualified', singular: true,
-         type: 's:string'
- }
-],
-      [%w[ClientBooking inputValue CustomerAddressCountryCode],
-       { namespace: namespace, form: 'qualified', singular: true,
-         type: 's:string'
- }
-],
-      [%w[ClientBooking inputValue Comment],
-       { namespace: namespace, form: 'qualified', singular: true,
-         type: 's:string'
- }
-],
-      [%w[ClientBooking inputValue Adults],
-       { namespace: namespace, form: 'qualified', singular: true, type: 's:int' }
-],
-      [%w[ClientBooking inputValue Babies],
-       { namespace: namespace, form: 'qualified', singular: true, type: 's:int' }
-],
-      [%w[ClientBooking inputValue Children],
-       { namespace: namespace, form: 'qualified', singular: true, type: 's:int' }
-],
-      [%w[ClientBooking inputValue CheckIn],
-       { namespace: namespace, form: 'qualified', singular: true,
-         type: 's:string'
- }
-],
-      [%w[ClientBooking inputValue CheckOut],
-       { namespace: namespace, form: 'qualified', singular: true,
-         type: 's:string'
- }
-],
-      [%w[ClientBooking inputValue LanguageCode],
-       { namespace: namespace, form: 'qualified', singular: true,
-         type: 's:string'
- }
-],
-      [%w[ClientBooking inputValue CurrencyCode],
-       { namespace: namespace, form: 'qualified', singular: true,
-         type: 's:string'
- }
-],
-      [%w[ClientBooking inputValue RetailerCode],
-       { namespace: namespace, form: 'qualified', singular: true,
-         type: 's:string'
- }
-],
-      [%w[ClientBooking inputValue RetailerExtraCode],
-       { namespace: namespace, form: 'qualified', singular: true,
-         type: 's:string'
- }
-],
-      [%w[ClientBooking inputValue PaymentType],
-       { namespace: namespace, form: 'qualified', singular: true,
-         type: 's:string'
- }
-],
-      [%w[ClientBooking inputValue CreditCardType],
-       { namespace: namespace, form: 'qualified', singular: true,
-         type: 's:string'
- }
-],
-      [%w[ClientBooking inputValue CreditCardNumber],
-       { namespace: namespace, form: 'qualified', singular: true,
-         type: 's:string'
- }
-],
-      [%w[ClientBooking inputValue CreditCardCvc],
-       { namespace: namespace, form: 'qualified', singular: true,
-         type: 's:string'
- }
-],
-      [%w[ClientBooking inputValue CreditCardExpiry],
-       { namespace: namespace, form: 'qualified', singular: true,
-         type: 's:string'
- }
-],
-      [%w[ClientBooking inputValue CreditCardHolder],
-       { namespace: namespace, form: 'qualified', singular: true,
-         type: 's:string'
- }
-],
-      [%w[ClientBooking inputValue BankAccountNumber],
-       { namespace: namespace, form: 'qualified', singular: true,
-         type: 's:string'
- }
-],
-      [%w[ClientBooking inputValue BankCode],
-       { namespace: namespace, form: 'qualified', singular: true,
-         type: 's:string'
- }
-],
-      [%w[ClientBooking inputValue BankAccountHolder],
-       { namespace: namespace, form: 'qualified', singular: true, type: 's:string' }
-]
+    expect(operation.contract.request.body.paths).to eq([
+      { path: ['ClientBooking'],
+        kind: :complex,
+        namespace: namespace,
+        form: 'qualified',
+        singular: true,
+        min_occurs: '1',
+        max_occurs: '1',
+        wildcard: false
+},
+      { path: %w[ClientBooking inputValue],
+        kind: :complex,
+        namespace: namespace,
+        form: 'qualified',
+        singular: true,
+        min_occurs: '0',
+        max_occurs: '1',
+        wildcard: false
+},
+      { path: %w[ClientBooking inputValue SalesOfficeCode],
+        kind: :simple,
+        namespace: namespace,
+        form: 'qualified',
+        singular: true,
+        min_occurs: '0',
+        max_occurs: '1',
+        type: 's:string',
+        list: false
+},
+      { path: %w[ClientBooking inputValue AccommodationCode],
+        kind: :simple,
+        namespace: namespace,
+        form: 'qualified',
+        singular: true,
+        min_occurs: '0',
+        max_occurs: '1',
+        type: 's:string',
+        list: false
+},
+      { path: %w[ClientBooking inputValue AdditionalServices],
+        kind: :complex,
+        namespace: namespace,
+        form: 'qualified',
+        singular: true,
+        min_occurs: '0',
+        max_occurs: '1',
+        wildcard: false
+},
+      { path: %w[ClientBooking inputValue AdditionalServices AdditionalServiceInputItem],
+        kind: :complex,
+        namespace: namespace,
+        form: 'qualified',
+        singular: false,
+        min_occurs: '0',
+        max_occurs: 'unbounded',
+        wildcard: false
+},
+      { path: %w[ClientBooking inputValue AdditionalServices AdditionalServiceInputItem Code],
+        kind: :simple,
+        namespace: namespace,
+        form: 'qualified',
+        singular: true,
+        min_occurs: '0',
+        max_occurs: '1',
+        type: 's:string',
+        list: false
+},
+      { path: %w[ClientBooking inputValue AdditionalServices AdditionalServiceInputItem Count],
+        kind: :simple,
+        namespace: namespace,
+        form: 'qualified',
+        singular: true,
+        min_occurs: '1',
+        max_occurs: '1',
+        type: 's:int',
+        list: false
+},
+      { path: %w[ClientBooking inputValue CustomerSalutationType],
+        kind: :simple,
+        namespace: namespace,
+        form: 'qualified',
+        singular: true,
+        min_occurs: '1',
+        max_occurs: '1',
+        type: 's:string',
+        list: false
+},
+      { path: %w[ClientBooking inputValue CustomerName],
+        kind: :simple,
+        namespace: namespace,
+        form: 'qualified',
+        singular: true,
+        min_occurs: '0',
+        max_occurs: '1',
+        type: 's:string',
+        list: false
+},
+      { path: %w[ClientBooking inputValue CustomerFirstName],
+        kind: :simple,
+        namespace: namespace,
+        form: 'qualified',
+        singular: true,
+        min_occurs: '0',
+        max_occurs: '1',
+        type: 's:string',
+        list: false
+},
+      { path: %w[ClientBooking inputValue CustomerPhone],
+        kind: :simple,
+        namespace: namespace,
+        form: 'qualified',
+        singular: true,
+        min_occurs: '0',
+        max_occurs: '1',
+        type: 's:string',
+        list: false
+},
+      { path: %w[ClientBooking inputValue CustomerFax],
+        kind: :simple,
+        namespace: namespace,
+        form: 'qualified',
+        singular: true,
+        min_occurs: '0',
+        max_occurs: '1',
+        type: 's:string',
+        list: false
+},
+      { path: %w[ClientBooking inputValue CustomerEmail],
+        kind: :simple,
+        namespace: namespace,
+        form: 'qualified',
+        singular: true,
+        min_occurs: '0',
+        max_occurs: '1',
+        type: 's:string',
+        list: false
+},
+      { path: %w[ClientBooking inputValue CustomerAddressStreet],
+        kind: :simple,
+        namespace: namespace,
+        form: 'qualified',
+        singular: true,
+        min_occurs: '0',
+        max_occurs: '1',
+        type: 's:string',
+        list: false
+},
+      { path: %w[ClientBooking inputValue CustomerAddressAdditionalStreet],
+        kind: :simple,
+        namespace: namespace,
+        form: 'qualified',
+        singular: true,
+        min_occurs: '0',
+        max_occurs: '1',
+        type: 's:string',
+        list: false
+},
+      { path: %w[ClientBooking inputValue CustomerAddressZIP],
+        kind: :simple,
+        namespace: namespace,
+        form: 'qualified',
+        singular: true,
+        min_occurs: '0',
+        max_occurs: '1',
+        type: 's:string',
+        list: false
+},
+      { path: %w[ClientBooking inputValue CustomerAddressPlace],
+        kind: :simple,
+        namespace: namespace,
+        form: 'qualified',
+        singular: true,
+        min_occurs: '0',
+        max_occurs: '1',
+        type: 's:string',
+        list: false
+},
+      { path: %w[ClientBooking inputValue CustomerAddressState],
+        kind: :simple,
+        namespace: namespace,
+        form: 'qualified',
+        singular: true,
+        min_occurs: '0',
+        max_occurs: '1',
+        type: 's:string',
+        list: false
+},
+      { path: %w[ClientBooking inputValue CustomerAddressCountryCode],
+        kind: :simple,
+        namespace: namespace,
+        form: 'qualified',
+        singular: true,
+        min_occurs: '0',
+        max_occurs: '1',
+        type: 's:string',
+        list: false
+},
+      { path: %w[ClientBooking inputValue Comment],
+        kind: :simple,
+        namespace: namespace,
+        form: 'qualified',
+        singular: true,
+        min_occurs: '0',
+        max_occurs: '1',
+        type: 's:string',
+        list: false
+},
+      { path: %w[ClientBooking inputValue Adults],
+        kind: :simple,
+        namespace: namespace,
+        form: 'qualified',
+        singular: true,
+        min_occurs: '1',
+        max_occurs: '1',
+        type: 's:int',
+        list: false
+},
+      { path: %w[ClientBooking inputValue Babies],
+        kind: :simple,
+        namespace: namespace,
+        form: 'qualified',
+        singular: true,
+        min_occurs: '1',
+        max_occurs: '1',
+        type: 's:int',
+        list: false
+},
+      { path: %w[ClientBooking inputValue Children],
+        kind: :simple,
+        namespace: namespace,
+        form: 'qualified',
+        singular: true,
+        min_occurs: '1',
+        max_occurs: '1',
+        type: 's:int',
+        list: false
+},
+      { path: %w[ClientBooking inputValue CheckIn],
+        kind: :simple,
+        namespace: namespace,
+        form: 'qualified',
+        singular: true,
+        min_occurs: '0',
+        max_occurs: '1',
+        type: 's:string',
+        list: false
+},
+      { path: %w[ClientBooking inputValue CheckOut],
+        kind: :simple,
+        namespace: namespace,
+        form: 'qualified',
+        singular: true,
+        min_occurs: '0',
+        max_occurs: '1',
+        type: 's:string',
+        list: false
+},
+      { path: %w[ClientBooking inputValue LanguageCode],
+        kind: :simple,
+        namespace: namespace,
+        form: 'qualified',
+        singular: true,
+        min_occurs: '0',
+        max_occurs: '1',
+        type: 's:string',
+        list: false
+},
+      { path: %w[ClientBooking inputValue CurrencyCode],
+        kind: :simple,
+        namespace: namespace,
+        form: 'qualified',
+        singular: true,
+        min_occurs: '0',
+        max_occurs: '1',
+        type: 's:string',
+        list: false
+},
+      { path: %w[ClientBooking inputValue RetailerCode],
+        kind: :simple,
+        namespace: namespace,
+        form: 'qualified',
+        singular: true,
+        min_occurs: '0',
+        max_occurs: '1',
+        type: 's:string',
+        list: false
+},
+      { path: %w[ClientBooking inputValue RetailerExtraCode],
+        kind: :simple,
+        namespace: namespace,
+        form: 'qualified',
+        singular: true,
+        min_occurs: '0',
+        max_occurs: '1',
+        type: 's:string',
+        list: false
+},
+      { path: %w[ClientBooking inputValue PaymentType],
+        kind: :simple,
+        namespace: namespace,
+        form: 'qualified',
+        singular: true,
+        min_occurs: '1',
+        max_occurs: '1',
+        type: 's:string',
+        list: false
+},
+      { path: %w[ClientBooking inputValue CreditCardType],
+        kind: :simple,
+        namespace: namespace,
+        form: 'qualified',
+        singular: true,
+        min_occurs: '1',
+        max_occurs: '1',
+        type: 's:string',
+        list: false
+},
+      { path: %w[ClientBooking inputValue CreditCardNumber],
+        kind: :simple,
+        namespace: namespace,
+        form: 'qualified',
+        singular: true,
+        min_occurs: '0',
+        max_occurs: '1',
+        type: 's:string',
+        list: false
+},
+      { path: %w[ClientBooking inputValue CreditCardCvc],
+        kind: :simple,
+        namespace: namespace,
+        form: 'qualified',
+        singular: true,
+        min_occurs: '0',
+        max_occurs: '1',
+        type: 's:string',
+        list: false
+},
+      { path: %w[ClientBooking inputValue CreditCardExpiry],
+        kind: :simple,
+        namespace: namespace,
+        form: 'qualified',
+        singular: true,
+        min_occurs: '0',
+        max_occurs: '1',
+        type: 's:string',
+        list: false
+},
+      { path: %w[ClientBooking inputValue CreditCardHolder],
+        kind: :simple,
+        namespace: namespace,
+        form: 'qualified',
+        singular: true,
+        min_occurs: '0',
+        max_occurs: '1',
+        type: 's:string',
+        list: false
+},
+      { path: %w[ClientBooking inputValue BankAccountNumber],
+        kind: :simple,
+        namespace: namespace,
+        form: 'qualified',
+        singular: true,
+        min_occurs: '0',
+        max_occurs: '1',
+        type: 's:string',
+        list: false
+},
+      { path: %w[ClientBooking inputValue BankCode],
+        kind: :simple,
+        namespace: namespace,
+        form: 'qualified',
+        singular: true,
+        min_occurs: '0',
+        max_occurs: '1',
+        type: 's:string',
+        list: false
+},
+      { path: %w[ClientBooking inputValue BankAccountHolder],
+        kind: :simple,
+        namespace: namespace,
+        form: 'qualified',
+        singular: true,
+        min_occurs: '0',
+        max_occurs: '1',
+        type: 's:string',
+        list: false
+}
     ])
   end
 

@@ -27,166 +27,334 @@ RSpec.describe 'Bronto' do
 
     namespace = 'http://api.bronto.com/v4'
 
-    expect(request_body_paths(operation)).to eq([
-      [['addLogins'],
-       { namespace: namespace, form: 'qualified', singular: true }
-],
-      [%w[addLogins accounts],
-       { namespace: namespace, form: 'unqualified', singular: false }
-],
-      [%w[addLogins accounts username],
-       { namespace: namespace, form: 'unqualified', singular: true,
-         type: 'xs:string'
- }
-],
-      [%w[addLogins accounts password],
-       { namespace: namespace, form: 'unqualified', singular: true,
-         type: 'xs:string'
- }
-],
-      [%w[addLogins accounts contactInformation],
-       { namespace: namespace, form: 'unqualified', singular: true }
-],
-      [%w[addLogins accounts contactInformation organization],
-       { namespace: namespace, form: 'unqualified', singular: true,
-         type: 'xs:string'
- }
-],
-      [%w[addLogins accounts contactInformation firstName],
-       { namespace: namespace, form: 'unqualified', singular: true,
-         type: 'xs:string'
- }
-],
-      [%w[addLogins accounts contactInformation lastName],
-       { namespace: namespace, form: 'unqualified', singular: true,
-         type: 'xs:string'
- }
-],
-      [%w[addLogins accounts contactInformation email],
-       { namespace: namespace, form: 'unqualified', singular: true,
-         type: 'xs:string'
- }
-],
-      [%w[addLogins accounts contactInformation phone],
-       { namespace: namespace, form: 'unqualified', singular: true,
-         type: 'xs:string'
- }
-],
-      [%w[addLogins accounts contactInformation address],
-       { namespace: namespace, form: 'unqualified', singular: true,
-         type: 'xs:string'
- }
-],
-      [%w[addLogins accounts contactInformation address2],
-       { namespace: namespace, form: 'unqualified', singular: true,
-         type: 'xs:string'
- }
-],
-      [%w[addLogins accounts contactInformation city],
-       { namespace: namespace, form: 'unqualified', singular: true,
-         type: 'xs:string'
- }
-],
-      [%w[addLogins accounts contactInformation state],
-       { namespace: namespace, form: 'unqualified', singular: true,
-         type: 'xs:string'
- }
-],
-      [%w[addLogins accounts contactInformation zip],
-       { namespace: namespace, form: 'unqualified', singular: true,
-         type: 'xs:string'
- }
-],
-      [%w[addLogins accounts contactInformation country],
-       { namespace: namespace, form: 'unqualified', singular: true,
-         type: 'xs:string'
- }
-],
-      [%w[addLogins accounts contactInformation notes],
-       { namespace: namespace, form: 'unqualified', singular: true,
-         type: 'xs:string'
- }
-],
-      [%w[addLogins accounts permissionAgencyAdmin],
-       { namespace: namespace, form: 'unqualified', singular: true,
-         type: 'xs:boolean'
- }
-],
-      [%w[addLogins accounts permissionAdmin],
-       { namespace: namespace, form: 'unqualified', singular: true,
-         type: 'xs:boolean'
- }
-],
-      [%w[addLogins accounts permissionApi],
-       { namespace: namespace, form: 'unqualified', singular: true,
-         type: 'xs:boolean'
- }
-],
-      [%w[addLogins accounts permissionUpgrade],
-       { namespace: namespace, form: 'unqualified', singular: true,
-         type: 'xs:boolean'
- }
-],
-      [%w[addLogins accounts permissionFatigueOverride],
-       { namespace: namespace, form: 'unqualified', singular: true,
-         type: 'xs:boolean'
- }
-],
-      [%w[addLogins accounts permissionMessageCompose],
-       { namespace: namespace, form: 'unqualified', singular: true,
-         type: 'xs:boolean'
- }
-],
-      [%w[addLogins accounts permissionMessageApprove],
-       { namespace: namespace, form: 'unqualified', singular: true,
-         type: 'xs:boolean'
- }
-],
-      [%w[addLogins accounts permissionMessageDelete],
-       { namespace: namespace, form: 'unqualified', singular: true,
-         type: 'xs:boolean'
- }
-],
-      [%w[addLogins accounts permissionAutomatorCompose],
-       { namespace: namespace, form: 'unqualified', singular: true,
-         type: 'xs:boolean'
- }
-],
-      [%w[addLogins accounts permissionListCreateSend],
-       { namespace: namespace, form: 'unqualified', singular: true,
-         type: 'xs:boolean'
- }
-],
-      [%w[addLogins accounts permissionListCreate],
-       { namespace: namespace, form: 'unqualified', singular: true,
-         type: 'xs:boolean'
- }
-],
-      [%w[addLogins accounts permissionSegmentCreate],
-       { namespace: namespace, form: 'unqualified', singular: true,
-         type: 'xs:boolean'
- }
-],
-      [%w[addLogins accounts permissionFieldCreate],
-       { namespace: namespace, form: 'unqualified', singular: true,
-         type: 'xs:boolean'
- }
-],
-      [%w[addLogins accounts permissionFieldReorder],
-       { namespace: namespace, form: 'unqualified', singular: true,
-         type: 'xs:boolean'
- }
-],
-      [%w[addLogins accounts permissionSubscriberCreate],
-       { namespace: namespace, form: 'unqualified', singular: true,
-         type: 'xs:boolean'
- }
-],
-      [%w[addLogins accounts permissionSubscriberView],
-       { namespace: namespace, form: 'unqualified', singular: true,
-         type: 'xs:boolean'
- }
-]
+    expect(operation.contract.request.body.paths).to eq([
+      { path: ['addLogins'],
+        kind: :complex,
+        namespace: namespace,
+        form: 'qualified',
+        singular: true,
+        min_occurs: '1',
+        max_occurs: '1',
+        wildcard: false
+},
+      { path: %w[addLogins accounts],
+        kind: :complex,
+        namespace: namespace,
+        form: 'unqualified',
+        singular: false,
+        min_occurs: '0',
+        max_occurs: 'unbounded',
+        wildcard: false
+},
+      { path: %w[addLogins accounts username],
+        kind: :simple,
+        namespace: namespace,
+        form: 'unqualified',
+        singular: true,
+        min_occurs: '0',
+        max_occurs: '1',
+        type: 'xs:string',
+        list: false
+},
+      { path: %w[addLogins accounts password],
+        kind: :simple,
+        namespace: namespace,
+        form: 'unqualified',
+        singular: true,
+        min_occurs: '0',
+        max_occurs: '1',
+        type: 'xs:string',
+        list: false
+},
+      { path: %w[addLogins accounts contactInformation],
+        kind: :complex,
+        namespace: namespace,
+        form: 'unqualified',
+        singular: true,
+        min_occurs: '0',
+        max_occurs: '1',
+        wildcard: false
+},
+      { path: %w[addLogins accounts contactInformation organization],
+        kind: :simple,
+        namespace: namespace,
+        form: 'unqualified',
+        singular: true,
+        min_occurs: '0',
+        max_occurs: '1',
+        type: 'xs:string',
+        list: false
+},
+      { path: %w[addLogins accounts contactInformation firstName],
+        kind: :simple,
+        namespace: namespace,
+        form: 'unqualified',
+        singular: true,
+        min_occurs: '0',
+        max_occurs: '1',
+        type: 'xs:string',
+        list: false
+},
+      { path: %w[addLogins accounts contactInformation lastName],
+        kind: :simple,
+        namespace: namespace,
+        form: 'unqualified',
+        singular: true,
+        min_occurs: '0',
+        max_occurs: '1',
+        type: 'xs:string',
+        list: false
+},
+      { path: %w[addLogins accounts contactInformation email],
+        kind: :simple,
+        namespace: namespace,
+        form: 'unqualified',
+        singular: true,
+        min_occurs: '0',
+        max_occurs: '1',
+        type: 'xs:string',
+        list: false
+},
+      { path: %w[addLogins accounts contactInformation phone],
+        kind: :simple,
+        namespace: namespace,
+        form: 'unqualified',
+        singular: true,
+        min_occurs: '0',
+        max_occurs: '1',
+        type: 'xs:string',
+        list: false
+},
+      { path: %w[addLogins accounts contactInformation address],
+        kind: :simple,
+        namespace: namespace,
+        form: 'unqualified',
+        singular: true,
+        min_occurs: '0',
+        max_occurs: '1',
+        type: 'xs:string',
+        list: false
+},
+      { path: %w[addLogins accounts contactInformation address2],
+        kind: :simple,
+        namespace: namespace,
+        form: 'unqualified',
+        singular: true,
+        min_occurs: '0',
+        max_occurs: '1',
+        type: 'xs:string',
+        list: false
+},
+      { path: %w[addLogins accounts contactInformation city],
+        kind: :simple,
+        namespace: namespace,
+        form: 'unqualified',
+        singular: true,
+        min_occurs: '0',
+        max_occurs: '1',
+        type: 'xs:string',
+        list: false
+},
+      { path: %w[addLogins accounts contactInformation state],
+        kind: :simple,
+        namespace: namespace,
+        form: 'unqualified',
+        singular: true,
+        min_occurs: '0',
+        max_occurs: '1',
+        type: 'xs:string',
+        list: false
+},
+      { path: %w[addLogins accounts contactInformation zip],
+        kind: :simple,
+        namespace: namespace,
+        form: 'unqualified',
+        singular: true,
+        min_occurs: '0',
+        max_occurs: '1',
+        type: 'xs:string',
+        list: false
+},
+      { path: %w[addLogins accounts contactInformation country],
+        kind: :simple,
+        namespace: namespace,
+        form: 'unqualified',
+        singular: true,
+        min_occurs: '0',
+        max_occurs: '1',
+        type: 'xs:string',
+        list: false
+},
+      { path: %w[addLogins accounts contactInformation notes],
+        kind: :simple,
+        namespace: namespace,
+        form: 'unqualified',
+        singular: true,
+        min_occurs: '0',
+        max_occurs: '1',
+        type: 'xs:string',
+        list: false
+},
+      { path: %w[addLogins accounts permissionAgencyAdmin],
+        kind: :simple,
+        namespace: namespace,
+        form: 'unqualified',
+        singular: true,
+        min_occurs: '0',
+        max_occurs: '1',
+        type: 'xs:boolean',
+        list: false
+},
+      { path: %w[addLogins accounts permissionAdmin],
+        kind: :simple,
+        namespace: namespace,
+        form: 'unqualified',
+        singular: true,
+        min_occurs: '0',
+        max_occurs: '1',
+        type: 'xs:boolean',
+        list: false
+},
+      { path: %w[addLogins accounts permissionApi],
+        kind: :simple,
+        namespace: namespace,
+        form: 'unqualified',
+        singular: true,
+        min_occurs: '0',
+        max_occurs: '1',
+        type: 'xs:boolean',
+        list: false
+},
+      { path: %w[addLogins accounts permissionUpgrade],
+        kind: :simple,
+        namespace: namespace,
+        form: 'unqualified',
+        singular: true,
+        min_occurs: '0',
+        max_occurs: '1',
+        type: 'xs:boolean',
+        list: false
+},
+      { path: %w[addLogins accounts permissionFatigueOverride],
+        kind: :simple,
+        namespace: namespace,
+        form: 'unqualified',
+        singular: true,
+        min_occurs: '0',
+        max_occurs: '1',
+        type: 'xs:boolean',
+        list: false
+},
+      { path: %w[addLogins accounts permissionMessageCompose],
+        kind: :simple,
+        namespace: namespace,
+        form: 'unqualified',
+        singular: true,
+        min_occurs: '0',
+        max_occurs: '1',
+        type: 'xs:boolean',
+        list: false
+},
+      { path: %w[addLogins accounts permissionMessageApprove],
+        kind: :simple,
+        namespace: namespace,
+        form: 'unqualified',
+        singular: true,
+        min_occurs: '0',
+        max_occurs: '1',
+        type: 'xs:boolean',
+        list: false
+},
+      { path: %w[addLogins accounts permissionMessageDelete],
+        kind: :simple,
+        namespace: namespace,
+        form: 'unqualified',
+        singular: true,
+        min_occurs: '0',
+        max_occurs: '1',
+        type: 'xs:boolean',
+        list: false
+},
+      { path: %w[addLogins accounts permissionAutomatorCompose],
+        kind: :simple,
+        namespace: namespace,
+        form: 'unqualified',
+        singular: true,
+        min_occurs: '0',
+        max_occurs: '1',
+        type: 'xs:boolean',
+        list: false
+},
+      { path: %w[addLogins accounts permissionListCreateSend],
+        kind: :simple,
+        namespace: namespace,
+        form: 'unqualified',
+        singular: true,
+        min_occurs: '0',
+        max_occurs: '1',
+        type: 'xs:boolean',
+        list: false
+},
+      { path: %w[addLogins accounts permissionListCreate],
+        kind: :simple,
+        namespace: namespace,
+        form: 'unqualified',
+        singular: true,
+        min_occurs: '0',
+        max_occurs: '1',
+        type: 'xs:boolean',
+        list: false
+},
+      { path: %w[addLogins accounts permissionSegmentCreate],
+        kind: :simple,
+        namespace: namespace,
+        form: 'unqualified',
+        singular: true,
+        min_occurs: '0',
+        max_occurs: '1',
+        type: 'xs:boolean',
+        list: false
+},
+      { path: %w[addLogins accounts permissionFieldCreate],
+        kind: :simple,
+        namespace: namespace,
+        form: 'unqualified',
+        singular: true,
+        min_occurs: '0',
+        max_occurs: '1',
+        type: 'xs:boolean',
+        list: false
+},
+      { path: %w[addLogins accounts permissionFieldReorder],
+        kind: :simple,
+        namespace: namespace,
+        form: 'unqualified',
+        singular: true,
+        min_occurs: '0',
+        max_occurs: '1',
+        type: 'xs:boolean',
+        list: false
+},
+      { path: %w[addLogins accounts permissionSubscriberCreate],
+        kind: :simple,
+        namespace: namespace,
+        form: 'unqualified',
+        singular: true,
+        min_occurs: '0',
+        max_occurs: '1',
+        type: 'xs:boolean',
+        list: false
+},
+      { path: %w[addLogins accounts permissionSubscriberView],
+        kind: :simple,
+        namespace: namespace,
+        form: 'unqualified',
+        singular: true,
+        min_occurs: '0',
+        max_occurs: '1',
+        type: 'xs:boolean',
+        list: false
+}
     ])
   end
 

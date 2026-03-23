@@ -30,25 +30,46 @@ RSpec.describe 'Bookt' do
 
     namespace = 'https://connect.bookt.com/connect'
 
-    expect(request_body_paths(get_booking)).to eq([
-      [['GetBooking'],
-       { namespace: namespace, form: 'qualified', singular: true }
-],
-      [%w[GetBooking apiKey],
-       { namespace: namespace, form: 'qualified', singular: true,
-         type: 'xs:string'
- }
-],
-      [%w[GetBooking bookingID],
-       { namespace: namespace, form: 'qualified', singular: true,
-         type: 'xs:string'
- }
-],
-      [%w[GetBooking useInternalID],
-       { namespace: namespace, form: 'qualified', singular: true,
-         type: 'xs:boolean'
- }
-]
+    expect(get_booking.contract.request.body.paths).to eq([
+      { path: ['GetBooking'],
+        kind: :complex,
+        namespace: namespace,
+        form: 'qualified',
+        singular: true,
+        min_occurs: '1',
+        max_occurs: '1',
+        wildcard: false
+},
+      { path: %w[GetBooking apiKey],
+        kind: :simple,
+        namespace: namespace,
+        form: 'qualified',
+        singular: true,
+        min_occurs: '0',
+        max_occurs: '1',
+        type: 'xs:string',
+        list: false
+},
+      { path: %w[GetBooking bookingID],
+        kind: :simple,
+        namespace: namespace,
+        form: 'qualified',
+        singular: true,
+        min_occurs: '0',
+        max_occurs: '1',
+        type: 'xs:string',
+        list: false
+},
+      { path: %w[GetBooking useInternalID],
+        kind: :simple,
+        namespace: namespace,
+        form: 'qualified',
+        singular: true,
+        min_occurs: '0',
+        max_occurs: '1',
+        type: 'xs:boolean',
+        list: false
+}
     ])
   end
 end

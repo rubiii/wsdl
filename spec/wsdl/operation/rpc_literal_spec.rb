@@ -10,20 +10,35 @@ RSpec.describe WSDL::Operation do
       op1 = client.operation('SampleService', 'Sample', 'op1')
       expect(op1.input_style).to eq('rpc/literal')
 
-      expect(request_body_paths(op1)).to eq([
-        [['in'],
-         { namespace: nil,                        form: 'unqualified', singular: true }
-],
-        [%w[in data1],
-         { namespace: 'http://dataNamespace.com', form: 'unqualified', singular: true,
-           type: 'int'
+      expect(op1.contract.request.body.paths).to eq([
+        { path: ['in'],
+          kind: :complex,
+          form: 'unqualified',
+          singular: true,
+          min_occurs: '1',
+          max_occurs: '1',
+          wildcard: false
+},
+        { path: %w[in data1],
+          kind: :simple,
+          namespace: 'http://dataNamespace.com',
+          form: 'unqualified',
+          singular: true,
+          min_occurs: '1',
+          max_occurs: '1',
+          type: 'int',
+          list: false
+},
+        { path: %w[in data2],
+          kind: :simple,
+          namespace: 'http://dataNamespace.com',
+          form: 'unqualified',
+          singular: true,
+          min_occurs: '1',
+          max_occurs: '1',
+          type: 'int',
+          list: false
 }
-],
-        [%w[in data2],
-         { namespace: 'http://dataNamespace.com', form: 'unqualified', singular: true,
-           type: 'int'
-}
-]
       ])
     end
 
@@ -33,20 +48,35 @@ RSpec.describe WSDL::Operation do
       op2 = client.operation('SampleService', 'Sample', 'op2')
       expect(op2.input_style).to eq('rpc/literal')
 
-      expect(request_body_paths(op2)).to eq([
-        [['in'],
-         { namespace: nil,                        form: 'unqualified', singular: true }
-],
-        [%w[in data1],
-         { namespace: 'http://dataNamespace.com', form: 'unqualified', singular: true,
-           type: 'int'
+      expect(op2.contract.request.body.paths).to eq([
+        { path: ['in'],
+          kind: :complex,
+          form: 'unqualified',
+          singular: true,
+          min_occurs: '1',
+          max_occurs: '1',
+          wildcard: false
+},
+        { path: %w[in data1],
+          kind: :simple,
+          namespace: 'http://dataNamespace.com',
+          form: 'unqualified',
+          singular: true,
+          min_occurs: '1',
+          max_occurs: '1',
+          type: 'int',
+          list: false
+},
+        { path: %w[in data2],
+          kind: :simple,
+          namespace: 'http://dataNamespace.com',
+          form: 'unqualified',
+          singular: true,
+          min_occurs: '1',
+          max_occurs: '1',
+          type: 'int',
+          list: false
 }
-],
-        [%w[in data2],
-         { namespace: 'http://dataNamespace.com', form: 'unqualified', singular: true,
-           type: 'int'
-}
-]
       ])
     end
 
@@ -56,26 +86,54 @@ RSpec.describe WSDL::Operation do
       op3 = client.operation('SampleService', 'Sample', 'op3')
       expect(op3.input_style).to eq('rpc/literal')
 
-      expect(request_body_paths(op3)).to eq([
-        [['DataElem'],
-         { namespace: 'http://dataNamespace.com', form: 'qualified', singular: true }
-],
-        [%w[DataElem data1],
-         { namespace: 'http://dataNamespace.com', form: 'unqualified', singular: true,
-           type: 'int'
+      expect(op3.contract.request.body.paths).to eq([
+        { path: ['DataElem'],
+          kind: :complex,
+          namespace: 'http://dataNamespace.com',
+          form: 'qualified',
+          singular: true,
+          min_occurs: '1',
+          max_occurs: '1',
+          wildcard: false
+},
+        { path: %w[DataElem data1],
+          kind: :simple,
+          namespace: 'http://dataNamespace.com',
+          form: 'unqualified',
+          singular: true,
+          min_occurs: '1',
+          max_occurs: '1',
+          type: 'int',
+          list: false
+},
+        { path: %w[DataElem data2],
+          kind: :simple,
+          namespace: 'http://dataNamespace.com',
+          form: 'unqualified',
+          singular: true,
+          min_occurs: '1',
+          max_occurs: '1',
+          type: 'int',
+          list: false
+},
+        { path: ['in2'],
+          kind: :complex,
+          form: 'unqualified',
+          singular: true,
+          min_occurs: '1',
+          max_occurs: '1',
+          wildcard: false
+},
+        { path: %w[in2 RefDataElem],
+          kind: :simple,
+          namespace: 'http://refNamespace.com',
+          form: 'qualified',
+          singular: true,
+          min_occurs: '1',
+          max_occurs: '1',
+          type: 'int',
+          list: false
 }
-],
-        [%w[DataElem data2],
-         { namespace: 'http://dataNamespace.com', form: 'unqualified', singular: true,
-           type: 'int'
-}
-],
-        [['in2'], { namespace: nil, form: 'unqualified', singular: true }],
-        [%w[in2 RefDataElem],
-         { namespace: 'http://refNamespace.com',  form: 'qualified',   singular: true,
-           type: 'int'
-}
-]
       ])
     end
   end

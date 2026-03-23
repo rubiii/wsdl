@@ -29,72 +29,153 @@ RSpec.describe 'Betfair' do
     ns = 'http://www.betfair.com/publicapi/v5/BFExchangeService/'
     ns2 = 'http://www.betfair.com/publicapi/types/exchange/v5/'
 
-    expect(request_body_paths(operation)).to eq([
-      [['getMUBetsLite'],
-       { namespace: ns, form: 'qualified', singular: true }
-],
-
-      [%w[getMUBetsLite request],
-       { namespace: ns, form: 'qualified', singular: true }
-],
-
-      # extension elements
-
-      [%w[getMUBetsLite request header],
-       { namespace: ns2, form: 'unqualified', singular: true }
-],
-
-      [%w[getMUBetsLite request header clientStamp],
-       { namespace: ns2, form: 'unqualified', singular: true, type: 'xsd:long' }
-],
-
-      [%w[getMUBetsLite request header sessionToken],
-       { namespace: ns2, form: 'unqualified', singular: true, type: 'xsd:string' }
-],
-
-      # ---
-
-      [%w[getMUBetsLite request betStatus],
-       { namespace: ns2, form: 'unqualified', singular: true, type: 'xsd:string' }
-],
-
-      [%w[getMUBetsLite request marketId],
-       { namespace: ns2, form: 'unqualified', singular: true, type: 'xsd:int' }
-],
-
-      [%w[getMUBetsLite request betIds],
-       { namespace: ns2, form: 'unqualified', singular: true }
-],
-
-      [%w[getMUBetsLite request betIds betId],
-       { namespace: ns2, form: 'qualified', singular: false, type: 'xsd:long' }
-],
-
-      [%w[getMUBetsLite request orderBy],
-       { namespace: ns2, form: 'unqualified', singular: true, type: 'xsd:string' }
-],
-
-      [%w[getMUBetsLite request sortOrder],
-       { namespace: ns2, form: 'unqualified', singular: true, type: 'xsd:string' }
-],
-
-      [%w[getMUBetsLite request recordCount],
-       { namespace: ns2, form: 'unqualified', singular: true, type: 'xsd:int' }
-],
-
-      [%w[getMUBetsLite request startRecord],
-       { namespace: ns2, form: 'unqualified', singular: true, type: 'xsd:int' }
-],
-
-      [%w[getMUBetsLite request matchedSince],
-       { namespace: ns2, form: 'unqualified', singular: true,
-         type: 'xsd:dateTime'
- }
-],
-
-      [%w[getMUBetsLite request excludeLastSecond],
-       { namespace: ns2, form: 'unqualified', singular: true, type: 'xsd:boolean' }
-]
+    expect(operation.contract.request.body.paths).to eq([
+      { path: ['getMUBetsLite'],
+        kind: :complex,
+        namespace: ns,
+        form: 'qualified',
+        singular: true,
+        min_occurs: '1',
+        max_occurs: '1',
+        wildcard: false
+},
+      { path: %w[getMUBetsLite request],
+        kind: :complex,
+        namespace: ns,
+        form: 'qualified',
+        singular: true,
+        min_occurs: '1',
+        max_occurs: '1',
+        wildcard: false
+},
+      { path: %w[getMUBetsLite request header],
+        kind: :complex,
+        namespace: ns2,
+        form: 'unqualified',
+        singular: true,
+        min_occurs: '1',
+        max_occurs: '1',
+        wildcard: false
+},
+      { path: %w[getMUBetsLite request header clientStamp],
+        kind: :simple,
+        namespace: ns2,
+        form: 'unqualified',
+        singular: true,
+        min_occurs: '1',
+        max_occurs: '1',
+        type: 'xsd:long',
+        list: false
+},
+      { path: %w[getMUBetsLite request header sessionToken],
+        kind: :simple,
+        namespace: ns2,
+        form: 'unqualified',
+        singular: true,
+        min_occurs: '1',
+        max_occurs: '1',
+        type: 'xsd:string',
+        list: false
+},
+      { path: %w[getMUBetsLite request betStatus],
+        kind: :simple,
+        namespace: ns2,
+        form: 'unqualified',
+        singular: true,
+        min_occurs: '1',
+        max_occurs: '1',
+        type: 'xsd:string',
+        list: false
+},
+      { path: %w[getMUBetsLite request marketId],
+        kind: :simple,
+        namespace: ns2,
+        form: 'unqualified',
+        singular: true,
+        min_occurs: '1',
+        max_occurs: '1',
+        type: 'xsd:int',
+        list: false
+},
+      { path: %w[getMUBetsLite request betIds],
+        kind: :complex,
+        namespace: ns2,
+        form: 'unqualified',
+        singular: true,
+        min_occurs: '1',
+        max_occurs: '1',
+        wildcard: false
+},
+      { path: %w[getMUBetsLite request betIds betId],
+        kind: :simple,
+        namespace: ns2,
+        form: 'qualified',
+        singular: false,
+        min_occurs: '0',
+        max_occurs: '1000',
+        type: 'xsd:long',
+        list: false
+},
+      { path: %w[getMUBetsLite request orderBy],
+        kind: :simple,
+        namespace: ns2,
+        form: 'unqualified',
+        singular: true,
+        min_occurs: '1',
+        max_occurs: '1',
+        type: 'xsd:string',
+        list: false
+},
+      { path: %w[getMUBetsLite request sortOrder],
+        kind: :simple,
+        namespace: ns2,
+        form: 'unqualified',
+        singular: true,
+        min_occurs: '1',
+        max_occurs: '1',
+        type: 'xsd:string',
+        list: false
+},
+      { path: %w[getMUBetsLite request recordCount],
+        kind: :simple,
+        namespace: ns2,
+        form: 'unqualified',
+        singular: true,
+        min_occurs: '1',
+        max_occurs: '1',
+        type: 'xsd:int',
+        list: false
+},
+      { path: %w[getMUBetsLite request startRecord],
+        kind: :simple,
+        namespace: ns2,
+        form: 'unqualified',
+        singular: true,
+        min_occurs: '1',
+        max_occurs: '1',
+        type: 'xsd:int',
+        list: false
+},
+      { path: %w[getMUBetsLite request matchedSince],
+        kind: :simple,
+        namespace: ns2,
+        form: 'unqualified',
+        singular: true,
+        min_occurs: '1',
+        max_occurs: '1',
+        type: 'xsd:dateTime',
+        list: false
+},
+      { path: %w[getMUBetsLite request excludeLastSecond],
+        kind: :simple,
+        namespace: ns2,
+        form: 'unqualified',
+        singular: true,
+        min_occurs: '1',
+        max_occurs: '1',
+        type: 'xsd:boolean',
+        list: false
+}
     ])
   end
 

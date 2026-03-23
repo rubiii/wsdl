@@ -42,61 +42,124 @@ RSpec.describe 'Oracle' do
 
     namespace = 'urn://oracle.bi.webservices/v7'
 
-    expect(request_body_paths(operation)).to eq([
-      [['joinGroups'],
-       { namespace: namespace, form: 'qualified', singular: true }
-],
-      [%w[joinGroups group],
-       { namespace: namespace, form: 'qualified', singular: false }
-],
-      [%w[joinGroups group name],
-       { namespace: namespace, form: 'qualified', singular: true,
-         type: 'xsd:string'
+    expect(operation.contract.request.body.paths).to eq([
+      { path: ['joinGroups'],
+        kind: :complex,
+        namespace: namespace,
+        form: 'qualified',
+        singular: true,
+        min_occurs: '1',
+        max_occurs: '1',
+        wildcard: false
+},
+      { path: %w[joinGroups group],
+        kind: :complex,
+        namespace: namespace,
+        form: 'qualified',
+        singular: false,
+        min_occurs: '1',
+        max_occurs: 'unbounded',
+        wildcard: false
+},
+      { path: %w[joinGroups group name],
+        kind: :simple,
+        namespace: namespace,
+        form: 'qualified',
+        singular: true,
+        min_occurs: '0',
+        max_occurs: '1',
+        type: 'xsd:string',
+        list: false
+},
+      { path: %w[joinGroups group accountType],
+        kind: :simple,
+        namespace: namespace,
+        form: 'qualified',
+        singular: true,
+        min_occurs: '1',
+        max_occurs: '1',
+        type: 'xsd:int',
+        list: false
+},
+      { path: %w[joinGroups group guid],
+        kind: :simple,
+        namespace: namespace,
+        form: 'qualified',
+        singular: true,
+        min_occurs: '0',
+        max_occurs: '1',
+        type: 'xsd:string',
+        list: false
+},
+      { path: %w[joinGroups group displayName],
+        kind: :simple,
+        namespace: namespace,
+        form: 'qualified',
+        singular: true,
+        min_occurs: '0',
+        max_occurs: '1',
+        type: 'xsd:string',
+        list: false
+},
+      { path: %w[joinGroups member],
+        kind: :complex,
+        namespace: namespace,
+        form: 'qualified',
+        singular: false,
+        min_occurs: '1',
+        max_occurs: 'unbounded',
+        wildcard: false
+},
+      { path: %w[joinGroups member name],
+        kind: :simple,
+        namespace: namespace,
+        form: 'qualified',
+        singular: true,
+        min_occurs: '0',
+        max_occurs: '1',
+        type: 'xsd:string',
+        list: false
+},
+      { path: %w[joinGroups member accountType],
+        kind: :simple,
+        namespace: namespace,
+        form: 'qualified',
+        singular: true,
+        min_occurs: '1',
+        max_occurs: '1',
+        type: 'xsd:int',
+        list: false
+},
+      { path: %w[joinGroups member guid],
+        kind: :simple,
+        namespace: namespace,
+        form: 'qualified',
+        singular: true,
+        min_occurs: '0',
+        max_occurs: '1',
+        type: 'xsd:string',
+        list: false
+},
+      { path: %w[joinGroups member displayName],
+        kind: :simple,
+        namespace: namespace,
+        form: 'qualified',
+        singular: true,
+        min_occurs: '0',
+        max_occurs: '1',
+        type: 'xsd:string',
+        list: false
+},
+      { path: %w[joinGroups sessionID],
+        kind: :simple,
+        namespace: namespace,
+        form: 'qualified',
+        singular: true,
+        min_occurs: '1',
+        max_occurs: '1',
+        type: 'xsd:string',
+        list: false
 }
-],
-      [%w[joinGroups group accountType],
-       { namespace: namespace, form: 'qualified', singular: true,
-         type: 'xsd:int'
-}
-],
-      [%w[joinGroups group guid],
-       { namespace: namespace, form: 'qualified', singular: true,
-         type: 'xsd:string'
-}
-],
-      [%w[joinGroups group displayName],
-       { namespace: namespace, form: 'qualified', singular: true,
-         type: 'xsd:string'
-}
-],
-      [%w[joinGroups member],
-       { namespace: namespace, form: 'qualified', singular: false }
-],
-      [%w[joinGroups member name],
-       { namespace: namespace, form: 'qualified', singular: true,
-         type: 'xsd:string'
-}
-],
-      [%w[joinGroups member accountType],
-       { namespace: namespace, form: 'qualified', singular: true,
-         type: 'xsd:int'
-}
-],
-      [%w[joinGroups member guid],
-       { namespace: namespace, form: 'qualified', singular: true,
-         type: 'xsd:string'
-}
-],
-      [%w[joinGroups member displayName],
-       { namespace: namespace, form: 'qualified', singular: true,
-         type: 'xsd:string'
-}
-],
-      [%w[joinGroups sessionID],
-       { namespace: namespace, form: 'qualified', singular: true,
-         type: 'xsd:string'
-}
-]
     ])
   end
 

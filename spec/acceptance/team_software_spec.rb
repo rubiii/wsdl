@@ -26,15 +26,26 @@ RSpec.describe 'TeamSoftware' do
 
     namespace = 'http://tempuri.org/'
 
-    expect(request_body_paths(operation)).to eq([
-      [['Login'],
-       { namespace: namespace, form: 'qualified', singular: true }
-],
-      [%w[Login MappingKey],
-       { namespace: namespace, form: 'qualified', singular: true,
-         type: 'xs:string'
+    expect(operation.contract.request.body.paths).to eq([
+      { path: ['Login'],
+        kind: :complex,
+        namespace: namespace,
+        form: 'qualified',
+        singular: true,
+        min_occurs: '1',
+        max_occurs: '1',
+        wildcard: false
+},
+      { path: %w[Login MappingKey],
+        kind: :simple,
+        namespace: namespace,
+        form: 'qualified',
+        singular: true,
+        min_occurs: '0',
+        max_occurs: '1',
+        type: 'xs:string',
+        list: false
 }
-]
     ])
   end
 end

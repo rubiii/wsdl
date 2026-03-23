@@ -33,18 +33,36 @@ RSpec.describe 'EmailVerification service' do
 
     namespace = 'http://ws.cdyne.com/'
 
-    expect(request_body_paths(operation)).to eq([
-      [['VerifyEmail'],
-       { namespace: namespace, form: 'qualified', singular: true }
-],
-      [%w[VerifyEmail email],
-       { namespace: namespace, form: 'qualified', singular: true,
-         type: 's:string'
- }
-],
-      [%w[VerifyEmail LicenseKey],
-       { namespace: namespace, form: 'qualified', singular: true, type: 's:string' }
-]
+    expect(operation.contract.request.body.paths).to eq([
+      { path: ['VerifyEmail'],
+        kind: :complex,
+        namespace: namespace,
+        form: 'qualified',
+        singular: true,
+        min_occurs: '1',
+        max_occurs: '1',
+        wildcard: false
+},
+      { path: %w[VerifyEmail email],
+        kind: :simple,
+        namespace: namespace,
+        form: 'qualified',
+        singular: true,
+        min_occurs: '0',
+        max_occurs: '1',
+        type: 's:string',
+        list: false
+},
+      { path: %w[VerifyEmail LicenseKey],
+        kind: :simple,
+        namespace: namespace,
+        form: 'qualified',
+        singular: true,
+        min_occurs: '0',
+        max_occurs: '1',
+        type: 's:string',
+        list: false
+}
     ])
   end
 
