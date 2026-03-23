@@ -34,7 +34,7 @@ module WSDL
         @data[:form]
       end
 
-      # @return [Symbol] element kind (:simple, :complex, or :recursive)
+      # @return [String] element kind ('simple', 'complex', or 'recursive')
       def kind
         @data[:type]
       end
@@ -46,12 +46,12 @@ module WSDL
 
       # @return [Boolean] true if this is a simple type element
       def simple_type?
-        @data[:type] == :simple
+        @data[:type] == 'simple'
       end
 
       # @return [Boolean] true if this is a complex or recursive type element
       def complex_type?
-        %i[complex recursive].include?(@data[:type])
+        %w[complex recursive].include?(@data[:type])
       end
 
       # @return [Boolean] true if this element appears at most once
@@ -76,7 +76,7 @@ module WSDL
 
       # @return [Boolean] true if this element has a recursive type definition
       def recursive?
-        @data[:type] == :recursive
+        @data[:type] == 'recursive'
       end
 
       # @return [String, nil] the recursive type name

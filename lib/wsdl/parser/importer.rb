@@ -304,7 +304,7 @@ module WSDL
       def record_resolved_source(location, xml)
         @provenance << {
           location: location,
-          status: :resolved,
+          status: 'resolved',
           digest: Digest::SHA256.hexdigest(xml),
           error: nil
         }
@@ -317,7 +317,7 @@ module WSDL
       def record_failed_source(error)
         @provenance << {
           location: error.location,
-          status: :failed,
+          status: 'failed',
           digest: nil,
           error: error.message
         }

@@ -69,7 +69,7 @@ RSpec.describe WSDL::XML::Element do
         name: 'user',
         namespace: 'http://example.com',
         form: 'qualified',
-        type: :simple,
+        type: 'simple',
         xsd_type: 'xsd:string',
         min_occurs: 1,
         max_occurs: 1,
@@ -90,18 +90,18 @@ RSpec.describe WSDL::XML::Element do
       parent.children = [child]
 
       hash = parent.to_definition_h
-      expect(hash[:type]).to eq(:complex)
+      expect(hash[:type]).to eq('complex')
       expect(hash[:xsd_type]).to be_nil
       expect(hash[:children].size).to eq(1)
       expect(hash[:children].first[:name]).to eq('name')
-      expect(hash[:children].first[:type]).to eq(:simple)
+      expect(hash[:children].first[:type]).to eq('simple')
     end
 
     it 'converts a recursive element' do
       element = build_element(name: 'parent', recursive_type: 'ParentType')
 
       hash = element.to_definition_h
-      expect(hash[:type]).to eq(:recursive)
+      expect(hash[:type]).to eq('recursive')
       expect(hash[:recursive_type]).to eq('ParentType')
     end
 
@@ -156,7 +156,7 @@ RSpec.describe WSDL::XML::Element do
 
       hash = root.to_definition_h
       expect(hash[:children].first[:children].first[:name]).to eq('value')
-      expect(hash[:children].first[:children].first[:type]).to eq(:simple)
+      expect(hash[:children].first[:children].first[:type]).to eq('simple')
     end
   end
 

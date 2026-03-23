@@ -6,7 +6,7 @@ RSpec.describe WSDL::Definition::ElementHash do
       name: 'age',
       namespace: 'http://example.com',
       form: 'qualified',
-      type: :simple,
+      type: 'simple',
       xsd_type: 'xsd:int',
       min_occurs: 1,
       max_occurs: 1,
@@ -26,7 +26,7 @@ RSpec.describe WSDL::Definition::ElementHash do
       name: 'user',
       namespace: 'http://example.com',
       form: 'qualified',
-      type: :complex,
+      type: 'complex',
       xsd_type: nil,
       min_occurs: 1,
       max_occurs: 1,
@@ -46,7 +46,7 @@ RSpec.describe WSDL::Definition::ElementHash do
       name: 'parent',
       namespace: 'http://example.com',
       form: 'qualified',
-      type: :recursive,
+      type: 'recursive',
       xsd_type: nil,
       min_occurs: 0,
       max_occurs: Float::INFINITY,
@@ -77,7 +77,7 @@ RSpec.describe WSDL::Definition::ElementHash do
     end
 
     it 'returns kind' do
-      expect(element.kind).to eq(:simple)
+      expect(element.kind).to eq('simple')
     end
 
     it 'returns base_type' do

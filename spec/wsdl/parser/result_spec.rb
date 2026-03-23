@@ -163,10 +163,10 @@ RSpec.describe WSDL::Parser::Result do
       provenance = parser_result.provenance
 
       expect(provenance).not_to be_empty
-      expect(provenance).to all(include(status: :resolved))
+      expect(provenance).to all(include(status: 'resolved'))
       expect(provenance.first).to include(
         location: a_kind_of(String),
-        status: :resolved,
+        status: 'resolved',
         digest: a_string_matching(/\A[a-f0-9]{64}\z/),
         error: nil
       )
@@ -185,7 +185,7 @@ RSpec.describe WSDL::Parser::Result do
 
       expect(locations.size).to be > 1
       expect(locations).to all(be_a(String))
-      expect(result.provenance).to all(include(status: :resolved))
+      expect(result.provenance).to all(include(status: 'resolved'))
     end
 
     it 'records failed sources in lenient mode' do
@@ -193,10 +193,10 @@ RSpec.describe WSDL::Parser::Result do
         fixture('wsdl/juniper'), http_mock, strictness: WSDL::Strictness.off
       )
 
-      failed = result.provenance.select { |s| s[:status] == :failed }
+      failed = result.provenance.select { |s| s[:status] == 'failed' }
       expect(failed).not_to be_empty
       expect(failed.first).to include(
-        status: :failed,
+        status: 'failed',
         digest: nil,
         error: a_kind_of(String)
       )

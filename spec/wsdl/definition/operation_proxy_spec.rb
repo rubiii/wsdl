@@ -6,7 +6,7 @@ RSpec.describe WSDL::Definition::OperationProxy do
   let(:element_hash) do
     {
       name: 'user', namespace: 'http://example.com', form: 'qualified',
-      type: :complex, xsd_type: nil, min_occurs: 1, max_occurs: 1,
+      type: 'complex', xsd_type: nil, min_occurs: 1, max_occurs: 1,
       nillable: false, singular: true, list: false, any_content: false,
       recursive_type: nil, complex_type_id: nil, children: [], attributes: []
     }

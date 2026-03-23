@@ -220,17 +220,17 @@ module WSDL
       # @example
       #   element.to_definition_h
       #   # => { name: "user", namespace: "http://example.com", form: "qualified",
-      #   #      type: :complex, xsd_type: nil, min_occurs: 1, max_occurs: 1,
+      #   #      type: "complex", xsd_type: nil, min_occurs: 1, max_occurs: 1,
       #   #      nillable: false, singular: true, list: false, any_content: false,
       #   #      recursive_type: nil, complex_type_id: nil,
       #   #      children: [...], attributes: [...] }
       #
-      def to_definition_h
+      def to_definition_h # rubocop:disable Metrics/AbcSize
         {
           name: name,
           namespace: namespace,
           form: form,
-          type: kind,
+          type: kind.to_s,
           xsd_type: base_type,
           min_occurs: min_occurs.to_i,
           max_occurs: definition_max_occurs,
