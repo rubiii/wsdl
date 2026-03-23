@@ -208,6 +208,14 @@ RSpec.describe 'Schema pattern coverage' do
 
       expect(result[:GetTagsResponse][:scores]).to eq [42, 99]
     end
+
+    it 'round-trips empty lists' do
+      hash = { tags: [], scores: [] }
+      result = roundtrip(operation, hash)
+
+      expect(result[:GetTagsResponse][:tags]).to eq []
+      expect(result[:GetTagsResponse][:scores]).to eq []
+    end
   end
 
   describe 'xs:choice compositor' do
