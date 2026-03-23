@@ -8,7 +8,7 @@ RSpec.describe 'Marketo Marketo Automation Software' do
 
   it 'returns header parts' do
     operation = client.operation(service_name, port_name, :getLead)
-    expect(request_template(operation, section: :header)).to eq({
+    expect(operation.contract.request.header.template(mode: :full).to_h).to eq({
       AuthenticationHeader: {
         mktowsUserId: 'string',
         requestSignature: 'string',
@@ -22,7 +22,7 @@ RSpec.describe 'Marketo Marketo Automation Software' do
   it 'creates an example body' do
     operation = client.operation(service_name, port_name, :getLead)
 
-    expect(request_template(operation, section: :body)).to eq({
+    expect(operation.contract.request.body.template(mode: :full).to_h).to eq({
       paramsGetLead: {
         leadKey: {
           keyType: 'string',

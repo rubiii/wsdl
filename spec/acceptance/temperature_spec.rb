@@ -8,13 +8,13 @@ RSpec.describe 'Temperature service' do
 
   it 'returns an empty Hash if there are no header parts' do
     operation = client.operation(service_name, port_name, :ConvertTemp)
-    expect(request_template(operation, section: :header)).to eq({})
+    expect(operation.contract.request.header.template(mode: :full).to_h).to eq({})
   end
 
   it 'creates an example body' do
     operation = client.operation(service_name, port_name, :ConvertTemp)
 
-    expect(request_template(operation, section: :body)).to eq(
+    expect(operation.contract.request.body.template(mode: :full).to_h).to eq(
       ConvertTemp: {
         Temperature: 'double',
         FromUnit: 'string',

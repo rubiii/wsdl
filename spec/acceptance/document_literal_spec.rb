@@ -9,7 +9,7 @@ RSpec.describe 'Document/Literal example' do
   it 'works with op1' do
     op1 = client.operation(service_name, port_name, :op1)
 
-    expect(request_template(op1, section: :body)).to eq(
+    expect(op1.contract.request.body.template(mode: :full).to_h).to eq(
       op1: {
         in: {
           data1: 'int',
@@ -53,7 +53,7 @@ RSpec.describe 'Document/Literal example' do
   it 'works with op3' do
     op3 = client.operation(service_name, port_name, :op3)
 
-    expect(request_template(op3, section: :body)).to eq(
+    expect(op3.contract.request.body.template(mode: :full).to_h).to eq(
       op3: {
         DataElem: {
           data1: 'int',

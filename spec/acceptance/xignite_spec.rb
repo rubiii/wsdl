@@ -78,7 +78,7 @@ RSpec.describe 'Xignite' do
   it 'creates an example header' do
     operation = client.operation(service_name, port_name, :GetSecurities)
 
-    expect(request_template(operation, section: :header)).to eq(
+    expect(operation.contract.request.header.template(mode: :full).to_h).to eq(
       Header: {
         Username: 'string',
         Password: 'string',
@@ -90,7 +90,7 @@ RSpec.describe 'Xignite' do
   it 'creates an example body' do
     operation = client.operation(service_name, port_name, :GetSecurities)
 
-    expect(request_template(operation, section: :body)).to eq(
+    expect(operation.contract.request.body.template(mode: :full).to_h).to eq(
       GetSecurities: {
         Identifiers: 'string',
         IdentifierType: 'string',

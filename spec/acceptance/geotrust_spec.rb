@@ -29,7 +29,7 @@ RSpec.describe 'Geotrust' do
   it 'creates an example body' do
     operation = client.operation('query', 'querySoap', 'GetQuickApproverList')
 
-    expect(request_template(operation, section: :body)).to eq(
+    expect(operation.contract.request.body.template(mode: :full).to_h).to eq(
       GetQuickApproverList: {
         Request: {
           QueryRequestHeader: {

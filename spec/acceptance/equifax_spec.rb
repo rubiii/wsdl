@@ -389,7 +389,7 @@ RSpec.describe 'Equifax' do
   it 'creates an example body with attributes' do
     operation = client.operation(service_name, port_name, :startTransaction)
 
-    expect(request_template(operation, section: :body)).to eq(
+    expect(operation.contract.request.body.template(mode: :full).to_h).to eq(
       InitialRequest: {
         Identity: {
           Name: {

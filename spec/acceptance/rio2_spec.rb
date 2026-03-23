@@ -23,7 +23,7 @@ RSpec.describe 'Rio II' do
 
     expect(operation.input_style).to eq('document/literal')
 
-    expect(request_template(operation, section: :body)).to eq(
+    expect(operation.contract.request.body.template(mode: :full).to_h).to eq(
       GetSessionState: {
         session: {
           ApplicationId: 'string',

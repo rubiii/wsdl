@@ -9,7 +9,7 @@ RSpec.describe 'BLZService' do
   it 'creates an example request' do
     operation = client.operation(service_name, port_name, :getBank)
 
-    expect(request_template(operation, section: :body)).to eq(
+    expect(operation.contract.request.body.template(mode: :full).to_h).to eq(
       getBank: {
         blz: 'string'
       }

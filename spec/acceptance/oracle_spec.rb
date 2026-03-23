@@ -198,7 +198,7 @@ RSpec.describe 'Oracle' do
       port = 'JobManagementServiceSoap'
       operation = client.operation(service, port, 'getJobInfo')
 
-      request_template(operation, section: :body)
+      operation.contract.request.body.template(mode: :full).to_h
 
       # Navigate to the detailedInfo in the example
       # The structure is: getJobInfo -> jobID (string), returnOptions (optional), sessionID

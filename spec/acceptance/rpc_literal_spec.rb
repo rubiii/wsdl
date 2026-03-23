@@ -10,7 +10,7 @@ RSpec.describe 'RPC/Literal example' do
     op1 = client.operation(service_name, port_name, :op1)
 
     # Check the example request.
-    expect(request_template(op1, section: :body)).to eq(
+    expect(op1.contract.request.body.template(mode: :full).to_h).to eq(
       in: {
         data1: 'int',
         data2: 'int'
@@ -53,7 +53,7 @@ RSpec.describe 'RPC/Literal example' do
     op3 = client.operation(service_name, port_name, :op3)
 
     # Check the example request.
-    expect(request_template(op3, section: :body)).to eq(
+    expect(op3.contract.request.body.template(mode: :full).to_h).to eq(
       DataElem: {
         data1: 'int',
         data2: 'int'

@@ -44,7 +44,7 @@ RSpec.describe 'Jetairways\'s SessionCreate Service' do
   it 'creates an example header' do
     operation = client.operation(service_name, port_name, :Logon)
 
-    expect(request_template(operation, section: :header)).to eq(
+    expect(operation.contract.request.header.template(mode: :full).to_h).to eq(
       MessageHeader:
         { From: { PartyId: [{ _type: 's:string' }], Role: 'string' },
           To: { PartyId: [{ _type: 's:string' }], Role: 'string' },
@@ -78,7 +78,7 @@ RSpec.describe 'Jetairways\'s SessionCreate Service' do
   it 'creates an example body' do
     operation = client.operation(service_name, port_name, :Logon)
 
-    expect(request_template(operation, section: :body)).to eq(
+    expect(operation.contract.request.body.template(mode: :full).to_h).to eq(
       Logon: {}
     )
   end

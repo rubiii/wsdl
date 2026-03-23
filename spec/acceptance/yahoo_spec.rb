@@ -66,7 +66,7 @@ RSpec.describe 'Yahoo\'s AccountService' do
   it 'creates an example header' do
     operation = client.operation(service_name, port_name, :updateStatusForManagedPublisher)
 
-    expect(request_template(operation, section: :header)).to eq(
+    expect(operation.contract.request.header.template(mode: :full).to_h).to eq(
       Security: {
         UsernameToken: {
           Username: 'string',
@@ -81,7 +81,7 @@ RSpec.describe 'Yahoo\'s AccountService' do
   it 'creates an example body' do
     operation = client.operation(service_name, port_name, :updateStatusForManagedPublisher)
 
-    expect(request_template(operation, section: :body)).to eq(
+    expect(operation.contract.request.body.template(mode: :full).to_h).to eq(
       updateStatusForManagedPublisher: {
         accountID: 'string',
         accountStatus: 'string'

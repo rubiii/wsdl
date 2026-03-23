@@ -182,7 +182,7 @@ RSpec.describe 'Betfair' do
   it 'creates a proper example request for messages with Arrays' do
     operation = client.operation(service_name, port_name, :getMUBetsLite)
 
-    expect(request_template(operation, section: :body)).to eq(
+    expect(operation.contract.request.body.template(mode: :full).to_h).to eq(
       getMUBetsLite: {
         request: {
 

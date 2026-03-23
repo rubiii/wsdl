@@ -42,7 +42,7 @@ RSpec.describe 'Schema pattern coverage' do
     end
 
     it 'generates a request template' do
-      template = request_template(operation, section: :body)
+      template = operation.contract.request.body.template(mode: :full).to_h
 
       expect(template).to eq(
         GetTreeRequest: {
@@ -231,7 +231,7 @@ RSpec.describe 'Schema pattern coverage' do
     end
 
     it 'generates a request template with all choices' do
-      template = request_template(operation, section: :body)
+      template = operation.contract.request.body.template(mode: :full).to_h
 
       expect(template[:ProcessPaymentRequest][:paymentMethod]).to eq(
         creditCard: 'string',

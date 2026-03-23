@@ -71,7 +71,7 @@ RSpec.describe 'Travelport' do
     ping_operation = client.operation('SystemService', 'SystemPingPort', 'service')
 
     # This should not raise an error about missing types
-    example = request_template(ping_operation, section: :body)
+    example = ping_operation.contract.request.body.template(mode: :full).to_h
 
     expect(example).to be_a(Hash)
     expect(example).to have_key(:PingReq)

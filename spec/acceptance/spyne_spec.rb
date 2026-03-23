@@ -40,7 +40,7 @@ RSpec.describe 'Spyne.io service' do
 
   it 'creates an example body with attributes' do
     operation = client.operation(service_name, port_name, :say_hello)
-    expect(request_template(operation, section: :body)).to eq(say_hello: {})
+    expect(operation.contract.request.body.template(mode: :full).to_h).to eq(say_hello: {})
   end
 
   it 'creates a request with attributes' do

@@ -220,7 +220,7 @@ RSpec.describe WSDL::Operation do
 
   describe '#example_request' do
     it 'returns an example request Hash following WSDL\'s conventions' do
-      expect(request_template(operation, section: :body)).to eq(
+      expect(operation.contract.request.body.template(mode: :full).to_h).to eq(
         ConvertTemp: {
           Temperature: 'double',
           FromUnit: 'string',
