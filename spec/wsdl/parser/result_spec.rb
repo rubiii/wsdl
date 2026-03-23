@@ -28,7 +28,8 @@ RSpec.describe WSDL::Parser::Result do
           ports: {
             'AuthenticationWebServiceImplPort' => {
               type: 'http://schemas.xmlsoap.org/wsdl/soap/',
-              location: 'http://example.com/validation/1.0/AuthenticationService'
+              location: 'http://example.com/validation/1.0/AuthenticationService',
+              operations: [{ name: 'authenticate' }]
             }
           }
         }

@@ -13,12 +13,14 @@ RSpec.describe 'Jetairways\'s SessionCreate Service' do
           'SessionCreateSoap' => {
             type: 'http://schemas.xmlsoap.org/wsdl/soap/',
             # symbolic endpoint
-            location: 'http://USE_ADDRESS_RETURNED_BY_LOCATION_SERVICE/jettaobeapi/SessionCreate.asmx'
+            location: 'http://USE_ADDRESS_RETURNED_BY_LOCATION_SERVICE/jettaobeapi/SessionCreate.asmx',
+            operations: [{ name: 'Logon' }]
           },
           'SessionCreateSoap12' => {
             type: 'http://schemas.xmlsoap.org/wsdl/soap12/',
             # symbolic endpoint
-            location: 'http://USE_ADDRESS_RETURNED_BY_LOCATION_SERVICE/jettaobeapi/SessionCreate.asmx'
+            location: 'http://USE_ADDRESS_RETURNED_BY_LOCATION_SERVICE/jettaobeapi/SessionCreate.asmx',
+            operations: [{ name: 'Logon' }]
           }
         }
       }

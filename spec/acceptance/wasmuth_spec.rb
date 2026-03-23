@@ -9,7 +9,16 @@ RSpec.describe 'Wasmuth' do
         ports: {
           'OnlineSyncPort' => {
             type: 'http://schemas.xmlsoap.org/wsdl/soap/',
-            location: 'http://www3.mediaservice-wasmuth.de:80/online-ws-2.0/OnlineSync'
+            location: 'http://www3.mediaservice-wasmuth.de:80/online-ws-2.0/OnlineSync',
+            operations: [
+              { name: 'getStTables' },
+              { name: 'getDbManager' },
+              { name: 'getVermarkterData' },
+              { name: 'getBelegungseinheitData' },
+              { name: 'getOnlineResponseData' },
+              { name: 'getVermarkterList' },
+              { name: 'getBelegungseinheitList' }
+            ]
           }
         }
       }

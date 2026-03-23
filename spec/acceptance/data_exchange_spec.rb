@@ -9,7 +9,13 @@ RSpec.describe 'DataExchange' do
         ports: {
           'DataExchange' => {
             type: 'http://schemas.xmlsoap.org/wsdl/soap/',
-            location: 'http://my.yfu.org/cgi-bin/WebObjects/WebService.woa/ws/DataExchange'
+            location: 'http://my.yfu.org/cgi-bin/WebObjects/WebService.woa/ws/DataExchange',
+            operations: [
+              { name: 'submit' },
+              { name: 'getNext' },
+              { name: 'getParticularBatch' },
+              { name: 'confirmReceipt' }
+            ]
           }
         }
       }

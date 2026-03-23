@@ -9,7 +9,34 @@ RSpec.describe 'Amazon' do
         ports: {
           'AmazonFPSPort' => {
             type: 'http://schemas.xmlsoap.org/wsdl/soap/',
-            location: 'https://fps.amazonaws.com'
+            location: 'https://fps.amazonaws.com',
+            operations: [
+              { name: 'CancelToken' },
+              { name: 'Cancel' },
+              { name: 'FundPrepaid' },
+              { name: 'GetAccountActivity' },
+              { name: 'GetAccountBalance' },
+              { name: 'GetDebtBalance' },
+              { name: 'GetOutstandingDebtBalance' },
+              { name: 'GetPrepaidBalance' },
+              { name: 'GetTokenByCaller' },
+              { name: 'CancelSubscriptionAndRefund' },
+              { name: 'GetTokenUsage' },
+              { name: 'GetTokens' },
+              { name: 'GetTotalPrepaidLiability' },
+              { name: 'GetTransaction' },
+              { name: 'GetTransactionStatus' },
+              { name: 'GetPaymentInstruction' },
+              { name: 'InstallPaymentInstruction' },
+              { name: 'Pay' },
+              { name: 'Refund' },
+              { name: 'Reserve' },
+              { name: 'Settle' },
+              { name: 'SettleDebt' },
+              { name: 'WriteOffDebt' },
+              { name: 'GetRecipientVerificationStatus' },
+              { name: 'VerifySignature' }
+            ]
           }
         }
       }

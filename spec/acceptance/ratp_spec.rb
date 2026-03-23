@@ -12,11 +12,39 @@ RSpec.describe 'RATP' do
         ports: {
           'WsivSOAP11port_http' => {
             type: 'http://schemas.xmlsoap.org/wsdl/soap/',
-            location: 'http://www.ratp.fr/wsiv/services/Wsiv'
+            location: 'http://www.ratp.fr/wsiv/services/Wsiv',
+            operations: [
+              { name: 'getItineraries' },
+              { name: 'getMissionsFrequency' },
+              { name: 'getMissionsFirstLast' },
+              { name: 'getStationAreas' },
+              { name: 'getVersion' },
+              { name: 'getLines' },
+              { name: 'getStations' },
+              { name: 'getMissionsNext' },
+              { name: 'getDirections' },
+              { name: 'getMission' },
+              { name: 'getPerturbations' },
+              { name: 'getGeoPoints' }
+            ]
           },
           'WsivSOAP12port_http' => {
             type: 'http://schemas.xmlsoap.org/wsdl/soap12/',
-            location: 'http://www.ratp.fr/wsiv/services/Wsiv'
+            location: 'http://www.ratp.fr/wsiv/services/Wsiv',
+            operations: [
+              { name: 'getItineraries' },
+              { name: 'getMissionsFrequency' },
+              { name: 'getMissionsFirstLast' },
+              { name: 'getStationAreas' },
+              { name: 'getVersion' },
+              { name: 'getLines' },
+              { name: 'getStations' },
+              { name: 'getMissionsNext' },
+              { name: 'getDirections' },
+              { name: 'getMission' },
+              { name: 'getPerturbations' },
+              { name: 'getGeoPoints' }
+            ]
           }
         }
       }

@@ -10,7 +10,8 @@ RSpec.describe 'Telefonkatalogen' do
         ports: {
           'SendSmsPort' => {
             type: 'http://schemas.xmlsoap.org/wsdl/soap/',
-            location: 'http://bedrift.telefonkatalogen.no/tk/websvcsendsms.php'
+            location: 'http://bedrift.telefonkatalogen.no/tk/websvcsendsms.php',
+            operations: [{ name: 'sendsms' }]
           }
         }
       }

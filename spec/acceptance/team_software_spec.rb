@@ -9,7 +9,35 @@ RSpec.describe 'TeamSoftware' do
         ports: {
           'BasicHttpBinding_IWinTeamServiceManager' => {
             type: 'http://schemas.xmlsoap.org/wsdl/soap/',
-            location: 'https://winteamservicestest.myteamsoftware.com/Services.svc'
+            location: 'https://winteamservicestest.myteamsoftware.com/Services.svc',
+            operations: [
+              { name: 'Login' },
+              { name: 'SaveEmployee' },
+              { name: 'SavePartialEmployee' },
+              { name: 'GetEmployeeComboListXML' },
+              { name: 'eHubValidEmployee' },
+              { name: 'eHubValidCustomer' },
+              { name: 'ValidEmployee' },
+              { name: 'EmployeeProfile' },
+              { name: 'EmployeeComplianceCodeImport' },
+              { name: 'EmployeeComplianceCodesCompletedExport' },
+              { name: 'EmployeeComplianceCodesNotCompletedExport' },
+              { name: 'PS_TT_TK_Hours_Import' },
+              { name: 'PS_TT_TK_Hours_BatchImport' },
+              { name: 'CyCop_JobExport' },
+              { name: 'CyCop_EmployeeExport' },
+              { name: 'CyCop_SingleEmployeeExport' },
+              { name: 'CyCop_PostExport' },
+              { name: 'CyCop_JobContactExport' },
+              { name: 'CyCop_SchedulingExport' },
+              { name: 'CyCop_JobHolidayExport' },
+              { name: 'GetActiveDirectoryEmployees' },
+              { name: 'UploadNewHireDocuments' },
+              { name: 'LMS_GetActiveEmployees' },
+              { name: 'LMS_ProcessFile' },
+              { name: 'UpdateComplianceCode' },
+              { name: 'DeleteComplianceCode' }
+            ]
           }
         }
       }

@@ -9,7 +9,11 @@ RSpec.describe 'Geotrust' do
         ports: {
           'querySoap' => {
             type: 'http://schemas.xmlsoap.org/wsdl/soap/',
-            location: 'https://test-api.geotrust.com:443/webtrust/query.jws'
+            location: 'https://test-api.geotrust.com:443/webtrust/query.jws',
+            operations: [
+              { name: 'GetQuickApproverList' },
+              { name: 'hello' }
+            ]
           }
         }
       }

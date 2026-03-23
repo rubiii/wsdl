@@ -9,7 +9,35 @@ RSpec.describe 'Bookt' do
         ports: {
           'IConnect' => {
             type: 'http://schemas.xmlsoap.org/wsdl/soap/',
-            location: 'http://connect.bookt.com/svc/connect.svc'
+            location: 'http://connect.bookt.com/svc/connect.svc',
+            operations: [
+              { name: 'GetPropertyCategories' },
+              { name: 'GetPropertyIDs' },
+              { name: 'GetProperty' },
+              { name: 'GetPropertyIDsByCategory' },
+              { name: 'GetRates' },
+              { name: 'GetPerRoomRates' },
+              { name: 'GetAvailability' },
+              { name: 'SetRates' },
+              { name: 'SetPerRoomRates' },
+              { name: 'SetAvailability' },
+              { name: 'SetRatesAndAvailability' },
+              { name: 'GetBooking' },
+              { name: 'MakeBooking' },
+              { name: 'CancelBooking' },
+              { name: 'ModifyBooking' },
+              { name: 'CreateLead' },
+              { name: 'CreateEvent' },
+              { name: 'GetEventCategories' },
+              { name: 'GetLead' },
+              { name: 'GetEvent' },
+              { name: 'GetReviewIDs' },
+              { name: 'GetReview' },
+              { name: 'GetReviews' },
+              { name: 'CreateReview' },
+              { name: 'DeleteReview' },
+              { name: 'GetBusinessRules' }
+            ]
           }
         }
       }

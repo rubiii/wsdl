@@ -95,11 +95,15 @@ module WSDL
 
     # Returns the services and ports defined by the WSDL.
     #
+    # Each port includes an +operations+ array. Overloaded operations
+    # (same name, different messages) include +input_name+ for disambiguation.
+    #
     # @return [Hash] a hash of service names to their port definitions
     #
     # @example
     #   client.services
-    #   # => {"ServiceName" => {ports: {"PortName" => {type: "...", location: "..."}}}}
+    #   # => {"ServiceName" => {ports: {"PortName" => {type: "...", location: "...",
+    #   #      operations: [{name: "Op1"}, {name: "Op2"}]}}}}
     #
     def services
       @parser_result.services

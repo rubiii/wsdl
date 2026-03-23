@@ -12,7 +12,39 @@ RSpec.describe 'Betfair' do
         ports: {
           'BFExchangeService' => {
             type: 'http://schemas.xmlsoap.org/wsdl/soap/',
-            location: 'https://api.betfair.com/exchange/v5/BFExchangeService'
+            location: 'https://api.betfair.com/exchange/v5/BFExchangeService',
+            operations: [
+              { name: 'getAccountFunds' },
+              { name: 'cancelBets' },
+              { name: 'cancelBetsByMarket' },
+              { name: 'updateBets' },
+              { name: 'placeBets' },
+              { name: 'getMarket' },
+              { name: 'getMarketInfo' },
+              { name: 'getMarketPrices' },
+              { name: 'getCompleteMarketPricesCompressed' },
+              { name: 'getMarketTradedVolumeCompressed' },
+              { name: 'getMarketPricesCompressed' },
+              { name: 'getAllMarkets' },
+              { name: 'getInPlayMarkets' },
+              { name: 'getPrivateMarkets' },
+              { name: 'getCurrentBets' },
+              { name: 'getCoupon' },
+              { name: 'getCurrentBetsLite' },
+              { name: 'getMUBets' },
+              { name: 'getMUBetsLite' },
+              { name: 'getDetailAvailableMktDepth' },
+              { name: 'getMarketTradedVolume' },
+              { name: 'getBetHistory' },
+              { name: 'getAccountStatement' },
+              { name: 'getMarketProfitAndLoss' },
+              { name: 'getBet' },
+              { name: 'getBetLite' },
+              { name: 'getBetMatchesLite' },
+              { name: 'getSilks' },
+              { name: 'getSilksV2' },
+              { name: 'heartbeat' }
+            ]
           }
         }
       }

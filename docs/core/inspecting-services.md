@@ -13,7 +13,17 @@ client.services
 #        ports: {
 #          "OrderPort" => {
 #            type: "http://schemas.xmlsoap.org/wsdl/soap/",
-#            location: "https://api.example.com/orders"
+#            location: "https://api.example.com/orders",
+#            operations: [
+#              { name: "GetOrder" },
+#              { name: "CreateOrder" },
+#              { name: "CancelOrder" },
+#
+#              # Overloaded operations (same name, different messages)
+#              # include input_name for disambiguation:
+#              { name: "Lookup", input_name: "LookupById" },
+#              { name: "Lookup", input_name: "LookupByName" }
+#            ]
 #          }
 #        }
 #      }
@@ -44,11 +54,16 @@ operation = client.operation('CreateOrder')
 
 # Multi-service explicit form:
 # operation = client.operation('OrderService', 'OrderPort', 'CreateOrder')
+
+# Overloaded operations (same name, different messages) need input_name: to disambiguate:
+# operation = client.operation('OrderService', 'OrderPort', 'CreateOrder', input_name: 'CreateOrderBatch')
 contract = operation.contract
 
 contract.style          # => "document/literal" or "rpc/literal"
-contract.request.empty? # => true/false
+contract.request.empty? # => true/false — no header or body elements
 ```
+
+When `empty?` returns `true`, the operation takes no input and can be invoked without `operation.prepare`.
 
 ### Request and Response Sections
 
@@ -160,10 +175,6 @@ pp minimal.to_h
 ```
 
 `to_dsl` is the recommended starting point for implementation.
-
-## Empty Input Operations
-
-If both request header and body are empty (`contract.request.empty? == true`), the operation can be invoked without defining `operation.prepare`.
 
 ## See also
 

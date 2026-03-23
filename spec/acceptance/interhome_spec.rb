@@ -12,11 +12,59 @@ RSpec.describe 'Interhome' do
         ports: {
           'WebServiceSoap' => {
             type: 'http://schemas.xmlsoap.org/wsdl/soap/',
-            location: 'https://webservices.interhome.com/quality/partnerV3/WebService.asmx'
+            location: 'https://webservices.interhome.com/quality/partnerV3/WebService.asmx',
+            operations: [
+              { name: 'CheckServerHealth' },
+              { name: 'CheckServerHealthV2' },
+              { name: 'Newsletter' },
+              { name: 'AdditionalServices' },
+              { name: 'Availability' },
+              { name: 'NearestBookingDate' },
+              { name: 'PriceDetail' },
+              { name: 'Prices' },
+              { name: 'PriceList' },
+              { name: 'ClientBooking' },
+              { name: 'RetailerBooking' },
+              { name: 'ReadBooking' },
+              { name: 'RatifyBooking' },
+              { name: 'CancelBooking' },
+              { name: 'CheckBooking' },
+              { name: 'CancellationConditions' },
+              { name: 'Search' },
+              { name: 'AccommodationDetail' },
+              { name: 'Trips' },
+              { name: 'AffiliateDetail' },
+              { name: 'VoucherDetail' },
+              { name: 'PaymentExtInformation' }
+            ]
           },
           'WebServiceSoap12' => {
             type: 'http://schemas.xmlsoap.org/wsdl/soap12/',
-            location: 'https://webservices.interhome.com/quality/partnerV3/WebService.asmx'
+            location: 'https://webservices.interhome.com/quality/partnerV3/WebService.asmx',
+            operations: [
+              { name: 'CheckServerHealth' },
+              { name: 'CheckServerHealthV2' },
+              { name: 'Newsletter' },
+              { name: 'AdditionalServices' },
+              { name: 'Availability' },
+              { name: 'NearestBookingDate' },
+              { name: 'PriceDetail' },
+              { name: 'Prices' },
+              { name: 'PriceList' },
+              { name: 'ClientBooking' },
+              { name: 'RetailerBooking' },
+              { name: 'ReadBooking' },
+              { name: 'RatifyBooking' },
+              { name: 'CancelBooking' },
+              { name: 'CheckBooking' },
+              { name: 'CancellationConditions' },
+              { name: 'Search' },
+              { name: 'AccommodationDetail' },
+              { name: 'Trips' },
+              { name: 'AffiliateDetail' },
+              { name: 'VoucherDetail' },
+              { name: 'PaymentExtInformation' }
+            ]
           }
         }
       }

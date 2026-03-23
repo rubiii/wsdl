@@ -9,7 +9,8 @@ RSpec.describe 'Travelport' do
         ports: {
           'ExternalCacheAccessPort' => {
             type: 'http://schemas.xmlsoap.org/wsdl/soap/',
-            location: 'http://localhost:8080/kestrel/ExternalCacheAccessService'
+            location: 'http://localhost:8080/kestrel/ExternalCacheAccessService',
+            operations: [{ name: 'service' }]
           }
         }
       },
@@ -17,15 +18,18 @@ RSpec.describe 'Travelport' do
         ports: {
           'SystemPingPort' => {
             type: 'http://schemas.xmlsoap.org/wsdl/soap/',
-            location: 'http://localhost:8080/kestrel/SystemService'
+            location: 'http://localhost:8080/kestrel/SystemService',
+            operations: [{ name: 'service' }]
           },
           'SystemInfoPort' => {
             type: 'http://schemas.xmlsoap.org/wsdl/soap/',
-            location: 'http://localhost:8080/kestrel/SystemService'
+            location: 'http://localhost:8080/kestrel/SystemService',
+            operations: [{ name: 'service' }]
           },
           'SystemtimePort' => {
             type: 'http://schemas.xmlsoap.org/wsdl/soap/',
-            location: 'http://localhost:8080/kestrel/SystemService'
+            location: 'http://localhost:8080/kestrel/SystemService',
+            operations: [{ name: 'service' }]
           }
         }
       }

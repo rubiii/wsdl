@@ -13,11 +13,55 @@ RSpec.describe 'Xignite' do
         ports: {
           'XigniteGlobalMasterSoap' => {
             type: 'http://schemas.xmlsoap.org/wsdl/soap/',
-            location: 'http://globalmaster.xignite.com/xglobalmaster.asmx'
+            location: 'http://globalmaster.xignite.com/xglobalmaster.asmx',
+            operations: [
+              { name: 'GetSecurity' },
+              { name: 'GetSecurities' },
+              { name: 'GetInstrument' },
+              { name: 'GetInstruments' },
+              { name: 'GetIssuer' },
+              { name: 'GetIssuers' },
+              { name: 'GetIssuerByCompanyIdentifier' },
+              { name: 'GetMasterByIdentifier' },
+              { name: 'GetMasterByIdentifiers' },
+              { name: 'GetMasterByExchange' },
+              { name: 'GetMasterByExchangeChanges' },
+              { name: 'GetMasterBySector' },
+              { name: 'GetMasterByIndustry' },
+              { name: 'ListExchanges' },
+              { name: 'ListIndustries' },
+              { name: 'ListSectors' },
+              { name: 'ListMICToLegacyExchange' },
+              { name: 'ListMICToLegacySuffix' },
+              { name: 'ListIdentifiersByExchange' },
+              { name: 'GetMasterStatisticsByExchange' }
+            ]
           },
           'XigniteGlobalMasterSoap12' => {
             type: 'http://schemas.xmlsoap.org/wsdl/soap12/',
-            location: 'http://globalmaster.xignite.com/xglobalmaster.asmx'
+            location: 'http://globalmaster.xignite.com/xglobalmaster.asmx',
+            operations: [
+              { name: 'GetSecurity' },
+              { name: 'GetSecurities' },
+              { name: 'GetInstrument' },
+              { name: 'GetInstruments' },
+              { name: 'GetIssuer' },
+              { name: 'GetIssuers' },
+              { name: 'GetIssuerByCompanyIdentifier' },
+              { name: 'GetMasterByIdentifier' },
+              { name: 'GetMasterByIdentifiers' },
+              { name: 'GetMasterByExchange' },
+              { name: 'GetMasterByExchangeChanges' },
+              { name: 'GetMasterBySector' },
+              { name: 'GetMasterByIndustry' },
+              { name: 'ListExchanges' },
+              { name: 'ListIndustries' },
+              { name: 'ListSectors' },
+              { name: 'ListMICToLegacyExchange' },
+              { name: 'ListMICToLegacySuffix' },
+              { name: 'ListIdentifiersByExchange' },
+              { name: 'GetMasterStatisticsByExchange' }
+            ]
           }
         }
       }

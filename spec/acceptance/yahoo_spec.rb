@@ -14,7 +14,43 @@ RSpec.describe 'Yahoo\'s AccountService' do
             type: 'http://schemas.xmlsoap.org/wsdl/soap/',
 
             # symbolic endpoint
-            location: 'https://USE_ADDRESS_RETURNED_BY_LOCATION_SERVICE/services/V10/AccountService'
+            location: 'https://USE_ADDRESS_RETURNED_BY_LOCATION_SERVICE/services/V10/AccountService',
+            operations: [
+              { name: 'addCurrencies' },
+              { name: 'addManagedAdvertiser' },
+              { name: 'addManagedAdvertisers' },
+              { name: 'addManagedAgencies' },
+              { name: 'addManagedAgency' },
+              { name: 'addManagedPublisher' },
+              { name: 'addManagedPublishers' },
+              { name: 'getAccount' },
+              { name: 'getAccountStatus' },
+              { name: 'getAccounts' },
+              { name: 'getBillingProfile' },
+              { name: 'getBillingTerms' },
+              { name: 'getCurrencies' },
+              { name: 'getManagedAdvertiserCountByAccountID' },
+              { name: 'getManagedAdvertisersByAccountID' },
+              { name: 'getManagedAgenciesByAccountID' },
+              { name: 'getManagedAgencyCountByAccountID' },
+              { name: 'getManagedPublisherCountByAccountID' },
+              { name: 'getManagedPublisherRevenueSharingPercentage' },
+              { name: 'getManagedPublishersByAccountID' },
+              { name: 'searchForAccount' },
+              { name: 'setBillingProfile' },
+              { name: 'setCreditLimit' },
+              { name: 'setCurrencies' },
+              { name: 'setManagedPublisherRevenueSharingPercentage' },
+              { name: 'updateManagedAdvertiser' },
+              { name: 'updateManagedAdvertisers' },
+              { name: 'updateManagedAgencies' },
+              { name: 'updateManagedAgency' },
+              { name: 'updateManagedPublisher' },
+              { name: 'updateManagedPublishers' },
+              { name: 'updateStatusForManagedAdvertiser' },
+              { name: 'updateStatusForManagedAgency' },
+              { name: 'updateStatusForManagedPublisher' }
+            ]
           }
         }
       }

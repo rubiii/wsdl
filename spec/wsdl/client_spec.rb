@@ -543,6 +543,16 @@ RSpec.describe WSDL::Client do
       expect(client.operations('LookupService', 'LookupPort').count('Lookup')).to eq(1)
     end
 
+    it 'includes overloaded operations with input_name in services hash' do
+      client = described_class.new(overloaded_wsdl, strictness: WSDL::Strictness.off)
+      port = client.services['LookupService'][:ports]['LookupPort']
+
+      expect(port[:operations]).to eq([
+        { name: 'Lookup', input_name: 'LookupById' },
+        { name: 'Lookup', input_name: 'LookupByName' }
+      ])
+    end
+
     it 'ignores input_name for non-overloaded operations' do
       client = described_class.new(fixture('wsdl/blz_service'))
 
@@ -676,11 +686,47 @@ RSpec.describe WSDL::Client do
           ports: {
             'AmazonFPSPort' => {
               type: 'http://schemas.xmlsoap.org/wsdl/soap/',
-              location: 'https://fps.amazonaws.com'
+              location: 'https://fps.amazonaws.com',
+              operations: [
+                { name: 'CancelToken' }, { name: 'Cancel' }, { name: 'FundPrepaid' },
+                { name: 'GetAccountActivity' }, { name: 'GetAccountBalance' },
+                { name: 'GetDebtBalance' }, { name: 'GetOutstandingDebtBalance' },
+                { name: 'GetPrepaidBalance' }, { name: 'GetTokenByCaller' },
+                { name: 'CancelSubscriptionAndRefund' }, { name: 'GetTokenUsage' },
+                { name: 'GetTokens' }, { name: 'GetTotalPrepaidLiability' },
+                { name: 'GetTransaction' }, { name: 'GetTransactionStatus' },
+                { name: 'GetPaymentInstruction' }, { name: 'InstallPaymentInstruction' },
+                { name: 'Pay' }, { name: 'Refund' }, { name: 'Reserve' }, { name: 'Settle' },
+                { name: 'SettleDebt' }, { name: 'WriteOffDebt' },
+                { name: 'GetRecipientVerificationStatus' }, { name: 'VerifySignature' }
+              ]
             }
           }
         }
       )
+    end
+
+    it 'returns empty operations for ports with unresolvable bindings' do
+      wsdl_xml = <<~WSDL
+        <definitions xmlns="http://schemas.xmlsoap.org/wsdl/"
+                     xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
+                     xmlns:tns="http://example.com" targetNamespace="http://example.com">
+          <service name="Svc">
+            <port name="P" binding="tns:MissingBinding">
+              <soap:address location="http://example.com/service"/>
+            </port>
+          </service>
+        </definitions>
+      WSDL
+
+      Tempfile.create(['broken_binding', '.wsdl']) do |f|
+        f.write(wsdl_xml)
+        f.close
+        broken_client = described_class.new(f.path, strictness: false)
+
+        port = broken_client.services['Svc'][:ports]['P']
+        expect(port[:operations]).to eq([])
+      end
     end
   end
 

@@ -115,6 +115,9 @@ module WSDL
 
       # Returns a Hash of services and ports defined by the WSDL.
       #
+      # Each port includes an +operations+ array. Overloaded operations
+      # (same name, different messages) include +input_name+ for disambiguation.
+      #
       # @return [Hash] a hash mapping service names to their port definitions
       # @example
       #   result.services
@@ -123,13 +126,19 @@ module WSDL
       #   #        ports: {
       #   #          "UserServicePort" => {
       #   #            type: "http://schemas.xmlsoap.org/wsdl/soap/",
-      #   #            location: "http://example.com/UserService"
+      #   #            location: "http://example.com/UserService",
+      #   #            operations: [
+      #   #              { name: "GetUser" },
+      #   #              { name: "CreateUser" }
+      #   #            ]
       #   #          }
       #   #        }
       #   #      }
       #   #    }
       def services
-        @documents.services.values.inject({}) { |memo, service| memo.merge service.to_hash }
+        hash = @documents.services.values.inject({}) { |memo, service| memo.merge service.to_hash }
+        enrich_with_operations(hash)
+        hash
       end
 
       # Returns an array of operation names for a given service and port.
@@ -208,6 +217,22 @@ module WSDL
       end
 
       private
+
+      def enrich_with_operations(hash)
+        @documents.services.each_value do |service|
+          service.ports.each_value do |port|
+            port_hash = hash[service.name][:ports][port.name]
+            port_hash[:operations] = operations_for(port)
+          end
+        end
+      end
+
+      def operations_for(port)
+        binding = port.fetch_binding(@documents)
+        binding.operations.to_a
+      rescue UnresolvedReferenceError
+        []
+      end
 
       def input_empty?(operation_info)
         input = operation_info.input

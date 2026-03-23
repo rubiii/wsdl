@@ -12,7 +12,12 @@ RSpec.describe 'Equifax' do
         ports: {
           'canadaHttpPortV2' => {
             type: 'http://schemas.xmlsoap.org/wsdl/soap/',
-            location: 'https://pilot.eidverifier.com/uru/soap/cert/canadav2'
+            location: 'https://pilot.eidverifier.com/uru/soap/cert/canadav2',
+            operations: [
+              { name: 'startTransaction' },
+              { name: 'interactiveQueryResponse' },
+              { name: 'avCorrection' }
+            ]
           }
         }
       }

@@ -9,7 +9,18 @@ RSpec.describe 'Oracle' do
         ports: {
           'SAWSessionServiceSoap' => {
             type: 'http://schemas.xmlsoap.org/wsdl/soap/',
-            location: 'https://fap0023-bi.oracleads.com/analytics-ws/saw.dll?SoapImpl=nQSessionService'
+            location: 'https://fap0023-bi.oracleads.com/analytics-ws/saw.dll?SoapImpl=nQSessionService',
+            operations: [
+              { name: 'logon' },
+              { name: 'logonex' },
+              { name: 'logoff' },
+              { name: 'keepAlive' },
+              { name: 'getCurUser' },
+              { name: 'getSessionEnvironment' },
+              { name: 'getSessionVariables' },
+              { name: 'impersonate' },
+              { name: 'impersonateex' }
+            ]
           }
         }
       },
@@ -17,7 +28,26 @@ RSpec.describe 'Oracle' do
         ports: {
           'WebCatalogServiceSoap' => {
             type: 'http://schemas.xmlsoap.org/wsdl/soap/',
-            location: 'https://fap0023-bi.oracleads.com/analytics-ws/saw.dll?SoapImpl=webCatalogService'
+            location: 'https://fap0023-bi.oracleads.com/analytics-ws/saw.dll?SoapImpl=webCatalogService',
+            operations: [
+              { name: 'deleteItem' },
+              { name: 'createFolder' },
+              { name: 'createLink' },
+              { name: 'removeFolder' },
+              { name: 'moveItem' },
+              { name: 'copyItem' },
+              { name: 'copyItem2' },
+              { name: 'pasteItem2' },
+              { name: 'getSubItems' },
+              { name: 'getItemInfo' },
+              { name: 'setItemProperty' },
+              { name: 'maintenanceMode' },
+              { name: 'readObjects' },
+              { name: 'writeObjects' },
+              { name: 'updateCatalogItemACL' },
+              { name: 'setOwnership' },
+              { name: 'setItemAttributes' }
+            ]
           }
         }
       },
@@ -25,7 +55,15 @@ RSpec.describe 'Oracle' do
         ports: {
           'XmlViewServiceSoap' => {
             type: 'http://schemas.xmlsoap.org/wsdl/soap/',
-            location: 'https://fap0023-bi.oracleads.com/analytics-ws/saw.dll?SoapImpl=xmlViewService'
+            location: 'https://fap0023-bi.oracleads.com/analytics-ws/saw.dll?SoapImpl=xmlViewService',
+            operations: [
+              { name: 'executeXMLQuery' },
+              { name: 'upgradeXML' },
+              { name: 'executeSQLQuery' },
+              { name: 'fetchNext' },
+              { name: 'cancelQuery' },
+              { name: 'getPromptedFilters' }
+            ]
           }
         }
       }

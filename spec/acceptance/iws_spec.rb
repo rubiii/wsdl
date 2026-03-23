@@ -9,7 +9,25 @@ RSpec.describe 'IWS' do
         ports: {
           'IWSIntegERPPort' => {
             type: 'http://schemas.xmlsoap.org/wsdl/soap/',
-            location: 'http://177.75.152.221:8084/WSIntegERP/WSIntegERP.exe/soap/IWSIntegERP'
+            location: 'http://177.75.152.221:8084/WSIntegERP/WSIntegERP.exe/soap/IWSIntegERP',
+            operations: [
+              { name: 'Autenticacao' },
+              { name: 'InsereTrajeto' },
+              { name: 'InsereEntidade' },
+              { name: 'InsereTrajetoXml' },
+              { name: 'InsereEntidadeXml' },
+              { name: 'InsereUsuarioXml' },
+              { name: 'AtualizaTrajeto' },
+              { name: 'FinalizaTrajeto' },
+              { name: 'AtualizaTrajeto_Entidade' },
+              { name: 'BuscaTrajeto' },
+              { name: 'BuscaLocalizacao' },
+              { name: 'ReprogramarPonto' },
+              { name: 'BuscaNCTrajeto' },
+              { name: 'BuscaNCTrajeto2' },
+              { name: 'BuscaTrajetoAtributo' },
+              { name: 'InsereAlerta' }
+            ]
           }
         }
       }

@@ -9,39 +9,138 @@ RSpec.describe 'AWSE' do
         ports: {
           'AWSECommerceServicePort' => {
             type: 'http://schemas.xmlsoap.org/wsdl/soap/',
-            location: 'https://webservices.amazon.com/onca/soap?Service=AWSECommerceService'
+            location: 'https://webservices.amazon.com/onca/soap?Service=AWSECommerceService',
+            operations: [
+              { name: 'ItemSearch' },
+              { name: 'ItemLookup' },
+              { name: 'BrowseNodeLookup' },
+              { name: 'SimilarityLookup' },
+              { name: 'CartGet' },
+              { name: 'CartCreate' },
+              { name: 'CartAdd' },
+              { name: 'CartModify' },
+              { name: 'CartClear' }
+            ]
           },
           'AWSECommerceServicePortCA' => {
             type: 'http://schemas.xmlsoap.org/wsdl/soap/',
-            location: 'https://webservices.amazon.ca/onca/soap?Service=AWSECommerceService'
+            location: 'https://webservices.amazon.ca/onca/soap?Service=AWSECommerceService',
+            operations: [
+              { name: 'ItemSearch' },
+              { name: 'ItemLookup' },
+              { name: 'BrowseNodeLookup' },
+              { name: 'SimilarityLookup' },
+              { name: 'CartGet' },
+              { name: 'CartCreate' },
+              { name: 'CartAdd' },
+              { name: 'CartModify' },
+              { name: 'CartClear' }
+            ]
           },
           'AWSECommerceServicePortCN' => {
             type: 'http://schemas.xmlsoap.org/wsdl/soap/',
-            location: 'https://webservices.amazon.cn/onca/soap?Service=AWSECommerceService'
+            location: 'https://webservices.amazon.cn/onca/soap?Service=AWSECommerceService',
+            operations: [
+              { name: 'ItemSearch' },
+              { name: 'ItemLookup' },
+              { name: 'BrowseNodeLookup' },
+              { name: 'SimilarityLookup' },
+              { name: 'CartGet' },
+              { name: 'CartCreate' },
+              { name: 'CartAdd' },
+              { name: 'CartModify' },
+              { name: 'CartClear' }
+            ]
           },
           'AWSECommerceServicePortDE' => {
             type: 'http://schemas.xmlsoap.org/wsdl/soap/',
-            location: 'https://webservices.amazon.de/onca/soap?Service=AWSECommerceService'
+            location: 'https://webservices.amazon.de/onca/soap?Service=AWSECommerceService',
+            operations: [
+              { name: 'ItemSearch' },
+              { name: 'ItemLookup' },
+              { name: 'BrowseNodeLookup' },
+              { name: 'SimilarityLookup' },
+              { name: 'CartGet' },
+              { name: 'CartCreate' },
+              { name: 'CartAdd' },
+              { name: 'CartModify' },
+              { name: 'CartClear' }
+            ]
           },
           'AWSECommerceServicePortFR' => {
             type: 'http://schemas.xmlsoap.org/wsdl/soap/',
-            location: 'https://webservices.amazon.fr/onca/soap?Service=AWSECommerceService'
+            location: 'https://webservices.amazon.fr/onca/soap?Service=AWSECommerceService',
+            operations: [
+              { name: 'ItemSearch' },
+              { name: 'ItemLookup' },
+              { name: 'BrowseNodeLookup' },
+              { name: 'SimilarityLookup' },
+              { name: 'CartGet' },
+              { name: 'CartCreate' },
+              { name: 'CartAdd' },
+              { name: 'CartModify' },
+              { name: 'CartClear' }
+            ]
           },
           'AWSECommerceServicePortIT' => {
             type: 'http://schemas.xmlsoap.org/wsdl/soap/',
-            location: 'https://webservices.amazon.it/onca/soap?Service=AWSECommerceService'
+            location: 'https://webservices.amazon.it/onca/soap?Service=AWSECommerceService',
+            operations: [
+              { name: 'ItemSearch' },
+              { name: 'ItemLookup' },
+              { name: 'BrowseNodeLookup' },
+              { name: 'SimilarityLookup' },
+              { name: 'CartGet' },
+              { name: 'CartCreate' },
+              { name: 'CartAdd' },
+              { name: 'CartModify' },
+              { name: 'CartClear' }
+            ]
           },
           'AWSECommerceServicePortJP' => {
             type: 'http://schemas.xmlsoap.org/wsdl/soap/',
-            location: 'https://webservices.amazon.co.jp/onca/soap?Service=AWSECommerceService'
+            location: 'https://webservices.amazon.co.jp/onca/soap?Service=AWSECommerceService',
+            operations: [
+              { name: 'ItemSearch' },
+              { name: 'ItemLookup' },
+              { name: 'BrowseNodeLookup' },
+              { name: 'SimilarityLookup' },
+              { name: 'CartGet' },
+              { name: 'CartCreate' },
+              { name: 'CartAdd' },
+              { name: 'CartModify' },
+              { name: 'CartClear' }
+            ]
           },
           'AWSECommerceServicePortUK' => {
             type: 'http://schemas.xmlsoap.org/wsdl/soap/',
-            location: 'https://webservices.amazon.co.uk/onca/soap?Service=AWSECommerceService'
+            location: 'https://webservices.amazon.co.uk/onca/soap?Service=AWSECommerceService',
+            operations: [
+              { name: 'ItemSearch' },
+              { name: 'ItemLookup' },
+              { name: 'BrowseNodeLookup' },
+              { name: 'SimilarityLookup' },
+              { name: 'CartGet' },
+              { name: 'CartCreate' },
+              { name: 'CartAdd' },
+              { name: 'CartModify' },
+              { name: 'CartClear' }
+            ]
           },
           'AWSECommerceServicePortUS' => {
             type: 'http://schemas.xmlsoap.org/wsdl/soap/',
-            location: 'https://webservices.amazon.com/onca/soap?Service=AWSECommerceService'
+            location: 'https://webservices.amazon.com/onca/soap?Service=AWSECommerceService',
+            operations: [
+              { name: 'ItemSearch' },
+              { name: 'ItemLookup' },
+              { name: 'BrowseNodeLookup' },
+              { name: 'SimilarityLookup' },
+              { name: 'CartGet' },
+              { name: 'CartCreate' },
+              { name: 'CartAdd' },
+              { name: 'CartModify' },
+              { name: 'CartClear' }
+            ]
           }
         }
       }

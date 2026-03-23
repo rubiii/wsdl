@@ -12,7 +12,8 @@ RSpec.describe 'Spyne.io service' do
         ports: {
           'Application' => {
             type: 'http://schemas.xmlsoap.org/wsdl/soap/',
-            location: 'http://localhost:8000/'
+            location: 'http://localhost:8000/',
+            operations: [{ name: 'say_hello' }]
           }
         }
       }

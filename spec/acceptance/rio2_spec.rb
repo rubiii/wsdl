@@ -9,7 +9,13 @@ RSpec.describe 'Rio II' do
         ports: {
           'BasicHttpBinding_ISecurityService' => {
             type: 'http://schemas.xmlsoap.org/wsdl/soap/',
-            location: 'http://193.155.1.72/MyCentral-RioII-Services/SecurityService.svc/soap'
+            location: 'http://193.155.1.72/MyCentral-RioII-Services/SecurityService.svc/soap',
+            operations: [
+              { name: 'StartSession' },
+              { name: 'EndSession' },
+              { name: 'GetSessionState' },
+              { name: 'GetSessionFromToken' }
+            ]
           }
         }
       }

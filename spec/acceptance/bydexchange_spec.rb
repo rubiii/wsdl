@@ -9,7 +9,19 @@ RSpec.describe 'BYDExchange' do
         ports: {
           'BasicHttpBinding_IBYDExchangeServer' => {
             type: 'http://schemas.xmlsoap.org/wsdl/soap/',
-            location: 'http://bydexchange.nbs-us.com/BYDExchangeServer.svc'
+            location: 'http://bydexchange.nbs-us.com/BYDExchangeServer.svc',
+            operations: [
+              { name: 'ListOrdersByCustomer' },
+              { name: 'ListOrdersByDate' },
+              { name: 'ProductAvail' },
+              { name: 'listcustomers' },
+              { name: 'ParseCSV' },
+              { name: 'AddOrder' },
+              { name: 'GetOrder' },
+              { name: 'AddCustomer' },
+              { name: 'GetCustomer' },
+              { name: 'Authenticate' }
+            ]
           }
         }
       }

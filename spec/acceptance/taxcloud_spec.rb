@@ -9,11 +9,41 @@ RSpec.describe 'Taxcloud' do
         ports: {
           'TaxCloudSoap' => {
             type: 'http://schemas.xmlsoap.org/wsdl/soap/',
-            location: 'https://api.taxcloud.net/1.0/TaxCloud.asmx'
+            location: 'https://api.taxcloud.net/1.0/TaxCloud.asmx',
+            operations: [
+              { name: 'VerifyAddress' },
+              { name: 'LookupForDate' },
+              { name: 'Lookup' },
+              { name: 'Authorized' },
+              { name: 'AuthorizedWithCapture' },
+              { name: 'Captured' },
+              { name: 'Returned' },
+              { name: 'GetTICGroups' },
+              { name: 'GetTICs' },
+              { name: 'GetTICsByGroup' },
+              { name: 'AddExemptCertificate' },
+              { name: 'DeleteExemptCertificate' },
+              { name: 'GetExemptCertificates' }
+            ]
           },
           'TaxCloudSoap12' => {
             type: 'http://schemas.xmlsoap.org/wsdl/soap12/',
-            location: 'https://api.taxcloud.net/1.0/TaxCloud.asmx'
+            location: 'https://api.taxcloud.net/1.0/TaxCloud.asmx',
+            operations: [
+              { name: 'VerifyAddress' },
+              { name: 'LookupForDate' },
+              { name: 'Lookup' },
+              { name: 'Authorized' },
+              { name: 'AuthorizedWithCapture' },
+              { name: 'Captured' },
+              { name: 'Returned' },
+              { name: 'GetTICGroups' },
+              { name: 'GetTICs' },
+              { name: 'GetTICsByGroup' },
+              { name: 'AddExemptCertificate' },
+              { name: 'DeleteExemptCertificate' },
+              { name: 'GetExemptCertificates' }
+            ]
           }
         }
       }

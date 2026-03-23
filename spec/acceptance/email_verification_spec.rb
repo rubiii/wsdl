@@ -12,11 +12,23 @@ RSpec.describe 'EmailVerification service' do
         ports: {
           'EmailVerNoTestEmailSoap' => {
             type: 'http://schemas.xmlsoap.org/wsdl/soap/',
-            location: 'http://ws.cdyne.com/emailverify/Emailvernotestemail.asmx'
+            location: 'http://ws.cdyne.com/emailverify/Emailvernotestemail.asmx',
+            operations: [
+              { name: 'VerifyMXRecord' },
+              { name: 'AdvancedVerifyEmail' },
+              { name: 'VerifyEmail' },
+              { name: 'ReturnCodes' }
+            ]
           },
           'EmailVerNoTestEmailSoap12' => {
             type: 'http://schemas.xmlsoap.org/wsdl/soap12/',
-            location: 'http://ws.cdyne.com/emailverify/Emailvernotestemail.asmx'
+            location: 'http://ws.cdyne.com/emailverify/Emailvernotestemail.asmx',
+            operations: [
+              { name: 'VerifyMXRecord' },
+              { name: 'AdvancedVerifyEmail' },
+              { name: 'VerifyEmail' },
+              { name: 'ReturnCodes' }
+            ]
           }
         }
       }

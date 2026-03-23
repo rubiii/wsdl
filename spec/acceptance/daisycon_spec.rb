@@ -9,7 +9,8 @@ RSpec.describe 'Daisycon' do
         ports: {
           'transactionPort' => {
             type: 'http://schemas.xmlsoap.org/wsdl/soap/',
-            location: 'http://api.daisycon.com/advertiser/soap//transaction/'
+            location: 'http://api.daisycon.com/advertiser/soap//transaction/',
+            operations: [{ name: 'getTransactions' }, { name: 'validateTransaction' }]
           }
         }
       }

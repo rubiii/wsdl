@@ -128,4 +128,42 @@ RSpec.describe WSDL::Parser::OperationMap do
       expect(map.overload_count('Lookup')).to eq(3)
     end
   end
+
+  describe '#to_a' do
+    it 'returns an empty array for an empty map' do
+      expect(map.to_a).to eq([])
+    end
+
+    it 'returns hashes without input_name for non-overloaded operations' do
+      map.add('getUser', operation)
+      map.add('deleteUser', operation)
+
+      expect(map.to_a).to eq([
+        { name: 'getUser' },
+        { name: 'deleteUser' }
+      ])
+    end
+
+    it 'returns hashes with input_name for overloaded operations' do
+      map.add('Lookup', operation(input_name: 'LookupById'))
+      map.add('Lookup', operation(input_name: 'LookupByName'))
+
+      expect(map.to_a).to eq([
+        { name: 'Lookup', input_name: 'LookupById' },
+        { name: 'Lookup', input_name: 'LookupByName' }
+      ])
+    end
+
+    it 'handles a mix of non-overloaded and overloaded operations' do
+      map.add('getUser', operation)
+      map.add('Lookup', operation(input_name: 'LookupById'))
+      map.add('Lookup', operation(input_name: 'LookupByName'))
+
+      expect(map.to_a).to eq([
+        { name: 'getUser' },
+        { name: 'Lookup', input_name: 'LookupById' },
+        { name: 'Lookup', input_name: 'LookupByName' }
+      ])
+    end
+  end
 end

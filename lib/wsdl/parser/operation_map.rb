@@ -83,6 +83,22 @@ module WSDL
         @entries[name]&.size || 0
       end
 
+      # Returns an array of operation summary hashes.
+      #
+      # Non-overloaded operations produce +{ name: "..." }+.
+      # Overloaded operations include +input_name+ for disambiguation.
+      #
+      # @return [Array<Hash>]
+      def to_a
+        @entries.flat_map do |name, ops|
+          if ops.one?
+            [{ name: name }]
+          else
+            ops.map { |op| { name: name, input_name: op.input_name } }
+          end
+        end
+      end
+
       private
 
       def resolve_overload(name, input_name, ops)

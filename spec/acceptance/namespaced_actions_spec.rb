@@ -9,11 +9,21 @@ RSpec.describe 'Namespaced actions example' do
         ports: {
           'apiSoap' => {
             type: 'http://schemas.xmlsoap.org/wsdl/soap/',
-            location: 'https://api.example.com/api/api.asmx'
+            location: 'https://api.example.com/api/api.asmx',
+            operations: [
+              { name: 'GetApiKey' },
+              { name: 'DeleteClient' },
+              { name: 'GetClients' }
+            ]
           },
           'apiSoap12' => {
             type: 'http://schemas.xmlsoap.org/wsdl/soap12/',
-            location: 'https://api.example.com/api/api.asmx'
+            location: 'https://api.example.com/api/api.asmx',
+            operations: [
+              { name: 'GetApiKey' },
+              { name: 'DeleteClient' },
+              { name: 'GetClients' }
+            ]
           }
         }
       }

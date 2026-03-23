@@ -15,7 +15,13 @@ RSpec.describe 'Juniper' do
         ports: {
           'System' => {
             type: 'http://schemas.xmlsoap.org/wsdl/soap/',
-            location: 'https://10.1.1.1:8443/axis2/services/SystemService'
+            location: 'https://10.1.1.1:8443/axis2/services/SystemService',
+            operations: [
+              { name: 'LoginRequest' },
+              { name: 'RespondToChallengeRequest' },
+              { name: 'LogoutRequest' },
+              { name: 'GetSystemInfoRequest' }
+            ]
           }
         }
       }
