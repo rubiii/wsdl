@@ -58,6 +58,42 @@ module WSDL
           list: list?
         }
       end
+
+      # Returns a definition-oriented hash representation.
+      #
+      # This format preserves raw schema properties (base_type, use) rather than
+      # derived properties (type, required), making it suitable for serialization
+      # and round-trip reconstruction via {Definition::ElementHash}.
+      #
+      # @return [Hash{Symbol => Object}] definition-compatible attribute hash
+      def to_definition_h
+        {
+          name: name,
+          base_type: base_type,
+          use: use,
+          list: list?
+        }
+      end
+
+      # Compares two attributes by their properties.
+      #
+      # @param other [Object] the object to compare
+      # @return [Boolean] true if attributes have identical properties
+      def ==(other)
+        return false unless other.is_a?(self.class)
+
+        name == other.name &&
+          base_type == other.base_type &&
+          use == other.use &&
+          list == other.list
+      end
+
+      alias eql? ==
+
+      # @return [Integer] hash code based on attribute properties
+      def hash
+        [name, base_type, use, list].hash
+      end
     end
   end
 end

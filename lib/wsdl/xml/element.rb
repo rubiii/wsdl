@@ -207,6 +207,83 @@ module WSDL
         super
       end
 
+      # Returns a definition-oriented hash representation of the element tree.
+      #
+      # Converts this element and all children/attributes into plain hashes
+      # suitable for storage in a {Definition}. The format preserves all
+      # schema properties needed by consumers (Response::Parser,
+      # Response::Builder, Request::Validator) and can be round-tripped
+      # through serialization.
+      #
+      # @return [Hash{Symbol => Object}] definition-compatible element hash
+      #
+      # @example
+      #   element.to_definition_h
+      #   # => { name: "user", namespace: "http://example.com", form: "qualified",
+      #   #      type: :complex, xsd_type: nil, min_occurs: 1, max_occurs: 1,
+      #   #      nillable: false, singular: true, list: false, any_content: false,
+      #   #      recursive_type: nil, complex_type_id: nil,
+      #   #      children: [...], attributes: [...] }
+      #
+      def to_definition_h
+        {
+          name: name,
+          namespace: namespace,
+          form: form,
+          type: kind,
+          xsd_type: base_type,
+          min_occurs: min_occurs.to_i,
+          max_occurs: definition_max_occurs,
+          nillable: nillable?,
+          singular: singular?,
+          list: list?,
+          any_content: any_content?,
+          recursive_type: recursive_type,
+          complex_type_id: complex_type_id,
+          children: children.map(&:to_definition_h),
+          attributes: attributes.map(&:to_definition_h)
+        }
+      end
+
+      # Compares two elements by their properties (excluding parent reference).
+      #
+      # Performs deep comparison including children and attributes.
+      #
+      # @param other [Object] the object to compare
+      # @return [Boolean] true if elements have identical properties
+      #
+      # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity -- all fields compared
+      def ==(other)
+        return false unless other.is_a?(self.class)
+
+        name == other.name &&
+          namespace == other.namespace &&
+          form == other.form &&
+          base_type == other.base_type &&
+          min_occurs == other.min_occurs &&
+          max_occurs == other.max_occurs &&
+          singular == other.singular &&
+          nillable == other.nillable &&
+          list == other.list &&
+          any_content == other.any_content &&
+          recursive_type == other.recursive_type &&
+          complex_type_id == other.complex_type_id &&
+          children == other.children &&
+          attributes == other.attributes
+      end
+      # rubocop:enable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
+
+      alias eql? ==
+
+      # @return [Integer] hash code based on element properties (excluding parent)
+      def hash
+        [
+          name, namespace, form, base_type, min_occurs, max_occurs,
+          singular, nillable, list, any_content, recursive_type, complex_type_id,
+          children, attributes
+        ].hash
+      end
+
       # Converts this element and its children to an Array representation for inspection.
       #
       # Each element is represented as a tuple of [path, data], where path is an
@@ -254,6 +331,13 @@ module WSDL
         memo
       end
       # rubocop:enable Metrics/AbcSize, Metrics/CyclomaticComplexity
+
+      private
+
+      # @return [Integer, Float] max_occurs as a numeric value for definition hashes
+      def definition_max_occurs
+        max_occurs == 'unbounded' ? Float::INFINITY : max_occurs.to_i
+      end
     end
   end
 end
