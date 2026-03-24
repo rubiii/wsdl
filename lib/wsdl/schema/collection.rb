@@ -296,7 +296,7 @@ module WSDL
             "that doesn't define a default namespace (xmlns=\"...\").",
             reference_type: :schema_namespace,
             reference_name: name,
-            namespace: namespace,
+            namespace:,
             context:
           )
         end
@@ -307,7 +307,7 @@ module WSDL
           "Available namespaces: #{available.empty? ? '(none)' : available.map(&:inspect).join(', ')}",
           reference_type: :schema_namespace,
           reference_name: name,
-          namespace: namespace,
+          namespace:,
           context:
         )
       end

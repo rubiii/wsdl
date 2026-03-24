@@ -87,10 +87,6 @@ module WSDL
   #     attr_reader :connection
   #     alias config connection
   #
-  #     def cache_key
-  #       'my-http-adapter:v1'
-  #     end
-  #
   #     def get(url)
   #       resp = @connection.get(url)
   #       WSDL::HTTPResponse.new(status: resp.status, headers: resp.headers, body: resp.body)
@@ -125,13 +121,6 @@ module WSDL
     #
     # @return [Config] the configuration object
     attr_reader :config
-
-    # Returns a stable cache fingerprint for parser cache partitioning.
-    #
-    # @return [String] adapter cache identity
-    def cache_key
-      self.class.name
-    end
 
     # Executes an HTTP GET request.
     #

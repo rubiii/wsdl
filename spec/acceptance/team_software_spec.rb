@@ -57,7 +57,7 @@ RSpec.describe 'TeamSoftware' do
     expect(operation.contract.request.body.paths).to eq([
       { path: ['Login'],
         kind: :complex,
-        namespace: namespace,
+        namespace:,
         form: 'qualified',
         singular: true,
         min_occurs: '1',
@@ -66,7 +66,7 @@ RSpec.describe 'TeamSoftware' do
 },
       { path: %w[Login MappingKey],
         kind: :simple,
-        namespace: namespace,
+        namespace:,
         form: 'qualified',
         singular: true,
         min_occurs: '0',

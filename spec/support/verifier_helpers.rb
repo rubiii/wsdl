@@ -26,10 +26,10 @@ module VerifierTestMethods
     config = WSDL::Security::Config.new
     config.timestamp
     config.signature(
-      certificate: certificate,
-      private_key: private_key,
-      explicit_namespace_prefixes: explicit_namespace_prefixes,
-      digest_algorithm: digest_algorithm,
+      certificate:,
+      private_key:,
+      explicit_namespace_prefixes:,
+      digest_algorithm:,
       sign_timestamp: signature_options.fetch(:sign_timestamp, true),
       key_reference: signature_options.fetch(:key_reference, :binary_security_token)
     )

@@ -109,7 +109,7 @@ module WSDL
           return
         end
 
-        xml = @resolver.resolve(location, base: base)
+        xml = @resolver.resolve(location, base:)
         @import_locations << resolved_location
         record_resolved_source(resolved_location, xml)
 
@@ -176,7 +176,7 @@ module WSDL
           resolved = @resolver.resolve_location(location, base)
           next if @processed_locations.include?(resolved)
 
-          process_schema_reference(location, base, include_into: include_into)
+          process_schema_reference(location, base, include_into:)
           found = true
         end
         found
@@ -232,7 +232,7 @@ module WSDL
       # @return [String] raw schema XML
       # @raise [SchemaImportError] when schema cannot be resolved
       def load_schema_xml(schema_location, base, action)
-        @resolver.resolve(schema_location, base: base)
+        @resolver.resolve(schema_location, base:)
       rescue *RECOVERABLE_SCHEMA_IMPORT_ERRORS => e
         raise SchemaImportError.new(
           "Failed to resolve XML Schema #{action} #{schema_location.inspect} " \
@@ -303,7 +303,7 @@ module WSDL
       # @return [void]
       def record_resolved_source(location, xml)
         @provenance << {
-          location: location,
+          location:,
           status: 'resolved',
           digest: Digest::SHA256.hexdigest(xml),
           error: nil

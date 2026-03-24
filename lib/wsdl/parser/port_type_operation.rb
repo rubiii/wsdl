@@ -44,7 +44,7 @@ module WSDL
       def input
         return @input if defined? @input
 
-        @input = parse_node(@input_node)
+        @input = @input_node ? parse_node(@input_node) : nil
       end
 
       # Returns the output message definition for this operation.

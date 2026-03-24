@@ -59,7 +59,6 @@ RSpec.configure do |config|
 
   # Reset global state to prevent test pollution.
   config.before do
-    WSDL.cache = nil
     WSDL.logger = nil
   end
 end

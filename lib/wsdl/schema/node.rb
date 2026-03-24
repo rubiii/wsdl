@@ -347,11 +347,11 @@ module WSDL
       #   end
       def deconstruct_keys(_keys)
         {
-          kind: kind,
-          name: name,
-          type: type,
-          ref: ref,
-          namespace: namespace
+          kind:,
+          name:,
+          type:,
+          ref:,
+          namespace:
         }
       end
 

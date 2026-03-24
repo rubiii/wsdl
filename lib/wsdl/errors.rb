@@ -108,7 +108,7 @@ module WSDL
   # @example
   #   begin
   #     # Relative imports require a resolvable base file/URL location
-  #     parser_result = WSDL::Parser::Result.parse('<definitions>...</definitions>', http_adapter)
+  #     definition = WSDL::Parser.parse('<definitions>...</definitions>', http_adapter)
   #   rescue WSDL::UnresolvableImportError => e
   #     puts "Cannot resolve import: #{e.message}"
   #   end
@@ -133,21 +133,6 @@ module WSDL
   # @see https://cheatsheetseries.owasp.org/cheatsheets/Server_Side_Request_Forgery_Prevention_Cheat_Sheet.html
   #
   class PathRestrictionError < FatalError
-  end
-
-  # Raised when an HTTP adapter does not satisfy the required interface.
-  #
-  # This is raised when custom adapters are missing required methods or return
-  # invalid values for required methods.
-  #
-  # @example
-  #   begin
-  #     client = WSDL::Client.new(wsdl, http: custom_adapter)
-  #   rescue WSDL::InvalidHTTPAdapterError => e
-  #     puts "Invalid adapter: #{e.message}"
-  #   end
-  #
-  class InvalidHTTPAdapterError < Error
   end
 
   # Base class for response security verification errors.
@@ -541,5 +526,37 @@ module WSDL
   # This error indicates internal misuse where a parser collection that has
   # completed its build phase is modified afterward.
   class SealedCollectionError < Error
+  end
+
+  # Raised by {Definition#verify!} when build issues were recorded.
+  #
+  # Provides access to all issues via {#issues} for programmatic handling.
+  #
+  # @example
+  #   begin
+  #     definition = WSDL.parse(url)
+  #     definition.verify!
+  #   rescue WSDL::DefinitionError => e
+  #     e.issues.each { |issue| puts "#{issue[:operation]}: #{issue[:error]}" }
+  #   end
+  class DefinitionError < Error
+    # Maximum number of issues shown in the error message.
+    DISPLAY_LIMIT = 5
+
+    # @param issues [Array<Hash>] build issues from {Definition#build_issues}
+    def initialize(issues)
+      @issues = issues
+
+      shown = issues.first(DISPLAY_LIMIT).map { |i|
+        i[:operation] ? "  #{i[:operation]}: #{i[:error]}" : "  #{i[:error]}"
+      }
+      remaining = issues.size - DISPLAY_LIMIT
+      shown << "  ... and #{remaining} more" if remaining.positive?
+
+      super("Definition has #{issues.size} build issue(s):\n#{shown.join("\n")}")
+    end
+
+    # @return [Array<Hash>] all build issues
+    attr_reader :issues
   end
 end

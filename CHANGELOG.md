@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `WSDL.parse` and `WSDL.load` entry points for explicit control over when fetching/parsing happens. `WSDL.parse` returns a frozen, serializable `Definition`. `WSDL.load` restores one from a cached hash.
+- `WSDL::Definition` — frozen intermediate representation of everything the library knows about a WSDL service. Provides discovery (`services`, `ports`, `operations`), introspection (`input`, `input_header`, `output`, `output_header`), DSL generation (`to_dsl`), provenance (`sources`, `fingerprint`), and serialization (`to_h`, `to_json`).
+- `Client.new` accepts a `Definition` as its first argument, skipping parsing entirely. All `Client` methods route through the `Definition`.
+- `Definition#verify!` raises `DefinitionError` if any operations could not be fully resolved. This is the opt-in strict check — parsing itself is always best-effort.
+- `Definition#build_issues` provides transparency into operations that could not be fully resolved, with error details for each.
+- `WSDL::DefinitionError` — raised by `Definition#verify!`, carries all build issues with `error.issues` for programmatic access.
+- Source provenance with SHA-256 content digests for every fetched document. Enables fingerprint-based change detection.
+- `Client#definition` accessor returns the `Definition` for the client's WSDL.
 - Operation overloading support per WSDL 1.1 §2.4.5. Same-named operations with different input/output messages are stored correctly and disambiguated via `client.operation(:Svc, :Port, :Op, input_name: :InputName)`. WS-I Basic Profile R2304 validation in strict mode raises `OperationOverloadError`.
 - `client.services` now includes an `operations` array for each port, listing all available operations. Overloaded operations include `input_name` for disambiguation.
 - Extract XML attributes from response elements into the parsed hash with `_`-prefixed keys (e.g., `transactionKey="TXN-123"` → `_transactionKey: "TXN-123"`). Attributes are type-coerced when schema metadata is available.
@@ -22,6 +30,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `xs:union` simpleType derivation is now supported for both elements and attributes. The first `memberType` is used as the base type for coercion.
 - `Element#kind` returns `:simple`, `:complex`, or `:recursive` for programmatic dispatch. Included in both `paths` and `tree` contract output.
 - `Attribute#to_h` provides a consistent hash representation. Contract `paths` and `tree` now return identical attribute metadata including `name`, `type`, `required`, and `list`.
+
+### Changed
+
+- `Client.new` with a URL/path eagerly builds the `Definition` during initialization. All service/operation resolution happens upfront — no more lazy resolution that could raise errors later during operation access.
+- Removed built-in parse cache (`WSDL.cache`, `Cache` class, `cache:` parameter on `Client.new` and `WSDL.parse`). `Definition` is serializable via `to_h`/`to_json`/`from_h` — cache at the Definition level instead (file, Redis, etc.).
+- Removed `cache_key` contract from HTTP adapters. Custom adapters no longer need to implement `#cache_key`.
+- Removed `InvalidHTTPAdapterError` (was only used for `cache_key` validation).
+- Element tree building is always best-effort. Unresolvable types, missing elements, and resource limits are recorded as build issues rather than raising exceptions. Operations are included in the `Definition` with whatever data was successfully collected.
+- `BindingOperation#find_input_child_nodes` returns `[]` for missing `<input>` instead of raising.
+- `PortTypeOperation#input` returns `nil` for missing `<input>` (matching how `output` already handled missing `<output>`).
+- `MessageParts` records issues via an issues pipeline instead of raising for missing messages and header references.
+- `ElementBuilder` always uses lenient schema resolution (`find_*` instead of `fetch_*`) and records issues via the pipeline. Nesting depth and element/attribute count limits are recorded as resource limit issues.
 
 ### Deprecated
 
@@ -54,7 +74,6 @@ Initial public release.
 
 - Full WSDL 1.1 parsing with recursive XSD import/include resolution
 - Strict and relaxed schema import modes for incomplete or malformed schemas
-- In-memory LRU cache with configurable TTL and max entries for parsed definitions
 - Sandbox path restrictions to prevent path traversal attacks
 - Configurable iteration limits for schema import cycles
 
@@ -109,7 +128,7 @@ Initial public release.
 - Global and per-client configuration with thread-safe defaults
 - 11 configurable resource limits (document size, schema count, nesting depth, and more)
 - Pluggable logger (defaults to silent `NullLogger`)
-- Pluggable HTTP adapter and cache implementations
+- Pluggable HTTP adapter
 
 ### Dependencies
 

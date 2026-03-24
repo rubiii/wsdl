@@ -415,8 +415,8 @@ RSpec.describe 'XML Schema conformance' do
   # --------------------------------------------------------------------------
 
   describe 'Type Inheritance' do
-    let(:result) { WSDL::Parser::Result.parse fixture('wsdl/oracle'), http_mock }
-    let(:operation_info) { result.operation('WebCatalogService', 'WebCatalogServiceSoap', 'updateCatalogItemACL') }
+    let(:definition) { WSDL::Parser.parse fixture('wsdl/oracle'), http_mock }
+    let(:op_data) { definition.operation_data('WebCatalogService', 'WebCatalogServiceSoap', 'updateCatalogItemACL') }
 
     # UpdateCatalogItemACLParams extends UpdateACLParams:
     #   base  (UpdateACLParams):             updateFlag (xsd:string via simpleType)
@@ -427,7 +427,8 @@ RSpec.describe 'XML Schema conformance' do
 
     # https://www.w3.org/TR/xmlschema-1/#declare-element
     it 'XSD-EXT-1: derived type includes its own elements' do
-      options = find_child_element(operation_info.input.body_parts.first, 'options')
+      body_parts = op_data[:input][:body].map { |h| WSDL::Definition::ElementHash.new(h) }
+      options = find_child_element(body_parts.first, 'options')
 
       expect(options).to be_complex_type
       child_names = options.children.map(&:name)
@@ -436,7 +437,8 @@ RSpec.describe 'XML Schema conformance' do
 
     # https://www.w3.org/TR/xmlschema-1/#declare-element
     it 'XSD-EXT-2: derived type includes inherited elements from base type' do
-      options = find_child_element(operation_info.input.body_parts.first, 'options')
+      body_parts = op_data[:input][:body].map { |h| WSDL::Definition::ElementHash.new(h) }
+      options = find_child_element(body_parts.first, 'options')
 
       child_names = options.children.map(&:name)
       expect(child_names).to include('updateFlag')
@@ -444,7 +446,8 @@ RSpec.describe 'XML Schema conformance' do
 
     # https://www.w3.org/TR/xmlschema-1/#declare-element
     it 'XSD-EXT-3: base type elements appear before derived type elements' do
-      options = find_child_element(operation_info.input.body_parts.first, 'options')
+      body_parts = op_data[:input][:body].map { |h| WSDL::Definition::ElementHash.new(h) }
+      options = find_child_element(body_parts.first, 'options')
 
       child_names = options.children.map(&:name)
       flag_index = child_names.index('updateFlag')

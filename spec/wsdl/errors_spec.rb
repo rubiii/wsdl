@@ -100,12 +100,6 @@ RSpec.describe 'WSDL error hierarchy' do
     end
   end
 
-  describe WSDL::InvalidHTTPAdapterError do
-    it 'inherits from WSDL::Error' do
-      expect(described_class).to be < WSDL::Error
-    end
-  end
-
   describe WSDL::SecurityError do
     it 'inherits from WSDL::FatalError' do
       expect(described_class).to be < WSDL::FatalError

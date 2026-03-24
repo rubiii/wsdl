@@ -12,19 +12,19 @@ RSpec.describe WSDL::QName do
 
     context 'with prefixed qname' do
       it 'resolves to local name and namespace URI' do
-        result = described_class.parse('tns:User', namespaces: namespaces)
+        result = described_class.parse('tns:User', namespaces:)
         expect(result.local).to eq('User')
         expect(result.namespace).to eq('http://example.com/target')
       end
 
       it 'handles different prefixes' do
-        result = described_class.parse('other:Order', namespaces: namespaces)
+        result = described_class.parse('other:Order', namespaces:)
         expect(result.local).to eq('Order')
         expect(result.namespace).to eq('http://example.com/other')
       end
 
       it 'returns nil namespace for unknown prefix' do
-        result = described_class.parse('unknown:Thing', namespaces: namespaces)
+        result = described_class.parse('unknown:Thing', namespaces:)
         expect(result.local).to eq('Thing')
         expect(result.namespace).to be_nil
       end
@@ -32,7 +32,7 @@ RSpec.describe WSDL::QName do
 
     context 'without prefix' do
       it 'uses default namespace from xmlns' do
-        result = described_class.parse('User', namespaces: namespaces)
+        result = described_class.parse('User', namespaces:)
         expect(result.local).to eq('User')
         expect(result.namespace).to eq('http://example.com/default')
       end
@@ -50,7 +50,7 @@ RSpec.describe WSDL::QName do
       end
 
       it 'prefers xmlns over default_namespace parameter' do
-        result = described_class.parse('User', namespaces: namespaces, default_namespace: 'http://fallback.com')
+        result = described_class.parse('User', namespaces:, default_namespace: 'http://fallback.com')
         expect(result.local).to eq('User')
         expect(result.namespace).to eq('http://example.com/default')
       end

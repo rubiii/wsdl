@@ -388,8 +388,8 @@ RSpec.describe WSDL::Security::SecurityHeader do
         WSDL::Security::Config.new.tap do |c|
           c.timestamp
           c.signature(
-            certificate: certificate,
-            private_key: private_key,
+            certificate:,
+            private_key:,
             key_reference: :binary_security_token
           )
         end
@@ -477,8 +477,8 @@ RSpec.describe WSDL::Security::SecurityHeader do
       let(:config) do
         WSDL::Security::Config.new.tap do |c|
           c.signature(
-            certificate: certificate,
-            private_key: private_key,
+            certificate:,
+            private_key:,
             key_reference: :issuer_serial
           )
         end
@@ -542,8 +542,8 @@ RSpec.describe WSDL::Security::SecurityHeader do
       let(:config) do
         WSDL::Security::Config.new.tap do |c|
           c.signature(
-            certificate: certificate,
-            private_key: private_key,
+            certificate:,
+            private_key:,
             key_reference: :subject_key_identifier
           )
         end
@@ -582,8 +582,8 @@ RSpec.describe WSDL::Security::SecurityHeader do
       let(:config) do
         WSDL::Security::Config.new.tap do |c|
           c.signature(
-            certificate: certificate,
-            private_key: private_key,
+            certificate:,
+            private_key:,
             explicit_namespace_prefixes: true
           )
         end
@@ -622,8 +622,8 @@ RSpec.describe WSDL::Security::SecurityHeader do
       let(:config) do
         WSDL::Security::Config.new.tap do |c|
           c.signature(
-            certificate: certificate,
-            private_key: private_key,
+            certificate:,
+            private_key:,
             sign_addressing: true
           )
         end
@@ -846,8 +846,8 @@ RSpec.describe WSDL::Security::SecurityHeader do
         WSDL::Security::Config.new.tap do |c|
           c.timestamp
           c.signature(
-            certificate: certificate,
-            private_key: private_key,
+            certificate:,
+            private_key:,
             sign_timestamp: false
           )
         end
@@ -881,8 +881,8 @@ RSpec.describe WSDL::Security::SecurityHeader do
           let(:config) do
             WSDL::Security::Config.new.tap do |c|
               c.signature(
-                certificate: certificate,
-                private_key: private_key,
+                certificate:,
+                private_key:,
                 digest_algorithm: algorithm
               )
             end

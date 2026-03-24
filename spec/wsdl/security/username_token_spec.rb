@@ -407,7 +407,7 @@ RSpec.describe WSDL::Security::UsernameToken do
       end
 
       it 'is safe when token is in a hash' do
-        hash = { token: token, name: 'test' }
+        hash = { token:, name: 'test' }
         output = hash.inspect
         expect(output).not_to include(password)
         expect(output).to include('[REDACTED]')

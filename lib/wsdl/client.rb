@@ -6,7 +6,12 @@ module WSDL
   # This class provides a high-level interface for parsing WSDL documents,
   # inspecting services and operations, and executing SOAP requests.
   #
-  # @example Basic usage
+  # @example From a Definition (recommended)
+  #   definition = WSDL.parse('http://example.com/service?wsdl')
+  #   client = WSDL::Client.new(definition)
+  #   operation = client.operation('GetData')
+  #
+  # @example From a URL (parses on initialization)
   #   client = WSDL::Client.new('http://example.com/service?wsdl')
   #   client.services
   #   # => {"ExampleService" => {ports: {"ExamplePort" => {type: "...", location: "..."}}}}
@@ -29,9 +34,6 @@ module WSDL
   # @example Disable XML formatting for whitespace-sensitive servers
   #   client = WSDL::Client.new('http://example.com/service?wsdl', format_xml: false)
   #
-  # @example Disable caching for this instance
-  #   client = WSDL::Client.new('http://example.com/service?wsdl', cache: false)
-  #
   # @example Custom sandbox paths for local imports spanning multiple directories
   #   client = WSDL::Client.new('/path/to/service.wsdl',
   #                             sandbox_paths: ['/path/to', '/other/schemas'])
@@ -43,41 +45,40 @@ module WSDL
   class Client
     # Creates a new Client instance.
     #
-    # Behavioral options (format_xml, strictness, sandbox_paths,
-    # limits) can be passed as keyword arguments or
-    # grouped into a {Config} object via the `config:` parameter.
-    # When both are provided, keyword arguments take precedence.
+    # Accepts either a {Definition} (recommended) or a WSDL URL/file path.
+    # When a Definition is provided, no parsing occurs — the Client
+    # operates entirely from the pre-built definition.
     #
-    # @param wsdl [String] a URL or file path to the WSDL document
+    # @param wsdl [Definition, String] a {Definition} instance, URL, or file path
     # @param http [Object, nil] an optional HTTP adapter instance
     #   (defaults to a new instance of {WSDL.http_adapter})
-    # @param cache [Cache, nil, false] the cache to use for parsed definitions.
-    #   Use `nil` (default) to use {WSDL.cache}, or `false` to disable caching.
     # @param config [Config, nil] a reusable {Config} instance grouping behavioral
     #   options. Any keyword arguments for Config options override the config object.
     #   Additional keyword arguments are forwarded to {Config#initialize}.
     #   See {Config#initialize} for the full list of supported options.
     #
-    def initialize(wsdl, http: nil, cache: nil, config: nil, **)
+    def initialize(wsdl, http: nil, config: nil, **)
       @config = config ? config.with(**) : Config.new(**)
-
-      source = Source.validate_wsdl!(wsdl)
       @http = http || WSDL.http_adapter.new
 
-      validate_http_adapter!(@http)
+      if wsdl.is_a?(Definition)
+        @definition = wsdl
+      else
+        source = Source.validate_wsdl!(wsdl)
+        resolved_sandbox_paths = source.resolve_sandbox_paths(@config.sandbox_paths)
 
-      resolved_sandbox_paths = source.resolve_sandbox_paths(@config.sandbox_paths)
-      @parser_result = Parser::CachedResult.load(
-        wsdl:,
-        http: @http,
-        cache:,
-        parse_options: ParseOptions.new(
-          sandbox_paths: resolved_sandbox_paths,
-          limits: @config.limits,
-          strictness: @config.strictness
-        )
-      )
+        @definition = Parser.parse(wsdl, @http, ParseOptions.new(
+                                                  sandbox_paths: resolved_sandbox_paths,
+                                                  limits: @config.limits,
+                                                  strictness: @config.strictness
+                                                ))
+      end
     end
+
+    # Returns the {Definition} for this client's WSDL.
+    #
+    # @return [Definition] the frozen definition
+    attr_reader :definition
 
     # Returns the behavioral configuration for this client.
     #
@@ -105,9 +106,22 @@ module WSDL
     #   # => {"ServiceName" => {ports: {"PortName" => {type: "...", location: "...",
     #   #      operations: [{name: "Op1"}, {name: "Op2"}]}}}}
     #
+    # rubocop:disable Metrics/AbcSize -- reconstructs legacy hash structure
     def services
-      @parser_result.services
+      @services ||= definition.services.to_h { |svc|
+        ports = definition.ports(svc[:name]).to_h { |port|
+          port_soap_type = definition.port_type(svc[:name], port[:name])
+          ops = definition.operations(svc[:name], port[:name]).map { |op|
+            entry = { name: op[:name] }
+            entry[:input_name] = op[:input_name] if op[:input_name]
+            entry
+          }
+          [port[:name], { type: port_soap_type, location: port[:endpoint], operations: ops }]
+        }
+        [svc[:name], { ports: }]
+      }
     end
+    # rubocop:enable Metrics/AbcSize
 
     # Returns the name of the primary service defined by the WSDL.
     #
@@ -116,10 +130,10 @@ module WSDL
     #
     # @return [String, nil] the service name, or nil if no service exists
     def service_name
-      name = @parser_result.service_name
+      name = definition.service_name
       return name if name && !name.empty?
 
-      @parser_result.services.keys.first
+      definition.services.first&.dig(:name)
     end
 
     # Returns an array of operation names for a service and port.
@@ -143,7 +157,8 @@ module WSDL
       end
 
       service_name, port_name = resolve_service_and_port(service_name, port_name)
-      @parser_result.operations(service_name.to_s, port_name.to_s)
+      verify_service_and_port!(service_name.to_s, port_name.to_s)
+      definition.operations(service_name.to_s, port_name.to_s).map { |op| op[:name] }.uniq
     end
 
     # Returns an Operation instance for calling a SOAP operation.
@@ -180,19 +195,63 @@ module WSDL
         service_name, port_name = resolve_service_and_port(nil, nil)
       end
 
-      operation_info = @parser_result.operation(service_name.to_s, port_name.to_s, operation_name.to_s,
-                                                input_name: input_name&.to_s)
-      verify_operation_style!(operation_info)
-
-      Operation.new(
-        operation_info,
-        @parser_result,
-        @http,
-        config: @config
-      )
+      build_operation_from_definition(service_name, port_name, operation_name, input_name:)
     end
 
     private
+
+    # Validates that the given service and port exist in the Definition.
+    #
+    # @param service_name [String] service name
+    # @param port_name [String] port name
+    # @raise [ArgumentError] if service or port not found
+    def verify_service_and_port!(service_name, port_name)
+      svc = definition.services.find { |s| s[:name] == service_name }
+      port = svc && svc[:ports].include?(port_name)
+
+      return if port
+
+      raise ArgumentError, "Unknown service #{service_name.inspect} or port #{port_name.inspect}.\n" \
+                           "Here is a list of known services and port:\n#{services.inspect}"
+    end
+
+    # Builds an Operation from Definition data.
+    #
+    # @return [Operation]
+    def build_operation_from_definition(service_name, port_name, operation_name, input_name: nil)
+      defn = definition
+      verify_overloading!(defn, service_name.to_s, port_name.to_s, operation_name.to_s)
+      op_data = defn.operation_data(
+        service_name.to_s, port_name.to_s, operation_name.to_s,
+        input_name: input_name&.to_s
+      )
+      endpoint = defn.endpoint(service_name.to_s, port_name.to_s)
+
+      verify_operation_style!(op_data)
+
+      Operation.new(op_data, endpoint, @http, config: @config)
+    end
+
+    # Raises OperationOverloadError if the operation is overloaded and strict mode is enabled.
+    #
+    # @param defn [Definition] the definition
+    # @param service [String] service name
+    # @param port [String] port name
+    # @param operation [String] operation name
+    # @raise [OperationOverloadError] if overloaded and strictness.operation_overloading is true
+    def verify_overloading!(defn, service, port, operation)
+      return unless @config.strictness.operation_overloading
+
+      ops = defn.operations(service, port).select { |op| op[:name] == operation }
+      return unless ops.size > 1
+
+      raise OperationOverloadError.new(
+        "Operation #{operation.inspect} is overloaded #{ops.size} times. " \
+        'Operation overloading is prohibited by WS-I Basic Profile R2304. ' \
+        'To allow it, use: strictness: { operation_overloading: false }',
+        operation_name: operation, port_type_name: port, overload_count: ops.size
+      )
+    end
 
     # Resolves service and port names, auto-detecting when there is exactly one of each.
     #
@@ -203,69 +262,20 @@ module WSDL
     def resolve_service_and_port(service_name, port_name)
       return [service_name, port_name] if service_name && port_name
 
-      svcs = services
-      resolved_service = resolve_single_service(svcs)
-      resolved_port = resolve_single_port(resolved_service, svcs)
-
-      [resolved_service, resolved_port]
-    end
-
-    # @param svcs [Hash] the services hash from {#services}
-    # @return [String] the single service name
-    # @raise [ArgumentError] if there are zero or multiple services
-    #
-    def resolve_single_service(svcs)
-      return svcs.keys.first if svcs.size == 1
-
-      names = svcs.keys.map(&:inspect).join(', ')
-      raise ArgumentError, "Cannot auto-resolve service: expected 1, found #{svcs.size} (#{names}). " \
-                           'Pass explicit service and port names.'
-    end
-
-    # @param resolved_service [String] the resolved service name
-    # @param svcs [Hash] the services hash from {#services}
-    # @return [String] the single port name
-    # @raise [ArgumentError] if there are zero or multiple ports
-    #
-    def resolve_single_port(resolved_service, svcs)
-      ports = svcs[resolved_service][:ports]
-      return ports.keys.first if ports.size == 1
-
-      names = ports.keys.map(&:inspect).join(', ')
-      raise ArgumentError, "Cannot auto-resolve port for service #{resolved_service.inspect}: " \
-                           "expected 1, found #{ports.size} (#{names}). " \
-                           'Pass explicit service and port names.'
+      definition.resolve_service_and_port
     end
 
     # Raises if the operation style is not supported.
     #
-    # @param operation_info [Parser::OperationInfo] the operation to verify
+    # @param op_data [Hash{Symbol => Object}] operation data hash
     # @raise [UnsupportedStyleError] if the operation style is not supported
     #
-    def verify_operation_style!(operation_info)
-      return unless operation_info.input_style == 'rpc/encoded'
+    def verify_operation_style!(op_data)
+      return unless op_data[:input_style] == 'rpc/encoded'
 
       raise UnsupportedStyleError,
-            "#{operation_info.name.inspect} is an #{operation_info.input_style.inspect} style operation.\n" \
+            "#{op_data[:name].inspect} is an #{op_data[:input_style].inspect} style operation.\n" \
             'Currently this style is not supported.'
-    end
-
-    # Validates that HTTP adapter satisfies required cache contract.
-    #
-    # @param adapter [Object] HTTP adapter instance
-    # @raise [InvalidHTTPAdapterError] if the adapter does not expose a usable cache_key
-    #
-    def validate_http_adapter!(adapter)
-      unless adapter.respond_to?(:cache_key)
-        raise InvalidHTTPAdapterError,
-              "HTTP adapter #{adapter.class.name} must implement #cache_key for parser cache partitioning."
-      end
-
-      cache_key = adapter.cache_key
-      return if cache_key && !cache_key.to_s.empty?
-
-      raise InvalidHTTPAdapterError,
-            "HTTP adapter #{adapter.class.name} must return a non-empty #cache_key."
     end
   end
 end

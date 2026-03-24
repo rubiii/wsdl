@@ -325,7 +325,7 @@ RSpec.describe 'Schema pattern coverage' do
       file.write(wsdl)
       file.close
 
-      relaxed = WSDL::Client.new(file.path, cache: false, strictness: { schema_references: false })
+      relaxed = WSDL::Client.new(file.path, strictness: { schema_references: false })
       op = relaxed.operation(:Op)
       paths = op.contract.response.body.paths
       child_names = paths.select { |p| p[:path].size == 2 }.map { |p| p[:path].last }
@@ -423,7 +423,7 @@ RSpec.describe 'Schema pattern coverage' do
       file.write(wsdl)
       file.close
 
-      relaxed = WSDL::Client.new(file.path, cache: false, strictness: { schema_references: false })
+      relaxed = WSDL::Client.new(file.path, strictness: { schema_references: false })
       op = relaxed.operation(:Op)
       paths = op.contract.response.body.paths
       data_children = paths.select { |p| p[:path].size == 3 && p[:path][1] == 'data' }

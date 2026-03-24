@@ -27,7 +27,7 @@ module WSDL
       def paths
         @elements.flat_map(&:to_a).map do |path, data|
           {
-            path: path,
+            path:,
             kind: data[:kind],
             namespace: data[:namespace],
             form: data[:form],

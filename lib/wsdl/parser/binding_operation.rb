@@ -56,6 +56,13 @@ module WSDL
         @operation_node['name']
       end
 
+      # Returns whether this binding operation has an input element.
+      #
+      # @return [Boolean] true if the binding operation defines an input
+      def input?
+        !!@input_wrapper
+      end
+
       # Returns the input header definitions for this operation.
       #
       # Each header is represented as a Hash with keys:
@@ -142,19 +149,12 @@ module WSDL
 
       # Finds child nodes of a specific type within the input element.
       #
+      # Returns an empty array when the binding has no input element.
+      #
       # @param child_name [String] the name of the child element to find
       # @return [Array<Nokogiri::XML::Node>] the matching child nodes
-      # @raise [Error] if the binding operation has no input element
       def find_input_child_nodes(child_name)
-        unless @input_wrapper
-          op_name = @operation_node['name']
-          raise UnresolvedReferenceError.new(
-            "Binding operation #{op_name.inspect} is missing a required <input> element",
-            reference_type: :input,
-            reference_name: 'input',
-            context: "binding operation #{op_name.inspect}"
-          )
-        end
+        return [] unless @input_wrapper
 
         @input_wrapper.element_children.select { |node| node.name == child_name }
       end

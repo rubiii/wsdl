@@ -14,23 +14,29 @@ module WSDL
       # Creates a new OperationInfo instance.
       #
       # @param name [String] the operation name
-      # @param endpoint [String] the SOAP endpoint URL
       # @param binding_operation [BindingOperation] the binding operation with protocol details
       # @param port_type_operation [PortTypeOperation] the port type operation with interface details
-      # @param parser_result [Result] the parser result for resolving references
-      def initialize(name, endpoint, binding_operation, port_type_operation, parser_result)
+      # @param documents [DocumentCollection] for resolving message references
+      # @param schemas [Schema::Collection] for building element trees
+      # @param limits [Limits] resource limits for element building
+      # @param strictness [Strictness] strictness configuration
+      # @param issues [Array, nil] optional issues collector for recording build problems
+      # rubocop:disable Metrics/ParameterLists
+      def initialize(name, binding_operation, port_type_operation,
+                     documents:, schemas:, limits:, strictness:, issues: nil)
         @name = name
-        @endpoint = endpoint
         @binding_operation = binding_operation
         @port_type_operation = port_type_operation
-        @parser_result = parser_result
+        @documents = documents
+        @schemas = schemas
+        @limits = limits
+        @strictness = strictness
+        @issues = issues
       end
+      # rubocop:enable Metrics/ParameterLists
 
       # @return [String] the name of this operation
       attr_reader :name
-
-      # @return [String] the SOAP endpoint URL
-      attr_reader :endpoint
 
       # @return [BindingOperation] the binding operation with protocol details
       attr_reader :binding_operation
@@ -65,7 +71,9 @@ module WSDL
       #
       # @return [Input] the input message definition
       def input
-        @input ||= Input.new(@binding_operation, @port_type_operation, @parser_result)
+        @input ||= Input.new(@binding_operation, @port_type_operation,
+                             documents: @documents, schemas: @schemas,
+                             limits: @limits, strictness: @strictness, issues: @issues)
       end
 
       # Returns the output message definition for this operation.
@@ -78,7 +86,11 @@ module WSDL
       def output
         return @output if defined?(@output)
 
-        @output = Output.new(@binding_operation, @port_type_operation, @parser_result) if @port_type_operation.output
+        return unless @port_type_operation.output
+
+        @output = Output.new(@binding_operation, @port_type_operation,
+                             documents: @documents, schemas: @schemas,
+                             limits: @limits, strictness: @strictness, issues: @issues)
       end
 
       # Returns the input style for this operation.

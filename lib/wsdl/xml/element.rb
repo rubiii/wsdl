@@ -227,9 +227,9 @@ module WSDL
       #
       def to_definition_h # rubocop:disable Metrics/AbcSize
         {
-          name: name,
-          namespace: namespace,
-          form: form,
+          name:,
+          namespace:,
+          form:,
           type: kind.to_s,
           xsd_type: base_type,
           min_occurs: min_occurs.to_i,
@@ -238,8 +238,8 @@ module WSDL
           singular: singular?,
           list: list?,
           any_content: any_content?,
-          recursive_type: recursive_type,
-          complex_type_id: complex_type_id,
+          recursive_type:,
+          complex_type_id:,
           children: children.map(&:to_definition_h),
           attributes: attributes.map(&:to_definition_h)
         }
@@ -305,11 +305,11 @@ module WSDL
       def to_a(memo = [], stack = [])
         new_stack = stack + [name]
         data = {
-          namespace: namespace,
-          form: form,
+          namespace:,
+          form:,
           singular: singular?,
-          min_occurs: min_occurs,
-          max_occurs: max_occurs
+          min_occurs:,
+          max_occurs:
         }
 
         data[:kind] = kind

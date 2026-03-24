@@ -2,7 +2,7 @@
 
 module WSDL
   # Represents a callable SOAP operation.
-  class Operation
+  class Operation # rubocop:disable Metrics/ClassLength
     # Default XML encoding used in SOAP request headers.
     #
     # @return [String]
@@ -16,15 +16,20 @@ module WSDL
       '1.2' => 'application/soap+xml'
     }.freeze
 
-    def initialize(operation_info, parser_result, http, config: Config.new)
-      @operation_info = operation_info
-      @parser_result = parser_result
+    # Creates a new Operation from Definition operation data.
+    #
+    # @param op_data [Hash{Symbol => Object}] operation hash from {Definition#operation_data}
+    # @param endpoint [String] the SOAP endpoint URL
+    # @param http [Object] an HTTP adapter instance
+    # @param config [Config] behavioral configuration
+    def initialize(op_data, endpoint, http, config: Config.new)
+      @op_data = op_data
       @http = http
       @config = config
 
-      @endpoint = operation_info.endpoint
-      @soap_version = operation_info.soap_version
-      @soap_action = operation_info.soap_action
+      @endpoint = endpoint
+      @soap_version = op_data[:soap_version]
+      @soap_action = op_data[:soap_action]
       @encoding = ENCODING
 
       @request_document = nil
@@ -40,7 +45,7 @@ module WSDL
     #   operation.name  # => "getBank"
     #
     def name
-      @operation_info.name
+      @op_data[:name]
     end
 
     attr_reader :endpoint, :soap_version, :soap_action, :encoding
@@ -56,7 +61,7 @@ module WSDL
     #   operation.input_element_name  # => "InitialRequest"
     #
     def input_element_name
-      @operation_info.input.body_parts.first&.name
+      input_body_parts.first&.name
     end
 
     # Returns the output body namespace from the WSDL binding.
@@ -71,7 +76,7 @@ module WSDL
     #   operation.output_namespace  # => "http://apiNamespace.com"
     #
     def output_namespace
-      @operation_info.binding_operation.output_body[:namespace]
+      @op_data[:rpc_output_namespace]
     end
 
     # Overrides the SOAP endpoint URL for this operation.
@@ -148,7 +153,13 @@ module WSDL
     #
     # @return [WSDL::Contract::OperationContract]
     def contract
-      @contract ||= Contract::OperationContract.new(@operation_info)
+      @contract ||= Contract::OperationContract.new(
+        input_header_parts:,
+        input_body_parts:,
+        output_header_parts: output_header_parts || [],
+        output_body_parts: output_body_parts || [],
+        input_style:
+      )
     end
 
     # Prepares request envelope from DSL and validates it immediately.
@@ -174,7 +185,7 @@ module WSDL
       Request::Validator.new(
         contract: validation_contract,
         strictness: @config.strictness,
-        schema_complete: schema_complete_for_validation?
+        schema_complete: @op_data[:schema_complete]
       ).validate!(document)
 
       Request::SecurityConflictDetector.new(document:, security:).validate!
@@ -264,8 +275,8 @@ module WSDL
 
       response = Response.new(
         http_response:,
-        output_body_parts: @operation_info.output&.body_parts,
-        output_header_parts: @operation_info.output&.header_parts,
+        output_body_parts:,
+        output_header_parts:,
         output_style:,
         verification: @security.response_verification_options
       )
@@ -281,7 +292,7 @@ module WSDL
     # @api private
     # @return [String] e.g. `document/literal`
     def input_style
-      @operation_info.input_style
+      @op_data[:input_style]
     end
 
     # Low-level output binding style from the WSDL.
@@ -291,10 +302,41 @@ module WSDL
     # @api private
     # @return [String] e.g. `document/literal`
     def output_style
-      @operation_info.output_style
+      @op_data[:output_style]
     end
 
     private
+
+    # @return [Array<Definition::ElementHash>] input header part elements
+    def input_header_parts
+      @input_header_parts ||= wrap_elements(@op_data.dig(:input, :header))
+    end
+
+    # @return [Array<Definition::ElementHash>] input body part elements
+    def input_body_parts
+      @input_body_parts ||= wrap_elements(@op_data.dig(:input, :body))
+    end
+
+    # @return [Array<Definition::ElementHash>, nil] output header part elements
+    def output_header_parts
+      return @output_header_parts if defined?(@output_header_parts)
+
+      @output_header_parts = @op_data[:output] ? wrap_elements(@op_data[:output][:header]) : nil
+    end
+
+    # @return [Array<Definition::ElementHash>, nil] output body part elements
+    def output_body_parts
+      return @output_body_parts if defined?(@output_body_parts)
+
+      @output_body_parts = @op_data[:output] ? wrap_elements(@op_data[:output][:body]) : nil
+    end
+
+    # @return [Array<Definition::ElementHash>] wrapped element hashes
+    def wrap_elements(hashes)
+      return [] unless hashes
+
+      hashes.map { |h| Definition::ElementHash.new(h) }.freeze
+    end
 
     def enforce_response_size_limit!(http_response)
       max = @config.limits.max_response_size
@@ -320,8 +362,8 @@ module WSDL
 
     def rpc_wrapper
       @rpc_wrapper ||= Request::RPCWrapper.new(
-        operation_name: @operation_info.name,
-        namespace_uri: @operation_info.binding_operation.input_body[:namespace]
+        operation_name: name,
+        namespace_uri: @op_data[:rpc_input_namespace]
       )
     end
 
@@ -334,7 +376,7 @@ module WSDL
       return if contract.request.empty?
 
       raise RequestDefinitionError,
-            "Operation #{@operation_info.name.inspect} requires a request definition via operation.prepare { ... }"
+            "Operation #{name.inspect} requires a request definition via operation.prepare { ... }"
     end
 
     def request_validation_contract
@@ -344,12 +386,6 @@ module WSDL
       raise unless schema_unresolved_reference?(e)
 
       fallback_validation_contract
-    end
-
-    def schema_complete_for_validation?
-      return true unless @config.strictness.request_validation
-
-      @parser_result.schema_complete_for_operation?(@operation_info)
     end
 
     def fallback_validation_contract

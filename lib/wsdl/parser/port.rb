@@ -66,7 +66,7 @@ module WSDL
       #   # => { "PortName" => { type: "http://schemas.xmlsoap.org/wsdl/soap/",
       #   #                      location: "http://example.com/service" } }
       def to_hash
-        { name => { type: type, location: location } }
+        { name => { type:, location: } }
       end
     end
   end

@@ -168,13 +168,13 @@ module WSDL
         raise ArgumentError, 'Element must have a wsu:Id attribute or id must be provided' unless element_id
 
         # Canonicalize and compute digest
-        canonical_xml = @canonicalizer.canonicalize(node, inclusive_namespaces: inclusive_namespaces)
+        canonical_xml = @canonicalizer.canonicalize(node, inclusive_namespaces:)
         digest_value = @digester.base64_digest(canonical_xml)
 
         @references << Reference.new(
           id: element_id,
-          digest_value: digest_value,
-          inclusive_namespaces: inclusive_namespaces
+          digest_value:,
+          inclusive_namespaces:
         )
 
         self

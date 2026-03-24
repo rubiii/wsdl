@@ -3,10 +3,11 @@
 require 'tempfile'
 
 RSpec.describe WSDL::Operation do
-  subject(:operation)  { described_class.new(operation_info, parser_result, http_mock) }
+  subject(:operation)  { described_class.new(op_data, endpoint, http_mock) }
 
-  let(:parser_result)  { WSDL::Parser::Result.parse fixture('wsdl/temperature'), http_mock }
-  let(:operation_info) { parser_result.operation('ConvertTemperature', 'ConvertTemperatureSoap12', 'ConvertTemp') }
+  let(:definition)     { WSDL::Parser.parse fixture('wsdl/temperature'), http_mock }
+  let(:op_data)        { definition.operation_data('ConvertTemperature', 'ConvertTemperatureSoap12', 'ConvertTemp') }
+  let(:endpoint)       { definition.endpoint('ConvertTemperature', 'ConvertTemperatureSoap12') }
   let(:tempfiles) { [] }
 
   after do
@@ -79,8 +80,9 @@ RSpec.describe WSDL::Operation do
     end
 
     context 'with an RPC/literal operation' do
-      let(:parser_result) { WSDL::Parser::Result.parse fixture('wsdl/rpc_literal'), http_mock }
-      let(:operation_info) { parser_result.operation('SampleService', 'Sample', 'op1') }
+      let(:definition) { WSDL::Parser.parse fixture('wsdl/rpc_literal'), http_mock }
+      let(:op_data)    { definition.operation_data('SampleService', 'Sample', 'op1') }
+      let(:endpoint)   { definition.endpoint('SampleService', 'Sample') }
 
       it 'returns the binding output namespace' do
         expect(operation.output_namespace).to eq('http://apiNamespace.com')
@@ -94,8 +96,9 @@ RSpec.describe WSDL::Operation do
     end
 
     context 'when the element name differs from the operation name' do
-      let(:parser_result) { WSDL::Parser::Result.parse fixture('wsdl/equifax'), http_mock }
-      let(:operation_info) { parser_result.operation('canadav2', 'canadaHttpPortV2', 'startTransaction') }
+      let(:definition) { WSDL::Parser.parse fixture('wsdl/equifax'), http_mock }
+      let(:op_data)    { definition.operation_data('canadav2', 'canadaHttpPortV2', 'startTransaction') }
+      let(:endpoint)   { definition.endpoint('canadav2', 'canadaHttpPortV2') }
 
       it 'returns the element name, not the operation name' do
         expect(operation.name).to eq('startTransaction')
@@ -147,13 +150,13 @@ RSpec.describe WSDL::Operation do
 
     it 'can be set via config' do
       config = WSDL::Config.new(format_xml: false)
-      operation = described_class.new(operation_info, parser_result, http_mock, config:)
+      operation = described_class.new(op_data, endpoint, http_mock, config:)
       expect(operation.format_xml).to be(false)
     end
 
     it 'per-operation override takes precedence over config' do
       config = WSDL::Config.new(format_xml: false)
-      operation = described_class.new(operation_info, parser_result, http_mock, config:)
+      operation = described_class.new(op_data, endpoint, http_mock, config:)
       operation.format_xml = true
       expect(operation.format_xml).to be(true)
     end
@@ -173,8 +176,9 @@ RSpec.describe WSDL::Operation do
     end
 
     it 'returns a Hash of HTTP headers for a SOAP 1.1 operation' do
-      soap11_operation_info = parser_result.operation('ConvertTemperature', 'ConvertTemperatureSoap', 'ConvertTemp')
-      operation = described_class.new(soap11_operation_info, parser_result, http_mock)
+      soap11_op_data = definition.operation_data('ConvertTemperature', 'ConvertTemperatureSoap', 'ConvertTemp')
+      soap11_endpoint = definition.endpoint('ConvertTemperature', 'ConvertTemperatureSoap')
+      operation = described_class.new(soap11_op_data, soap11_endpoint, http_mock)
 
       expect(operation.http_headers).to eq(
         'SOAPAction' => '"http://www.webserviceX.NET/ConvertTemp"',
@@ -579,7 +583,7 @@ RSpec.describe WSDL::Operation do
     end
 
     context 'with format_xml: false' do
-      let(:compact_operation) { described_class.new(operation_info, parser_result, http_mock, config: WSDL::Config.new(format_xml: false)) }
+      let(:compact_operation) { described_class.new(op_data, endpoint, http_mock, config: WSDL::Config.new(format_xml: false)) }
 
       it 'returns compact XML without indentation' do
         compact_operation.prepare do
@@ -632,19 +636,11 @@ RSpec.describe WSDL::Operation do
     end
 
     context 'with Strictness.off fallback behavior' do
-      it 'still raises for non-schema unresolved references' do
-        parser_result = parse_result(header_missing_part_wsdl)
-        operation_info = parser_result.operation('TestService', 'TestPort', 'TestOp')
-        relaxed_operation = described_class.new(operation_info, parser_result, http_mock,
-                                                config: WSDL::Config.new(strictness: WSDL::Strictness.off))
+      it 'handles missing header parts gracefully with empty contract' do
+        definition = parse_definition(header_missing_part_wsdl)
 
-        expect {
-          relaxed_operation.prepare do
-            tag('TestRequest', 'value')
-          end
-        }.to raise_error(WSDL::UnresolvedReferenceError) { |error|
-          expect(error.reference_type).to eq(:message_part)
-        }
+        expect(definition.build_issues).not_to be_empty
+        expect(definition.build_issues.first[:error]).to include('soap:header')
       end
     end
   end
@@ -692,7 +688,7 @@ RSpec.describe WSDL::Operation do
 
         limits = WSDL::Limits.new(max_response_size: 512)
         config = WSDL::Config.new(limits:)
-        op = described_class.new(operation_info, parser_result, http_mock, config:)
+        op = described_class.new(op_data, endpoint, http_mock, config:)
 
         prepare_convert_temp(op)
 
@@ -719,7 +715,7 @@ RSpec.describe WSDL::Operation do
 
         limits = WSDL::Limits.new(max_response_size: nil)
         config = WSDL::Config.new(limits:)
-        op = described_class.new(operation_info, parser_result, http_mock, config:)
+        op = described_class.new(op_data, endpoint, http_mock, config:)
 
         prepare_convert_temp(op)
 
@@ -771,8 +767,8 @@ RSpec.describe WSDL::Operation do
     end
   end
 
-  def parse_result(wsdl_xml)
-    WSDL::Parser::Result.parse(write_wsdl_file(wsdl_xml), http_mock)
+  def parse_definition(wsdl_xml)
+    WSDL::Parser.parse(write_wsdl_file(wsdl_xml), http_mock)
   end
 
   def write_wsdl_file(wsdl_xml)

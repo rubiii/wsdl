@@ -422,7 +422,7 @@ RSpec.describe WSDL::Security::Verifier::CertificateValidator do
 
       config = WSDL::Security::Config.new
       config.timestamp
-      config.signature(certificate: valid_certificate, private_key: private_key)
+      config.signature(certificate: valid_certificate, private_key:)
 
       header = WSDL::Security::SecurityHeader.new(config)
       header.apply(envelope)
@@ -447,7 +447,7 @@ RSpec.describe WSDL::Security::Verifier::CertificateValidator do
 
       config = WSDL::Security::Config.new
       config.timestamp
-      config.signature(certificate: expired_certificate, private_key: private_key)
+      config.signature(certificate: expired_certificate, private_key:)
 
       header = WSDL::Security::SecurityHeader.new(config)
       expired_response = header.apply(envelope)
@@ -470,7 +470,7 @@ RSpec.describe WSDL::Security::Verifier::CertificateValidator do
 
       config = WSDL::Security::Config.new
       config.timestamp
-      config.signature(certificate: expired_certificate, private_key: private_key)
+      config.signature(certificate: expired_certificate, private_key:)
 
       header = WSDL::Security::SecurityHeader.new(config)
       expired_response = header.apply(envelope)

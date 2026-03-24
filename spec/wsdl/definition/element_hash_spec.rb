@@ -77,7 +77,7 @@ RSpec.describe WSDL::Definition::ElementHash do
     end
 
     it 'returns kind' do
-      expect(element.kind).to eq('simple')
+      expect(element.kind).to eq(:simple)
     end
 
     it 'returns base_type' do
@@ -297,8 +297,12 @@ RSpec.describe WSDL::Definition::ElementHash do
       expect(attribute).to be_frozen
     end
 
-    it 'returns the underlying hash via to_h' do
-      expect(attribute.to_h).to equal(attribute_hash)
+    it 'returns the introspection-compatible hash via to_h' do
+      expect(attribute.to_h).to eq({ name: 'id', type: 'xsd:string', required: true, list: false })
+    end
+
+    it 'returns the raw definition hash via to_definition_h' do
+      expect(attribute.to_definition_h).to equal(attribute_hash)
     end
 
     it 'responds to all methods that Response::Parser calls on attributes' do

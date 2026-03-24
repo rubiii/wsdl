@@ -2,7 +2,6 @@
 
 require 'json'
 require 'wsdl/definition/element_hash'
-require 'wsdl/definition/operation_proxy'
 require 'wsdl/definition/builder'
 
 module WSDL
@@ -81,6 +80,40 @@ module WSDL
       @data[:sources]
     end
 
+    # Returns build issues encountered during Definition construction.
+    #
+    # Each entry records an operation that could not be fully resolved
+    # and the reason. These operations are included in the Definition
+    # with empty message parts.
+    #
+    # @return [Array<Hash{Symbol => String}>] build issue entries with
+    #   +:operation+ and +:error+ keys
+    #
+    # @example
+    #   definition.build_issues
+    #   # => [{ operation: "GetStatus", error: "Unable to find element ..." }]
+    def build_issues
+      @data[:build_issues] || []
+    end
+
+    # Raises if any build issues were recorded during construction.
+    #
+    # Call this after {WSDL.parse} if you want strict behavior — failing
+    # on any operation that could not be fully resolved.
+    #
+    # @return [self] if no issues
+    # @raise [DefinitionError] if there are build issues
+    #
+    # @example Strict parsing
+    #   definition = WSDL.parse(url)
+    #   definition.verify!  # raises if any operations couldn't be fully built
+    #
+    def verify!
+      raise DefinitionError, build_issues if build_issues.any?
+
+      self
+    end
+
     # Returns all services. Arguments filter the results.
     #
     # @return [Array<Hash>] service entries with +:name+ and +:ports+ keys
@@ -90,7 +123,7 @@ module WSDL
     #   # => [{ name: "UserService", ports: ["UserPort", "AdminPort"] }]
     def services
       @data[:services].map do |name, data|
-        { name: name, ports: data[:ports].keys }
+        { name:, ports: data[:ports].keys }
       end
     end
 
@@ -122,7 +155,7 @@ module WSDL
       result = []
       each_operation(service_name, port_name) do |svc, port, op|
         entry = {
-          service: svc, port: port, name: op[:name],
+          service: svc, port:, name: op[:name],
           style: op[:input_style], soap_action: op[:soap_action]
         }
         entry[:input_name] = op[:input_name] if op[:input_name]
@@ -209,16 +242,52 @@ module WSDL
       lines.join("\n")
     end
 
-    # Returns the endpoint URL for a port.
+    # Returns the endpoint URL for a specific service and port.
     #
-    # @overload endpoint(service_name, port_name)
-    # @overload endpoint
+    # @param service_name [String] the service name
+    # @param port_name [String] the port name
     # @return [String] the endpoint URL
     # @api private
-    def endpoint(*)
-      svc_name, port_name = resolve_service_and_port(*)
-      @data[:services][svc_name][:ports][port_name][:endpoint]
+    def endpoint(service_name, port_name)
+      @data[:services][service_name][:ports][port_name][:endpoint]
     end
+
+    # Returns the SOAP type namespace URI for a port.
+    #
+    # @param service_name [String] the service name
+    # @param port_name [String] the port name
+    # @return [String] the SOAP namespace URI
+    # @api private
+    def port_type(service_name, port_name)
+      @data[:services][service_name][:ports][port_name][:type]
+    end
+
+    # Resolves the single service and port for auto-resolution.
+    #
+    # @return [Array(String, String)] service and port names
+    # @raise [ArgumentError] if ambiguous
+    # @api private
+    # rubocop:disable Metrics/AbcSize -- validation requires multiple checks
+    def resolve_service_and_port
+      svcs = @data[:services]
+      if svcs.size != 1
+        names = svcs.keys.map(&:inspect).join(', ')
+        raise ArgumentError, "Cannot auto-resolve service: expected 1, found #{svcs.size} (#{names}). " \
+                             'Pass explicit service and port names.'
+      end
+
+      svc_name = svcs.keys.first
+      ports = svcs[svc_name][:ports]
+      if ports.size != 1
+        names = ports.keys.map(&:inspect).join(', ')
+        raise ArgumentError, "Cannot auto-resolve port for service #{svc_name.inspect}: " \
+                             "expected 1, found #{ports.size} (#{names}). " \
+                             'Pass explicit service and port names.'
+      end
+
+      [svc_name, ports.keys.first]
+    end
+    # rubocop:enable Metrics/AbcSize
 
     # Serializes this Definition to a plain Hash.
     #
@@ -327,40 +396,13 @@ module WSDL
             "Available: #{available.inspect}"
     end
 
-    # Resolves the single service and port for auto-resolution.
-    #
-    # @param args [Array] empty or (service_name, port_name)
-    # @return [Array(String, String)] service and port names
-    # @raise [ArgumentError] if ambiguous
-    # rubocop:disable Metrics/AbcSize -- validation requires multiple checks
-    def resolve_service_and_port(*args)
-      return args if args.size == 2
-
-      svcs = @data[:services]
-      if svcs.size != 1
-        names = svcs.keys.map(&:inspect).join(', ')
-        raise ArgumentError, "Cannot auto-resolve service: found #{svcs.size} (#{names}). " \
-                             'Pass explicit service and port names.'
-      end
-
-      svc_name = svcs.keys.first
-      ports = svcs[svc_name][:ports]
-      if ports.size != 1
-        names = ports.keys.map(&:inspect).join(', ')
-        raise ArgumentError, "Cannot auto-resolve port for service #{svc_name.inspect}: " \
-                             "found #{ports.size} (#{names}). Pass explicit service and port names."
-      end
-
-      [svc_name, ports.keys.first]
-    end
-    # rubocop:enable Metrics/AbcSize
-
     # @return [String] error message for unknown operations
     def unknown_operation_message(service, port, operation)
       ops = @data.dig(:services, service, :ports, port, :operations)
       if ops
-        "Unknown operation #{operation.inspect} for service #{service.inspect}, port #{port.inspect}. " \
-          "Available: #{ops.keys.inspect}"
+        "Unknown operation #{operation.inspect} for " \
+          "service #{service.inspect} and port #{port.inspect}.\n" \
+          "You may want to try one of #{ops.keys.inspect}."
       else
         "Unknown service #{service.inspect} or port #{port.inspect}."
       end

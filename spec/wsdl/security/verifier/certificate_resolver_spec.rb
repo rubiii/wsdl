@@ -9,9 +9,9 @@ RSpec.describe WSDL::Security::Verifier::CertificateResolver, :verifier_helpers 
     described_class.new(
       document,
       security_node,
-      signature_node: signature_node,
+      signature_node:,
       provided: provided_cert,
-      trust_store: trust_store
+      trust_store:
     )
   end
   let(:provided_cert) { nil }

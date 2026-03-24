@@ -18,10 +18,10 @@ RSpec.describe WSDL::Request::RPCWrapper do
 
   def build_node(name, namespace_uri: nil)
     WSDL::Request::Node.new(
-      name: name,
+      name:,
       prefix: nil,
       local_name: name,
-      namespace_uri: namespace_uri
+      namespace_uri:
     )
   end
 

@@ -1,11 +1,12 @@
 # frozen_string_literal: true
 
 RSpec.describe 'Nillable elements' do
-  let(:parser_result) { WSDL::Parser::Result.parse(fixture('wsdl/nillable_elements'), http_mock) }
-  let(:operation_info) { parser_result.operation('UserService', 'UserServicePort', 'CreateUser') }
+  let(:definition) { WSDL::Parser.parse(fixture('wsdl/nillable_elements'), http_mock) }
+  let(:op_data) { definition.operation_data('UserService', 'UserServicePort', 'CreateUser') }
+  let(:endpoint) { definition.endpoint('UserService', 'UserServicePort') }
 
   describe 'element nillable attribute parsing' do
-    let(:body_parts) { operation_info.input.body_parts }
+    let(:body_parts) { op_data[:input][:body].map { |h| WSDL::Definition::ElementHash.new(h) } }
     let(:create_user_element) { body_parts.first }
 
     it 'parses nillable="true" on simple type elements' do
@@ -48,7 +49,7 @@ RSpec.describe 'Nillable elements' do
 
   describe 'xsi:nil serialization' do
     let(:config) { WSDL::Config.new(strictness: WSDL::Strictness.off) }
-    let(:operation) { WSDL::Operation.new(operation_info, parser_result, http_mock, config:) }
+    let(:operation) { WSDL::Operation.new(op_data, endpoint, http_mock, config:) }
 
     it 'serializes nil nillable simple elements with xsi:nil="true"' do
       operation.prepare do

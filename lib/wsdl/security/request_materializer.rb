@@ -8,8 +8,8 @@ module WSDL
       # @param now [Time]
       # @return [RequestContext]
       def self.materialize(policy, now: Time.now.utc)
-        username_token = build_username_token(policy.username_token, now: now)
-        timestamp = build_timestamp(policy.timestamp, now: now)
+        username_token = build_username_token(policy.username_token, now:)
+        timestamp = build_timestamp(policy.timestamp, now:)
 
         signature_policy = policy.signature
         signature_options = signature_policy&.options
@@ -19,7 +19,7 @@ module WSDL
           username_token_config: username_token,
           timestamp_config: timestamp,
           signature_config: signature,
-          signature_options: signature_options
+          signature_options:
         )
       end
 

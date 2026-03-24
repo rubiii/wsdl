@@ -52,7 +52,7 @@ module WSDL
       # @return [Hash{Symbol => Object}] attribute metadata
       def to_h
         {
-          name: name,
+          name:,
           type: base_type,
           required: !optional?,
           list: list?
@@ -68,9 +68,9 @@ module WSDL
       # @return [Hash{Symbol => Object}] definition-compatible attribute hash
       def to_definition_h
         {
-          name: name,
-          base_type: base_type,
-          use: use,
+          name:,
+          base_type:,
+          use:,
           list: list?
         }
       end

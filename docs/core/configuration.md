@@ -10,7 +10,6 @@
 |--------|------|---------|-------------|
 | `wsdl` | `String` | (required) | HTTP(S) URL or local file path to the WSDL document |
 | `http:` | adapter instance | `WSDL.http_adapter.new` | Custom HTTP adapter (see [HTTP Adapter](#http-adapter)) |
-| `cache:` | `Cache`, `nil`, `false` | `nil` | Parser cache — `nil` uses global, `false` disables (see [Cache](#cache)) |
 | `config:` | `Config`, `nil` | `nil` | Reusable Config object (see [Config](#config)) |
 
 ### Behavioral options (via Config)
@@ -51,11 +50,10 @@ Config is frozen after construction, like `Limits`.
 
 ## Global Defaults
 
-Five module-level settings apply to all new clients:
+Four module-level settings apply to all new clients:
 
 ```ruby
 WSDL.http_adapter = MyAdapterClass             # default: WSDL::HTTPAdapter
-WSDL.cache = WSDL::Cache.new(max_entries: 50)  # default: LRU cache, 50 entries
 WSDL.limits = { max_schemas: 200 }             # default: sensible defaults
 WSDL.strictness = false                        # default: all strict (true)
 WSDL.logger = Rails.logger                     # default: silent (NullLogger)
@@ -97,37 +95,22 @@ When an error is raised due to a strictness check, the error message tells you e
 
 > **Deprecated:** `strict_schema: true/false` still works but emits a deprecation warning.
 
-## Cache
+## Caching
 
-The parser cache avoids re-parsing the same WSDL on repeated client construction. Cache keys include the WSDL source, sandbox paths, limits, strict schema mode, and HTTP adapter identity.
-
-The built-in `WSDL::Cache` is a thread-safe in-memory LRU cache. When the entry limit is reached, the least recently used entry is evicted.
-
-### Options
-
-| Option | Type | Default | Description |
-|--------|------|---------|-------------|
-| `max_entries:` | `Integer`, `nil` | `50` | Maximum number of cached entries. LRU eviction when exceeded. `nil` for unlimited. |
-| `ttl:` | `Integer`, `nil` | `nil` | Time-to-live in seconds. Expired entries are recomputed on next access. `nil` for no expiry. |
-
-### Per-client
+The built-in parser cache has been removed. `Definition` is serializable via `to_h`/`to_json` and restorable via `WSDL.load` — cache at the Definition level instead:
 
 ```ruby
-client = WSDL::Client.new(wsdl)                    # use WSDL.cache (default)
-client = WSDL::Client.new(wsdl, cache: false)      # disable for this client
-client = WSDL::Client.new(wsdl, cache: my_cache)   # use a custom cache instance
+# Parse once
+definition = WSDL.parse('http://example.com/service?wsdl')
+File.write('cache.json', definition.to_json)
+
+# Restore from cache
+cached = JSON.parse(File.read('cache.json'))
+definition = WSDL.load(cached)
+client = WSDL::Client.new(definition)
 ```
 
-### Global
-
-```ruby
-WSDL.cache = WSDL::Cache.new(max_entries: 50)       # LRU cache, max 50 entries (default)
-WSDL.cache = WSDL::Cache.new(max_entries: 200)      # raise the entry limit
-WSDL.cache = WSDL::Cache.new(ttl: 3600)             # 1-hour TTL
-WSDL.cache = nil                                    # disable caching globally
-```
-
-Custom caches must implement `fetch(key) { ... }` and `clear`.
+Use any caching backend (file, Redis, Memcached, etc.) that can store the serialized hash.
 
 ## Limits
 

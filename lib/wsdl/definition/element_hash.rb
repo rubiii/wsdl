@@ -34,9 +34,9 @@ module WSDL
         @data[:form]
       end
 
-      # @return [String] element kind ('simple', 'complex', or 'recursive')
+      # @return [Symbol] element kind (:simple, :complex, or :recursive)
       def kind
-        @data[:type]
+        @data[:type].to_sym
       end
 
       # @return [String, nil] base type name (e.g. 'xsd:string')
@@ -114,6 +114,35 @@ module WSDL
       def to_h
         @data
       end
+
+      # Converts this element and its children to an Array representation.
+      #
+      # Produces the same format as {XML::Element#to_a} for compatibility
+      # with {Contract::PartContract#paths}.
+      #
+      # @param memo [Array] accumulator for recursive traversal
+      # @param stack [Array<String>] current path of element names
+      # @return [Array<Array>] array of [path, data] tuples
+      # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity -- mirrors XML::Element#to_a
+      def to_a(memo = [], stack = [])
+        new_stack = stack + [name]
+        data = {
+          namespace:, form:, singular: singular?,
+          min_occurs:, max_occurs:, kind:
+        }
+        data[:attributes] = attributes.map(&:to_h) unless attributes.empty?
+        case @data[:type]
+        when 'recursive' then data[:recursive_type] = recursive_type
+        when 'simple'
+          data[:type] = base_type
+          data[:list] = list?
+        when 'complex' then data[:any_content] = any_content?
+        end
+        memo << [new_stack, data]
+        children.each { |child| child.to_a(memo, new_stack) } if @data[:type] == 'complex'
+        memo
+      end
+      # rubocop:enable Metrics/AbcSize, Metrics/CyclomaticComplexity
     end
 
     # Frozen wrapper around a plain attribute hash that duck-types as {XML::Attribute}.
@@ -152,8 +181,15 @@ module WSDL
         @data[:use] == 'optional'
       end
 
-      # @return [Hash{Symbol => Object}] the underlying attribute data
+      # Returns an introspection-compatible hash matching {XML::Attribute#to_h}.
+      #
+      # @return [Hash{Symbol => Object}] attribute metadata
       def to_h
+        { name:, type: base_type, required: !optional?, list: list? }
+      end
+
+      # @return [Hash{Symbol => Object}] the underlying definition data
+      def to_definition_h
         @data
       end
     end

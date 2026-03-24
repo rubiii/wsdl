@@ -1,11 +1,10 @@
 # frozen_string_literal: true
 
 require 'digest'
-require 'json'
 
 module WSDL
   class Definition
-    # Constructs a frozen {Definition} from a {Parser::Result}.
+    # Constructs a frozen {Definition} from parsed WSDL data.
     #
     # Walks the parsed WSDL documents and schemas to enumerate all services,
     # ports, and operations. For each operation, resolves message references
@@ -20,21 +19,41 @@ module WSDL
       # @return [Integer]
       SCHEMA_VERSION = 1
 
+      # Empty message placeholder for operations whose element resolution fails.
+      #
+      # @return [Hash]
+      EMPTY_MESSAGE = { header: [], body: [] }.freeze
+
       # Creates a new Builder.
       #
-      # @param parser_result [Parser::Result] the parsed WSDL result
-      def initialize(parser_result)
-        @result = parser_result
+      # @param documents [Parser::DocumentCollection] parsed WSDL documents
+      # @param schemas [Schema::Collection] parsed XML schemas
+      # @param limits [Limits] resource limits
+      # @param strictness [Strictness] strictness configuration
+      # @param provenance [Array<Hash>] source provenance from import
+      # @param schema_import_errors [Array<SchemaImportError>] recoverable schema import errors
+      # rubocop:disable Metrics/ParameterLists -- all fields previously bundled in a single Result object
+      def initialize(documents:, schemas:, limits:, strictness:, provenance:, schema_import_errors:)
+        @documents = documents
+        @schemas = schemas
+        @limits = limits
+        @strictness = strictness
+        @provenance = provenance
+        @schema_import_errors = schema_import_errors
       end
+      # rubocop:enable Metrics/ParameterLists
 
       # Builds and returns a frozen {Definition}.
       #
       # @return [Definition] the frozen definition
       def build
+        @build_issues = []
+
         data = {
           schema_version: SCHEMA_VERSION,
-          service_name: @result.service_name,
-          sources: @result.provenance.dup,
+          service_name: @documents.service_name,
+          sources: @provenance.dup,
+          build_issues: @build_issues,
           services: build_services
         }
 
@@ -51,19 +70,19 @@ module WSDL
       def build_services
         services = {}
 
-        @result.documents.services.each_value do |service|
+        @documents.services.each_value do |service|
           ports = {}
 
           service.ports.each_value do |port|
-            operations = build_operations(service.name, port)
+            operations = build_operations(port)
             ports[port.name] = {
               type: port.type,
               endpoint: port.location,
-              operations: operations
+              operations:
             }
           end
 
-          services[service.name] = { ports: ports }
+          services[service.name] = { ports: }
         end
 
         services
@@ -71,48 +90,80 @@ module WSDL
 
       # Builds operations for a given port.
       #
-      # @param service_name [String] the service name
+      # Resolves binding and port_type once, then iterates all operations
+      # directly.
+      #
       # @param port [Parser::Port] the port
       # @return [Hash{String => Hash, Array<Hash>}] operation data keyed by name
-      def build_operations(service_name, port)
-        binding = port.fetch_binding(@result.documents)
+      # rubocop:disable Metrics/AbcSize, Metrics/MethodLength, Metrics/BlockLength, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
+      def build_operations(port)
+        binding = port.fetch_binding(@documents)
+        port_type = binding.fetch_port_type(@documents)
         operations = {}
 
         binding.operations.to_a.each do |op_entry|
           op_name = op_entry[:name]
           input_name = op_entry[:input_name]
+          metadata = default_operation(op_name, input_name:)
 
-          op_data = build_operation(service_name, port, op_name, input_name:)
-          store_operation(operations, op_name, op_data)
+          binding_op = binding.operations.fetch(op_name, input_name:)
+          port_type_op = port_type.operations.fetch(op_name, input_name:) { nil }
+
+          unless port_type_op
+            record_build_issue(op_name,
+                               "Binding operation #{op_name.inspect} not found in portType #{port_type.name.inspect}")
+            store_operation(operations, op_name, metadata)
+            next
+          end
+
+          op_info = Parser::OperationInfo.new(op_name, binding_op, port_type_op,
+                                              documents: @documents, schemas: @schemas,
+                                              limits: @limits, strictness: @strictness,
+                                              issues: @build_issues)
+
+          metadata[:soap_action] = op_info.soap_action
+          metadata[:soap_version] = op_info.soap_version
+
+          if binding_op.input?
+            metadata[:input_style] = op_info.input_style
+            metadata[:output_style] = op_info.output_style
+            metadata[:rpc_input_namespace] = binding_op.input_body[:namespace]
+            metadata[:rpc_output_namespace] = binding_op.output_body&.dig(:namespace)
+          else
+            record_build_issue(op_name,
+                               "Binding operation #{op_name.inspect} is missing a required <input> element")
+          end
+
+          metadata[:schema_complete] = schema_complete_for_operation?(op_info)
+          metadata[:input] = build_message(op_info.input)
+          metadata[:output] = op_info.output ? build_message(op_info.output) : nil
+          store_operation(operations, op_name, metadata)
         end
 
         operations
-      rescue UnresolvedReferenceError
+      rescue UnresolvedReferenceError => e
+        record_build_issue(nil, e.message)
         {}
       end
+      # rubocop:enable Metrics/AbcSize, Metrics/MethodLength, Metrics/BlockLength, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
 
-      # Builds a single operation's data hash.
+      # Returns an operation hash with safe defaults.
       #
-      # @param service_name [String] the service name
-      # @param port [Parser::Port] the port
-      # @param op_name [String] the operation name
+      # Each field starts as nil/empty. The loop in {#build_operations}
+      # progressively enhances the hash with binding-level metadata and
+      # resolved message data. If any step fails, the rescue stores
+      # whatever was captured up to that point.
+      #
+      # @param name [String] the operation name
       # @param input_name [String, nil] disambiguator for overloaded operations
-      # @return [Hash] the operation data # -- collects all operation metadata
-      def build_operation(service_name, port, op_name, input_name: nil)
-        op_info = @result.operation(service_name, port.name, op_name, input_name:)
-
+      # @return [Hash] operation data with nil/empty defaults
+      def default_operation(name, input_name: nil)
         {
-          name: op_name,
-          input_name: input_name,
-          soap_action: op_info.soap_action,
-          soap_version: op_info.soap_version,
-          input_style: op_info.input_style,
-          output_style: op_info.output_style,
-          rpc_input_namespace: op_info.binding_operation.input_body[:namespace],
-          rpc_output_namespace: op_info.binding_operation.output_body[:namespace],
-          schema_complete: @result.schema_complete_for_operation?(op_info),
-          input: build_message(op_info.input),
-          output: op_info.output ? build_message(op_info.output) : nil
+          name:, input_name:,
+          soap_action: nil, soap_version: nil,
+          input_style: nil, output_style: nil,
+          rpc_input_namespace: nil, rpc_output_namespace: nil,
+          schema_complete: false, input: EMPTY_MESSAGE, output: nil
         }
       end
 
@@ -140,6 +191,68 @@ module WSDL
           header: message.header_parts.map(&:to_definition_h),
           body: message.body_parts.map(&:to_definition_h)
         }
+      end
+
+      # Records a build error issue.
+      #
+      # @param operation [String, nil] the operation name
+      # @param error [String] description of the problem
+      # @return [void]
+      def record_build_issue(operation, error)
+        @build_issues << { type: :build_error, operation:, error: }
+      end
+
+      # Returns whether schema metadata is complete for the given operation.
+      #
+      # In best-effort import mode, failures may be tolerated globally. This
+      # method allows operation-level gating for strict request validation.
+      #
+      # @param operation_info [Parser::OperationInfo]
+      # @return [Boolean]
+      def schema_complete_for_operation?(operation_info)
+        return true if @schema_import_errors.empty?
+        return true if input_empty?(operation_info)
+        return false if @schema_import_errors.any? { |error| error.base_location.nil? }
+
+        operation_namespaces = input_namespaces_for(operation_info)
+        return true if operation_namespaces.empty?
+
+        affected_namespaces = namespaces_affected_by_import_errors
+        !operation_namespaces.intersect?(affected_namespaces)
+      end
+
+      # @return [Boolean] true if the operation has no input parts
+      def input_empty?(operation_info)
+        input = operation_info.input
+        input.header_parts.empty? && input.body_parts.empty?
+      end
+
+      # @return [Array<String>] namespaces used in operation input elements
+      def input_namespaces_for(operation_info)
+        elements = operation_info.input.header_parts + operation_info.input.body_parts
+        namespaces = []
+        elements.each do |element|
+          collect_element_namespaces(element, namespaces)
+        end
+        namespaces.compact.uniq
+      end
+
+      # @return [void]
+      def collect_element_namespaces(element, namespaces)
+        namespaces << element.namespace
+        element.children.each { |child| collect_element_namespaces(child, namespaces) }
+      end
+
+      # @return [Array<String>] namespaces whose schemas had import errors
+      def namespaces_affected_by_import_errors
+        error_bases = @schema_import_errors.filter_map(&:base_location).uniq
+
+        @schemas.each_with_object([]) do |definition, memo|
+          next unless error_bases.include?(definition.source_location)
+          next unless definition.target_namespace
+
+          memo << definition.target_namespace
+        end.uniq
       end
 
       # Computes a deterministic fingerprint from source provenance.

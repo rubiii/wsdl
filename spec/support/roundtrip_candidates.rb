@@ -41,7 +41,14 @@ module RoundtripCandidates
   end
 
   def candidates_from_local(path)
-    candidates_from_client(WSDL::Client.new(path))
+    client = WSDL::Client.new(path)
+
+    # Skip fixtures with build issues (unresolvable types, missing elements,
+    # resource limits). These operations have incomplete element trees that
+    # can't round-trip through Builder → Parser correctly.
+    return [] if client.definition.build_issues.any?
+
+    candidates_from_client(client)
   rescue *EXPECTED_ERRORS
     []
   end

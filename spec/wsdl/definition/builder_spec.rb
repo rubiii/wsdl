@@ -1,9 +1,7 @@
 # frozen_string_literal: true
 
 RSpec.describe WSDL::Definition::Builder do
-  subject(:definition) { described_class.new(parser_result).build }
-
-  let(:parser_result) { WSDL::Parser::Result.parse(fixture('wsdl/authentication'), http_mock) }
+  subject(:definition) { WSDL::Parser.parse(fixture('wsdl/authentication'), http_mock) }
 
   describe '#build' do
     it 'returns a frozen Definition' do
@@ -29,8 +27,8 @@ RSpec.describe WSDL::Definition::Builder do
     end
 
     it 'produces stable fingerprints for the same input' do
-      definition_a = described_class.new(parser_result).build
-      definition_b = described_class.new(parser_result).build
+      definition_a = WSDL::Parser.parse(fixture('wsdl/authentication'), http_mock)
+      definition_b = WSDL::Parser.parse(fixture('wsdl/authentication'), http_mock)
 
       expect(definition_a.fingerprint).to eq(definition_b.fingerprint)
     end
@@ -103,9 +101,8 @@ RSpec.describe WSDL::Definition::Builder do
     end
 
     it 'sets schema_complete to false when imports fail' do
-      result = WSDL::Parser::Result.parse(fixture('wsdl/juniper'), http_mock,
-                                          strictness: WSDL::Strictness.off)
-      juniper_def = described_class.new(result).build
+      juniper_def = WSDL::Parser.parse(fixture('wsdl/juniper'), http_mock,
+                                       strictness: WSDL::Strictness.off)
 
       op = juniper_def.to_h.dig('services', 'SystemService', 'ports', 'System',
                                 'operations', 'LoginRequest')
@@ -114,7 +111,7 @@ RSpec.describe WSDL::Definition::Builder do
   end
 
   describe 'multi-operation WSDLs' do
-    let(:parser_result) { WSDL::Parser::Result.parse(fixture('wsdl/interhome'), http_mock) }
+    subject(:definition) { WSDL::Parser.parse(fixture('wsdl/interhome'), http_mock) }
 
     it 'builds all operations' do
       port_data = definition.to_h.dig('services', 'WebService', 'ports', 'WebServiceSoap')
@@ -175,8 +172,7 @@ RSpec.describe WSDL::Definition::Builder do
     end
 
     it 'preserves unbounded max_occurs through round-trip' do
-      result = WSDL::Parser::Result.parse(fixture('wsdl/bronto'), http_mock)
-      bronto_def = described_class.new(result).build
+      bronto_def = WSDL::Parser.parse(fixture('wsdl/bronto'), http_mock)
       json = bronto_def.to_json
       restored = WSDL::Definition.from_h(JSON.parse(json))
 
@@ -199,8 +195,7 @@ RSpec.describe WSDL::Definition::Builder do
   describe 'builds from various fixtures' do
     %w[authentication temperature blz_service bronto].each do |fixture_name|
       it "builds and round-trips #{fixture_name}" do
-        result = WSDL::Parser::Result.parse(fixture("wsdl/#{fixture_name}"), http_mock)
-        defn = described_class.new(result).build
+        defn = WSDL::Parser.parse(fixture("wsdl/#{fixture_name}"), http_mock)
 
         expect(defn).to be_frozen
         expect(defn.to_h['services']).not_to be_empty

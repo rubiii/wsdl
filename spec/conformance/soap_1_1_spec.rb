@@ -6,9 +6,10 @@
 # Each test references an assertion ID documented in W3C_CONFORMANCE_ASSERTIONS.md.
 
 RSpec.describe 'SOAP 1.1 conformance' do
-  let(:parser_result) { WSDL::Parser::Result.parse fixture('wsdl/temperature'), http_mock }
-  let(:operation_info) { parser_result.operation('ConvertTemperature', 'ConvertTemperatureSoap', 'ConvertTemp') }
-  let(:operation) { WSDL::Operation.new(operation_info, parser_result, http_mock) }
+  let(:definition) { WSDL::Parser.parse fixture('wsdl/temperature'), http_mock }
+  let(:op_data) { definition.operation_data('ConvertTemperature', 'ConvertTemperatureSoap', 'ConvertTemp') }
+  let(:endpoint) { definition.endpoint('ConvertTemperature', 'ConvertTemperatureSoap') }
+  let(:operation) { WSDL::Operation.new(op_data, endpoint, http_mock) }
 
   def parsed_envelope
     operation.prepare do

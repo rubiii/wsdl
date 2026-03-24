@@ -2,8 +2,7 @@
 
 module WSDL
   # Immutable value object capturing the parse-affecting configuration
-  # options that flow through the parse pipeline (Client → CachedResult →
-  # Result → Importer).
+  # options that flow through the parse pipeline (Parser.parse → Importer).
   #
   # @!attribute [r] sandbox_paths
   #   @return [Array<String>, nil] directories where file access is allowed

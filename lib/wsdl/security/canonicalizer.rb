@@ -164,7 +164,7 @@ module WSDL
       #
       def self.canonicalize(node, **options)
         algorithm = options.delete(:algorithm) || DEFAULT_ALGORITHM
-        new(algorithm: algorithm).canonicalize(node, **options)
+        new(algorithm:).canonicalize(node, **options)
       end
     end
   end

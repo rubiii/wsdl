@@ -175,7 +175,7 @@ module WSDL
       # @return [String] the digest in the specified format
       #
       def self.digest(data, algorithm: DEFAULT_ALGORITHM, encode: nil)
-        digester = new(algorithm: algorithm)
+        digester = new(algorithm:)
 
         case encode
         when :base64
@@ -195,7 +195,7 @@ module WSDL
       # @return [String] the Base64-encoded digest
       #
       def self.base64_digest(data, algorithm: DEFAULT_ALGORITHM)
-        new(algorithm: algorithm).base64_digest(data)
+        new(algorithm:).base64_digest(data)
       end
     end
   end

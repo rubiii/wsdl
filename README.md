@@ -21,7 +21,15 @@ gem 'wsdl'
 ```ruby
 require 'wsdl'
 
-# Parse a WSDL document
+# Parse a WSDL and create a client
+definition = WSDL.parse('http://example.com/service?wsdl')
+client = WSDL::Client.new(definition)
+
+# The definition is serializable — cache it to skip re-parsing
+File.write('cache.json', definition.to_json)
+definition = WSDL.load(JSON.parse(File.read('cache.json')))
+
+# Or use the shorthand (parses on initialization)
 client = WSDL::Client.new('http://example.com/service?wsdl')
 
 # Discover available services, ports, and operations

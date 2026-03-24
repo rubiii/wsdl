@@ -1,9 +1,7 @@
 # frozen_string_literal: true
 
 RSpec.describe WSDL::Definition do
-  subject(:definition) { WSDL::Definition::Builder.new(parser_result).build }
-
-  let(:parser_result) { WSDL::Parser::Result.parse(fixture('wsdl/authentication'), http_mock) }
+  subject(:definition) { WSDL::Parser.parse(fixture('wsdl/authentication'), http_mock) }
 
   describe '#services' do
     it 'returns all services with port names' do
@@ -56,7 +54,7 @@ RSpec.describe WSDL::Definition do
     end
 
     context 'with multi-operation WSDL' do
-      let(:parser_result) { WSDL::Parser::Result.parse(fixture('wsdl/interhome'), http_mock) }
+      subject(:definition) { WSDL::Parser.parse(fixture('wsdl/interhome'), http_mock) }
 
       it 'returns all operations across ports' do
         ops = definition.operations
@@ -214,14 +212,16 @@ RSpec.describe WSDL::Definition do
   end
 
   describe '#endpoint' do
-    it 'returns the endpoint URL' do
-      expect(definition.endpoint).to eq('http://example.com/validation/1.0/AuthenticationService')
+    it 'returns the endpoint URL for a service and port' do
+      expect(definition.endpoint('AuthenticationWebServiceImplService',
+                                 'AuthenticationWebServiceImplPort'))
+        .to eq('http://example.com/validation/1.0/AuthenticationService')
     end
   end
 
   describe 'auto-resolution' do
     context 'with multiple services' do
-      let(:parser_result) { WSDL::Parser::Result.parse(fixture('wsdl/interhome'), http_mock) }
+      subject(:definition) { WSDL::Parser.parse(fixture('wsdl/interhome'), http_mock) }
 
       it 'raises when auto-resolving with multiple ports' do
         expect {
@@ -386,8 +386,8 @@ RSpec.describe WSDL::Definition do
 
   def simple_element(name, xsd_type: 'xsd:string')
     {
-      name: name, namespace: nil, form: 'qualified', type: 'simple',
-      xsd_type: xsd_type, min_occurs: 1, max_occurs: 1, nillable: false,
+      name:, namespace: nil, form: 'qualified', type: 'simple',
+      xsd_type:, min_occurs: 1, max_occurs: 1, nillable: false,
       singular: true, list: false, any_content: false, recursive_type: nil,
       complex_type_id: nil, children: [], attributes: []
     }

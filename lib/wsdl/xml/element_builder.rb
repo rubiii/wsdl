@@ -37,10 +37,13 @@ module WSDL
       # @param limits [Limits, nil] resource limits for DoS protection.
       #   If nil, uses {WSDL.limits}.
       # @param strictness [Strictness] the strictness configuration
-      def initialize(schemas, limits: nil, strictness: WSDL.strictness)
+      # @param issues [Array, nil] optional issues collector for recording build problems
+      def initialize(schemas, limits: nil, strictness: WSDL.strictness, issues: nil)
         @schemas = schemas
         @limits = limits || WSDL.limits
         @strictness = strictness
+        @issues = issues
+        @depth_exceeded = false
       end
 
       # Builds Element trees from WSDL message parts.
@@ -100,18 +103,13 @@ module WSDL
 
       def resolve_part_schema_element(part)
         resolved = QName.parse(part[:element], namespaces: part[:namespaces])
+        schema_element = @schemas.find_element(resolved.namespace, resolved.local)
 
-        schema_element = if @strictness.schema_references
-          @schemas.fetch_element(
-            resolved.namespace,
-            resolved.local,
-            context: "message part element reference #{part[:element].inspect}"
-          )
-        else
-          @schemas.find_element(resolved.namespace, resolved.local)
+        unless schema_element
+          record_issue(:build_error, "Unable to find element #{part[:element].inspect} " \
+                                     "in schema namespace #{resolved.namespace.inspect}")
+          return nil
         end
-
-        return nil unless schema_element
 
         [schema_element, resolved.namespace]
       end
@@ -207,7 +205,14 @@ module WSDL
       # @param type [Schema::Node] the complex type to extract attributes from
       # @return [Array<Attribute>] the built attribute objects
       def element_attributes(type)
-        type.attributes([], limits: @limits, strict: @strictness.schema_references).filter_map { |schema_attr|
+        schema_attrs = begin
+          type.attributes([], limits: @limits, strict: false)
+        rescue ResourceLimitError => e
+          record_issue(:resource_limit, e.message)
+          []
+        end
+
+        schema_attrs.filter_map { |schema_attr|
           attr = Attribute.new
 
           if schema_attr.ref
@@ -236,9 +241,10 @@ module WSDL
       # @param depth [Integer] the current nesting depth (default: 1)
       # @return [Hash] a hash with :elements (Array<Element>) and :has_any (Boolean)
       # @raise [ResourceLimitError] if nesting depth exceeds max_type_nesting_depth
-      # rubocop:disable Metrics/AbcSize, Metrics/MethodLength, Metrics/BlockLength, Metrics/PerceivedComplexity -- cohesive element-building logic
+      # rubocop:disable Metrics/AbcSize, Metrics/MethodLength, Metrics/BlockLength, Metrics/PerceivedComplexity, Metrics/CyclomaticComplexity -- cohesive element-building logic
       def child_elements(parent, type, depth: 1)
-        validate_nesting_depth!(depth, type)
+        return { elements: [], has_any: false } unless within_nesting_depth?(depth, type)
+
         has_any = false
         elements = []
 
@@ -279,19 +285,23 @@ module WSDL
           elements << el.freeze
         end
 
-        { elements: elements, has_any: has_any }
+        { elements:, has_any: }
       end
-      # rubocop:enable Metrics/AbcSize, Metrics/MethodLength, Metrics/BlockLength, Metrics/PerceivedComplexity
+      # rubocop:enable Metrics/AbcSize, Metrics/MethodLength, Metrics/BlockLength, Metrics/PerceivedComplexity, Metrics/CyclomaticComplexity
 
       # Resolves child elements from a schema type node.
       #
-      # Passes the strictness setting to Schema::Node so it can use
-      # find (returns nil) vs fetch (raises) for reference resolution.
+      # Always uses lenient resolution (strict: false) so Schema::Node
+      # returns nil for missing groups/types instead of raising.
+      # Catches ResourceLimitError from Schema::Node's count validation.
       #
       # @param type [Schema::Node] the complex type node
       # @return [Array<Schema::Node>] the child elements
       def resolve_schema_elements(type)
-        type.elements([], limits: @limits, strict: @strictness.schema_references)
+        type.elements([], limits: @limits, strict: false)
+      rescue ResourceLimitError => e
+        record_issue(:resource_limit, e.message)
+        []
       end
 
       # Checks if an element's type creates a recursive definition.
@@ -346,51 +356,46 @@ module WSDL
       # @param namespaces [Hash] namespace declarations in scope
       # @return [Schema::Node, String] the resolved type
       def find_type(qname, namespaces)
-        resolved = QName.parse(qname, namespaces: namespaces)
+        resolved = QName.parse(qname, namespaces:)
 
         return qname unless resolved.namespace
 
         if resolved.namespace == NS::XSD
-          validate_xsd_builtin_type!(resolved.local, qname) if @strictness.schema_references
+          validate_xsd_builtin_type(resolved.local, qname)
           return qname
         end
 
-        if @strictness.schema_references
-          @schemas.fetch_type(resolved.namespace, resolved.local, context: "type reference #{qname.inspect}")
-        else
-          @schemas.find_type(resolved.namespace, resolved.local) || qname
+        type = @schemas.find_type(resolved.namespace, resolved.local)
+        unless type
+          record_issue(:build_error, "Unable to find type #{qname.inspect} " \
+                                     "in schema namespace #{resolved.namespace.inspect}")
+          return qname
         end
+
+        type
       end
 
-      def validate_xsd_builtin_type!(local_name, qname)
+      def validate_xsd_builtin_type(local_name, qname)
         return if XSD_BUILTIN_TYPES.include?(local_name)
 
-        raise UnresolvedReferenceError.new(
-          "Unknown XSD built-in type #{qname.inspect}. " \
-          'To allow unresolved type references, use: ' \
-          'strictness: { schema_references: false }',
-          reference_type: :type,
-          reference_name: qname,
-          namespace: NS::XSD,
-          context: 'XSD built-in type validation'
-        )
+        record_issue(:build_error, "Unknown XSD built-in type #{qname.inspect}")
       end
 
       # Finds a global element by its qualified name.
       #
       # @param qname [String] the qualified element name (prefix:localName)
       # @param namespaces [Hash] namespace declarations in scope
-      # @param context [String, nil] additional context for lookup failures
       # @return [Schema::Node] the resolved element
-      def find_element(qname, namespaces, context: nil)
-        resolved = QName.parse(qname, namespaces: namespaces)
+      def find_element(qname, namespaces)
+        resolved = QName.parse(qname, namespaces:)
+        element = @schemas.find_element(resolved.namespace, resolved.local)
 
-        if @strictness.schema_references
-          @schemas.fetch_element(resolved.namespace, resolved.local,
-                                 context: context || "element reference #{qname.inspect}")
-        else
-          @schemas.find_element(resolved.namespace, resolved.local)
+        unless element
+          record_issue(:build_error, "Unable to find element #{qname.inspect} " \
+                                     "in schema namespace #{resolved.namespace.inspect}")
         end
+
+        element
       end
 
       # Finds a global attribute by its qualified name.
@@ -403,27 +408,39 @@ module WSDL
       # @param namespaces [Hash] namespace declarations in scope
       # @return [Schema::Node, nil] the resolved attribute, or nil if not found
       def find_attribute(qname, namespaces)
-        resolved = QName.parse(qname, namespaces: namespaces)
+        resolved = QName.parse(qname, namespaces:)
         @schemas.find_attribute(resolved.namespace, resolved.local)
       end
 
-      # Validates nesting depth against limits.
+      # Checks nesting depth against limits.
+      #
+      # When exceeded, sets +@depth_exceeded+ to stop ALL further recursion
+      # for this builder instance — not just the current subtree. Without
+      # this, deeply nested types cause exponential blowup as each sibling
+      # branch independently recurses to the depth limit.
       #
       # @param depth [Integer] the current nesting depth
       # @param type [Schema::Node] the type being processed (for error messages)
-      # @raise [ResourceLimitError] if depth exceeds max_type_nesting_depth
-      def validate_nesting_depth!(depth, type)
-        return unless @limits.max_type_nesting_depth
-        return if depth <= @limits.max_type_nesting_depth
+      # @return [Boolean] true if within limits, false if exceeded
+      def within_nesting_depth?(depth, type)
+        return false if @depth_exceeded
+        return true unless @limits.max_type_nesting_depth
+        return true if depth <= @limits.max_type_nesting_depth
 
-        raise ResourceLimitError.new(
-          "Type nesting depth #{depth} exceeds limit of #{@limits.max_type_nesting_depth} " \
-          "while processing type #{type.name.inspect}." \
-          "\nTo increase, use: limits: { max_type_nesting_depth: #{depth} }",
-          limit_name: :max_type_nesting_depth,
-          limit_value: @limits.max_type_nesting_depth,
-          actual_value: depth
-        )
+        @depth_exceeded = true
+        record_issue(:resource_limit,
+                     "Type nesting depth #{depth} exceeds limit of #{@limits.max_type_nesting_depth} " \
+                     "while processing type #{type.name.inspect}")
+        false
+      end
+
+      # Records a build issue if an issues collector is available.
+      #
+      # @param type [Symbol] the issue type (:build_error or :resource_limit)
+      # @param error [String] description of the problem
+      # @return [void]
+      def record_issue(type, error)
+        @issues&.push(type:, error:)
       end
     end
   end

@@ -92,9 +92,9 @@ module WSDL
       def to_a
         @entries.flat_map do |name, ops|
           if ops.one?
-            [{ name: name }]
+            [{ name: }]
           else
-            ops.map { |op| { name: name, input_name: op.input_name } }
+            ops.map { |op| { name:, input_name: op.input_name } }
           end
         end
       end

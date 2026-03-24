@@ -30,14 +30,6 @@ module WSDL
     # @return [Class] the HTTP adapter class (defaults to {HTTPAdapter})
     attr_reader :http_adapter
 
-    # The parser cache instance, or +nil+ if caching is disabled.
-    #
-    # This is a global setting. Set it once at boot time, before creating
-    # any clients or spawning threads.
-    #
-    # @return [Cache, nil]
-    attr_accessor :cache
-
     # @return [Limits] the default limits instance
     attr_reader :limits
 
@@ -117,13 +109,12 @@ module WSDL
 
     # Parses a WSDL and returns a frozen {Definition}.
     #
-    # Accepts a URL, file path, or inline XML string. Uses the existing
-    # parsing pipeline internally and converts the result to a {Definition}
-    # that can be cached, serialized, and passed to {Client.new}.
+    # Accepts a URL or file path. Uses the parsing pipeline internally
+    # and returns a {Definition} that can be serialized and passed to
+    # {Client.new}.
     #
-    # @param source [String] WSDL URL, file path, or inline XML
+    # @param source [String] WSDL URL or file path
     # @param http [Object, nil] HTTP adapter for fetching (defaults to {.http_adapter})
-    # @param cache [Cache, nil, false] cache instance (defaults to {.cache})
     # @param strictness [Strictness, Hash, Boolean, nil] strictness settings
     # @param sandbox_paths [Array<String>, nil] allowed directories for file access
     # @param limits [Limits, Hash, nil] resource limits
@@ -138,25 +129,18 @@ module WSDL
     # @example With options
     #   definition = WSDL.parse(url, strictness: false, limits: { max_schemas: 200 })
     #
-    def parse(source, http: nil, cache: nil, strictness: nil, sandbox_paths: nil, limits: nil) # rubocop:disable Metrics/ParameterLists
+    def parse(source, http: nil, strictness: nil, sandbox_paths: nil, limits: nil)
       http ||= http_adapter.new
       config = Config.new(strictness:, sandbox_paths:, limits:)
 
       source_obj = Source.validate_wsdl!(source)
       resolved_sandbox = source_obj.resolve_sandbox_paths(config.sandbox_paths)
 
-      parser_result = Parser::CachedResult.load(
-        wsdl: source,
-        http:,
-        cache:,
-        parse_options: ParseOptions.new(
-          sandbox_paths: resolved_sandbox,
-          limits: config.limits,
-          strictness: config.strictness
-        )
-      )
-
-      Definition::Builder.new(parser_result).build
+      Parser.parse(source, http, ParseOptions.new(
+                                   sandbox_paths: resolved_sandbox,
+                                   limits: config.limits,
+                                   strictness: config.strictness
+                                 ))
     end
 
     # Restores a {Definition} from a serialized Hash.
@@ -188,7 +172,6 @@ module WSDL
   require 'wsdl/strictness'
   require 'wsdl/parse_options'
   require 'wsdl/source'
-  require 'wsdl/cache'
   require 'wsdl/config'
   require 'wsdl/http_response'
   require 'wsdl/http_adapter'
@@ -226,9 +209,7 @@ module WSDL
   require 'wsdl/client'
 
   # Initialize defaults. These must be set before spawning threads.
-  # Reconfigure via the corresponding writer (e.g. WSDL.cache = nil).
   @http_adapter = HTTPAdapter
-  @cache        = Cache.new(max_entries: 50)
   @limits       = Limits.new
   @strictness   = Strictness.new
   @logger       = Log::NullLogger.new

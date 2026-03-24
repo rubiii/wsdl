@@ -33,13 +33,13 @@ module SchemaElementHelper
                      nillable: false, namespace: nil, form: 'qualified', list: false)
     element = instance_double(
       WSDL::XML::Element,
-      name: name,
+      name:,
       singular?: singular,
       nillable?: nillable,
-      children: children,
-      attributes: attributes,
-      namespace: namespace,
-      form: form
+      children:,
+      attributes:,
+      namespace:,
+      form:
     )
 
     allow(element).to receive(:list?).and_return(list)
@@ -66,9 +66,9 @@ module SchemaElementHelper
   def schema_attribute(name, type: 'xsd:string', use: 'required', list: false)
     instance_double(
       WSDL::XML::Attribute,
-      name: name,
+      name:,
       base_type: type,
-      use: use,
+      use:,
       optional?: use == 'optional',
       list?: list
     )

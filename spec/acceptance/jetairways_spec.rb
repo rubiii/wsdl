@@ -36,7 +36,7 @@ RSpec.describe 'Jetairways\'s SessionCreate Service' do
     namespace = 'http://www.vedaleon.com/webservices'
 
     expect(operation.contract.request.body.paths).to eq([
-      { path: ['Logon'], kind: :complex, namespace: namespace, form: 'qualified',
+      { path: ['Logon'], kind: :complex, namespace:, form: 'qualified',
         singular: true, min_occurs: '1', max_occurs: '1', wildcard: false
 }
     ])

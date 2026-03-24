@@ -22,7 +22,6 @@ WSDL::Error
 ├── WSDL::SchemaImportError
 │   └── WSDL::SchemaImportParseError
 ├── WSDL::UnsupportedStyleError
-├── WSDL::InvalidHTTPAdapterError
 ├── WSDL::UnresolvedReferenceError
 ├── WSDL::DuplicateDefinitionError
 ├── WSDL::OperationOverloadError
@@ -96,7 +95,6 @@ All inherit from `WSDL::SecurityError < WSDL::FatalError`. Rescue `WSDL::Securit
 
 | Error | When |
 |-------|------|
-| `InvalidHTTPAdapterError` | Custom HTTP adapter missing required methods |
 | `SealedCollectionError` | Internal: mutating a sealed parser collection |
 
 ## Rescue Patterns

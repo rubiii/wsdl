@@ -13,9 +13,15 @@ RSpec.describe 'WSDL 1.1 conformance' do
   describe 'Document Structure' do
     # https://www.w3.org/TR/wsdl#_messages
     it 'W11-NAME-1: duplicate message names across imports raise DuplicateDefinitionError' do
-      result = WSDL::Parser::Result.parse fixture('parser/duplicate_definitions/root'), http_mock
+      wsdl = fixture('parser/duplicate_definitions/root')
+      documents = WSDL::Parser::DocumentCollection.new
+      schemas = WSDL::Schema::Collection.new
+      source = WSDL::Source.validate_wsdl!(wsdl)
+      resolver = WSDL::Parser::Resolver.new(http_mock, sandbox_paths: [File.dirname(File.expand_path(wsdl))])
+      importer = WSDL::Parser::Importer.new(resolver, documents, schemas, WSDL::ParseOptions.default)
+      importer.import(source.value)
 
-      expect { result.documents.messages }
+      expect { documents.messages }
         .to raise_error(WSDL::DuplicateDefinitionError) { |error|
           expect(error.component_type).to eq(:message)
         }
@@ -23,33 +29,34 @@ RSpec.describe 'WSDL 1.1 conformance' do
 
     # https://www.w3.org/TR/wsdl#_porttypes
     it 'W11-NAME-2: port type names resolve uniquely within a document' do
-      result = WSDL::Parser::Result.parse fixture('wsdl/temperature'), http_mock
-      operations = result.operations('ConvertTemperature', 'ConvertTemperatureSoap')
+      definition = WSDL::Parser.parse fixture('wsdl/temperature'), http_mock
+      operations = definition.operations('ConvertTemperature', 'ConvertTemperatureSoap').map { |o| o[:name] }
       expect(operations).to include('ConvertTemp')
     end
 
     # https://www.w3.org/TR/wsdl#_bindings
     it 'W11-NAME-3: each binding maps to a distinct port' do
-      result = WSDL::Parser::Result.parse fixture('wsdl/temperature'), http_mock
-      ports = result.services['ConvertTemperature'][:ports]
+      definition = WSDL::Parser.parse fixture('wsdl/temperature'), http_mock
+      ports = definition.ports('ConvertTemperature')
 
       expect(ports.size).to eq(2)
-      expect(ports.keys).to contain_exactly('ConvertTemperatureSoap', 'ConvertTemperatureSoap12')
-      expect(ports.values.map { |p| p[:type] }.uniq.size).to eq(2)
+      expect(ports.map { |p| p[:name] }).to contain_exactly('ConvertTemperatureSoap', 'ConvertTemperatureSoap12')
     end
 
     # https://www.w3.org/TR/wsdl#_ports
     it 'W11-NAME-4: port names are unique within a service' do
-      result = WSDL::Parser::Result.parse fixture('wsdl/temperature'), http_mock
-      ports = result.services['ConvertTemperature'][:ports]
-      expect(ports.keys.uniq.size).to eq(ports.keys.size)
+      definition = WSDL::Parser.parse fixture('wsdl/temperature'), http_mock
+      ports = definition.ports('ConvertTemperature')
+      port_names = ports.map { |p| p[:name] }
+      expect(port_names.uniq.size).to eq(port_names.size)
     end
 
     # https://www.w3.org/TR/wsdl#_services
     it 'W11-NAME-5: service names are unique within a document' do
-      result = WSDL::Parser::Result.parse fixture('wsdl/temperature'), http_mock
-      services = result.services
-      expect(services.keys.uniq.size).to eq(services.keys.size)
+      definition = WSDL::Parser.parse fixture('wsdl/temperature'), http_mock
+      services = definition.services
+      service_names = services.map { |s| s[:name] }
+      expect(service_names.uniq.size).to eq(service_names.size)
     end
   end
 
@@ -60,42 +67,42 @@ RSpec.describe 'WSDL 1.1 conformance' do
   describe 'SOAP Binding' do
     # https://www.w3.org/TR/wsdl#_soap:binding
     it 'W11-SOAP-1: soap:binding must be present for SOAP operations' do
-      result = WSDL::Parser::Result.parse fixture('wsdl/temperature'), http_mock
-      operation_info = result.operation('ConvertTemperature', 'ConvertTemperatureSoap', 'ConvertTemp')
-      expect(operation_info.input_style).to eq('document/literal')
+      definition = WSDL::Parser.parse fixture('wsdl/temperature'), http_mock
+      op_data = definition.operation_data('ConvertTemperature', 'ConvertTemperatureSoap', 'ConvertTemp')
+      expect(op_data[:input_style]).to eq('document/literal')
     end
 
     # https://www.w3.org/TR/wsdl#_soap:binding
     it 'W11-SOAP-2: style defaults to document when soap:binding omits style attribute' do
-      result = WSDL::Parser::Result.parse fixture('wsdl/economic'), http_mock
-      operation_info = result.operation('EconomicWebService', 'EconomicWebServiceSoap', 'Connect')
-      expect(operation_info.input_style).to eq('document/literal')
+      definition = WSDL::Parser.parse fixture('wsdl/economic'), http_mock
+      op_data = definition.operation_data('EconomicWebService', 'EconomicWebServiceSoap', 'Connect')
+      expect(op_data[:input_style]).to eq('document/literal')
     end
 
     # https://www.w3.org/TR/wsdl#_soap:operation
     it 'W11-SOAP-3: operation style inherits from binding-level style' do
-      result = WSDL::Parser::Result.parse fixture('wsdl/rpc_literal'), http_mock
+      definition = WSDL::Parser.parse fixture('wsdl/rpc_literal'), http_mock
 
-      op1 = result.operation('SampleService', 'Sample', 'op1')
-      op2 = result.operation('SampleService', 'Sample', 'op2')
+      op1 = definition.operation_data('SampleService', 'Sample', 'op1')
+      op2 = definition.operation_data('SampleService', 'Sample', 'op2')
 
-      expect(op1.input_style).to eq('rpc/literal')
-      expect(op2.input_style).to eq('rpc/literal')
+      expect(op1[:input_style]).to eq('rpc/literal')
+      expect(op2[:input_style]).to eq('rpc/literal')
     end
 
     # https://www.w3.org/TR/wsdl#_soap:operation
     it 'W11-SOAP-4: SOAPAction is extracted from soap:operation' do
-      result = WSDL::Parser::Result.parse fixture('wsdl/temperature'), http_mock
-      operation_info = result.operation('ConvertTemperature', 'ConvertTemperatureSoap', 'ConvertTemp')
-      expect(operation_info.soap_action).to eq('http://www.webserviceX.NET/ConvertTemp')
+      definition = WSDL::Parser.parse fixture('wsdl/temperature'), http_mock
+      op_data = definition.operation_data('ConvertTemperature', 'ConvertTemperatureSoap', 'ConvertTemp')
+      expect(op_data[:soap_action]).to eq('http://www.webserviceX.NET/ConvertTemp')
     end
 
     # https://www.w3.org/TR/wsdl#_soap:body
     it 'W11-SOAP-5: all message parts included when parts attribute is omitted' do
-      result = WSDL::Parser::Result.parse fixture('wsdl/temperature'), http_mock
-      operation_info = result.operation('ConvertTemperature', 'ConvertTemperatureSoap', 'ConvertTemp')
+      definition = WSDL::Parser.parse fixture('wsdl/temperature'), http_mock
+      op_data = definition.operation_data('ConvertTemperature', 'ConvertTemperatureSoap', 'ConvertTemp')
 
-      body_parts = operation_info.input.body_parts
+      body_parts = op_data[:input][:body].map { |h| WSDL::Definition::ElementHash.new(h) }
       expect(body_parts).not_to be_empty
       expect(body_parts.first.name).to eq('ConvertTemp')
     end
@@ -110,9 +117,10 @@ RSpec.describe 'WSDL 1.1 conformance' do
 
     # https://www.w3.org/TR/wsdl#_soap:body
     it 'W11-SOAP-7: RPC wraps parts in an operation-named element with namespace' do
-      result = WSDL::Parser::Result.parse fixture('wsdl/rpc_literal'), http_mock
-      operation_info = result.operation('SampleService', 'Sample', 'op1')
-      operation = WSDL::Operation.new(operation_info, result, http_mock)
+      definition = WSDL::Parser.parse fixture('wsdl/rpc_literal'), http_mock
+      op_data = definition.operation_data('SampleService', 'Sample', 'op1')
+      endpoint = definition.endpoint('SampleService', 'Sample')
+      operation = WSDL::Operation.new(op_data, endpoint, http_mock)
 
       operation.prepare do
         body do
@@ -133,9 +141,10 @@ RSpec.describe 'WSDL 1.1 conformance' do
 
     # https://www.w3.org/TR/wsdl#_soap:body
     it 'W11-SOAP-8: document parts appear directly under Body without wrapper' do
-      result = WSDL::Parser::Result.parse fixture('wsdl/temperature'), http_mock
-      operation_info = result.operation('ConvertTemperature', 'ConvertTemperatureSoap', 'ConvertTemp')
-      operation = WSDL::Operation.new(operation_info, result, http_mock)
+      definition = WSDL::Parser.parse fixture('wsdl/temperature'), http_mock
+      op_data = definition.operation_data('ConvertTemperature', 'ConvertTemperatureSoap', 'ConvertTemp')
+      endpoint = definition.endpoint('ConvertTemperature', 'ConvertTemperatureSoap')
+      operation = WSDL::Operation.new(op_data, endpoint, http_mock)
 
       operation.prepare do
         body do
@@ -156,41 +165,37 @@ RSpec.describe 'WSDL 1.1 conformance' do
 
     # https://www.w3.org/TR/wsdl#_soap:header
     it 'W11-SOAP-9: header parts are resolved from soap:header' do
-      result = WSDL::Parser::Result.parse fixture('wsdl/yahoo'), http_mock
-      operation_info = result.operation(
+      definition = WSDL::Parser.parse fixture('wsdl/yahoo'), http_mock
+      op_data = definition.operation_data(
         'AccountServiceService', 'AccountService', 'updateStatusForManagedPublisher'
       )
 
-      header_parts = operation_info.input.header_parts
+      header_parts = op_data[:input][:header].map { |h| WSDL::Definition::ElementHash.new(h) }
       expect(header_parts).not_to be_empty
       expect(header_parts.map(&:name)).to include('Security')
     end
 
     # https://www.w3.org/TR/wsdl#_soap:address
     it 'W11-SOAP-10: endpoint address is extracted from soap:address' do
-      result = WSDL::Parser::Result.parse fixture('wsdl/temperature'), http_mock
-      operation_info = result.operation('ConvertTemperature', 'ConvertTemperatureSoap', 'ConvertTemp')
-      expect(operation_info.endpoint).to eq('http://www.webservicex.net/ConvertTemperature.asmx')
+      definition = WSDL::Parser.parse fixture('wsdl/temperature'), http_mock
+      endpoint = definition.endpoint('ConvertTemperature', 'ConvertTemperatureSoap')
+      expect(endpoint).to eq('http://www.webservicex.net/ConvertTemperature.asmx')
     end
 
     # https://www.w3.org/TR/wsdl#_bindings
-    it 'W11-BIND-1: missing binding reference raises UnresolvedReferenceError' do
-      result = WSDL::Parser::Result.parse fixture('parser/unresolved_references/binding'), http_mock
+    it 'W11-BIND-1: missing binding reference records build issue' do
+      definition = WSDL::Parser.parse fixture('parser/unresolved_references/binding'), http_mock
 
-      expect { result.operations('BadService', 'BadPort') }
-        .to raise_error(WSDL::UnresolvedReferenceError) { |error|
-          expect(error.reference_type).to eq(:binding)
-        }
+      expect(definition.build_issues).not_to be_empty
+      expect(definition.build_issues.any? { |issue| issue[:error].match?(/binding/i) }).to be true
     end
 
     # https://www.w3.org/TR/wsdl#_ports
-    it 'W11-PORT-1: missing portType reference raises UnresolvedReferenceError' do
-      result = WSDL::Parser::Result.parse fixture('parser/unresolved_references/port_type'), http_mock
+    it 'W11-PORT-1: missing portType reference records build issue' do
+      definition = WSDL::Parser.parse fixture('parser/unresolved_references/port_type'), http_mock
 
-      expect { result.operation('BadService', 'BadPort', 'Ping') }
-        .to raise_error(WSDL::UnresolvedReferenceError) { |error|
-          expect(error.reference_type).to eq(:port_type)
-        }
+      expect(definition.build_issues).not_to be_empty
+      expect(definition.build_issues.any? { |issue| issue[:error].match?(/port.?type/i) }).to be true
     end
   end
 
@@ -201,20 +206,23 @@ RSpec.describe 'WSDL 1.1 conformance' do
   describe 'Operation Types' do
     # https://www.w3.org/TR/wsdl#_request-response
     it 'W11-OP-1: request-response operations have both input and output' do
-      result = WSDL::Parser::Result.parse fixture('wsdl/temperature'), http_mock
-      operation_info = result.operation('ConvertTemperature', 'ConvertTemperatureSoap', 'ConvertTemp')
+      definition = WSDL::Parser.parse fixture('wsdl/temperature'), http_mock
+      op_data = definition.operation_data('ConvertTemperature', 'ConvertTemperatureSoap', 'ConvertTemp')
 
-      expect(operation_info.input).not_to be_nil
-      expect(operation_info.input.body_parts).not_to be_empty
-      expect(operation_info.output).not_to be_nil
-      expect(operation_info.output.body_parts).not_to be_empty
+      input_body = op_data[:input][:body].map { |h| WSDL::Definition::ElementHash.new(h) }
+      expect(op_data[:input]).not_to be_nil
+      expect(input_body).not_to be_empty
+
+      output_body = op_data[:output][:body].map { |h| WSDL::Definition::ElementHash.new(h) }
+      expect(op_data[:output]).not_to be_nil
+      expect(output_body).not_to be_empty
     end
 
     # https://www.w3.org/TR/wsdl#_messages
     it 'W11-TYPE-1: message parts with element= attribute resolve to named schema elements' do
-      result = WSDL::Parser::Result.parse fixture('wsdl/temperature'), http_mock
-      operation_info = result.operation('ConvertTemperature', 'ConvertTemperatureSoap', 'ConvertTemp')
-      body_parts = operation_info.input.body_parts
+      definition = WSDL::Parser.parse fixture('wsdl/temperature'), http_mock
+      op_data = definition.operation_data('ConvertTemperature', 'ConvertTemperatureSoap', 'ConvertTemp')
+      body_parts = op_data[:input][:body].map { |h| WSDL::Definition::ElementHash.new(h) }
 
       expect(body_parts.first.name).to eq('ConvertTemp')
       expect(body_parts.first).to respond_to(:children)
@@ -222,9 +230,9 @@ RSpec.describe 'WSDL 1.1 conformance' do
 
     # https://www.w3.org/TR/wsdl#_messages
     it 'W11-TYPE-2: message parts with type= attribute are resolved' do
-      result = WSDL::Parser::Result.parse fixture('wsdl/rpc_literal'), http_mock
-      operation_info = result.operation('SampleService', 'Sample', 'op1')
-      body_parts = operation_info.input.body_parts
+      definition = WSDL::Parser.parse fixture('wsdl/rpc_literal'), http_mock
+      op_data = definition.operation_data('SampleService', 'Sample', 'op1')
+      body_parts = op_data[:input][:body].map { |h| WSDL::Definition::ElementHash.new(h) }
 
       expect(body_parts).not_to be_empty
       expect(body_parts.first.name).to eq('in')
@@ -232,9 +240,9 @@ RSpec.describe 'WSDL 1.1 conformance' do
 
     # https://www.w3.org/TR/wsdl#_document-n
     it 'W11-IMP-1: cross-namespace schema imports are resolved' do
-      result = WSDL::Parser::Result.parse fixture('wsdl/rpc_literal'), http_mock
-      operation_info = result.operation('SampleService', 'Sample', 'op3')
-      body_parts = operation_info.input.body_parts
+      definition = WSDL::Parser.parse fixture('wsdl/rpc_literal'), http_mock
+      op_data = definition.operation_data('SampleService', 'Sample', 'op3')
+      body_parts = op_data[:input][:body].map { |h| WSDL::Definition::ElementHash.new(h) }
 
       expect(body_parts.size).to be >= 2
     end
@@ -247,13 +255,13 @@ RSpec.describe 'WSDL 1.1 conformance' do
   describe 'WS-I Basic Profile' do
     # http://www.ws-i.org/Profiles/BasicProfile-1.1-2004-08-24.html#R2304
     it 'WSI-R2304: overloaded portType operations rejected in strict mode' do
-      result = WSDL::Parser::Result.parse fixture('parser/operation_overloading'), http_mock,
-                                          strictness: WSDL::Strictness.on
+      client = WSDL::Client.new fixture('parser/operation_overloading'),
+                                http: http_mock,
+                                strictness: WSDL::Strictness.on
 
-      expect { result.operation('LookupService', 'LookupPort', 'Lookup') }
+      expect { client.operation('LookupService', 'LookupPort', 'Lookup') }
         .to raise_error(WSDL::OperationOverloadError) { |error|
           expect(error.operation_name).to eq('Lookup')
-          expect(error.port_type_name).to eq('LookupPortType')
           expect(error.overload_count).to eq(2)
         }
     end

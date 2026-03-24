@@ -83,7 +83,7 @@ RSpec.describe 'Oracle' do
     expect(operation.contract.request.body.paths).to eq([
       { path: ['joinGroups'],
         kind: :complex,
-        namespace: namespace,
+        namespace:,
         form: 'qualified',
         singular: true,
         min_occurs: '1',
@@ -92,7 +92,7 @@ RSpec.describe 'Oracle' do
 },
       { path: %w[joinGroups group],
         kind: :complex,
-        namespace: namespace,
+        namespace:,
         form: 'qualified',
         singular: false,
         min_occurs: '1',
@@ -101,7 +101,7 @@ RSpec.describe 'Oracle' do
 },
       { path: %w[joinGroups group name],
         kind: :simple,
-        namespace: namespace,
+        namespace:,
         form: 'qualified',
         singular: true,
         min_occurs: '0',
@@ -111,7 +111,7 @@ RSpec.describe 'Oracle' do
 },
       { path: %w[joinGroups group accountType],
         kind: :simple,
-        namespace: namespace,
+        namespace:,
         form: 'qualified',
         singular: true,
         min_occurs: '1',
@@ -121,7 +121,7 @@ RSpec.describe 'Oracle' do
 },
       { path: %w[joinGroups group guid],
         kind: :simple,
-        namespace: namespace,
+        namespace:,
         form: 'qualified',
         singular: true,
         min_occurs: '0',
@@ -131,7 +131,7 @@ RSpec.describe 'Oracle' do
 },
       { path: %w[joinGroups group displayName],
         kind: :simple,
-        namespace: namespace,
+        namespace:,
         form: 'qualified',
         singular: true,
         min_occurs: '0',
@@ -141,7 +141,7 @@ RSpec.describe 'Oracle' do
 },
       { path: %w[joinGroups member],
         kind: :complex,
-        namespace: namespace,
+        namespace:,
         form: 'qualified',
         singular: false,
         min_occurs: '1',
@@ -150,7 +150,7 @@ RSpec.describe 'Oracle' do
 },
       { path: %w[joinGroups member name],
         kind: :simple,
-        namespace: namespace,
+        namespace:,
         form: 'qualified',
         singular: true,
         min_occurs: '0',
@@ -160,7 +160,7 @@ RSpec.describe 'Oracle' do
 },
       { path: %w[joinGroups member accountType],
         kind: :simple,
-        namespace: namespace,
+        namespace:,
         form: 'qualified',
         singular: true,
         min_occurs: '1',
@@ -170,7 +170,7 @@ RSpec.describe 'Oracle' do
 },
       { path: %w[joinGroups member guid],
         kind: :simple,
-        namespace: namespace,
+        namespace:,
         form: 'qualified',
         singular: true,
         min_occurs: '0',
@@ -180,7 +180,7 @@ RSpec.describe 'Oracle' do
 },
       { path: %w[joinGroups member displayName],
         kind: :simple,
-        namespace: namespace,
+        namespace:,
         form: 'qualified',
         singular: true,
         min_occurs: '0',
@@ -190,7 +190,7 @@ RSpec.describe 'Oracle' do
 },
       { path: %w[joinGroups sessionID],
         kind: :simple,
-        namespace: namespace,
+        namespace:,
         form: 'qualified',
         singular: true,
         min_occurs: '1',
@@ -203,7 +203,7 @@ RSpec.describe 'Oracle' do
 
   describe 'xsd:any support' do
     let(:namespace) { 'urn://oracle.bi.webservices/v7' }
-    let(:schemas) { WSDL::Parser::Result.parse(fixture('wsdl/oracle'), WSDL.http_adapter.new).schemas }
+    let(:schemas) { parse_schemas(fixture('wsdl/oracle')) }
 
     it 'marks the JobInfo/detailedInfo element as allowing arbitrary content' do
       # The JobInfo type has a detailedInfo child with xs:any
@@ -306,5 +306,16 @@ RSpec.describe 'Oracle' do
       expect(result).to include('<Author>John Doe</Author>')
       expect(result).to include('<Department>Finance</Department>')
     end
+  end
+
+  def parse_schemas(wsdl_path)
+    documents = WSDL::Parser::DocumentCollection.new
+    schemas = WSDL::Schema::Collection.new
+    source = WSDL::Source.validate_wsdl!(wsdl_path)
+    sandbox = [File.dirname(File.expand_path(wsdl_path))]
+    resolver = WSDL::Parser::Resolver.new(WSDL.http_adapter.new, sandbox_paths: sandbox)
+    importer = WSDL::Parser::Importer.new(resolver, documents, schemas, WSDL::ParseOptions.default)
+    importer.import(source.value)
+    schemas
   end
 end

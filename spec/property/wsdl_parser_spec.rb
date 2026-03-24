@@ -19,7 +19,7 @@ RSpec.describe 'WSDL parser resilience' do
     file = Tempfile.new(['fuzz', '.wsdl'])
     file.write(content)
     file.close
-    client = WSDL::Client.new(file.path, cache: false)
+    client = WSDL::Client.new(file.path)
     client.services
     :parsed
   rescue WSDL::Error

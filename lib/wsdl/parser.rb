@@ -8,8 +8,8 @@ module WSDL
   # recursive imports, relative path resolution, and builds an in-memory
   # representation of the WSDL structure.
   #
-  # The main entry point is {Result}, which is created by {WSDL::Client}
-  # when loading a WSDL document.
+  # The main entry point is {.parse}, which validates the source, runs
+  # the import pipeline, and returns a frozen {Definition}.
   #
   # @api private
   #
@@ -30,7 +30,40 @@ module WSDL
     require 'wsdl/parser/document_collection'
     require 'wsdl/parser/resolver'
     require 'wsdl/parser/importer'
-    require 'wsdl/parser/result'
-    require 'wsdl/parser/cached_result'
+
+    # Parses a WSDL document and returns a frozen {Definition}.
+    #
+    # Validates the source, resolves all imports and schemas, and builds
+    # the Definition IR in a single pass. This is the primary entry point
+    # for the parse pipeline.
+    #
+    # @param wsdl [String] a URL or local file path to the WSDL document
+    # @param http [Object] an HTTP adapter instance for fetching remote documents
+    # @param parse_options [ParseOptions, nil] parse configuration.
+    #   When omitted, {ParseOptions.default} is used.
+    # @return [Definition] the frozen definition
+    #
+    # rubocop:disable Metrics/AbcSize -- straightforward factory: validate, import, build
+    def self.parse(wsdl, http, parse_options = nil, **)
+      parse_options ||= ParseOptions.default(**)
+
+      documents = DocumentCollection.new
+      schemas = Schema::Collection.new
+
+      source = Source.validate_wsdl!(wsdl)
+      resolved_sandbox_paths = source.resolve_sandbox_paths(parse_options.sandbox_paths)
+      resolver = Resolver.new(http, sandbox_paths: resolved_sandbox_paths, limits: parse_options.limits)
+      importer = Importer.new(resolver, documents, schemas, parse_options)
+      importer.import(source.value)
+
+      Definition::Builder.new(
+        documents:, schemas:,
+        limits: parse_options.limits,
+        strictness: parse_options.strictness,
+        schema_import_errors: importer.schema_import_errors.freeze,
+        provenance: importer.provenance.freeze
+      ).build
+    end
+    # rubocop:enable Metrics/AbcSize
   end
 end

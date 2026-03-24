@@ -54,35 +54,36 @@ RSpec.describe WSDL::XML::ElementBuilder do
         collection
       end
 
-      it 'raises ResourceLimitError when nesting depth exceeds limit' do
+      it 'records resource_limit issue when nesting depth exceeds limit' do
+        issues = []
         low_limit = WSDL::Limits.new(max_type_nesting_depth: 2)
-        builder = described_class.new(nested_schemas, limits: low_limit)
+        builder = described_class.new(nested_schemas, limits: low_limit, issues:)
 
         part = {
           element: 'tns:Root',
           namespaces: { 'xmlns:tns' => 'http://example.com/nested' }
         }
 
-        expect {
-          builder.build([part])
-        }.to raise_error(WSDL::ResourceLimitError, /nesting depth.*exceeds limit/)
+        builder.build([part])
+
+        expect(issues).not_to be_empty
+        expect(issues.first[:type]).to eq(:resource_limit)
+        expect(issues.first[:error]).to match(/nesting depth.*exceeds limit/)
       end
 
-      it 'includes limit details in the error' do
+      it 'returns partial results when nesting depth is exceeded' do
+        issues = []
         low_limit = WSDL::Limits.new(max_type_nesting_depth: 2)
-        builder = described_class.new(nested_schemas, limits: low_limit)
+        builder = described_class.new(nested_schemas, limits: low_limit, issues:)
 
         part = {
           element: 'tns:Root',
           namespaces: { 'xmlns:tns' => 'http://example.com/nested' }
         }
 
-        expect {
-          builder.build([part])
-        }.to raise_error(WSDL::ResourceLimitError) { |e|
-          expect(e.limit_name).to eq(:max_type_nesting_depth)
-          expect(e.limit_value).to eq(2)
-        }
+        elements = builder.build([part])
+        expect(elements.size).to eq(1)
+        expect(elements.first.name).to eq('Root')
       end
 
       it 'allows nesting when depth is within limit' do
@@ -148,19 +149,21 @@ RSpec.describe WSDL::XML::ElementBuilder do
         collection
       end
 
-      it 'passes limits to type.elements for validation' do
-        # Set a very low element limit
+      it 'records resource_limit issue when element count exceeds limit' do
+        issues = []
         low_limit = WSDL::Limits.new(max_elements_per_type: 1)
-        builder = described_class.new(simple_schemas, limits: low_limit)
+        builder = described_class.new(simple_schemas, limits: low_limit, issues:)
 
         part = {
           element: 'tns:Simple',
           namespaces: { 'xmlns:tns' => 'http://example.com/simple' }
         }
 
-        expect {
-          builder.build([part])
-        }.to raise_error(WSDL::ResourceLimitError, /Element count.*exceeds limit/)
+        builder.build([part])
+
+        limit_issues = issues.select { |i| i[:type] == :resource_limit }
+        expect(limit_issues).not_to be_empty
+        expect(limit_issues.first[:error]).to match(/Element count.*exceeds limit/)
       end
 
       it 'allows elements when within limit' do
@@ -216,41 +219,43 @@ RSpec.describe WSDL::XML::ElementBuilder do
       expect(elements.first.name).to eq('TestElement')
     end
 
-    it 'raises typed error when referenced schema namespace is missing' do
-      builder = described_class.new(test_schemas)
+    it 'records build_error when referenced schema namespace is missing' do
+      issues = []
+      builder = described_class.new(test_schemas, issues:)
 
       part = {
         element: 'other:TestElement',
         namespaces: { 'xmlns:other' => 'http://example.com/other' }
       }
 
-      expect {
-        builder.build([part])
-      }.to raise_error(WSDL::UnresolvedReferenceError) { |error|
-        expect(error.reference_type).to eq(:schema_namespace)
-        expect(error.namespace).to eq('http://example.com/other')
-      }
+      elements = builder.build([part])
+
+      expect(elements).to be_empty
+      expect(issues).not_to be_empty
+      expect(issues.first[:type]).to eq(:build_error)
+      expect(issues.first[:error]).to match(/Unable to find element/)
     end
 
-    it 'raises typed error when referenced element is missing in schema' do
-      builder = described_class.new(test_schemas)
+    it 'records build_error when referenced element is missing in schema' do
+      issues = []
+      builder = described_class.new(test_schemas, issues:)
 
       part = {
         element: 'tns:MissingElement',
         namespaces: { 'xmlns:tns' => 'http://example.com/test' }
       }
 
-      expect {
-        builder.build([part])
-      }.to raise_error(WSDL::UnresolvedReferenceError) { |error|
-        expect(error.reference_type).to eq(:element)
-        expect(error.reference_name).to eq('MissingElement')
-        expect(error.namespace).to eq('http://example.com/test')
-      }
+      elements = builder.build([part])
+
+      expect(elements).to be_empty
+      expect(issues).not_to be_empty
+      expect(issues.first[:type]).to eq(:build_error)
+      expect(issues.first[:error]).to match(/Unable to find element/)
     end
 
-    it 'raises typed error when referenced custom type is missing in schema' do
-      builder = described_class.new(test_schemas)
+    it 'records build_error when referenced custom type is missing in schema' do
+      issues = []
+      builder = described_class.new(test_schemas, issues:)
 
       part = {
         name: 'payload',
@@ -258,13 +263,12 @@ RSpec.describe WSDL::XML::ElementBuilder do
         namespaces: { 'xmlns:tns' => 'http://example.com/test' }
       }
 
-      expect {
-        builder.build([part])
-      }.to raise_error(WSDL::UnresolvedReferenceError) { |error|
-        expect(error.reference_type).to eq(:type)
-        expect(error.reference_name).to eq('MissingType')
-        expect(error.namespace).to eq('http://example.com/test')
-      }
+      elements = builder.build([part])
+
+      expect(elements.size).to eq(1)
+      expect(issues).not_to be_empty
+      expect(issues.first[:type]).to eq(:build_error)
+      expect(issues.first[:error]).to match(/Unable to find type/)
     end
 
     it 'returns empty array for empty parts' do

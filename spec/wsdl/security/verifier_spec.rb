@@ -13,7 +13,7 @@ RSpec.describe WSDL::Security::Verifier, :verifier_helpers do
     end
 
     it 'accepts an optional certificate' do
-      verifier = described_class.new(unsigned_soap_response, certificate: certificate)
+      verifier = described_class.new(unsigned_soap_response, certificate:)
       expect(verifier.certificate).to eq(certificate)
     end
 
@@ -225,7 +225,7 @@ RSpec.describe WSDL::Security::Verifier, :verifier_helpers do
 
     context 'with provided certificate' do
       it 'uses the provided certificate for verification' do
-        verifier = described_class.new(signed_soap_response, certificate: certificate)
+        verifier = described_class.new(signed_soap_response, certificate:)
         expect(verifier.valid?).to be true
       end
 
@@ -387,7 +387,7 @@ RSpec.describe WSDL::Security::Verifier, :verifier_helpers do
   describe '#certificate' do
     context 'with provided certificate' do
       it 'returns the provided certificate immediately' do
-        verifier = described_class.new(unsigned_soap_response, certificate: certificate)
+        verifier = described_class.new(unsigned_soap_response, certificate:)
         expect(verifier.certificate).to eq(certificate)
       end
     end
@@ -424,7 +424,7 @@ RSpec.describe WSDL::Security::Verifier, :verifier_helpers do
 
       config = WSDL::Security::Config.new
       config.timestamp
-      config.signature(certificate: certificate, private_key: private_key)
+      config.signature(certificate:, private_key:)
 
       header = WSDL::Security::SecurityHeader.new(config)
       signed_xml = header.apply(envelope)
@@ -613,7 +613,7 @@ RSpec.describe WSDL::Security::Verifier, :verifier_helpers do
 
       config = WSDL::Security::Config.new
       config.timestamp
-      config.signature(certificate: expired_certificate, private_key: private_key)
+      config.signature(certificate: expired_certificate, private_key:)
 
       header = WSDL::Security::SecurityHeader.new(config)
       header.apply(envelope)
@@ -715,7 +715,7 @@ RSpec.describe WSDL::Security::Verifier, :verifier_helpers do
 
       config = WSDL::Security::Config.new
       config.timestamp(created_at: past_time, expires_at: past_time + 60)
-      config.signature(certificate: certificate, private_key: private_key)
+      config.signature(certificate:, private_key:)
 
       header = WSDL::Security::SecurityHeader.new(config)
       signed_xml = header.apply(envelope)

@@ -3,8 +3,8 @@
 RSpec.describe WSDL::Security::RequestContext do
   let(:signature_options) do
     WSDL::Security::Signature.new(
-      certificate: certificate,
-      private_key: private_key,
+      certificate:,
+      private_key:,
       digest_algorithm: :sha256,
       explicit_namespace_prefixes: true,
       key_reference: :issuer_serial
@@ -63,7 +63,7 @@ RSpec.describe WSDL::Security::RequestContext do
         username_token_config: nil,
         timestamp_config: nil,
         signature_config: nil,
-        signature_options: signature_options
+        signature_options:
       )
       expect(ctx.explicit_namespace_prefixes?).to be true
     end
@@ -85,7 +85,7 @@ RSpec.describe WSDL::Security::RequestContext do
         username_token_config: nil,
         timestamp_config: nil,
         signature_config: nil,
-        signature_options: signature_options
+        signature_options:
       )
       expect(ctx.key_reference).to eq(:issuer_serial)
     end

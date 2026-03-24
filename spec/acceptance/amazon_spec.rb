@@ -56,7 +56,7 @@ RSpec.describe 'Amazon' do
     expect(operation.contract.request.body.paths).to eq([
       { path: ['Pay'],
         kind: :complex,
-        namespace: namespace,
+        namespace:,
         form: 'qualified',
         singular: true,
         min_occurs: '1',
@@ -65,7 +65,7 @@ RSpec.describe 'Amazon' do
 },
       { path: %w[Pay SenderTokenId],
         kind: :simple,
-        namespace: namespace,
+        namespace:,
         form: 'qualified',
         singular: true,
         min_occurs: '0',
@@ -75,7 +75,7 @@ RSpec.describe 'Amazon' do
 },
       { path: %w[Pay RecipientTokenId],
         kind: :simple,
-        namespace: namespace,
+        namespace:,
         form: 'qualified',
         singular: true,
         min_occurs: '0',
@@ -85,7 +85,7 @@ RSpec.describe 'Amazon' do
 },
       { path: %w[Pay TransactionAmount],
         kind: :complex,
-        namespace: namespace,
+        namespace:,
         form: 'qualified',
         singular: true,
         min_occurs: '0',
@@ -94,7 +94,7 @@ RSpec.describe 'Amazon' do
 },
       { path: %w[Pay TransactionAmount CurrencyCode],
         kind: :simple,
-        namespace: namespace,
+        namespace:,
         form: 'qualified',
         singular: true,
         min_occurs: '1',
@@ -104,7 +104,7 @@ RSpec.describe 'Amazon' do
 },
       { path: %w[Pay TransactionAmount Value],
         kind: :simple,
-        namespace: namespace,
+        namespace:,
         form: 'qualified',
         singular: true,
         min_occurs: '1',
@@ -114,7 +114,7 @@ RSpec.describe 'Amazon' do
 },
       { path: %w[Pay ChargeFeeTo],
         kind: :simple,
-        namespace: namespace,
+        namespace:,
         form: 'qualified',
         singular: true,
         min_occurs: '0',
@@ -124,7 +124,7 @@ RSpec.describe 'Amazon' do
 },
       { path: %w[Pay CallerReference],
         kind: :simple,
-        namespace: namespace,
+        namespace:,
         form: 'qualified',
         singular: true,
         min_occurs: '0',
@@ -134,7 +134,7 @@ RSpec.describe 'Amazon' do
 },
       { path: %w[Pay CallerDescription],
         kind: :simple,
-        namespace: namespace,
+        namespace:,
         form: 'qualified',
         singular: true,
         min_occurs: '0',
@@ -144,7 +144,7 @@ RSpec.describe 'Amazon' do
 },
       { path: %w[Pay SenderDescription],
         kind: :simple,
-        namespace: namespace,
+        namespace:,
         form: 'qualified',
         singular: true,
         min_occurs: '0',
@@ -154,7 +154,7 @@ RSpec.describe 'Amazon' do
 },
       { path: %w[Pay DescriptorPolicy],
         kind: :complex,
-        namespace: namespace,
+        namespace:,
         form: 'qualified',
         singular: true,
         min_occurs: '0',
@@ -163,7 +163,7 @@ RSpec.describe 'Amazon' do
 },
       { path: %w[Pay DescriptorPolicy SoftDescriptorType],
         kind: :simple,
-        namespace: namespace,
+        namespace:,
         form: 'qualified',
         singular: true,
         min_occurs: '0',
@@ -173,7 +173,7 @@ RSpec.describe 'Amazon' do
 },
       { path: %w[Pay DescriptorPolicy CSOwner],
         kind: :simple,
-        namespace: namespace,
+        namespace:,
         form: 'qualified',
         singular: true,
         min_occurs: '0',
@@ -183,7 +183,7 @@ RSpec.describe 'Amazon' do
 },
       { path: %w[Pay TransactionTimeoutInMins],
         kind: :simple,
-        namespace: namespace,
+        namespace:,
         form: 'qualified',
         singular: true,
         min_occurs: '0',
@@ -193,7 +193,7 @@ RSpec.describe 'Amazon' do
 },
       { path: %w[Pay MarketplaceFixedFee],
         kind: :complex,
-        namespace: namespace,
+        namespace:,
         form: 'qualified',
         singular: true,
         min_occurs: '0',
@@ -202,7 +202,7 @@ RSpec.describe 'Amazon' do
 },
       { path: %w[Pay MarketplaceFixedFee CurrencyCode],
         kind: :simple,
-        namespace: namespace,
+        namespace:,
         form: 'qualified',
         singular: true,
         min_occurs: '1',
@@ -212,7 +212,7 @@ RSpec.describe 'Amazon' do
 },
       { path: %w[Pay MarketplaceFixedFee Value],
         kind: :simple,
-        namespace: namespace,
+        namespace:,
         form: 'qualified',
         singular: true,
         min_occurs: '1',
@@ -222,7 +222,7 @@ RSpec.describe 'Amazon' do
 },
       { path: %w[Pay MarketplaceVariableFee],
         kind: :simple,
-        namespace: namespace,
+        namespace:,
         form: 'qualified',
         singular: true,
         min_occurs: '0',
@@ -235,7 +235,7 @@ RSpec.describe 'Amazon' do
 
   describe 'xsd:any support' do
     let(:namespace) { 'http://fps.amazonaws.com/doc/2008-09-17/' }
-    let(:schemas) { WSDL::Parser::Result.parse(fixture('wsdl/amazon'), WSDL.http_adapter.new).schemas }
+    let(:schemas) { parse_schemas(fixture('wsdl/amazon')) }
 
     it 'marks the Error/Detail element as allowing arbitrary content' do
       # The Error element has a Detail child with xs:any
@@ -325,5 +325,16 @@ RSpec.describe 'Amazon' do
       expect(result).to include('<ExpectedType>Decimal</ExpectedType>')
       expect(result).to include('<ReceivedValue>not-a-number</ReceivedValue>')
     end
+  end
+
+  def parse_schemas(wsdl_path)
+    documents = WSDL::Parser::DocumentCollection.new
+    schemas = WSDL::Schema::Collection.new
+    source = WSDL::Source.validate_wsdl!(wsdl_path)
+    sandbox = [File.dirname(File.expand_path(wsdl_path))]
+    resolver = WSDL::Parser::Resolver.new(WSDL.http_adapter.new, sandbox_paths: sandbox)
+    importer = WSDL::Parser::Importer.new(resolver, documents, schemas, WSDL::ParseOptions.default)
+    importer.import(source.value)
+    schemas
   end
 end

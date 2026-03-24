@@ -7,14 +7,16 @@
 # Each test references an assertion ID documented in W3C_CONFORMANCE_ASSERTIONS.md.
 
 RSpec.describe 'SOAP 1.2 conformance' do
-  let(:parser_result) { WSDL::Parser::Result.parse fixture('wsdl/temperature'), http_mock }
+  let(:definition) { WSDL::Parser.parse fixture('wsdl/temperature'), http_mock }
 
-  let(:soap12_info) { parser_result.operation('ConvertTemperature', 'ConvertTemperatureSoap12', 'ConvertTemp') }
-  let(:soap12_operation) { WSDL::Operation.new(soap12_info, parser_result, http_mock) }
+  let(:soap12_data) { definition.operation_data('ConvertTemperature', 'ConvertTemperatureSoap12', 'ConvertTemp') }
+  let(:soap12_endpoint) { definition.endpoint('ConvertTemperature', 'ConvertTemperatureSoap12') }
+  let(:soap12_operation) { WSDL::Operation.new(soap12_data, soap12_endpoint, http_mock) }
 
-  let(:rpc_result) { WSDL::Parser::Result.parse fixture('wsdl/rpc_literal'), http_mock }
-  let(:rpc_info) { rpc_result.operation('SampleService', 'Sample', 'op1') }
-  let(:rpc_operation) { WSDL::Operation.new(rpc_info, rpc_result, http_mock) }
+  let(:rpc_definition) { WSDL::Parser.parse fixture('wsdl/rpc_literal'), http_mock }
+  let(:rpc_data) { rpc_definition.operation_data('SampleService', 'Sample', 'op1') }
+  let(:rpc_endpoint) { rpc_definition.endpoint('SampleService', 'Sample') }
+  let(:rpc_operation) { WSDL::Operation.new(rpc_data, rpc_endpoint, http_mock) }
 
   def parsed_soap12_envelope
     soap12_operation.prepare do

@@ -3,8 +3,8 @@
 RSpec.describe WSDL::Security::Signature do
   subject(:signature) do
     described_class.new(
-      certificate: certificate,
-      private_key: private_key
+      certificate:,
+      private_key:
     )
   end
 
@@ -42,8 +42,8 @@ RSpec.describe WSDL::Security::Signature do
 
     it 'preserves a custom security_token_id' do
       sig = described_class.new(
-        certificate: certificate,
-        private_key: private_key,
+        certificate:,
+        private_key:,
         security_token_id: 'custom-token-id'
       )
       expect(sig.security_token_id).to eq('custom-token-id')
@@ -52,8 +52,8 @@ RSpec.describe WSDL::Security::Signature do
     it 'raises ArgumentError for unknown digest_algorithm' do
       expect {
         described_class.new(
-          certificate: certificate,
-          private_key: private_key,
+          certificate:,
+          private_key:,
           digest_algorithm: :md5
         )
       }.to raise_error(ArgumentError, /Unknown digest algorithm.*:md5/)
@@ -63,7 +63,7 @@ RSpec.describe WSDL::Security::Signature do
       expect {
         described_class.new(
           certificate: nil,
-          private_key: private_key
+          private_key:
         )
       }.to raise_error(ArgumentError, /certificate is required/)
     end
@@ -71,7 +71,7 @@ RSpec.describe WSDL::Security::Signature do
     it 'raises ArgumentError when private_key is nil' do
       expect {
         described_class.new(
-          certificate: certificate,
+          certificate:,
           private_key: nil
         )
       }.to raise_error(ArgumentError, /private_key is required/)
@@ -120,8 +120,8 @@ RSpec.describe WSDL::Security::Signature do
     context 'with different algorithms' do
       it 'shows sha1 algorithm' do
         sig = described_class.new(
-          certificate: certificate,
-          private_key: private_key,
+          certificate:,
+          private_key:,
           digest_algorithm: :sha1
         )
         expect(sig.inspect).to include('algorithm=:sha1')
@@ -130,8 +130,8 @@ RSpec.describe WSDL::Security::Signature do
 
       it 'shows sha512 algorithm' do
         sig = described_class.new(
-          certificate: certificate,
-          private_key: private_key,
+          certificate:,
+          private_key:,
           digest_algorithm: :sha512
         )
         expect(sig.inspect).to include('algorithm=:sha512')
@@ -142,8 +142,8 @@ RSpec.describe WSDL::Security::Signature do
     context 'with different key reference methods' do
       it 'shows issuer_serial reference' do
         sig = described_class.new(
-          certificate: certificate,
-          private_key: private_key,
+          certificate:,
+          private_key:,
           key_reference: :issuer_serial
         )
         expect(sig.inspect).to include('key_reference=:issuer_serial')
@@ -158,7 +158,7 @@ RSpec.describe WSDL::Security::Signature do
 
         sig = described_class.new(
           certificate: bad_cert,
-          private_key: private_key,
+          private_key:,
           digest_algorithm: :sha256
         )
 
@@ -214,8 +214,8 @@ RSpec.describe WSDL::Security::Signature do
 
     it 'returns true when enabled' do
       sig = described_class.new(
-        certificate: certificate,
-        private_key: private_key,
+        certificate:,
+        private_key:,
         explicit_namespace_prefixes: true
       )
 

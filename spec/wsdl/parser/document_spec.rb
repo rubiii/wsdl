@@ -24,7 +24,7 @@ RSpec.describe WSDL::Parser::Document do
       namespaces['xmlns:jaxws'] = 'http://java.sun.com/xml/ns/jaxws' if defined?(JRUBY_VERSION)
 
       expect(message.parts).to eq([
-        { name: 'parameters', namespaces: namespaces,
+        { name: 'parameters', namespaces:,
           type: nil, element: 'sawsoap:addReportToPage'
 }
       ])
@@ -50,15 +50,15 @@ RSpec.describe WSDL::Parser::Document do
       }
 
       expect(message.parts).to eq([
-        { name: 'sender', namespaces: namespaces, type: 'xsd:string', element: nil },
-        { name: 'cellular',    namespaces: namespaces, type: 'xsd:string', element: nil },
-        { name: 'msg',         namespaces: namespaces, type: 'xsd:string', element: nil },
-        { name: 'smsnumgroup', namespaces: namespaces, type: 'xsd:string', element: nil },
-        { name: 'emailaddr',   namespaces: namespaces, type: 'xsd:string', element: nil },
-        { name: 'udh',         namespaces: namespaces, type: 'xsd:string', element: nil },
-        { name: 'datetime',    namespaces: namespaces, type: 'xsd:string', element: nil },
-        { name: 'format',      namespaces: namespaces, type: 'xsd:string', element: nil },
-        { name: 'dlrurl',      namespaces: namespaces, type: 'xsd:string', element: nil }
+        { name: 'sender', namespaces:, type: 'xsd:string', element: nil },
+        { name: 'cellular',    namespaces:, type: 'xsd:string', element: nil },
+        { name: 'msg',         namespaces:, type: 'xsd:string', element: nil },
+        { name: 'smsnumgroup', namespaces:, type: 'xsd:string', element: nil },
+        { name: 'emailaddr',   namespaces:, type: 'xsd:string', element: nil },
+        { name: 'udh',         namespaces:, type: 'xsd:string', element: nil },
+        { name: 'datetime',    namespaces:, type: 'xsd:string', element: nil },
+        { name: 'format',      namespaces:, type: 'xsd:string', element: nil },
+        { name: 'dlrurl',      namespaces:, type: 'xsd:string', element: nil }
       ])
     end
   end
@@ -209,8 +209,14 @@ RSpec.describe WSDL::Parser::Document do
   end
 
   def get_documents(fixture_path)
-    parser_result = WSDL::Parser::Result.parse(fixture(fixture_path), http_mock)
-    parser_result.documents
+    documents = WSDL::Parser::DocumentCollection.new
+    schemas = WSDL::Schema::Collection.new
+    source = WSDL::Source.validate_wsdl!(fixture(fixture_path))
+    resolver = WSDL::Parser::Resolver.new(http_mock,
+                                          sandbox_paths: [File.dirname(File.expand_path(fixture(fixture_path)))])
+    importer = WSDL::Parser::Importer.new(resolver, documents, schemas, WSDL::ParseOptions.default)
+    importer.import(source.value)
+    documents
   end
 
   def local_keys(collection)
