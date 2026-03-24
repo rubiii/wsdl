@@ -15,6 +15,9 @@ AllCops:
 Style/FrozenStringLiteralComment:
   Enabled: true
 
+Style/HashSyntax:
+  EnforcedShorthandSyntax: always
+
 Style/StringLiterals:
   EnforcedStyle: single_quotes
 
