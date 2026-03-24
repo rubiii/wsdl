@@ -24,44 +24,16 @@ namespace :yard do
   end
 end
 
-# rubocop:disable Metrics/BlockLength
 namespace :lint do
   desc 'Check markdown links point to existing files'
   task :links do
-    errors = []
-    root = File.expand_path(__dir__)
-    md_files = Dir.glob([
-      File.join(root, '*.md'),               # Top-level markdown files
-      File.join(root, 'docs', '**', '*.md')  # Markdown files in /docs
-    ])
-
-    md_files.each do |file|
-      dir = File.dirname(file)
-      File.read(file).scan(/\[(?:[^\]]*)\]\(([^)]+)\)/).flatten.each do |link|
-        next if link.start_with?('http://', 'https://', 'mailto:')
-
-        path = link.split('#').first
-        next if path.empty?
-
-        target = File.expand_path(path, dir)
-        next if File.exist?(target)
-
-        relative = file.sub("#{root}/", '')
-        errors << "  #{relative}: #{link}"
-      end
-    end
-
-    if errors.any?
-      abort "Broken markdown links:\n#{errors.join("\n")}"
-    else
-      puts "All markdown links OK (#{md_files.size} files checked)"
-    end
+    require_relative 'scripts/lint_links'
+    LintLinks.check
   end
 
   desc 'Autofix RuboCop offenses (safe and unsafe)'
   task fix: 'lint:ruby:autocorrect_all'
 end
-# rubocop:enable Metrics/BlockLength
 
 desc 'Run linting'
 task lint: %i[lint:ruby lint:links]
