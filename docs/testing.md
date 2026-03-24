@@ -16,6 +16,7 @@ Environment variables:
 |----------|---------|---------|
 | `DEBUG` | unset | Enable debug logging during test runs |
 | `PROPERTY_TRIALS` | `100` | Number of trials for property-based tests |
+| `SPEC_TIMEOUT` | `30` | Per-example timeout in seconds for `:with_timeout` tagged specs |
 
 ## Test Structure
 
@@ -141,6 +142,14 @@ Property tests live in `spec/property/`:
 **Security invariants** (`spec/property/xml_parser_spec.rb`): DOCTYPE rejection across randomized casing and positions, XXE payload variations, crash resistance for random byte sequences.
 
 **Round-trip fidelity** (`spec/property/response_roundtrip_spec.rb`): for randomly chosen operations from fixture WSDLs, generates random response hashes (all XSD types, nillable elements, variable-length arrays, XML-special characters) and verifies `parse(build(hash)) == hash`.
+
+All property specs are automatically tagged with `:with_timeout` metadata, which wraps each example in a `Timeout.timeout` call (default: 30 seconds, override with `SPEC_TIMEOUT`). This prevents generative tests from consuming unbounded memory or CPU when Rantly picks large WSDL definitions. The tag can also be applied to individual examples in other spec directories:
+
+```ruby
+it 'something potentially expensive', :with_timeout do
+  # ...
+end
+```
 
 ## Coverage
 
