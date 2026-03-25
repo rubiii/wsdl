@@ -61,17 +61,15 @@ module WSDL
       @config = config ? config.with(**) : Config.new(**)
       @http = http || WSDL.http_adapter.new
 
-      if wsdl.is_a?(Definition)
-        @definition = wsdl
+      @definition = if wsdl.is_a?(Definition)
+        wsdl
       else
-        source = Source.validate_wsdl!(wsdl)
-        resolved_sandbox_paths = source.resolve_sandbox_paths(@config.sandbox_paths)
-
-        @definition = Parser.parse(wsdl, @http, ParseOptions.new(
-                                                  sandbox_paths: resolved_sandbox_paths,
-                                                  limits: @config.limits,
-                                                  strictness: @config.strictness
-                                                ))
+        parse_options = ParseOptions.new(
+          sandbox_paths: @config.sandbox_paths,
+          limits: @config.limits,
+          strictness: @config.strictness
+        )
+        Parser.parse(wsdl, @http, parse_options)
       end
     end
 

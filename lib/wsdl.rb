@@ -131,16 +131,13 @@ module WSDL
     #
     def parse(source, http: nil, strictness: nil, sandbox_paths: nil, limits: nil)
       http ||= http_adapter.new
-      config = Config.new(strictness:, sandbox_paths:, limits:)
 
-      source_obj = Source.validate_wsdl!(source)
-      resolved_sandbox = source_obj.resolve_sandbox_paths(config.sandbox_paths)
-
-      Parser.parse(source, http, ParseOptions.new(
-                                   sandbox_paths: resolved_sandbox,
-                                   limits: config.limits,
-                                   strictness: config.strictness
-                                 ))
+      parse_options = ParseOptions.new(
+        sandbox_paths:,
+        limits: Limits.resolve(limits) || self.limits,
+        strictness: Strictness.resolve(strictness) || self.strictness
+      )
+      Parser.parse(source, http, parse_options)
     end
 
     # Restores a {Definition} from a serialized Hash.

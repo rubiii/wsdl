@@ -65,13 +65,16 @@ RSpec.describe WSDL::Client do
         it 'sandboxes to WSDL parent directory' do
           wsdl_directory = File.dirname(File.expand_path(wsdl))
           allow(WSDL::Parser).to receive(:parse).and_wrap_original do |method, *args|
-            expect(args[2]).to have_attributes(sandbox_paths: [wsdl_directory])
+            # Client passes nil sandbox_paths; Parser.parse resolves from source
+            expect(args[2]).to have_attributes(sandbox_paths: nil)
             method.call(*args)
           end
 
-          described_class.new(wsdl)
+          client = described_class.new(wsdl)
+          sources = client.definition.sources.map { |s| s[:location] }
 
           expect(WSDL::Parser).to have_received(:parse)
+          expect(sources).to all(start_with(wsdl_directory))
         end
 
         it 'blocks imports outside the WSDL parent directory' do
