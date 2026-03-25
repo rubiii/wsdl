@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xsd:schema targetNamespace="urn:split-ns:types"
+            elementFormDefault="qualified"
+            xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+            xmlns:tns="urn:split-ns:types">
+
+  <xsd:element name="GetUserRequest">
+    <xsd:complexType>
+      <xsd:sequence>
+        <xsd:element name="userId" type="xsd:int"/>
+      </xsd:sequence>
+    </xsd:complexType>
+  </xsd:element>
+</xsd:schema>

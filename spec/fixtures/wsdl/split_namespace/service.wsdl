@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<wsdl:definitions name="SplitNamespaceService"
+                  targetNamespace="urn:split-ns:service"
+                  xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/"
+                  xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
+                  xmlns:tns="urn:split-ns:service"
+                  xmlns:types="urn:split-ns:types">
+
+  <wsdl:types>
+    <xsd:schema targetNamespace="urn:split-ns:wrapper"
+                xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+      <xsd:import namespace="urn:split-ns:types" schemaLocation="types_a.xsd"/>
+      <xsd:import namespace="urn:split-ns:types" schemaLocation="types_b.xsd"/>
+    </xsd:schema>
+  </wsdl:types>
+
+  <wsdl:message name="GetUserInput">
+    <wsdl:part name="parameters" element="types:GetUserRequest"/>
+  </wsdl:message>
+
+  <wsdl:message name="GetUserOutput">
+    <wsdl:part name="parameters" element="types:GetUserResponse"/>
+  </wsdl:message>
+
+  <wsdl:portType name="UserPortType">
+    <wsdl:operation name="GetUser">
+      <wsdl:input message="tns:GetUserInput"/>
+      <wsdl:output message="tns:GetUserOutput"/>
+    </wsdl:operation>
+  </wsdl:portType>
+
+  <wsdl:binding name="UserBinding" type="tns:UserPortType">
+    <soap:binding style="document" transport="http://schemas.xmlsoap.org/soap/http"/>
+    <wsdl:operation name="GetUser">
+      <soap:operation soapAction="urn:split-ns:GetUser"/>
+      <wsdl:input><soap:body use="literal"/></wsdl:input>
+      <wsdl:output><soap:body use="literal"/></wsdl:output>
+    </wsdl:operation>
+  </wsdl:binding>
+
+  <wsdl:service name="UserService">
+    <wsdl:port name="UserPort" binding="tns:UserBinding">
+      <soap:address location="http://example.com/user"/>
+    </wsdl:port>
+  </wsdl:service>
+</wsdl:definitions>

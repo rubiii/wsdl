@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xsd:schema targetNamespace="urn:split-ns:types"
+            elementFormDefault="qualified"
+            xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+            xmlns:tns="urn:split-ns:types">
+
+  <xsd:element name="GetUserResponse">
+    <xsd:complexType>
+      <xsd:sequence>
+        <xsd:element name="name" type="xsd:string"/>
+        <xsd:element name="email" type="xsd:string"/>
+      </xsd:sequence>
+    </xsd:complexType>
+  </xsd:element>
+</xsd:schema>

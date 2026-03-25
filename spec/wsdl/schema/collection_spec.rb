@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require 'logger'
+
 RSpec.describe WSDL::Schema::Collection do
   subject(:collection) { described_class.new }
 
@@ -247,6 +249,117 @@ RSpec.describe WSDL::Schema::Collection do
     end
   end
 
+  context 'with multiple definitions sharing a namespace' do
+    let(:element_a) { instance_double(WSDL::Schema::Node, kind: :element, name: 'Alpha') }
+    let(:element_b) { instance_double(WSDL::Schema::Node, kind: :element, name: 'Beta') }
+    let(:complex_type_a) { instance_double(WSDL::Schema::Node, kind: :complexType, name: 'TypeA') }
+    let(:simple_type_b) { instance_double(WSDL::Schema::Node, kind: :simpleType, name: 'TypeB') }
+    let(:attribute_b) { instance_double(WSDL::Schema::Node, kind: :attribute, name: 'attrB') }
+    let(:group_b) { instance_double(WSDL::Schema::Node, kind: :group, name: 'GroupB') }
+    let(:attr_group_b) { instance_double(WSDL::Schema::Node, kind: :attributeGroup, name: 'AttrGroupB') }
+
+    let(:definition_a) do
+      instance_double(
+        WSDL::Schema::Definition,
+        target_namespace: 'http://shared.com',
+        elements: { 'Alpha' => element_a },
+        complex_types: { 'TypeA' => complex_type_a },
+        simple_types: {},
+        attributes: {},
+        groups: {},
+        attribute_groups: {}
+      )
+    end
+
+    let(:definition_b) do
+      instance_double(
+        WSDL::Schema::Definition,
+        target_namespace: 'http://shared.com',
+        elements: { 'Beta' => element_b },
+        complex_types: {},
+        simple_types: { 'TypeB' => simple_type_b },
+        attributes: { 'attrB' => attribute_b },
+        groups: { 'GroupB' => group_b },
+        attribute_groups: { 'AttrGroupB' => attr_group_b }
+      )
+    end
+
+    before do
+      collection << definition_a
+      collection << definition_b
+    end
+
+    it 'finds element in first definition' do
+      expect(collection.find_element('http://shared.com', 'Alpha')).to eq(element_a)
+    end
+
+    it 'finds element in second definition' do
+      expect(collection.find_element('http://shared.com', 'Beta')).to eq(element_b)
+    end
+
+    it 'returns nil when element is in neither definition' do
+      expect(collection.find_element('http://shared.com', 'Missing')).to be_nil
+    end
+
+    it 'finds complex type across definitions' do
+      expect(collection.find_complex_type('http://shared.com', 'TypeA')).to eq(complex_type_a)
+    end
+
+    it 'finds simple type across definitions' do
+      expect(collection.find_simple_type('http://shared.com', 'TypeB')).to eq(simple_type_b)
+    end
+
+    it 'finds complex type in one definition and simple type in another via find_type' do
+      expect(collection.find_type('http://shared.com', 'TypeA')).to eq(complex_type_a)
+      expect(collection.find_type('http://shared.com', 'TypeB')).to eq(simple_type_b)
+    end
+
+    it 'finds attribute across definitions' do
+      expect(collection.find_attribute('http://shared.com', 'attrB')).to eq(attribute_b)
+    end
+
+    it 'finds group across definitions' do
+      expect(collection.find_group('http://shared.com', 'GroupB')).to eq(group_b)
+    end
+
+    it 'finds attribute group across definitions' do
+      expect(collection.find_attribute_group('http://shared.com', 'AttrGroupB')).to eq(attr_group_b)
+    end
+
+    it 'find_by_namespace returns the first definition' do
+      expect(collection.find_by_namespace('http://shared.com')).to eq(definition_a)
+    end
+
+    it 'maintains index when mixing << and push' do
+      fresh = described_class.new
+      fresh << definition_a
+      fresh.push([definition_b])
+
+      expect(fresh.find_element('http://shared.com', 'Alpha')).to eq(element_a)
+      expect(fresh.find_element('http://shared.com', 'Beta')).to eq(element_b)
+    end
+
+    it 'handles nil namespace with multiple definitions' do
+      nil_def_a = instance_double(
+        WSDL::Schema::Definition,
+        target_namespace: nil,
+        elements: { 'X' => element_a }
+      )
+      nil_def_b = instance_double(
+        WSDL::Schema::Definition,
+        target_namespace: nil,
+        elements: { 'Y' => element_b }
+      )
+
+      fresh = described_class.new
+      fresh << nil_def_a
+      fresh << nil_def_b
+
+      expect(fresh.find_element(nil, 'X')).to eq(element_a)
+      expect(fresh.find_element(nil, 'Y')).to eq(element_b)
+    end
+  end
+
   describe 'missing namespace behavior' do
     it 'returns nil for unknown namespace even when other schemas exist' do
       definition = instance_double(
@@ -433,6 +546,41 @@ RSpec.describe WSDL::Schema::Definition do
     end
   end
 
+  describe '#import_locations' do
+    it 'collects all schema locations' do
+      definition = new_definition('
+        <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+          <xs:import namespace="http://other.com" schemaLocation="other.xsd"/>
+          <xs:import namespace="http://another.com" schemaLocation="another.xsd"/>
+        </xs:schema>
+      ')
+
+      expect(definition.import_locations).to eq(%w[other.xsd another.xsd])
+    end
+
+    it 'collects multiple locations for the same namespace' do
+      definition = new_definition('
+        <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+          <xs:import namespace="http://shared.com" schemaLocation="a.xsd"/>
+          <xs:import namespace="http://shared.com" schemaLocation="b.xsd"/>
+        </xs:schema>
+      ')
+
+      expect(definition.import_locations).to eq(%w[a.xsd b.xsd])
+    end
+
+    it 'excludes imports without schema location' do
+      definition = new_definition('
+        <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+          <xs:import namespace="http://other.com"/>
+          <xs:import namespace="http://another.com" schemaLocation="another.xsd"/>
+        </xs:schema>
+      ')
+
+      expect(definition.import_locations).to eq(['another.xsd'])
+    end
+  end
+
   describe '#includes' do
     it 'parses include declarations' do
       definition = new_definition('
@@ -529,6 +677,10 @@ RSpec.describe WSDL::Schema::Definition do
         'http://other.com' => 'other.xsd',
         'http://another.com' => 'another.xsd'
       })
+    end
+
+    it 'merges import locations' do
+      expect(base_definition.import_locations).to eq(%w[other.xsd another.xsd])
     end
 
     it 'merges includes' do

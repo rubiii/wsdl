@@ -36,6 +36,7 @@ module WSDL
         @attribute_groups = {}
         @groups = {}
         @imports = {}
+        @import_locations = []
         @includes = []
 
         parse
@@ -71,6 +72,9 @@ module WSDL
       # @return [Hash{String => String}] namespace to schemaLocation mappings
       attr_reader :imports
 
+      # @return [Array<String>] all import schemaLocation values (supports multiple per namespace)
+      attr_reader :import_locations
+
       # @return [Array<String>] schemaLocation values for includes
       attr_reader :includes
 
@@ -93,6 +97,7 @@ module WSDL
         merge_with_conflict_detection(@attribute_groups, other.attribute_groups, :attribute_group)
         merge_with_conflict_detection(@groups, other.groups, :group)
         @imports.merge!(other.imports)
+        @import_locations.concat(other.import_locations)
         @includes.concat(other.includes)
       end
 
@@ -157,7 +162,9 @@ module WSDL
       # @param child [Nokogiri::XML::Node] the import element
       # @return [void]
       def parse_import(child)
-        @imports[child['namespace']] = child['schemaLocation']
+        location = child['schemaLocation']
+        @imports[child['namespace']] = location
+        @import_locations << location if location
       end
 
       # Parses an xs:include element.

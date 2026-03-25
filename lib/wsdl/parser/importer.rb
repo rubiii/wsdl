@@ -158,7 +158,7 @@ module WSDL
       def process_pending_schema_references
         found = false
         @schemas.each do |schema|
-          found = true if process_references(schema.imports.values.compact, schema.source_location)
+          found = true if process_references(schema.import_locations, schema.source_location)
           found = true if process_references(schema.includes, schema.source_location, include_into: schema)
         end
         found
