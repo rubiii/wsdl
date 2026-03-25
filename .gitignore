@@ -3,6 +3,7 @@
 yard_docs
 coverage
 .yardoc
+.claude/settings.local.json
 pkg
 *~
 *.rbc

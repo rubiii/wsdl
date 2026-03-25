@@ -2,6 +2,14 @@
 
 WSDL toolkit for Ruby. Turn WSDL 1.1 documents into inspectable services and callable operations.
 
+## Priorities
+
+- **Developer happiness** — clear errors, good defaults, minimal configuration
+- **Code quality** — 100% YARD docs, 95%+ coverage, clean RuboCop, no shortcuts
+- **Security** — maintain and extend defenses (XXE, SSRF, XML Signature); never regress
+- **Specification compliance** — code must conform to W3C/OASIS specs; local copies in `docs/reference/specs/`, overview in `docs/reference/specifications.md`
+- **Automation** — build tools that verify correctness, enforce quality, and reduce manual work
+- **Performance** — the parser is designed for speed; measure before and after changes
 
 ## Getting Started
 
@@ -17,39 +25,11 @@ WSDL toolkit for Ruby. Turn WSDL 1.1 documents into inspectable services and cal
 - **Response** — Wraps SOAP responses with parsing and verification
 - **Security** — WS-Security implementation (see `docs/security/ws-security.md`)
 
-## Workflow Rules
+## Workflow
 
-1. **Always make a plan first.** Propose a plan and wait for explicit confirmation before making changes.
-
-2. **Run quality checks after every code change.** Run `bundle exec rake ci` to ensure both RuboCop and RSpec pass. Never consider a task complete until CI is green. Let RuboCop autofix problems.
-
-3. **Follow the official specifications.** Code must conform to the W3C and OASIS specifications in `docs/reference/specifications.md`.
-
-4. **Update documentation after every change.** Check if YARD docs, `docs/` folder, `AGENTS.md`, or `README.md` need updates. Run `bundle exec yard` to verify.
-
-5. **Capture full test output.** Never pipe test or CI commands through `grep`, `tail`, or `head`. Property-based tests include randomized inputs in failure output — filtering loses them permanently.
+- **CI must pass before a task is complete.** Run `bundle exec rake ci` (lint + YARD audit + tests). RuboCop runs automatically on every file edit via a hook — let it autofix.
+- **When implementing protocol behavior**, consult the local spec docs in `docs/reference/specs/` and reference the relevant section.
 
 ## Testing
 
-- Every public method must be tested, 100% coverage is a must
-- Use existing fixtures in `spec/fixtures/` (real-world WSDLs)
-- Unit tests in `spec/wsdl/` mirror `lib/wsdl/` structure
-- Acceptance tests in `spec/acceptance/` (real WSDLs, no network)
-- Integration tests in `spec/integration/` (live mock services, auto-tagged `:test_service`)
-- Conformance tests in `spec/conformance/` (W3C/OASIS spec assertions)
-- Property-based tests in `spec/property/` use Rantly (`PROPERTY_TRIALS` env var, default 100)
-- See [Testing docs](docs/testing.md) for full details
-
-## Quick Links
-
-| Resource | Path |
-|----------|------|
-| Main entry point | `lib/wsdl/client.rb` |
-| Error definitions | `lib/wsdl/errors.rb` |
-| Namespace constants | `lib/wsdl/ns.rb` |
-| Security constants | `lib/wsdl/security/constants.rb` |
-| Development guidelines | `docs/development.md` |
-| WS-Security docs | `docs/security/ws-security.md` |
-| Specifications | `docs/reference/specifications.md` |
-| Benchmarks | `docs/reference/benchmarks.md` |
-| Testing docs | `docs/testing.md` |
+Every public method must be tested, 100% coverage is a must. See [Testing docs](docs/testing.md) for test structure, fixtures, helpers, and coverage requirements.
