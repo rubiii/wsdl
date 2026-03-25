@@ -111,15 +111,17 @@ module WSDL
 
           unless port_type_op
             record_build_issue(op_name,
-                               "Binding operation #{op_name.inspect} not found in portType #{port_type.name.inspect}")
+              "Binding operation #{op_name.inspect} not found in portType #{port_type.name.inspect}")
             store_operation(operations, op_name, metadata)
             next
           end
 
-          op_info = Parser::OperationInfo.new(op_name, binding_op, port_type_op,
-                                              documents: @documents, schemas: @schemas,
-                                              limits: @limits, strictness: @strictness,
-                                              issues: @build_issues)
+          op_info = Parser::OperationInfo.new(
+            op_name, binding_op, port_type_op,
+            documents: @documents, schemas: @schemas,
+            limits: @limits, strictness: @strictness,
+            issues: @build_issues
+          )
 
           metadata[:soap_action] = op_info.soap_action
           metadata[:soap_version] = op_info.soap_version
@@ -131,7 +133,7 @@ module WSDL
             metadata[:rpc_output_namespace] = binding_op.output_body&.dig(:namespace)
           else
             record_build_issue(op_name,
-                               "Binding operation #{op_name.inspect} is missing a required <input> element")
+              "Binding operation #{op_name.inspect} is missing a required <input> element")
           end
 
           metadata[:schema_complete] = schema_complete_for_operation?(op_info)

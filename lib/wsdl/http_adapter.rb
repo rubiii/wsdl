@@ -197,7 +197,7 @@ module WSDL
       return unless count > @config.max_redirects
 
       raise TooManyRedirectsError,
-            "Too many redirects (limit: #{@config.max_redirects})"
+        "Too many redirects (limit: #{@config.max_redirects})"
     end
 
     # Returns a copy of the headers hash with sensitive headers removed.

@@ -171,8 +171,8 @@ module WSDL
 
       if @request_document
         raise RequestDslError,
-              'operation.prepare was already called. ' \
-              'Use operation.reset! to clear the previous request before preparing a new one'
+          'operation.prepare was already called. ' \
+          'Use operation.reset! to clear the previous request before preparing a new one'
       end
 
       document = Request::Envelope.new
@@ -376,7 +376,7 @@ module WSDL
       return if contract.request.empty?
 
       raise RequestDefinitionError,
-            "Operation #{name.inspect} requires a request definition via operation.prepare { ... }"
+        "Operation #{name.inspect} requires a request definition via operation.prepare { ... }"
     end
 
     def request_validation_contract

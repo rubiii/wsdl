@@ -142,8 +142,8 @@ module WSDL
       def method_missing(name, *_args, &)
         available = RESERVED_METHODS.map(&:inspect).join(', ')
         ::Kernel.raise ::WSDL::RequestDslError,
-                       "Unknown request DSL method #{name.inspect}. " \
-                       "Use tag('#{name}') for elements, or one of the reserved methods: #{available}"
+          "Unknown request DSL method #{name.inspect}. " \
+          "Use tag('#{name}') for elements, or one of the reserved methods: #{available}"
       end
 
       # :nocov:
@@ -173,8 +173,8 @@ module WSDL
 
         if @in_section_block
           ::Kernel.raise ::WSDL::RequestDslError,
-                         "Cannot nest #{section} inside another section block. " \
-                         'header and body blocks must be at the top level of the request.'
+            "Cannot nest #{section} inside another section block. " \
+            'header and body blocks must be at the top level of the request.'
         end
 
         previous = @section
@@ -221,7 +221,7 @@ module WSDL
         return unless namespace_uri.nil?
 
         ::Kernel.raise ::WSDL::RequestDslError,
-                       "Undeclared namespace prefix #{prefix.inspect} for attribute #{qname.inspect}"
+          "Undeclared namespace prefix #{prefix.inspect} for attribute #{qname.inspect}"
       end
 
       def validate_duplicate_qualified_attribute!(node, qname, namespace_uri, local_name)
@@ -229,14 +229,14 @@ module WSDL
         return unless node.attributes.any? { |attr| "#{attr.namespace_uri}:#{attr.local_name}" == key }
 
         ::Kernel.raise ::WSDL::RequestDslError,
-                       "Duplicate attribute #{qname.inspect} on element #{node.name.inspect}"
+          "Duplicate attribute #{qname.inspect} on element #{node.name.inspect}"
       end
 
       def validate_duplicate_unqualified_attribute!(node, qname)
         return unless node.attributes.any? { |attr| attr.prefix.nil? && attr.local_name == qname }
 
         ::Kernel.raise ::WSDL::RequestDslError,
-                       "Duplicate attribute #{qname.inspect} on element #{node.name.inspect}"
+          "Duplicate attribute #{qname.inspect} on element #{node.name.inspect}"
       end
 
       def append_node(node)

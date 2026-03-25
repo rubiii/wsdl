@@ -27,7 +27,7 @@ module WSDL
       def <<(document)
         if sealed?
           raise SealedCollectionError,
-                'Cannot add documents after import has completed and the collection is sealed.'
+            'Cannot add documents after import has completed and the collection is sealed.'
         end
 
         @documents << document

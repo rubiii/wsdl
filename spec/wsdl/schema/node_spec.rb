@@ -845,7 +845,7 @@ RSpec.describe WSDL::Schema::Node do
     it 'returns hash with kind, name, type, ref, and namespace' do
       context = { target_namespace: 'http://example.com' }
       node = new_node('<xs:element name="user" type="tns:User" xmlns:xs="http://www.w3.org/2001/XMLSchema"/>', nil,
-                      context)
+        context)
 
       result = node.deconstruct_keys(nil)
       expect(result).to eq({

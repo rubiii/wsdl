@@ -183,7 +183,7 @@ module WSDL
     def operation(service_name_or_operation_name, port_name = nil, operation_name = nil, input_name: nil)
       if port_name && !operation_name
         raise ArgumentError,
-              'Pass 1 argument (operation_name) or 3 arguments (service_name, port_name, operation_name).'
+          'Pass 1 argument (operation_name) or 3 arguments (service_name, port_name, operation_name).'
       end
 
       if operation_name
@@ -272,8 +272,8 @@ module WSDL
       return unless op_data[:input_style] == 'rpc/encoded'
 
       raise UnsupportedStyleError,
-            "#{op_data[:name].inspect} is an #{op_data[:input_style].inspect} style operation.\n" \
-            'Currently this style is not supported.'
+        "#{op_data[:name].inspect} is an #{op_data[:input_style].inspect} style operation.\n" \
+        'Currently this style is not supported.'
     end
   end
 end

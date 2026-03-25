@@ -46,7 +46,7 @@ RSpec.describe WSDL::Parser::BindingOperation do
     schemas = WSDL::Schema::Collection.new
     source = WSDL::Source.validate_wsdl!(fixture(fixture_path))
     resolver = WSDL::Parser::Resolver.new(http_mock,
-                                          sandbox_paths: [File.dirname(File.expand_path(fixture(fixture_path)))])
+      sandbox_paths: [File.dirname(File.expand_path(fixture(fixture_path)))])
     importer = WSDL::Parser::Importer.new(resolver, documents, schemas, WSDL::ParseOptions.default)
     importer.import(source.value)
 

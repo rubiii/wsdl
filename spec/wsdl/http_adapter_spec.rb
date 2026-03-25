@@ -56,7 +56,7 @@ RSpec.describe WSDL::HTTPAdapter do
 
     it 'does not allow user headers to be overwritten by the gzip protection' do
       request = http.send(:build_request, :get, URI('https://example.com'),
-                          { 'Accept-Encoding' => 'gzip' }, nil)
+        { 'Accept-Encoding' => 'gzip' }, nil)
 
       expect(request['Accept-Encoding']).to eq('gzip')
     end
@@ -165,8 +165,8 @@ RSpec.describe WSDL::HTTPAdapter do
       end
 
       http.post('https://example.com/api',
-                { 'Authorization' => 'Bearer secret', 'Content-Type' => 'text/xml', 'Cookie' => 'session=abc' },
-                '<soap/>')
+        { 'Authorization' => 'Bearer secret', 'Content-Type' => 'text/xml', 'Cookie' => 'session=abc' },
+        '<soap/>')
 
       # First request should have Authorization and Cookie
       expect(request_headers[0]).to include('authorization', 'cookie')
@@ -192,8 +192,8 @@ RSpec.describe WSDL::HTTPAdapter do
       end
 
       http.post('https://example.com/api',
-                { 'Authorization' => 'Bearer secret', 'Content-Type' => 'text/xml' },
-                '<soap/>')
+        { 'Authorization' => 'Bearer secret', 'Content-Type' => 'text/xml' },
+        '<soap/>')
 
       # Both requests should have Authorization
       expect(request_headers[0]).to include('authorization')
@@ -217,8 +217,8 @@ RSpec.describe WSDL::HTTPAdapter do
       end
 
       http.post('https://example.com/api',
-                { 'Authorization' => 'Bearer secret', 'Content-Type' => 'text/xml' },
-                '<soap/>')
+        { 'Authorization' => 'Bearer secret', 'Content-Type' => 'text/xml' },
+        '<soap/>')
 
       expect(request_headers[1]).not_to include('authorization')
       # Content-Type should be preserved (not sensitive)
@@ -242,8 +242,8 @@ RSpec.describe WSDL::HTTPAdapter do
       end
 
       http.post('http://example.com/api',
-                { 'Authorization' => 'Bearer secret', 'Content-Type' => 'text/xml' },
-                '<soap/>')
+        { 'Authorization' => 'Bearer secret', 'Content-Type' => 'text/xml' },
+        '<soap/>')
 
       # http→https on same host is a TLS upgrade, not a cross-origin redirect
       expect(request_headers[1]).to include('authorization')

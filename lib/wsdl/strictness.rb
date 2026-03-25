@@ -79,7 +79,7 @@ module WSDL
     # @return [Strictness]
     def self.off
       new(schema_imports: false, schema_references: false,
-          operation_overloading: false, request_validation: false)
+        operation_overloading: false, request_validation: false)
     end
 
     # Returns a new Strictness with the specified settings overridden.

@@ -711,7 +711,7 @@ RSpec.describe WSDL::Client do
     it 'raises if the operation could not be found' do
       expect { client.operation(service_name, port_name, :UnknownOperation) }
         .to raise_error(ArgumentError,
-                        /Unknown operation "UnknownOperation" for service "AmazonFPS" and port "AmazonFPSPort"/)
+          /Unknown operation "UnknownOperation" for service "AmazonFPS" and port "AmazonFPSPort"/)
     end
 
     context 'with shorthand (operation name only)' do

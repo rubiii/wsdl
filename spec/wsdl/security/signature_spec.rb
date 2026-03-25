@@ -237,9 +237,9 @@ RSpec.describe WSDL::Security::Signature do
       XML
 
       body = envelope.at_xpath('//soap:Body',
-                               'soap' => 'http://schemas.xmlsoap.org/soap/envelope/')
+        'soap' => 'http://schemas.xmlsoap.org/soap/envelope/')
       security = envelope.at_xpath('//wsse:Security',
-                                   'wsse' => 'http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd')
+        'wsse' => 'http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd')
 
       signature.sign_element(body, inclusive_namespaces: %w[soap])
       signature.apply(envelope, security)

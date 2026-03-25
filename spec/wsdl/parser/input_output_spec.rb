@@ -69,18 +69,18 @@ RSpec.describe WSDL::Parser::Input do
     documents, schemas = import_wsdl(wsdl_xml)
     binding_op, port_type_op = resolve_operations(documents, 'TestService', 'TestPort', 'TestOp')
     WSDL::Parser::Input.new(binding_op, port_type_op,
-                            documents:, schemas:,
-                            limits: WSDL.limits, strictness: WSDL.strictness,
-                            issues:)
+      documents:, schemas:,
+      limits: WSDL.limits, strictness: WSDL.strictness,
+      issues:)
   end
 
   def build_output(wsdl_xml, issues: nil)
     documents, schemas = import_wsdl(wsdl_xml)
     binding_op, port_type_op = resolve_operations(documents, 'TestService', 'TestPort', 'TestOp')
     WSDL::Parser::Output.new(binding_op, port_type_op,
-                             documents:, schemas:,
-                             limits: WSDL.limits, strictness: WSDL.strictness,
-                             issues:)
+      documents:, schemas:,
+      limits: WSDL.limits, strictness: WSDL.strictness,
+      issues:)
   end
 
   def import_wsdl(wsdl_xml)

@@ -342,12 +342,12 @@ RSpec.describe WSDL::Security::XmlBuilderHelper do
         builder = Nokogiri::XML::Builder.new do |xml|
           helper.build_element(xml, :ds, 'SignedInfo') do
             helper.build_child(xml, :ds, 'CanonicalizationMethod',
-                               Algorithm: 'http://www.w3.org/2001/10/xml-exc-c14n#')
+              Algorithm: 'http://www.w3.org/2001/10/xml-exc-c14n#')
             helper.build_child(xml, :ds, 'SignatureMethod',
-                               Algorithm: 'http://www.w3.org/2001/04/xmldsig-more#rsa-sha256')
+              Algorithm: 'http://www.w3.org/2001/04/xmldsig-more#rsa-sha256')
             helper.build_child(xml, :ds, 'Reference', URI: '#Body-123') do
               helper.build_child(xml, :ds, 'DigestMethod',
-                                 Algorithm: 'http://www.w3.org/2001/04/xmlenc#sha256')
+                Algorithm: 'http://www.w3.org/2001/04/xmlenc#sha256')
               helper.build_child(xml, :ds, 'DigestValue', 'abc123digest')
             end
           end
@@ -368,12 +368,12 @@ RSpec.describe WSDL::Security::XmlBuilderHelper do
         builder = Nokogiri::XML::Builder.new do |xml|
           helper.build_element(xml, :ds, 'SignedInfo') do
             helper.build_child(xml, :ds, 'CanonicalizationMethod',
-                               Algorithm: 'http://www.w3.org/2001/10/xml-exc-c14n#')
+              Algorithm: 'http://www.w3.org/2001/10/xml-exc-c14n#')
             helper.build_child(xml, :ds, 'SignatureMethod',
-                               Algorithm: 'http://www.w3.org/2001/04/xmldsig-more#rsa-sha256')
+              Algorithm: 'http://www.w3.org/2001/04/xmldsig-more#rsa-sha256')
             helper.build_child(xml, :ds, 'Reference', URI: '#Body-123') do
               helper.build_child(xml, :ds, 'DigestMethod',
-                                 Algorithm: 'http://www.w3.org/2001/04/xmlenc#sha256')
+                Algorithm: 'http://www.w3.org/2001/04/xmlenc#sha256')
               helper.build_child(xml, :ds, 'DigestValue', 'abc123digest')
             end
           end

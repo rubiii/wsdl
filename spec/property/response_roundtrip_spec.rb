@@ -109,7 +109,7 @@ module RoundtripPropertyHelpers
 
   def random_datetime(rantly)
     Time.utc(rantly.range(2020, 2025), rantly.range(1, 12), rantly.range(1, 28),
-             rantly.range(0, 23), rantly.range(0, 59), rantly.range(0, 59))
+      rantly.range(0, 23), rantly.range(0, 59), rantly.range(0, 59))
   end
 
   def random_time(rantly)

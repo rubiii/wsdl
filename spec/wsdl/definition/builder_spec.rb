@@ -45,7 +45,7 @@ RSpec.describe WSDL::Definition::Builder do
 
     it 'builds port data with endpoint' do
       port = definition.to_h.dig('services', 'AuthenticationWebServiceImplService', 'ports',
-                                 'AuthenticationWebServiceImplPort')
+        'AuthenticationWebServiceImplPort')
 
       expect(port['endpoint']).to eq('http://example.com/validation/1.0/AuthenticationService')
       expect(port['type']).to eq('http://schemas.xmlsoap.org/wsdl/soap/')
@@ -53,7 +53,7 @@ RSpec.describe WSDL::Definition::Builder do
 
     it 'builds operation data' do
       operations = definition.to_h.dig('services', 'AuthenticationWebServiceImplService', 'ports',
-                                       'AuthenticationWebServiceImplPort', 'operations')
+        'AuthenticationWebServiceImplPort', 'operations')
 
       expect(operations).to have_key('authenticate')
       op = operations['authenticate']
@@ -65,7 +65,7 @@ RSpec.describe WSDL::Definition::Builder do
   describe 'operation element hashes' do
     it 'converts input body elements to hashes' do
       op = definition.to_h.dig('services', 'AuthenticationWebServiceImplService', 'ports',
-                               'AuthenticationWebServiceImplPort', 'operations', 'authenticate')
+        'AuthenticationWebServiceImplPort', 'operations', 'authenticate')
 
       input_body = op.dig('input', 'body')
       expect(input_body).to be_an(Array)
@@ -76,7 +76,7 @@ RSpec.describe WSDL::Definition::Builder do
 
     it 'converts output body elements to hashes' do
       op = definition.to_h.dig('services', 'AuthenticationWebServiceImplService', 'ports',
-                               'AuthenticationWebServiceImplPort', 'operations', 'authenticate')
+        'AuthenticationWebServiceImplPort', 'operations', 'authenticate')
 
       output_body = op.dig('output', 'body')
       expect(output_body).to be_an(Array)
@@ -84,7 +84,7 @@ RSpec.describe WSDL::Definition::Builder do
 
     it 'converts input header elements to hashes' do
       op = definition.to_h.dig('services', 'AuthenticationWebServiceImplService', 'ports',
-                               'AuthenticationWebServiceImplPort', 'operations', 'authenticate')
+        'AuthenticationWebServiceImplPort', 'operations', 'authenticate')
 
       input_header = op.dig('input', 'header')
       expect(input_header).to be_an(Array)
@@ -94,7 +94,7 @@ RSpec.describe WSDL::Definition::Builder do
   describe 'schema_complete' do
     it 'pre-computes schema_complete for operations' do
       op = definition.to_h.dig('services', 'AuthenticationWebServiceImplService', 'ports',
-                               'AuthenticationWebServiceImplPort', 'operations', 'authenticate')
+        'AuthenticationWebServiceImplPort', 'operations', 'authenticate')
 
       expect(op).to have_key('schema_complete')
       expect(op['schema_complete']).to be(true)
@@ -102,10 +102,10 @@ RSpec.describe WSDL::Definition::Builder do
 
     it 'sets schema_complete to false when imports fail' do
       juniper_def = WSDL::Parser.parse(fixture('wsdl/juniper'), http_mock,
-                                       strictness: WSDL::Strictness.off)
+        strictness: WSDL::Strictness.off)
 
       op = juniper_def.to_h.dig('services', 'SystemService', 'ports', 'System',
-                                'operations', 'LoginRequest')
+        'operations', 'LoginRequest')
       expect(op['schema_complete']).to be(false)
     end
   end
@@ -154,7 +154,7 @@ RSpec.describe WSDL::Definition::Builder do
       json = definition.to_json
       restored = WSDL::Definition.from_h(JSON.parse(json))
       op = restored.to_h.dig('services', 'AuthenticationWebServiceImplService', 'ports',
-                             'AuthenticationWebServiceImplPort', 'operations', 'authenticate')
+        'AuthenticationWebServiceImplPort', 'operations', 'authenticate')
 
       body_elements = op.dig('input', 'body')
       types = collect_types(body_elements)
@@ -185,7 +185,7 @@ RSpec.describe WSDL::Definition::Builder do
       json = definition.to_json
       restored = WSDL::Definition.from_h(JSON.parse(json))
       op = restored.to_h.dig('services', 'AuthenticationWebServiceImplService', 'ports',
-                             'AuthenticationWebServiceImplPort', 'operations', 'authenticate')
+        'AuthenticationWebServiceImplPort', 'operations', 'authenticate')
 
       names = collect_names(op.dig('input', 'body'))
       expect(names).to all(be_a(String))

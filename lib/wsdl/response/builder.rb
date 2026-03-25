@@ -119,7 +119,7 @@ module WSDL
           next if schema_by_name.key?(key)
 
           raise ResponseBuildError,
-                "Unknown part #{key.inspect}. Expected: #{schema_by_name.keys.inspect}"
+            "Unknown part #{key.inspect}. Expected: #{schema_by_name.keys.inspect}"
         end
 
         hash.each do |key, value|
@@ -161,8 +161,8 @@ module WSDL
           next if schema_attr_names.include?(name)
 
           raise ResponseBuildError,
-                "Unknown attribute #{name.inspect} at #{path}. " \
-                "Expected: #{schema_attr_names.to_a.inspect}"
+            "Unknown attribute #{name.inspect} at #{path}. " \
+            "Expected: #{schema_attr_names.to_a.inspect}"
         end
       end
 
@@ -171,8 +171,8 @@ module WSDL
           next if schema_by_name.key?(key)
 
           raise ResponseBuildError,
-                "Unknown element #{key.inspect} at #{path}. " \
-                "Expected: #{schema_by_name.keys.inspect}"
+            "Unknown element #{key.inspect} at #{path}. " \
+            "Expected: #{schema_by_name.keys.inspect}"
         end
       end
 
@@ -182,7 +182,7 @@ module WSDL
           next if hash.key?(element.name.to_sym)
 
           raise ResponseBuildError,
-                "Missing required element #{element.name.inspect} at #{path}"
+            "Missing required element #{element.name.inspect} at #{path}"
         end
       end
 
@@ -207,8 +207,8 @@ module WSDL
         return if element.list?
 
         raise ResponseBuildError,
-              "Singular element #{element.name.inspect} at #{path} received an Array. " \
-              'Use a scalar value, or check that maxOccurs > 1 in the schema.'
+          "Singular element #{element.name.inspect} at #{path} received an Array. " \
+          'Use a scalar value, or check that maxOccurs > 1 in the schema.'
       end
 
       def validate_single_value(value, element, path)
@@ -227,8 +227,8 @@ module WSDL
         return if allowed.any? { |klass| value.is_a?(klass) }
 
         raise ResponseBuildError,
-              "Type mismatch at #{path}: expected #{xsd_type} " \
-              "(#{allowed.map(&:name).join('/')}) but got #{value.class.name} (#{value.inspect})"
+          "Type mismatch at #{path}: expected #{xsd_type} " \
+          "(#{allowed.map(&:name).join('/')}) but got #{value.class.name} (#{value.inspect})"
       end
 
       def allowed_classes(xsd_type)
@@ -269,8 +269,8 @@ module WSDL
         wrapper = Nokogiri::XML::Node.new("#{@operation_name}Response", doc)
 
         if @output_namespace
-          wrapper.namespace = ensure_namespace(root, resolve_prefix(@output_namespace, namespaces),
-                                               @output_namespace, namespaces)
+          prefix = resolve_prefix(@output_namespace, namespaces)
+          wrapper.namespace = ensure_namespace(root, prefix, @output_namespace, namespaces)
         end
 
         body.add_child(wrapper)
@@ -325,8 +325,10 @@ module WSDL
           items = child_value.is_a?(Array) && !child_element.list? ? child_value : [child_value]
 
           items.each do |item|
-            parent.add_child(build_element(context[:doc], child_element, item,
-                                           context[:namespaces], context[:root]))
+            child_node = build_element(
+              context[:doc], child_element, item, context[:namespaces], context[:root]
+            )
+            parent.add_child(child_node)
           end
         end
       end

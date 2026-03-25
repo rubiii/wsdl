@@ -31,7 +31,7 @@ module WSDL
         return if @schema_complete
 
         raise RequestValidationError,
-              'Strict request validation requires complete operation-relevant schema metadata. '
+          'Strict request validation requires complete operation-relevant schema metadata. '
       end
 
       def validate_section!(nodes, expected_elements, section:)
@@ -61,7 +61,7 @@ module WSDL
 
       def raise_unknown_section_element!(node, section:)
         raise RequestValidationError,
-              "Unknown #{section} element #{node.name.inspect} for #{@contract.style} operation"
+          "Unknown #{section} element #{node.name.inspect} for #{@contract.style} operation"
       end
 
       def validate_required_elements!(counts, expected_elements, section:)
@@ -73,7 +73,7 @@ module WSDL
           next if counts[expected] >= min
 
           raise RequestValidationError,
-                "Missing required #{section} element #{expected.name.inspect}"
+            "Missing required #{section} element #{expected.name.inspect}"
         end
 
         validate_max_occurs_for_section!(counts, expected_elements, section:)
@@ -85,7 +85,7 @@ module WSDL
           next if counts[expected] <= expected.max_occurs.to_i
 
           raise RequestValidationError,
-                "Element #{expected.name.inspect} exceeds maxOccurs=#{expected.max_occurs} in #{section}"
+            "Element #{expected.name.inspect} exceeds maxOccurs=#{expected.max_occurs} in #{section}"
         end
       end
 
@@ -166,7 +166,7 @@ module WSDL
         return unless @strictness.request_validation && !xsi_nil_attribute?(attribute)
 
         raise RequestValidationError,
-              "Unknown attribute #{attribute.name.inspect} on element #{node.name.inspect}"
+          "Unknown attribute #{attribute.name.inspect} on element #{node.name.inspect}"
       end
 
       def validate_required_attributes!(expected_attributes, present, node)
@@ -177,7 +177,7 @@ module WSDL
           next if present[expected_attribute.name].positive?
 
           raise RequestValidationError,
-                "Missing required attribute #{expected_attribute.name.inspect} on element #{node.name.inspect}"
+            "Missing required attribute #{expected_attribute.name.inspect} on element #{node.name.inspect}"
         end
       end
 
@@ -192,7 +192,7 @@ module WSDL
         index = expected_children.index(expected_child)
         if @strictness.request_validation && index && index < last_known_index
           raise RequestValidationError,
-                "Element order mismatch under #{node.name.inspect}: received #{child.name.inspect} out of order"
+            "Element order mismatch under #{node.name.inspect}: received #{child.name.inspect} out of order"
         end
 
         index
@@ -200,7 +200,7 @@ module WSDL
 
       def raise_unknown_child!(child, node)
         raise RequestValidationError,
-              "Unknown child element #{child.name.inspect} under #{node.name.inspect}"
+          "Unknown child element #{child.name.inspect} under #{node.name.inspect}"
       end
 
       def raise_namespace_mismatch_if_known_name!(node, expected_elements, context:)
@@ -223,8 +223,8 @@ module WSDL
 
         expected_ns = expected_namespaces.one? ? expected_namespaces.first.inspect : expected_namespaces.inspect
         raise RequestValidationError,
-              "Element #{node.name.inspect} namespace #{node.namespace_uri.inspect} does not match expected " \
-              "namespace #{expected_ns} for element #{node.local_name.inspect} #{context}"
+          "Element #{node.name.inspect} namespace #{node.namespace_uri.inspect} does not match expected " \
+          "namespace #{expected_ns} for element #{node.local_name.inspect} #{context}"
       end
 
       def qualified_expected_namespaces(candidates)
@@ -236,8 +236,8 @@ module WSDL
 
       def raise_unqualified_namespace_mismatch!(node, context:)
         raise RequestValidationError,
-              "Element #{node.name.inspect} must be unqualified (no namespace) for element " \
-              "#{node.local_name.inspect} #{context}"
+          "Element #{node.name.inspect} must be unqualified (no namespace) for element " \
+          "#{node.local_name.inspect} #{context}"
       end
 
       def validate_expected_child_counts!(expected_children, counts, node)
@@ -254,7 +254,7 @@ module WSDL
         return unless counts[expected_child] < min
 
         raise RequestValidationError,
-              "Missing required child element #{expected_child.name.inspect} under #{node.name.inspect}"
+          "Missing required child element #{expected_child.name.inspect} under #{node.name.inspect}"
       end
 
       def validate_child_max_occurs!(expected_child, counts, node)
@@ -264,8 +264,8 @@ module WSDL
         return unless max.positive? && counts[expected_child] > max
 
         raise RequestValidationError,
-              "Element #{expected_child.name.inspect} exceeds maxOccurs=#{expected_child.max_occurs} " \
-              "under #{node.name.inspect}"
+          "Element #{expected_child.name.inspect} exceeds maxOccurs=#{expected_child.max_occurs} " \
+          "under #{node.name.inspect}"
       end
 
       def xsi_nil_attribute?(attribute)

@@ -72,10 +72,9 @@ module WSDL
           header_part_names.include?(part[:name])
         end
 
-        builder = XML::ElementBuilder.new(@schemas,
-                                          limits: @limits,
-                                          strictness: @strictness,
-                                          issues: @issues)
+        builder = XML::ElementBuilder.new(
+          @schemas, limits: @limits, strictness: @strictness, issues: @issues
+        )
         @header_parts = builder.build(header_parts)
         @body_parts = builder.build(body_parts)
       end

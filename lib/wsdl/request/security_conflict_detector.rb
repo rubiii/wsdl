@@ -38,7 +38,7 @@ module WSDL
           next unless blocked.include?(node.local_name)
 
           raise RequestSecurityConflictError,
-                "Manual header element #{node.name.inspect} conflicts with generated WS-Security content"
+            "Manual header element #{node.name.inspect} conflicts with generated WS-Security content"
         end
       end
 
@@ -49,7 +49,7 @@ module WSDL
             next unless attribute.local_name == 'Id'
 
             raise RequestSecurityConflictError,
-                  "Manual attribute #{attribute.name.inspect} in Body conflicts with generated signature references"
+              "Manual attribute #{attribute.name.inspect} in Body conflicts with generated signature references"
           end
         end
       end

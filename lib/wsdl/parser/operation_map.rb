@@ -105,15 +105,15 @@ module WSDL
         unless input_name
           available = ops.filter_map(&:input_name)
           raise ArgumentError,
-                "Operation #{name.inspect} is overloaded (#{ops.size} definitions). " \
-                "Provide input_name: to disambiguate. Available: #{available.inspect}"
+            "Operation #{name.inspect} is overloaded (#{ops.size} definitions). " \
+            "Provide input_name: to disambiguate. Available: #{available.inspect}"
         end
 
         matched = ops.find { |op| op.input_name == input_name.to_s }
         return matched if matched
 
         raise ArgumentError,
-              "No overload of #{name.inspect} with input_name: #{input_name.inspect}"
+          "No overload of #{name.inspect} with input_name: #{input_name.inspect}"
       end
     end
   end

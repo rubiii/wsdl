@@ -346,7 +346,7 @@ RSpec.describe WSDL::Parser::Resolver do
       it 'accepts custom limits' do
         custom_limits = WSDL::Limits.new(max_document_size: 1024)
         resolver_with_limits = described_class.new(http_test_client, sandbox_paths: [fixture_dir],
-                                                                     limits: custom_limits)
+          limits: custom_limits)
 
         expect(resolver_with_limits.limits).to eq(custom_limits)
       end

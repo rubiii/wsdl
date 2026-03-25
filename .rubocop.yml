@@ -31,6 +31,9 @@ Style/BlockDelimiters:
 Layout/LineLength:
   Max: 120
 
+Layout/ArgumentAlignment:
+  EnforcedStyle: with_fixed_indentation
+
 Layout/MultilineMethodCallIndentation:
   EnforcedStyle: indented
 

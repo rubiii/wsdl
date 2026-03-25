@@ -71,9 +71,11 @@ module WSDL
       #
       # @return [Input] the input message definition
       def input
-        @input ||= Input.new(@binding_operation, @port_type_operation,
-                             documents: @documents, schemas: @schemas,
-                             limits: @limits, strictness: @strictness, issues: @issues)
+        @input ||= Input.new(
+          @binding_operation, @port_type_operation,
+          documents: @documents, schemas: @schemas,
+          limits: @limits, strictness: @strictness, issues: @issues
+        )
       end
 
       # Returns the output message definition for this operation.
@@ -88,9 +90,11 @@ module WSDL
 
         return unless @port_type_operation.output
 
-        @output = Output.new(@binding_operation, @port_type_operation,
-                             documents: @documents, schemas: @schemas,
-                             limits: @limits, strictness: @strictness, issues: @issues)
+        @output = Output.new(
+          @binding_operation, @port_type_operation,
+          documents: @documents, schemas: @schemas,
+          limits: @limits, strictness: @strictness, issues: @issues
+        )
       end
 
       # Returns the input style for this operation.

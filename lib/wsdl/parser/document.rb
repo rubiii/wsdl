@@ -96,7 +96,7 @@ module WSDL
         return unless @document.root.namespace&.href == NS::WSDL_2_0
 
         raise UnsupportedWSDLVersionError,
-              'WSDL 2.0 is not supported. This library only supports WSDL 1.1 documents.'
+          'WSDL 2.0 is not supported. This library only supports WSDL 1.1 documents.'
       end
 
       def reject_empty_document!

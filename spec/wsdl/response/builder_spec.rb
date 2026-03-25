@@ -16,8 +16,8 @@ RSpec.describe WSDL::Response::Builder do
       subject(:builder) do
         described_class.new(
           schema_elements: schema_elements('wsdl/blz_service',
-                                           service: :BLZService, port: :BLZServiceSOAP11port_http,
-                                           operation_name: :getBank)
+            service: :BLZService, port: :BLZServiceSOAP11port_http,
+            operation_name: :getBank)
         )
       end
 
@@ -143,8 +143,8 @@ RSpec.describe WSDL::Response::Builder do
       subject(:builder) do
         described_class.new(
           schema_elements: schema_elements('wsdl/interhome',
-                                           service: :WebService, port: :WebServiceSoap,
-                                           operation_name: :ClientBooking)
+            service: :WebService, port: :WebServiceSoap,
+            operation_name: :ClientBooking)
         )
       end
 
@@ -177,8 +177,8 @@ RSpec.describe WSDL::Response::Builder do
 
     it 'produces SOAP 1.2 envelopes when specified' do
       elements = schema_elements('wsdl/blz_service',
-                                 service: :BLZService, port: :BLZServiceSOAP12port_http,
-                                 operation_name: :getBank)
+        service: :BLZService, port: :BLZServiceSOAP12port_http,
+        operation_name: :getBank)
 
       builder = described_class.new(schema_elements: elements, soap_version: '1.2')
       xml = builder.to_xml(details: { bezeichnung: 'Test' })
@@ -245,8 +245,8 @@ RSpec.describe WSDL::Response::Builder do
     subject(:builder) do
       described_class.new(
         schema_elements: schema_elements('wsdl/blz_service',
-                                         service: :BLZService, port: :BLZServiceSOAP11port_http,
-                                         operation_name: :getBank)
+          service: :BLZService, port: :BLZServiceSOAP11port_http,
+          operation_name: :getBank)
       )
     end
 
@@ -266,8 +266,8 @@ RSpec.describe WSDL::Response::Builder do
 
     it 'rejects missing required elements' do
       elements = schema_elements('wsdl/interhome',
-                                 service: :WebService, port: :WebServiceSoap,
-                                 operation_name: :ClientBooking)
+        service: :WebService, port: :WebServiceSoap,
+        operation_name: :ClientBooking)
       interhome_builder = described_class.new(schema_elements: elements)
 
       expect { interhome_builder.validate!(ClientBookingResult: {}) }
@@ -286,8 +286,8 @@ RSpec.describe WSDL::Response::Builder do
 
     it 'accepts arrays for plural elements' do
       elements = schema_elements('wsdl/interhome',
-                                 service: :WebService, port: :WebServiceSoap,
-                                 operation_name: :ClientBooking)
+        service: :WebService, port: :WebServiceSoap,
+        operation_name: :ClientBooking)
       interhome_builder = described_class.new(schema_elements: elements)
 
       expect {

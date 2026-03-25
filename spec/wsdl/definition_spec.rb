@@ -73,7 +73,7 @@ RSpec.describe WSDL::Definition do
       it 'always includes service and port keys regardless of filters' do
         all_ops = definition.operations
         filtered = definition.operations('AuthenticationWebServiceImplService',
-                                         'AuthenticationWebServiceImplPort')
+          'AuthenticationWebServiceImplPort')
 
         expect(all_ops.first.keys).to eq(filtered.first.keys)
       end
@@ -206,7 +206,7 @@ RSpec.describe WSDL::Definition do
 
     it 'accepts explicit service, port, operation' do
       data = definition.operation_data('AuthenticationWebServiceImplService',
-                                       'AuthenticationWebServiceImplPort', 'authenticate')
+        'AuthenticationWebServiceImplPort', 'authenticate')
       expect(data[:name]).to eq('authenticate')
     end
   end
@@ -214,7 +214,7 @@ RSpec.describe WSDL::Definition do
   describe '#endpoint' do
     it 'returns the endpoint URL for a service and port' do
       expect(definition.endpoint('AuthenticationWebServiceImplService',
-                                 'AuthenticationWebServiceImplPort'))
+        'AuthenticationWebServiceImplPort'))
         .to eq('http://example.com/validation/1.0/AuthenticationService')
     end
   end
@@ -267,7 +267,7 @@ RSpec.describe WSDL::Definition do
     it 'auto-resolves service and port' do
       expect(definition.to_dsl('authenticate')).to eq(
         definition.to_dsl('AuthenticationWebServiceImplService',
-                          'AuthenticationWebServiceImplPort', 'authenticate')
+          'AuthenticationWebServiceImplPort', 'authenticate')
       )
     end
 

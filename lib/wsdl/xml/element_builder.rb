@@ -427,8 +427,8 @@ module WSDL
 
         @depth_exceeded = true
         record_issue(:resource_limit,
-                     "Type nesting depth #{depth} exceeds limit of #{@limits.max_type_nesting_depth} " \
-                     "while processing type #{type.name.inspect}")
+          "Type nesting depth #{depth} exceeds limit of #{@limits.max_type_nesting_depth} " \
+          "while processing type #{type.name.inspect}")
         false
       end
 

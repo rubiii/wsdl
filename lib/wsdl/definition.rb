@@ -319,8 +319,8 @@ module WSDL
 
       unless version == Builder::SCHEMA_VERSION
         raise ArgumentError,
-              "Definition schema version mismatch: expected #{Builder::SCHEMA_VERSION}, " \
-              "got #{version.inspect}. Please re-parse the WSDL with WSDL.parse."
+          "Definition schema version mismatch: expected #{Builder::SCHEMA_VERSION}, " \
+          "got #{version.inspect}. Please re-parse the WSDL with WSDL.parse."
       end
 
       new(deserialize(hash))
@@ -340,7 +340,7 @@ module WSDL
       when 3 then resolve_explicit_operation(args[0], args[1], args[2], input_name:)
       else
         raise ArgumentError,
-              'Pass 1 argument (operation_name) or 3 arguments (service_name, port_name, operation_name).'
+          'Pass 1 argument (operation_name) or 3 arguments (service_name, port_name, operation_name).'
       end
     end
 
@@ -383,8 +383,8 @@ module WSDL
       unless input_name
         available = entries.filter_map { |e| e[:input_name] }
         raise ArgumentError,
-              "Operation #{operation.inspect} is overloaded. Pass input_name: to disambiguate. " \
-              "Available: #{available.inspect}"
+          "Operation #{operation.inspect} is overloaded. Pass input_name: to disambiguate. " \
+          "Available: #{available.inspect}"
       end
 
       match = entries.find { |e| e[:input_name] == input_name }
@@ -392,8 +392,8 @@ module WSDL
 
       available = entries.filter_map { |e| e[:input_name] }
       raise ArgumentError,
-            "No overload of #{operation.inspect} matches input_name: #{input_name.inspect}. " \
-            "Available: #{available.inspect}"
+        "No overload of #{operation.inspect} matches input_name: #{input_name.inspect}. " \
+        "Available: #{available.inspect}"
     end
 
     # @return [String] error message for unknown operations

@@ -141,7 +141,7 @@ RSpec.describe WSDL::HTTPAdapter::RedirectGuard do
 
       expect { guard.send(:validate_redirect_scheme!, original, target) }
         .to raise_error(WSDL::UnsafeRedirectError,
-                        /from #{Regexp.escape(original.to_s)} to #{Regexp.escape(target.to_s)}/)
+          /from #{Regexp.escape(original.to_s)} to #{Regexp.escape(target.to_s)}/)
     end
 
     it 'stores the target URL on the error' do
@@ -337,7 +337,7 @@ RSpec.describe WSDL::HTTPAdapter::RedirectGuard do
 
       it 'normalizes IPv4-mapped IPv6 to native IPv4 for connection pinning' do
         uri = instance_double(URI::HTTP, hostname: '::ffff:93.184.216.34', host: '::ffff:93.184.216.34',
-                                         to_s: 'http://[::ffff:93.184.216.34]/')
+          to_s: 'http://[::ffff:93.184.216.34]/')
 
         expect(guard.send(:validate_redirect_target!, uri)).to eq('93.184.216.34')
       end

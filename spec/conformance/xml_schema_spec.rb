@@ -369,7 +369,7 @@ RSpec.describe 'XML Schema conformance' do
             '<ns:Name>Alice</ns:Name></ns:Response>'
 
       name_element = schema_element('Name', type: 'xsd:string',
-                                            namespace: 'http://example.com', form: 'qualified')
+        namespace: 'http://example.com', form: 'qualified')
 
       result = WSDL::Response::Parser.parse(xml, schema: [name_element])
       expect(result[:Response][:Name]).to eq('Alice')
@@ -381,7 +381,7 @@ RSpec.describe 'XML Schema conformance' do
             '<Name>Alice</Name></ns:Response>'
 
       name_element = schema_element('Name', type: 'xsd:string',
-                                            namespace: nil, form: 'unqualified')
+        namespace: nil, form: 'unqualified')
 
       result = WSDL::Response::Parser.parse(xml, schema: [name_element])
       expect(result[:Response][:Name]).to eq('Alice')
@@ -397,7 +397,7 @@ RSpec.describe 'XML Schema conformance' do
       )
       wrapper = schema_element(
         'User', children: [qualified_child, unqualified_child],
-                namespace: 'http://example.com', form: 'qualified'
+        namespace: 'http://example.com', form: 'qualified'
       )
 
       xml = '<ns:Response xmlns:ns="http://example.com">' \

@@ -101,9 +101,9 @@ module WSDL
         return unless document.internal_subset
 
         raise WSDL::XMLSecurityError,
-              'DOCTYPE declarations are not allowed. ' \
-              'Legitimate SOAP/WSDL documents do not require DOCTYPE. ' \
-              'This restriction prevents XXE and entity expansion attacks.'
+          'DOCTYPE declarations are not allowed. ' \
+          'Legitimate SOAP/WSDL documents do not require DOCTYPE. ' \
+          'This restriction prevents XXE and entity expansion attacks.'
       end
 
       def remove_blank_text_nodes!(document)
@@ -201,7 +201,7 @@ module WSDL
       def build_username_token_xml(token)
         Nokogiri::XML::Builder.new do |xml|
           xml['wsse'].UsernameToken('xmlns:wsse' => SecurityNS::WSSE, 'xmlns:wsu' => SecurityNS::WSU,
-                                    'wsu:Id' => token.id) do
+            'wsu:Id' => token.id) do
             xml['wsse'].Username(token.username)
             xml['wsse'].Password(token.password_value, 'Type' => token.password_type)
             add_digest_elements(xml, token) if token.digest?

@@ -256,8 +256,8 @@ RSpec.describe 'WSDL 1.1 conformance' do
     # http://www.ws-i.org/Profiles/BasicProfile-1.1-2004-08-24.html#R2304
     it 'WSI-R2304: overloaded portType operations rejected in strict mode' do
       client = WSDL::Client.new fixture('parser/operation_overloading'),
-                                http: http_mock,
-                                strictness: WSDL::Strictness.on
+        http: http_mock,
+        strictness: WSDL::Strictness.on
 
       expect { client.operation('LookupService', 'LookupPort', 'Lookup') }
         .to raise_error(WSDL::OperationOverloadError) { |error|

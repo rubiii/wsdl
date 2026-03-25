@@ -27,19 +27,19 @@ module WSDL
 
         if source.inline_xml?
           raise ArgumentError,
-                'Inline XML WSDL is not supported. Provide an HTTP(S) URL or a local file path.'
+            'Inline XML WSDL is not supported. Provide an HTTP(S) URL or a local file path.'
         end
 
         if source.file_url?
           raise ArgumentError,
-                "file:// URLs are not supported: #{value.inspect}. " \
-                'Provide an HTTP(S) URL or a local file path.'
+            "file:// URLs are not supported: #{value.inspect}. " \
+            'Provide an HTTP(S) URL or a local file path.'
         end
 
         if source.unsupported_scheme?
           raise ArgumentError,
-                "Unsupported URL scheme for WSDL source #{value.inspect}. " \
-                'Only HTTP(S) URLs and local file paths are supported.'
+            "Unsupported URL scheme for WSDL source #{value.inspect}. " \
+            'Only HTTP(S) URLs and local file paths are supported.'
         end
 
         source

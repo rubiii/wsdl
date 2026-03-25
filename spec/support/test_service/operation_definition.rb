@@ -82,8 +82,8 @@ module WSDL
 
           unless element
             raise ResponseDefinitionError,
-                  "Unknown input element #{key.inspect} in on() for #{operation_name}. " \
-                  "Known input elements: #{input_leaves.keys.inspect}"
+              "Unknown input element #{key.inspect} in on() for #{operation_name}. " \
+              "Known input elements: #{input_leaves.keys.inspect}"
           end
 
           validate_input_type(value, element, key, operation_name)
@@ -95,9 +95,9 @@ module WSDL
         return if value.nil? || allowed.nil? || allowed.any? { |klass| value.is_a?(klass) }
 
         raise ResponseDefinitionError,
-              "Type mismatch for input #{key.inspect} in on() for #{operation_name}: " \
-              "expected #{element.base_type} (#{allowed.map(&:name).join('/')}) " \
-              "but got #{value.class.name} (#{value.inspect})"
+          "Type mismatch for input #{key.inspect} in on() for #{operation_name}: " \
+          "expected #{element.base_type} (#{allowed.map(&:name).join('/')}) " \
+          "but got #{value.class.name} (#{value.inspect})"
       end
 
       def allowed_classes_for(xsd_type)

@@ -43,7 +43,7 @@ RSpec.describe WSDL do
 
     it 'accepts strictness option' do
       definition = described_class.parse(fixture('wsdl/juniper'), http: http_mock,
-                                                                  strictness: { schema_imports: false })
+        strictness: { schema_imports: false })
 
       expect(definition).to be_a(WSDL::Definition)
       expect(definition.sources.any? { |s| s[:status] == 'failed' }).to be true

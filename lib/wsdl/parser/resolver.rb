@@ -156,21 +156,21 @@ module WSDL
       def validate_location_source!(source)
         if source.inline_xml?
           raise PathRestrictionError,
-                "Inline XML is not supported as a WSDL/schema location: #{source.value.inspect}. " \
-                'Use an HTTP(S) URL or a local file path.'
+            "Inline XML is not supported as a WSDL/schema location: #{source.value.inspect}. " \
+            'Use an HTTP(S) URL or a local file path.'
         end
 
         if source.file_url?
           raise PathRestrictionError,
-                "file:// URLs are not allowed for security reasons: #{source.value.inspect}. " \
-                'Use a local file path instead if you need to load from the filesystem.'
+            "file:// URLs are not allowed for security reasons: #{source.value.inspect}. " \
+            'Use a local file path instead if you need to load from the filesystem.'
         end
 
         return unless source.unsupported_scheme?
 
         raise PathRestrictionError,
-              "Unsupported URL scheme for schema location #{source.value.inspect}. " \
-              'Only HTTP(S) URLs and local file paths are supported.'
+          "Unsupported URL scheme for schema location #{source.value.inspect}. " \
+          'Only HTTP(S) URLs and local file paths are supported.'
       end
 
       # Validates that a valid base exists for resolving a relative location.
@@ -187,7 +187,7 @@ module WSDL
         return if base_source.url? || base_source.file_path?
 
         raise UnresolvableImportError,
-              "Cannot resolve relative path #{location.inspect}: base #{base.inspect} is not a URL or file path."
+          "Cannot resolve relative path #{location.inspect}: base #{base.inspect} is not a URL or file path."
       end
 
       # Fetches content from an absolute location.
@@ -314,8 +314,8 @@ module WSDL
       def validate_file_access!(path)
         if @sandbox_paths.nil?
           raise PathRestrictionError,
-                "File access is disabled. Cannot read #{path.inspect}. " \
-                'All schema imports must use URLs, or provide sandbox_paths to allow file access.'
+            "File access is disabled. Cannot read #{path.inspect}. " \
+            'All schema imports must use URLs, or provide sandbox_paths to allow file access.'
         end
 
         validate_path_in_sandbox!(path)
@@ -333,9 +333,9 @@ module WSDL
         return normalized_path if @sandbox_paths.any? { |sandbox| path_within_directory?(normalized_path, sandbox) }
 
         raise PathRestrictionError,
-              "Path #{path.inspect} is outside the allowed directories. " \
-              "Allowed: #{@sandbox_paths.inspect}. " \
-              'This may indicate a path traversal attack in a schemaLocation attribute.'
+          "Path #{path.inspect} is outside the allowed directories. " \
+          "Allowed: #{@sandbox_paths.inspect}. " \
+          'This may indicate a path traversal attack in a schemaLocation attribute.'
       end
 
       # Checks if a canonical path is within a canonical directory.

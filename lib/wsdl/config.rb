@@ -117,7 +117,7 @@ module WSDL
 
       Kernel.warn '[WSDL] strict_schema is deprecated. ' \
                   "Use strictness: WSDL::Strictness.#{strict_schema ? 'on' : 'off'} instead.",
-                  uplevel: 2
+        uplevel: 2
       strict_schema ? Strictness.on : Strictness.off
     end
   end

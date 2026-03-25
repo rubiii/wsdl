@@ -306,9 +306,9 @@ module WSDL
         builder = Nokogiri::XML::Builder.new do |xml|
           @xml_helper.build_element(xml, :ds, 'SignedInfo') do
             @xml_helper.build_child(xml, :ds, 'CanonicalizationMethod',
-                                    Algorithm: @canonicalizer.algorithm_id)
+              Algorithm: @canonicalizer.algorithm_id)
             @xml_helper.build_child(xml, :ds, 'SignatureMethod',
-                                    Algorithm: @signature_algorithm[:id])
+              Algorithm: @signature_algorithm[:id])
 
             @references.each do |reference|
               build_reference(xml, reference)
@@ -328,7 +328,7 @@ module WSDL
         @xml_helper.build_child(xml, :ds, 'Reference', URI: reference.uri) do
           @xml_helper.build_child(xml, :ds, 'Transforms') do
             @xml_helper.build_child(xml, :ds, 'Transform',
-                                    Algorithm: @canonicalizer.algorithm_id) do
+              Algorithm: @canonicalizer.algorithm_id) do
               if reference.inclusive_namespaces?
                 xml['ec'].InclusiveNamespaces(
                   'xmlns:ec' => SignatureNS::EC,

@@ -397,7 +397,7 @@ RSpec.describe WSDL::Request::Validator do
     context 'with wildcard (any_content)' do
       let(:parent) do
         build_element(name: 'Parent', namespace: ns_example,
-                      children: [child_a], any_content: true)
+          children: [child_a], any_content: true)
       end
       let(:contract) { build_contract(body_elements: [parent]) }
 
@@ -413,9 +413,9 @@ RSpec.describe WSDL::Request::Validator do
 
       it 'still validates known children even with wildcard' do
         child_a_with_max = build_element(name: 'A', namespace: ns_example,
-                                         min_occurs: '1', max_occurs: '1')
+          min_occurs: '1', max_occurs: '1')
         wildcard_parent = build_element(name: 'Parent', namespace: ns_example,
-                                        children: [child_a_with_max], any_content: true)
+          children: [child_a_with_max], any_content: true)
         c = build_contract(body_elements: [wildcard_parent])
 
         node = build_node('Parent', namespace_uri: ns_example, children: [
@@ -537,11 +537,11 @@ RSpec.describe WSDL::Request::Validator do
       let(:inner_attr) { build_attribute(name: 'type', use: 'required') }
       let(:inner) do
         build_element(name: 'Detail', namespace: nil, form: 'unqualified',
-                      min_occurs: '1', max_occurs: 'unbounded', attributes: [inner_attr])
+          min_occurs: '1', max_occurs: 'unbounded', attributes: [inner_attr])
       end
       let(:outer) do
         build_element(name: 'Order', namespace: ns_example, form: 'qualified',
-                      children: [inner])
+          children: [inner])
       end
       let(:contract) { build_contract(body_elements: [outer]) }
 

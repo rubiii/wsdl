@@ -60,7 +60,7 @@ RSpec.describe 'Strictness fixture matrix' do
       definition = WSDL.parse(fixture(fixture_key))
 
       expect { definition.verify! }.not_to raise_error,
-                                           "expected verify! to pass for #{fixture_key}"
+        "expected verify! to pass for #{fixture_key}"
     end
   end
 
@@ -69,7 +69,7 @@ RSpec.describe 'Strictness fixture matrix' do
       client = WSDL::Client.new(fixture(fixture_key))
 
       expect(client.definition.build_issues).not_to be_empty,
-                                                    "expected build issues for #{fixture_key}"
+        "expected build issues for #{fixture_key}"
     end
   end
 
@@ -78,7 +78,7 @@ RSpec.describe 'Strictness fixture matrix' do
       definition = WSDL.parse(fixture(fixture_key))
 
       expect { definition.verify! }.to raise_error(WSDL::DefinitionError),
-                                       "expected verify! to raise for #{fixture_key}"
+        "expected verify! to raise for #{fixture_key}"
     end
   end
 
@@ -95,7 +95,7 @@ RSpec.describe 'Strictness fixture matrix' do
       client = WSDL::Client.new(fixture(fixture_key), strictness: WSDL::Strictness.off)
 
       expect(client.definition.build_issues).not_to be_empty,
-                                                    "expected build issues for #{fixture_key} in lenient mode"
+        "expected build issues for #{fixture_key} in lenient mode"
     end
   end
 

@@ -250,7 +250,7 @@ RSpec.describe 'WSDL error hierarchy' do
 
     it 'passes the message through to super alongside keyword arguments' do
       error = described_class.new('missing', reference_type: :binding, reference_name: 'Foo',
-                                             namespace: 'http://example.com', context: 'resolving port')
+        namespace: 'http://example.com', context: 'resolving port')
 
       expect(error.message).to eq('missing')
       expect(error.reference_type).to eq(:binding)

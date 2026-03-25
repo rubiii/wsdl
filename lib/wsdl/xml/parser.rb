@@ -336,9 +336,9 @@ module WSDL
           return unless contains_doctype?(xml_string)
 
           raise WSDL::XMLSecurityError,
-                'DOCTYPE declarations are not allowed. ' \
-                'Legitimate SOAP/WSDL documents do not require DOCTYPE. ' \
-                'This restriction prevents XXE and entity expansion attacks.'
+            'DOCTYPE declarations are not allowed. ' \
+            'Legitimate SOAP/WSDL documents do not require DOCTYPE. ' \
+            'This restriction prevents XXE and entity expansion attacks.'
         end
 
         # Patterns in libxml2 error messages that indicate security-related failures.

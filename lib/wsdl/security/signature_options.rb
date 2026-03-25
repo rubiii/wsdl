@@ -64,7 +64,7 @@ module WSDL
           sign_timestamp: options.fetch(:sign_timestamp, DEFAULTS[:sign_timestamp]),
           sign_addressing: options.fetch(:sign_addressing, DEFAULTS[:sign_addressing]),
           explicit_namespace_prefixes: options.fetch(:explicit_namespace_prefixes,
-                                                     DEFAULTS[:explicit_namespace_prefixes]),
+            DEFAULTS[:explicit_namespace_prefixes]),
           key_reference: options.fetch(:key_reference, DEFAULTS[:key_reference]),
           digest_algorithm: options.fetch(:digest_algorithm, DEFAULTS[:digest_algorithm])
         )
