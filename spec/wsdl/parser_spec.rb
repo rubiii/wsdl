@@ -94,10 +94,10 @@ RSpec.describe WSDL::Parser do
         # Here we verify the DocumentCollection detects duplicates on access.
         documents = WSDL::Parser::DocumentCollection.new
         schemas = WSDL::Schema::Collection.new
-        source = WSDL::Source.validate_wsdl!(fixture('parser/duplicate_definitions/root'))
+        source = WSDL::Resolver::Source.validate_wsdl!(fixture('parser/duplicate_definitions/root'))
         sandbox = [File.dirname(File.expand_path(fixture('parser/duplicate_definitions/root')))]
-        resolver = WSDL::Parser::Resolver.new(http_mock, sandbox_paths: sandbox)
-        importer = WSDL::Parser::Importer.new(resolver, documents, schemas, WSDL::ParseOptions.default)
+        loader = WSDL::Resolver::Loader.new(http_mock, sandbox_paths: sandbox)
+        importer = WSDL::Resolver::Importer.new(loader, documents, schemas, WSDL::ParseOptions.default)
         importer.import(source.value)
 
         expect { documents.messages }.to raise_error(WSDL::DuplicateDefinitionError) { |error|

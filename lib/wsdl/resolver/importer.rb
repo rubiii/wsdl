@@ -6,7 +6,7 @@ require 'uri'
 require 'wsdl/xml/parser'
 
 module WSDL
-  module Parser
+  module Resolver
     # Imports WSDL documents and their referenced schemas.
     #
     # Handles recursive imports, including WSDL imports and XSD imports/includes.
@@ -38,13 +38,13 @@ module WSDL
 
       # Creates a new Importer instance.
       #
-      # @param resolver [Resolver] the resolver for fetching documents
-      # @param documents [DocumentCollection] the collection to store parsed documents
+      # @param loader [Loader] the loader for fetching documents
+      # @param documents [Parser::DocumentCollection] the collection to store parsed documents
       # @param schemas [Schema::Collection] the collection to store parsed schemas
       # @param parse_options [ParseOptions] parse configuration options
       #
-      def initialize(resolver, documents, schemas, parse_options)
-        @resolver = resolver
+      def initialize(loader, documents, schemas, parse_options)
+        @loader = loader
         @documents = documents
         @schemas = schemas
         @limits = parse_options.limits
@@ -98,23 +98,23 @@ module WSDL
       # @param location [String] the document location
       # @param base [String, nil] the base location for resolving relative paths
       # @yield [document, resolved_location] yields each parsed document
-      # @yieldparam document [Document] the parsed document
+      # @yieldparam document [Parser::Document] the parsed document
       # @yieldparam resolved_location [String] the resolved absolute location
       # @return [void]
       def import_document(location, base:, &block)
-        resolved_location = @resolver.resolve_location(location, base)
+        resolved_location = @loader.resolve_location(location, base)
 
         if @import_locations.include? resolved_location
           logger.info("Skipping already imported location #{resolved_location.inspect}.")
           return
         end
 
-        xml = @resolver.resolve(location, base:)
+        xml = @loader.resolve(location, base:)
         @import_locations << resolved_location
         record_resolved_source(resolved_location, xml)
 
         parsed = XML::Parser.parse_with_logging(xml, strict: false)
-        document = Document.new(parsed, @schemas)
+        document = Parser::Document.new(parsed, @schemas)
         block.call(document, resolved_location)
 
         # Resolve WSDL imports (relative to this document's location)
@@ -173,7 +173,7 @@ module WSDL
       def process_references(locations, base, include_into: nil)
         found = false
         locations.each do |location|
-          resolved = @resolver.resolve_location(location, base)
+          resolved = @loader.resolve_location(location, base)
           next if @processed_locations.include?(resolved)
 
           process_schema_reference(location, base, include_into:)
@@ -189,7 +189,7 @@ module WSDL
       # @param include_into [Schema::Definition, nil] if provided, merge into this schema
       # @return [void]
       def process_schema_reference(schema_location, base, include_into: nil)
-        resolved_location = @resolver.resolve_location(schema_location, base)
+        resolved_location = @loader.resolve_location(schema_location, base)
         @processed_locations.add(resolved_location)
 
         if @import_locations.include?(resolved_location)
@@ -216,7 +216,7 @@ module WSDL
         record_resolved_source(resolved_location, xml)
 
         parsed = parse_schema_xml(xml, schema_location, base, action)
-        document = Document.new(parsed, @schemas)
+        document = Parser::Document.new(parsed, @schemas)
         new_schemas = document.schemas(resolved_location)
 
         apply_schemas(new_schemas, include_into)
@@ -232,7 +232,7 @@ module WSDL
       # @return [String] raw schema XML
       # @raise [SchemaImportError] when schema cannot be resolved
       def load_schema_xml(schema_location, base, action)
-        @resolver.resolve(schema_location, base:)
+        @loader.resolve(schema_location, base:)
       rescue *RECOVERABLE_SCHEMA_IMPORT_ERRORS => e
         raise SchemaImportError.new(
           "Failed to resolve XML Schema #{action} #{schema_location.inspect} " \

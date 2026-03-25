@@ -3,13 +3,12 @@
 module WSDL
   # WSDL and XSD document parsing.
   #
-  # This module contains classes responsible for importing, resolving, and
-  # parsing WSDL documents and their referenced XML schemas. It handles
-  # recursive imports, relative path resolution, and builds an in-memory
-  # representation of the WSDL structure.
+  # This module contains classes for parsing WSDL documents and their
+  # referenced XML schemas into structured objects. I/O (fetching,
+  # sandboxing, import orchestration) lives in {Resolver}.
   #
-  # The main entry point is {.parse}, which validates the source, runs
-  # the import pipeline, and returns a frozen {Definition}.
+  # The main entry point is {.parse}, which coordinates the
+  # {Resolver} and {Definition::Builder} to return a frozen {Definition}.
   #
   # @api private
   #
@@ -28,8 +27,9 @@ module WSDL
     require 'wsdl/parser/service'
     require 'wsdl/parser/document'
     require 'wsdl/parser/document_collection'
-    require 'wsdl/parser/resolver'
-    require 'wsdl/parser/importer'
+    require 'wsdl/resolver/source'
+    require 'wsdl/resolver/loader'
+    require 'wsdl/resolver/importer'
 
     # Parses a WSDL document and returns a frozen {Definition}.
     #
@@ -50,10 +50,10 @@ module WSDL
       documents = DocumentCollection.new
       schemas = Schema::Collection.new
 
-      source = Source.validate_wsdl!(wsdl)
+      source = WSDL::Resolver::Source.validate_wsdl!(wsdl)
       resolved_sandbox_paths = source.resolve_sandbox_paths(parse_options.sandbox_paths)
-      resolver = Resolver.new(http, sandbox_paths: resolved_sandbox_paths, limits: parse_options.limits)
-      importer = Importer.new(resolver, documents, schemas, parse_options)
+      loader = WSDL::Resolver::Loader.new(http, sandbox_paths: resolved_sandbox_paths, limits: parse_options.limits)
+      importer = WSDL::Resolver::Importer.new(loader, documents, schemas, parse_options)
       importer.import(source.value)
 
       Definition::Builder.new(

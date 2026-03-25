@@ -16,9 +16,9 @@ RSpec.describe 'WSDL 1.1 conformance' do
       wsdl = fixture('parser/duplicate_definitions/root')
       documents = WSDL::Parser::DocumentCollection.new
       schemas = WSDL::Schema::Collection.new
-      source = WSDL::Source.validate_wsdl!(wsdl)
-      resolver = WSDL::Parser::Resolver.new(http_mock, sandbox_paths: [File.dirname(File.expand_path(wsdl))])
-      importer = WSDL::Parser::Importer.new(resolver, documents, schemas, WSDL::ParseOptions.default)
+      source = WSDL::Resolver::Source.validate_wsdl!(wsdl)
+      loader = WSDL::Resolver::Loader.new(http_mock, sandbox_paths: [File.dirname(File.expand_path(wsdl))])
+      importer = WSDL::Resolver::Importer.new(loader, documents, schemas, WSDL::ParseOptions.default)
       importer.import(source.value)
 
       expect { documents.messages }

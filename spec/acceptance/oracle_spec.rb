@@ -311,10 +311,10 @@ RSpec.describe 'Oracle' do
   def parse_schemas(wsdl_path)
     documents = WSDL::Parser::DocumentCollection.new
     schemas = WSDL::Schema::Collection.new
-    source = WSDL::Source.validate_wsdl!(wsdl_path)
+    source = WSDL::Resolver::Source.validate_wsdl!(wsdl_path)
     sandbox = [File.dirname(File.expand_path(wsdl_path))]
-    resolver = WSDL::Parser::Resolver.new(WSDL.http_adapter.new, sandbox_paths: sandbox)
-    importer = WSDL::Parser::Importer.new(resolver, documents, schemas, WSDL::ParseOptions.default)
+    loader = WSDL::Resolver::Loader.new(WSDL.http_adapter.new, sandbox_paths: sandbox)
+    importer = WSDL::Resolver::Importer.new(loader, documents, schemas, WSDL::ParseOptions.default)
     importer.import(source.value)
     schemas
   end

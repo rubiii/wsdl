@@ -3,8 +3,8 @@
 require 'tmpdir'
 require 'fileutils'
 
-RSpec.describe WSDL::Parser::Resolver do
-  subject(:resolver) { described_class.new(http_test_client, **options) }
+RSpec.describe WSDL::Resolver::Loader do
+  subject(:loader) { described_class.new(http_test_client, **options) }
 
   let(:http_test_client) do
     Class.new do
@@ -21,14 +21,14 @@ RSpec.describe WSDL::Parser::Resolver do
     it 'resolves remote files using a simple HTTP client interface' do
       url = 'http://example.com?wsdl'
 
-      xml = resolver.resolve(url)
+      xml = loader.resolve(url)
       expect(xml).to eq("raw_response for #{url}")
     end
 
     it 'resolves local files when sandbox_paths is configured' do
       fixture_path = fixture('wsdl/authentication')
 
-      xml = resolver.resolve(fixture_path)
+      xml = loader.resolve(fixture_path)
       expect(xml).to eq(File.read(fixture_path))
     end
 
@@ -36,7 +36,7 @@ RSpec.describe WSDL::Parser::Resolver do
       string = '<xml/>'
 
       expect {
-        resolver.resolve(string)
+        loader.resolve(string)
       }.to raise_error(WSDL::PathRestrictionError, /Inline XML is not supported/)
     end
   end
@@ -46,7 +46,7 @@ RSpec.describe WSDL::Parser::Resolver do
       base = '/path/to/wsdl/service.wsdl'
       relative = '../schemas/types.xsd'
 
-      resolved = resolver.resolve_location(relative, base)
+      resolved = loader.resolve_location(relative, base)
       expect(resolved).to eq('/path/to/schemas/types.xsd')
     end
 
@@ -54,21 +54,21 @@ RSpec.describe WSDL::Parser::Resolver do
       base = 'http://example.com/wsdl/service.wsdl'
       relative = '../schemas/types.xsd'
 
-      resolved = resolver.resolve_location(relative, base)
+      resolved = loader.resolve_location(relative, base)
       expect(resolved).to eq('http://example.com/schemas/types.xsd')
     end
 
     it 'returns absolute URLs unchanged' do
       absolute = 'http://example.com/schemas/types.xsd'
 
-      resolved = resolver.resolve_location(absolute, '/some/base.wsdl')
+      resolved = loader.resolve_location(absolute, '/some/base.wsdl')
       expect(resolved).to eq(absolute)
     end
 
     it 'returns absolute file paths unchanged' do
       absolute = '/absolute/path/to/schema.xsd'
 
-      resolved = resolver.resolve_location(absolute, '/some/base.wsdl')
+      resolved = loader.resolve_location(absolute, '/some/base.wsdl')
       expect(resolved).to eq(absolute)
     end
 
@@ -76,29 +76,29 @@ RSpec.describe WSDL::Parser::Resolver do
       xml = '<schema/>'
 
       expect {
-        resolver.resolve_location(xml, '/some/base.wsdl')
+        loader.resolve_location(xml, '/some/base.wsdl')
       }.to raise_error(WSDL::PathRestrictionError, /Inline XML is not supported/)
     end
 
     it 'identifies relative locations' do
-      expect(resolver.relative_location?('relative/path.xsd')).to be true
-      expect(resolver.relative_location?('../path.xsd')).to be true
-      expect(resolver.relative_location?('http://example.com/path.xsd')).to be false
-      expect(resolver.relative_location?('/absolute/path.xsd')).to be false
-      expect(resolver.relative_location?('<xml/>')).to be false
+      expect(loader.relative_location?('relative/path.xsd')).to be true
+      expect(loader.relative_location?('../path.xsd')).to be true
+      expect(loader.relative_location?('http://example.com/path.xsd')).to be false
+      expect(loader.relative_location?('/absolute/path.xsd')).to be false
+      expect(loader.relative_location?('<xml/>')).to be false
     end
   end
 
   describe 'error handling for relative paths' do
     it 'resolves against current directory when base is nil' do
       # This supports loading initial WSDL from relative paths like "path/to/service.wsdl"
-      resolved = resolver.resolve_location('relative/path.xsd', nil)
+      resolved = loader.resolve_location('relative/path.xsd', nil)
       expect(resolved).to eq(File.expand_path('relative/path.xsd'))
     end
 
     it 'raises UnresolvableImportError when base is not a URL or file path' do
       expect {
-        resolver.resolve_location('relative/path.xsd', '<definitions/>')
+        loader.resolve_location('relative/path.xsd', '<definitions/>')
       }.to raise_error(WSDL::UnresolvableImportError, /not a URL or file path/)
     end
   end
@@ -106,25 +106,25 @@ RSpec.describe WSDL::Parser::Resolver do
   describe 'file:// URL blocking' do
     it 'blocks file:// URLs' do
       expect {
-        resolver.resolve_location('file:///etc/passwd')
+        loader.resolve_location('file:///etc/passwd')
       }.to raise_error(WSDL::PathRestrictionError, %r{file:// URLs are not allowed})
     end
 
     it 'blocks FILE:// URLs (case insensitive)' do
       expect {
-        resolver.resolve_location('FILE:///etc/passwd')
+        loader.resolve_location('FILE:///etc/passwd')
       }.to raise_error(WSDL::PathRestrictionError, %r{file:// URLs are not allowed})
     end
 
     it 'blocks file:// URLs in relative imports' do
       expect {
-        resolver.resolve_location('file:///etc/passwd', base: '/some/base.wsdl')
+        loader.resolve_location('file:///etc/passwd', base: '/some/base.wsdl')
       }.to raise_error(WSDL::PathRestrictionError, %r{file:// URLs are not allowed})
     end
 
     it 'blocks unsupported URL schemes' do
       expect {
-        resolver.resolve_location('ftp://example.com/schema.xsd')
+        loader.resolve_location('ftp://example.com/schema.xsd')
       }.to raise_error(WSDL::PathRestrictionError, /Unsupported URL scheme/)
     end
   end
@@ -136,59 +136,59 @@ RSpec.describe WSDL::Parser::Resolver do
       it 'allows files within sandbox paths' do
         allow(File).to receive(:read).with('/app/wsdl/service.wsdl').and_return('<xml/>')
 
-        expect { resolver.resolve('/app/wsdl/service.wsdl') }.not_to raise_error
+        expect { loader.resolve('/app/wsdl/service.wsdl') }.not_to raise_error
       end
 
       it 'allows files in subdirectories of sandbox paths' do
         allow(File).to receive(:read).with('/app/wsdl/sub/dir/schema.xsd').and_return('<xml/>')
 
-        expect { resolver.resolve('/app/wsdl/sub/dir/schema.xsd') }.not_to raise_error
+        expect { loader.resolve('/app/wsdl/sub/dir/schema.xsd') }.not_to raise_error
       end
 
       it 'allows files in alternate sandbox path' do
         allow(File).to receive(:read).with('/app/schemas/common.xsd').and_return('<xml/>')
 
-        expect { resolver.resolve('/app/schemas/common.xsd') }.not_to raise_error
+        expect { loader.resolve('/app/schemas/common.xsd') }.not_to raise_error
       end
 
       it 'blocks files outside sandbox paths' do
         expect {
-          resolver.resolve('/etc/passwd')
+          loader.resolve('/etc/passwd')
         }.to raise_error(WSDL::PathRestrictionError, /outside the allowed directories/)
       end
 
       it 'blocks path traversal attacks' do
         expect {
-          resolver.resolve('/app/wsdl/../../../etc/passwd')
+          loader.resolve('/app/wsdl/../../../etc/passwd')
         }.to raise_error(WSDL::PathRestrictionError, /outside the allowed directories/)
       end
 
       it 'blocks path traversal via relative imports' do
         # When resolving ../../../etc/passwd against /app/wsdl/service.wsdl
         # it should resolve to /etc/passwd which is outside the sandbox
-        resolved = resolver.resolve_location('../../../../etc/passwd', '/app/wsdl/service.wsdl')
+        resolved = loader.resolve_location('../../../../etc/passwd', '/app/wsdl/service.wsdl')
         expect(resolved).to eq('/etc/passwd')
 
         expect {
-          resolver.resolve(resolved)
+          loader.resolve(resolved)
         }.to raise_error(WSDL::PathRestrictionError, /outside the allowed directories/)
       end
 
       it 'includes the path in error messages for debugging' do
         expect {
-          resolver.resolve('/etc/passwd')
+          loader.resolve('/etc/passwd')
         }.to raise_error(WSDL::PathRestrictionError, %r{/etc/passwd})
       end
 
       it 'includes allowed directories in error messages' do
         expect {
-          resolver.resolve('/etc/passwd')
+          loader.resolve('/etc/passwd')
         }.to raise_error(WSDL::PathRestrictionError, %r{Allowed:.*/app/wsdl})
       end
 
       it 'mentions path traversal attack in error messages' do
         expect {
-          resolver.resolve('/etc/passwd')
+          loader.resolve('/etc/passwd')
         }.to raise_error(WSDL::PathRestrictionError, /path traversal attack/)
       end
     end
@@ -197,25 +197,25 @@ RSpec.describe WSDL::Parser::Resolver do
       let(:options) { { sandbox_paths: nil } }
 
       it 'allows URL access' do
-        xml = resolver.resolve('http://example.com/service.wsdl')
+        xml = loader.resolve('http://example.com/service.wsdl')
         expect(xml).to eq('raw_response for http://example.com/service.wsdl')
       end
 
       it 'blocks inline XML' do
         expect {
-          resolver.resolve('<xml/>')
+          loader.resolve('<xml/>')
         }.to raise_error(WSDL::PathRestrictionError, /Inline XML is not supported/)
       end
 
       it 'blocks file access' do
         expect {
-          resolver.resolve('/path/to/file.wsdl')
+          loader.resolve('/path/to/file.wsdl')
         }.to raise_error(WSDL::PathRestrictionError, /File access is disabled/)
       end
 
       it 'includes helpful message about alternatives' do
         expect {
-          resolver.resolve('/path/to/file.wsdl')
+          loader.resolve('/path/to/file.wsdl')
         }.to raise_error(WSDL::PathRestrictionError, /provide sandbox_paths to allow file access/)
       end
     end
@@ -226,7 +226,7 @@ RSpec.describe WSDL::Parser::Resolver do
       let(:options) { { sandbox_paths: nil } }
 
       it 'returns false' do
-        expect(resolver.file_access_allowed?).to be false
+        expect(loader.file_access_allowed?).to be false
       end
     end
 
@@ -234,7 +234,7 @@ RSpec.describe WSDL::Parser::Resolver do
       let(:options) { { sandbox_paths: ['/app'] } }
 
       it 'returns true' do
-        expect(resolver.file_access_allowed?).to be true
+        expect(loader.file_access_allowed?).to be true
       end
     end
   end
@@ -243,12 +243,12 @@ RSpec.describe WSDL::Parser::Resolver do
     let(:options) { { sandbox_paths: ['./relative/path', '../other'] } }
 
     it 'normalizes relative sandbox paths to absolute paths' do
-      expect(resolver.sandbox_paths).to all(start_with('/'))
+      expect(loader.sandbox_paths).to all(start_with('/'))
     end
 
     it 'expands sandbox paths' do
-      expect(resolver.sandbox_paths).to include(File.expand_path('./relative/path'))
-      expect(resolver.sandbox_paths).to include(File.expand_path('../other'))
+      expect(loader.sandbox_paths).to include(File.expand_path('./relative/path'))
+      expect(loader.sandbox_paths).to include(File.expand_path('../other'))
     end
   end
 
@@ -259,7 +259,7 @@ RSpec.describe WSDL::Parser::Resolver do
       it 'allows files in the directory' do
         allow(File).to receive(:read).with('/app/wsdl/service.wsdl').and_return('<xml/>')
 
-        expect { resolver.resolve('/app/wsdl/service.wsdl') }.not_to raise_error
+        expect { loader.resolve('/app/wsdl/service.wsdl') }.not_to raise_error
       end
     end
 
@@ -268,13 +268,13 @@ RSpec.describe WSDL::Parser::Resolver do
 
       it 'blocks /app/wsdl-malicious (not a true subdirectory)' do
         expect {
-          resolver.resolve('/app/wsdl-malicious/evil.xsd')
+          loader.resolve('/app/wsdl-malicious/evil.xsd')
         }.to raise_error(WSDL::PathRestrictionError)
       end
 
       it 'blocks /app/wsdlmalicious (not a true subdirectory)' do
         expect {
-          resolver.resolve('/app/wsdlmalicious/evil.xsd')
+          loader.resolve('/app/wsdlmalicious/evil.xsd')
         }.to raise_error(WSDL::PathRestrictionError)
       end
     end
@@ -285,7 +285,7 @@ RSpec.describe WSDL::Parser::Resolver do
       it 'allows reading the sandbox directory path itself' do
         allow(File).to receive(:read).with('/app/wsdl').and_return('<xml/>')
 
-        expect { resolver.resolve('/app/wsdl') }.not_to raise_error
+        expect { loader.resolve('/app/wsdl') }.not_to raise_error
       end
     end
   end
@@ -306,10 +306,10 @@ RSpec.describe WSDL::Parser::Resolver do
           skip 'Symlink creation is not supported in this environment'
         end
 
-        symlink_resolver = described_class.new(http_test_client, sandbox_paths: [sandbox_dir])
+        symlink_loader = described_class.new(http_test_client, sandbox_paths: [sandbox_dir])
 
         expect {
-          symlink_resolver.resolve(symlink_path)
+          symlink_loader.resolve(symlink_path)
         }.to raise_error(WSDL::PathRestrictionError, /outside the allowed directories/)
       end
     end
@@ -331,8 +331,8 @@ RSpec.describe WSDL::Parser::Resolver do
           skip 'Symlink creation is not supported in this environment'
         end
 
-        symlink_resolver = described_class.new(http_test_client, sandbox_paths: [sandbox_dir])
-        expect(symlink_resolver.resolve(symlink_path)).to eq(expected_content)
+        symlink_loader = described_class.new(http_test_client, sandbox_paths: [sandbox_dir])
+        expect(symlink_loader.resolve(symlink_path)).to eq(expected_content)
       end
     end
   end
@@ -340,15 +340,15 @@ RSpec.describe WSDL::Parser::Resolver do
   describe 'resource limits' do
     describe '#limits' do
       it 'uses WSDL.limits by default' do
-        expect(resolver.limits).to eq(WSDL.limits)
+        expect(loader.limits).to eq(WSDL.limits)
       end
 
       it 'accepts custom limits' do
         custom_limits = WSDL::Limits.new(max_document_size: 1024)
-        resolver_with_limits = described_class.new(http_test_client, sandbox_paths: [fixture_dir],
+        loader_with_limits = described_class.new(http_test_client, sandbox_paths: [fixture_dir],
           limits: custom_limits)
 
-        expect(resolver_with_limits.limits).to eq(custom_limits)
+        expect(loader_with_limits.limits).to eq(custom_limits)
       end
     end
 
@@ -359,7 +359,7 @@ RSpec.describe WSDL::Parser::Resolver do
         let(:options) { { sandbox_paths: [fixture_dir], limits: WSDL::Limits.new(max_document_size: 10 * 1024 * 1024) } }
 
         it 'allows reading the file' do
-          expect { resolver.resolve(small_file) }.not_to raise_error
+          expect { loader.resolve(small_file) }.not_to raise_error
         end
       end
 
@@ -368,13 +368,13 @@ RSpec.describe WSDL::Parser::Resolver do
 
         it 'raises ResourceLimitError' do
           expect {
-            resolver.resolve(small_file)
+            loader.resolve(small_file)
           }.to raise_error(WSDL::ResourceLimitError, /exceeds limit/)
         end
 
         it 'includes the limit name in the error' do
           expect {
-            resolver.resolve(small_file)
+            loader.resolve(small_file)
           }.to raise_error(WSDL::ResourceLimitError) { |e|
             expect(e.limit_name).to eq(:max_document_size)
           }
@@ -382,7 +382,7 @@ RSpec.describe WSDL::Parser::Resolver do
 
         it 'includes the limit value in the error' do
           expect {
-            resolver.resolve(small_file)
+            loader.resolve(small_file)
           }.to raise_error(WSDL::ResourceLimitError) { |e|
             expect(e.limit_value).to eq(10)
           }
@@ -393,7 +393,7 @@ RSpec.describe WSDL::Parser::Resolver do
         let(:options) { { sandbox_paths: [fixture_dir], limits: WSDL::Limits.new(max_document_size: nil) } }
 
         it 'allows any file size' do
-          expect { resolver.resolve(small_file) }.not_to raise_error
+          expect { loader.resolve(small_file) }.not_to raise_error
         end
       end
 
@@ -412,14 +412,14 @@ RSpec.describe WSDL::Parser::Resolver do
         end
 
         it 'raises ResourceLimitError when HTTP response exceeds limit' do
-          limited_resolver = described_class.new(
+          limited_loader = described_class.new(
             http_client,
             sandbox_paths: nil,
             limits: WSDL::Limits.new(max_document_size: 100)
           )
 
           expect {
-            limited_resolver.resolve('http://example.com/large.wsdl')
+            limited_loader.resolve('http://example.com/large.wsdl')
           }.to raise_error(WSDL::ResourceLimitError, /exceeds limit/)
         end
       end
@@ -439,9 +439,9 @@ RSpec.describe WSDL::Parser::Resolver do
 
         it 'allows multiple downloads' do
           3.times do
-            resolver.resolve(small_file)
+            loader.resolve(small_file)
           end
-          expect(resolver.total_bytes_downloaded).to eq(file_size * 3)
+          expect(loader.total_bytes_downloaded).to eq(file_size * 3)
         end
       end
 
@@ -454,18 +454,18 @@ RSpec.describe WSDL::Parser::Resolver do
         end
 
         it 'raises ResourceLimitError on second download' do
-          resolver.resolve(small_file)
+          loader.resolve(small_file)
 
           expect {
-            resolver.resolve(small_file)
+            loader.resolve(small_file)
           }.to raise_error(WSDL::ResourceLimitError, /Total download size/)
         end
 
         it 'includes the limit name in the error' do
-          resolver.resolve(small_file)
+          loader.resolve(small_file)
 
           expect {
-            resolver.resolve(small_file)
+            loader.resolve(small_file)
           }.to raise_error(WSDL::ResourceLimitError) { |e|
             expect(e.limit_name).to eq(:max_total_download_size)
           }
@@ -477,24 +477,24 @@ RSpec.describe WSDL::Parser::Resolver do
 
         it 'allows unlimited total download' do
           10.times do
-            resolver.resolve(small_file)
+            loader.resolve(small_file)
           end
-          expect(resolver.total_bytes_downloaded).to eq(file_size * 10)
+          expect(loader.total_bytes_downloaded).to eq(file_size * 10)
         end
       end
     end
 
     describe '#total_bytes_downloaded' do
       it 'starts at zero' do
-        expect(resolver.total_bytes_downloaded).to eq(0)
+        expect(loader.total_bytes_downloaded).to eq(0)
       end
 
       it 'accumulates bytes from file reads' do
         small_file = fixture('wsdl/authentication')
         file_size = File.size(small_file)
 
-        resolver.resolve(small_file)
-        expect(resolver.total_bytes_downloaded).to eq(file_size)
+        loader.resolve(small_file)
+        expect(loader.total_bytes_downloaded).to eq(file_size)
       end
 
       it 'accumulates bytes from HTTP responses' do
@@ -509,10 +509,10 @@ RSpec.describe WSDL::Parser::Resolver do
           end
         end.new(content)
 
-        http_resolver = described_class.new(http_client, sandbox_paths: nil)
-        http_resolver.resolve('http://example.com/test.wsdl')
+        http_loader = described_class.new(http_client, sandbox_paths: nil)
+        http_loader.resolve('http://example.com/test.wsdl')
 
-        expect(http_resolver.total_bytes_downloaded).to eq(content.bytesize)
+        expect(http_loader.total_bytes_downloaded).to eq(content.bytesize)
       end
     end
   end
@@ -523,29 +523,29 @@ RSpec.describe WSDL::Parser::Resolver do
     it 'allows reading fixtures within the sandbox' do
       fixture_path = fixture('wsdl/authentication')
 
-      xml = resolver.resolve(fixture_path)
+      xml = loader.resolve(fixture_path)
       expect(xml).to include('definitions')
     end
 
     it 'resolves relative imports within the sandbox' do
       # Travelport fixture uses relative imports like ../common_v32_0/CommonReqRsp.xsd
       travelport_dir = File.join(fixture_dir, 'travelport')
-      sandbox_resolver = described_class.new(http_test_client, sandbox_paths: [travelport_dir])
+      sandbox_loader = described_class.new(http_test_client, sandbox_paths: [travelport_dir])
 
       base = File.join(travelport_dir, 'system_v32_0/System.xsd')
-      resolved = sandbox_resolver.resolve_location('../common_v32_0/CommonReqRsp.xsd', base)
+      resolved = sandbox_loader.resolve_location('../common_v32_0/CommonReqRsp.xsd', base)
 
       expect(resolved).to eq(File.join(travelport_dir, 'common_v32_0/CommonReqRsp.xsd'))
 
       # Should be able to read this file
-      xml = sandbox_resolver.resolve(resolved)
+      xml = sandbox_loader.resolve(resolved)
       expect(xml).to include('schema')
     end
 
     it 'blocks path traversal that escapes fixture directory' do
       expect {
-        resolver.resolve_location('../../../../etc/passwd', fixture('wsdl/authentication'))
-        resolver.resolve('/etc/passwd')
+        loader.resolve_location('../../../../etc/passwd', fixture('wsdl/authentication'))
+        loader.resolve('/etc/passwd')
       }.to raise_error(WSDL::PathRestrictionError)
     end
   end

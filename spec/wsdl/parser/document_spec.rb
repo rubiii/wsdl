@@ -211,10 +211,10 @@ RSpec.describe WSDL::Parser::Document do
   def get_documents(fixture_path)
     documents = WSDL::Parser::DocumentCollection.new
     schemas = WSDL::Schema::Collection.new
-    source = WSDL::Source.validate_wsdl!(fixture(fixture_path))
-    resolver = WSDL::Parser::Resolver.new(http_mock,
+    source = WSDL::Resolver::Source.validate_wsdl!(fixture(fixture_path))
+    loader = WSDL::Resolver::Loader.new(http_mock,
       sandbox_paths: [File.dirname(File.expand_path(fixture(fixture_path)))])
-    importer = WSDL::Parser::Importer.new(resolver, documents, schemas, WSDL::ParseOptions.default)
+    importer = WSDL::Resolver::Importer.new(loader, documents, schemas, WSDL::ParseOptions.default)
     importer.import(source.value)
     documents
   end

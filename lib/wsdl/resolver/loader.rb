@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module WSDL
-  module Parser
+  module Resolver
     # Resolves WSDL and schema locations to their XML content.
     #
     # This class handles two types of locations:
@@ -14,9 +14,9 @@ module WSDL
     #
     # == Security
     #
-    # The resolver implements sandbox restrictions to prevent path traversal attacks.
+    # The loader implements sandbox restrictions to prevent path traversal attacks.
     # When a WSDL contains malicious schemaLocation attributes like
-    # `../../../../etc/passwd`, the resolver blocks access to files outside
+    # `../../../../etc/passwd`, the loader blocks access to files outside
     # the allowed directory tree.
     #
     # File access is controlled by the `sandbox_paths` option:
@@ -24,17 +24,17 @@ module WSDL
     # - When `sandbox_paths` is nil: file access is disabled (URL-only mode)
     #
     # @example Resolving a URL (no file access needed)
-    #   resolver = Resolver.new(http_adapter)
-    #   xml = resolver.resolve('http://example.com/service?wsdl')
+    #   loader = Loader.new(http_adapter)
+    #   xml = loader.resolve('http://example.com/service?wsdl')
     #
     # @example Resolving a local file with sandboxing
-    #   resolver = Resolver.new(http_adapter, sandbox_paths: ['/app/wsdl'])
-    #   xml = resolver.resolve('/app/wsdl/service.wsdl')
+    #   loader = Loader.new(http_adapter, sandbox_paths: ['/app/wsdl'])
+    #   xml = loader.resolve('/app/wsdl/service.wsdl')
     #
     # @api private
     #
-    class Resolver
-      # Creates a new Resolver instance.
+    class Loader
+      # Creates a new Loader instance.
       #
       # @param http [Object] an HTTP adapter instance that responds to `get(url)`
       # @param sandbox_paths [Array<String>, nil] directories where file access is allowed.
@@ -197,8 +197,7 @@ module WSDL
       # @raise [PathRestrictionError] if file access is not allowed or path is outside sandbox
       #
       def fetch(location)
-        source = Source.new(location)
-        source.url? ? fetch_http(location) : fetch_file(location)
+        location.match?(Source::HTTP_URL_PATTERN) ? fetch_http(location) : fetch_file(location)
       end
 
       # Fetches content from a file path with security checks.

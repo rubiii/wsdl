@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-RSpec.describe WSDL::Source do
+RSpec.describe WSDL::Resolver::Source do
   describe '#url?' do
     it 'returns true for HTTP(S) URLs' do
       expect(described_class.new('http://example.com/service.wsdl').url?).to be(true)
