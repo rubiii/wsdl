@@ -27,6 +27,8 @@ All notable changes to this project will be documented in this file.
 - `xs:union` simpleType derivation is now supported for both elements and attributes. The first `memberType` is used as the base type for coercion.
 - `Element#kind` returns `:simple`, `:complex`, or `:recursive` for programmatic dispatch. Included in both `paths` and `tree` contract output.
 - `Attribute#to_h` provides a consistent hash representation. Contract `paths` and `tree` now return identical attribute metadata including `name`, `type`, `required`, and `list`.
+- `operation.invoke { ... }` accepts an optional block, combining `prepare` and `invoke` into a single call.
+- `operation.to_xml(pretty: true)` for formatted XML output. Request XML is compact by default.
 
 ### Changed
 
@@ -39,6 +41,7 @@ All notable changes to this project will be documented in this file.
 - `PortTypeOperation#input` returns `nil` for missing `<input>` (matching how `output` already handled missing `<output>`).
 - `MessageParts` records issues via an issues pipeline instead of raising for missing messages and header references.
 - `ElementBuilder` always uses lenient schema resolution (`find_*` instead of `fetch_*`) and records issues via the pipeline. Nesting depth and element/attribute count limits are recorded as resource limit issues.
+- Removed `format_xml` option from `Config`, `Client`, and `Operation`. Request XML is now always compact. Use `operation.to_xml(pretty: true)` when formatted output is needed.
 
 ### Deprecated
 
