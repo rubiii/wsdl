@@ -15,10 +15,12 @@
       "Bash(gem build *)",
       "Bash(ruby *)",
 
+      "Bash(echo *)",
       "Bash(ls *)",
       "Bash(wc *)",
       "Bash(mkdir *)",
-      "Bash(chmod +x *)"
+
+      "Bash(.claude/scripts/*)"
     ],
     "deny": [
       "Bash(rm -rf *)",
