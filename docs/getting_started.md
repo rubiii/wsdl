@@ -114,6 +114,16 @@ end
 
 ## 6. Invoke and Read the Response
 
+You can also combine steps 4 and 6 into a single call:
+
+```ruby
+response = operation.invoke do
+  tag('GetOrder') { tag('orderId', 123) }
+end
+```
+
+Or invoke after a separate prepare:
+
 ```ruby
 response = operation.invoke
 

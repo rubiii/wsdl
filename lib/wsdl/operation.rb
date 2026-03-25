@@ -265,9 +265,20 @@ module WSDL
 
     # Invokes this SOAP operation.
     #
+    # When a block is given, calls {#prepare} first — combining
+    # request building and invocation into a single step.
+    #
+    # @yield optional request DSL block (forwarded to {#prepare})
     # @return [Response]
     # @raise [ResourceLimitError] when the response body exceeds {Limits#max_response_size}
-    def invoke
+    #
+    # @example One-step invoke
+    #   response = operation.invoke do
+    #     tag('GetUser') { tag('id', 123) }
+    #   end
+    #
+    def invoke(&block)
+      prepare(&block) if block
       ensure_request_definition!
 
       http_response = @http.post(endpoint, http_headers, to_xml)

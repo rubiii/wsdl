@@ -57,12 +57,11 @@ puts operation.contract.request.body.template(mode: :minimal).to_dsl
 # end
 
 # Fill in the values and invoke the operation
-operation.prepare do
+response = operation.invoke do
   tag('GetOrder') do
     tag('orderId', 123)
   end
 end
-response = operation.invoke
 
 # Response body is automatically parsed with schema-aware type conversion
 response.body
