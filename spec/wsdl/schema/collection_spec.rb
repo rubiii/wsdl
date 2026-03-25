@@ -145,24 +145,6 @@ RSpec.describe WSDL::Schema::Collection do
       end
     end
 
-    describe '#fetch_element' do
-      it 'returns the element when found' do
-        result = collection.fetch_element('http://example.com/test', 'User')
-        expect(result).to eq(element_node)
-      end
-
-      it 'raises typed error when element is missing in schema' do
-        expect {
-          collection.fetch_element('http://example.com/test', 'NonExistent', context: 'test context')
-        }.to raise_error(WSDL::UnresolvedReferenceError) { |error|
-          expect(error.reference_type).to eq(:element)
-          expect(error.reference_name).to eq('NonExistent')
-          expect(error.namespace).to eq('http://example.com/test')
-          expect(error.context).to eq('test context')
-        }
-      end
-    end
-
     describe '#find_complex_type' do
       it 'returns the complex type when found' do
         result = collection.find_complex_type('http://example.com/test', 'UserType')
@@ -179,22 +161,6 @@ RSpec.describe WSDL::Schema::Collection do
       end
     end
 
-    describe '#fetch_complex_type' do
-      it 'returns the complex type when found' do
-        result = collection.fetch_complex_type('http://example.com/test', 'UserType')
-        expect(result).to eq(complex_type_node)
-      end
-
-      it 'raises typed error when complex type is missing in schema' do
-        expect {
-          collection.fetch_complex_type('http://example.com/test', 'NonExistent')
-        }.to raise_error(WSDL::UnresolvedReferenceError) { |error|
-          expect(error.reference_type).to eq(:complex_type)
-          expect(error.reference_name).to eq('NonExistent')
-        }
-      end
-    end
-
     describe '#find_simple_type' do
       it 'returns the simple type when found' do
         result = collection.find_simple_type('http://example.com/test', 'StatusType')
@@ -208,22 +174,6 @@ RSpec.describe WSDL::Schema::Collection do
 
       it 'returns nil when namespace not found' do
         expect(collection.find_simple_type('http://unknown.com', 'StatusType')).to be_nil
-      end
-    end
-
-    describe '#fetch_simple_type' do
-      it 'returns the simple type when found' do
-        result = collection.fetch_simple_type('http://example.com/test', 'StatusType')
-        expect(result).to eq(simple_type_node)
-      end
-
-      it 'raises typed error when simple type is missing in schema' do
-        expect {
-          collection.fetch_simple_type('http://example.com/test', 'NonExistent')
-        }.to raise_error(WSDL::UnresolvedReferenceError) { |error|
-          expect(error.reference_type).to eq(:simple_type)
-          expect(error.reference_name).to eq('NonExistent')
-        }
       end
     end
 
@@ -248,27 +198,6 @@ RSpec.describe WSDL::Schema::Collection do
       end
     end
 
-    describe '#fetch_type' do
-      it 'returns complex type when found' do
-        result = collection.fetch_type('http://example.com/test', 'UserType')
-        expect(result).to eq(complex_type_node)
-      end
-
-      it 'returns simple type when complex type is not found' do
-        result = collection.fetch_type('http://example.com/test', 'StatusType')
-        expect(result).to eq(simple_type_node)
-      end
-
-      it 'raises typed error when type is missing in schema' do
-        expect {
-          collection.fetch_type('http://example.com/test', 'NonExistent')
-        }.to raise_error(WSDL::UnresolvedReferenceError) { |error|
-          expect(error.reference_type).to eq(:type)
-          expect(error.reference_name).to eq('NonExistent')
-        }
-      end
-    end
-
     describe '#find_attribute' do
       it 'returns the attribute when found' do
         result = collection.find_attribute('http://example.com/test', 'id')
@@ -282,22 +211,6 @@ RSpec.describe WSDL::Schema::Collection do
 
       it 'returns nil when namespace not found' do
         expect(collection.find_attribute('http://unknown.com', 'id')).to be_nil
-      end
-    end
-
-    describe '#fetch_attribute' do
-      it 'returns the attribute when found' do
-        result = collection.fetch_attribute('http://example.com/test', 'id')
-        expect(result).to eq(attribute_node)
-      end
-
-      it 'raises typed error when attribute is missing in schema' do
-        expect {
-          collection.fetch_attribute('http://example.com/test', 'NonExistent')
-        }.to raise_error(WSDL::UnresolvedReferenceError) { |error|
-          expect(error.reference_type).to eq(:attribute)
-          expect(error.reference_name).to eq('NonExistent')
-        }
       end
     end
 
@@ -317,22 +230,6 @@ RSpec.describe WSDL::Schema::Collection do
       end
     end
 
-    describe '#fetch_attribute_group' do
-      it 'returns the attribute group when found' do
-        result = collection.fetch_attribute_group('http://example.com/test', 'CommonAttrs')
-        expect(result).to eq(attribute_group_node)
-      end
-
-      it 'raises typed error when attribute group is missing in schema' do
-        expect {
-          collection.fetch_attribute_group('http://example.com/test', 'NonExistent')
-        }.to raise_error(WSDL::UnresolvedReferenceError) { |error|
-          expect(error.reference_type).to eq(:attribute_group)
-          expect(error.reference_name).to eq('NonExistent')
-        }
-      end
-    end
-
     describe '#find_group' do
       it 'returns the group when found' do
         result = collection.find_group('http://example.com/test', 'AddressGroup')
@@ -346,22 +243,6 @@ RSpec.describe WSDL::Schema::Collection do
 
       it 'returns nil when namespace not found' do
         expect(collection.find_group('http://unknown.com', 'AddressGroup')).to be_nil
-      end
-    end
-
-    describe '#fetch_group' do
-      it 'returns the group when found' do
-        result = collection.fetch_group('http://example.com/test', 'AddressGroup')
-        expect(result).to eq(group_node)
-      end
-
-      it 'raises typed error when group is missing in schema' do
-        expect {
-          collection.fetch_group('http://example.com/test', 'NonExistent')
-        }.to raise_error(WSDL::UnresolvedReferenceError) { |error|
-          expect(error.reference_type).to eq(:group)
-          expect(error.reference_name).to eq('NonExistent')
-        }
       end
     end
   end

@@ -206,7 +206,7 @@ module WSDL
       # @return [Array<Attribute>] the built attribute objects
       def element_attributes(type)
         schema_attrs = begin
-          type.attributes([], limits: @limits, strict: false)
+          type.attributes([], limits: @limits)
         rescue ResourceLimitError => e
           record_issue(:resource_limit, e.message)
           []
@@ -291,14 +291,13 @@ module WSDL
 
       # Resolves child elements from a schema type node.
       #
-      # Always uses lenient resolution (strict: false) so Schema::Node
-      # returns nil for missing groups/types instead of raising.
+      # Schema::Node returns nil for missing groups/types instead of raising.
       # Catches ResourceLimitError from Schema::Node's count validation.
       #
       # @param type [Schema::Node] the complex type node
       # @return [Array<Schema::Node>] the child elements
       def resolve_schema_elements(type)
-        type.elements([], limits: @limits, strict: false)
+        type.elements([], limits: @limits)
       rescue ResourceLimitError => e
         record_issue(:resource_limit, e.message)
         []
@@ -400,8 +399,7 @@ module WSDL
 
       # Finds a global attribute by its qualified name.
       #
-      # Always uses find (returns nil) rather than fetch (raises) because
-      # attribute refs are best-effort — a missing attribute doesn't break
+      # Attribute refs are best-effort — a missing attribute doesn't break
       # the message structure, only omits metadata.
       #
       # @param qname [String] the qualified attribute name (prefix:localName)
