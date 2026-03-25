@@ -19,9 +19,9 @@ module WSDL
   #   response = operation.invoke
   #   puts response.body[:get_user_response][:user][:name]
   #
-  # @example Working with the raw response
+  # @example Working with the raw XML
   #   response = operation.invoke
-  #   puts response.raw  # Raw XML string
+  #   puts response.xml
   #
   # @example Using XPath queries
   #   response = operation.invoke
@@ -96,7 +96,7 @@ module WSDL
     # Returns the raw XML response string.
     #
     # @return [String] the raw XML response body
-    def raw
+    def xml
       @raw_response
     end
 
@@ -155,7 +155,7 @@ module WSDL
     #
     # @return [Nokogiri::XML::Document] the parsed XML document
     def doc
-      @doc ||= XML::Parser.parse(raw)
+      @doc ||= XML::Parser.parse(xml)
     end
 
     # Executes an XPath query on the response document.
@@ -248,7 +248,7 @@ module WSDL
     #   response.security.errors           # => ["Digest mismatch..."]
     #
     def security
-      @security ||= SecurityContext.new(raw, @verification)
+      @security ||= SecurityContext.new(xml, @verification)
     end
 
     private

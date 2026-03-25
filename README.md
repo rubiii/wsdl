@@ -70,7 +70,7 @@ response.body
 
 # Access HTTP metadata and raw XML when needed
 response.http_status   # => 200
-response.raw           # => "<?xml version=\"1.0\" ...>"
+response.xml           # => "<?xml version=\"1.0\" ...>"
 ```
 
 ## Documentation

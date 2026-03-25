@@ -42,6 +42,7 @@ All notable changes to this project will be documented in this file.
 - `MessageParts` records issues via an issues pipeline instead of raising for missing messages and header references.
 - `ElementBuilder` always uses lenient schema resolution (`find_*` instead of `fetch_*`) and records issues via the pipeline. Nesting depth and element/attribute count limits are recorded as resource limit issues.
 - Removed `format_xml` option from `Config`, `Client`, and `Operation`. Request XML is now always compact. Use `operation.to_xml(pretty: true)` when formatted output is needed.
+- `response.xml` replaces `response.raw`.
 
 ### Deprecated
 

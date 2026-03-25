@@ -48,20 +48,20 @@ RSpec.describe WSDL::Response do
   describe 'without schema parts (fallback to parser)' do
     subject(:response) { build_response(soap_response) }
 
-    describe '#raw' do
+    describe '#xml' do
       it 'returns the raw XML response' do
-        expect(response.raw).to eq(soap_response)
+        expect(response.xml).to eq(soap_response)
       end
 
       it 'returns a frozen string to prevent TOCTOU mutation' do
-        expect(response.raw).to be_frozen
+        expect(response.xml).to be_frozen
       end
 
       it 'freezes the body extracted from an HTTPResponse' do
         http_response = WSDL::HTTPResponse.new(status: 200, body: soap_response.dup)
         response = described_class.new(http_response:)
 
-        expect(response.raw).to be_frozen
+        expect(response.xml).to be_frozen
       end
     end
 
