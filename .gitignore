@@ -10,3 +10,4 @@ pkg
 .bundle
 Gemfile.lock
 bin/
+docs/reference/specs

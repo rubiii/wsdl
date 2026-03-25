@@ -41,6 +41,18 @@ bundle exec rspec              # Run all tests
 bundle exec rake ci            # Run all checks (lint + docs + tests)
 ```
 
+## Specifications
+
+This library implements several W3C and OASIS standards. Local markdown copies of these specifications are available for reference but are not committed to the repository (the original documents are copyrighted). After cloning, run:
+
+```sh
+bundle exec rake specifications:update      # Download and convert all specs
+bundle exec rake specifications:check       # Check if local copies are up to date
+bundle exec rake specifications:reconvert   # Re-download and reconvert all specs
+```
+
+The specs are stored in `docs/reference/specs/` with a `manifest.yml` that tracks URLs, checksums, and freshness. See [Specifications](reference/specifications.md) for the full list of standards this library targets.
+
 ## See also
 
 - [Testing](testing.md)

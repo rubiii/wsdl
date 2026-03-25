@@ -38,6 +38,26 @@ end
 desc 'Run linting'
 task lint: %i[lint:ruby lint:links]
 
+namespace :specifications do
+  desc 'Check if local specification documents are up to date'
+  task :check do
+    require_relative 'scripts/specifications'
+    abort unless Specifications.check
+  end
+
+  desc 'Download and convert all specification documents'
+  task :update do
+    require_relative 'scripts/specifications'
+    Specifications.update
+  end
+
+  desc 'Re-download and reconvert all specification documents'
+  task :reconvert do
+    require_relative 'scripts/specifications'
+    Specifications.update(force: true)
+  end
+end
+
 desc 'Run performance benchmarks'
 task :benchmark do
   ruby 'benchmarks/run.rb'
