@@ -29,19 +29,15 @@ module WSDL
       # @param documents [Parser::DocumentCollection] parsed WSDL documents
       # @param schemas [Schema::Collection] parsed XML schemas
       # @param limits [Limits] resource limits
-      # @param strictness [Strictness] strictness configuration
       # @param provenance [Array<Hash>] source provenance from import
       # @param schema_import_errors [Array<SchemaImportError>] recoverable schema import errors
-      # rubocop:disable Metrics/ParameterLists -- all fields previously bundled in a single Result object
-      def initialize(documents:, schemas:, limits:, strictness:, provenance:, schema_import_errors:)
+      def initialize(documents:, schemas:, limits:, provenance:, schema_import_errors:)
         @documents = documents
         @schemas = schemas
         @limits = limits
-        @strictness = strictness
         @provenance = provenance
         @schema_import_errors = schema_import_errors
       end
-      # rubocop:enable Metrics/ParameterLists
 
       # Builds and returns a frozen {Definition}.
       #
@@ -119,8 +115,7 @@ module WSDL
           op_info = Parser::OperationInfo.new(
             op_name, binding_op, port_type_op,
             documents: @documents, schemas: @schemas,
-            limits: @limits, strictness: @strictness,
-            issues: @build_issues
+            limits: @limits, issues: @build_issues
           )
 
           metadata[:soap_action] = op_info.soap_action

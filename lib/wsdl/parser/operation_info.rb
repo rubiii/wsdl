@@ -19,18 +19,16 @@ module WSDL
       # @param documents [DocumentCollection] for resolving message references
       # @param schemas [Schema::Collection] for building element trees
       # @param limits [Limits] resource limits for element building
-      # @param strictness [Strictness] strictness configuration
       # @param issues [Array, nil] optional issues collector for recording build problems
-      # rubocop:disable Metrics/ParameterLists
+      # rubocop:disable Metrics/ParameterLists -- per-operation + build context
       def initialize(name, binding_operation, port_type_operation,
-                     documents:, schemas:, limits:, strictness:, issues: nil)
+                     documents:, schemas:, limits:, issues: nil)
         @name = name
         @binding_operation = binding_operation
         @port_type_operation = port_type_operation
         @documents = documents
         @schemas = schemas
         @limits = limits
-        @strictness = strictness
         @issues = issues
       end
       # rubocop:enable Metrics/ParameterLists
@@ -74,7 +72,7 @@ module WSDL
         @input ||= Input.new(
           @binding_operation, @port_type_operation,
           documents: @documents, schemas: @schemas,
-          limits: @limits, strictness: @strictness, issues: @issues
+          limits: @limits, issues: @issues
         )
       end
 
@@ -93,7 +91,7 @@ module WSDL
         @output = Output.new(
           @binding_operation, @port_type_operation,
           documents: @documents, schemas: @schemas,
-          limits: @limits, strictness: @strictness, issues: @issues
+          limits: @limits, issues: @issues
         )
       end
 

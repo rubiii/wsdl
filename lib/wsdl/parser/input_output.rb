@@ -16,16 +16,14 @@ module WSDL
       # @param documents [DocumentCollection] for resolving message references
       # @param schemas [Schema::Collection] for building element trees
       # @param limits [Limits] resource limits for element building
-      # @param strictness [Strictness] strictness configuration
       # @param issues [Array, nil] optional issues collector for recording build problems
-      # rubocop:disable Metrics/ParameterLists -- keyword args replace a single parser_result back-reference
-      def initialize(binding_operation, port_type_operation, documents:, schemas:, limits:, strictness:, issues: nil)
+      # rubocop:disable Metrics/ParameterLists -- per-operation + build context
+      def initialize(binding_operation, port_type_operation, documents:, schemas:, limits:, issues: nil)
         @binding_operation = binding_operation
         @port_type_operation = port_type_operation
         @documents = documents
         @schemas = schemas
         @limits = limits
-        @strictness = strictness
         @issues = issues
 
         build_parts
@@ -72,9 +70,7 @@ module WSDL
           header_part_names.include?(part[:name])
         end
 
-        builder = XML::ElementBuilder.new(
-          @schemas, limits: @limits, strictness: @strictness, issues: @issues
-        )
+        builder = XML::ElementBuilder.new(@schemas, limits: @limits, issues: @issues)
         @header_parts = builder.build(header_parts)
         @body_parts = builder.build(body_parts)
       end

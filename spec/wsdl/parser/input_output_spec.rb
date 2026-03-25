@@ -70,7 +70,7 @@ RSpec.describe WSDL::Parser::Input do
     binding_op, port_type_op = resolve_operations(documents, 'TestService', 'TestPort', 'TestOp')
     WSDL::Parser::Input.new(binding_op, port_type_op,
       documents:, schemas:,
-      limits: WSDL.limits, strictness: WSDL.strictness,
+      limits: WSDL.limits,
       issues:)
   end
 
@@ -79,7 +79,7 @@ RSpec.describe WSDL::Parser::Input do
     binding_op, port_type_op = resolve_operations(documents, 'TestService', 'TestPort', 'TestOp')
     WSDL::Parser::Output.new(binding_op, port_type_op,
       documents:, schemas:,
-      limits: WSDL.limits, strictness: WSDL.strictness,
+      limits: WSDL.limits,
       issues:)
   end
 

@@ -36,12 +36,10 @@ module WSDL
       # @param schemas [Schema::Collection] the schema collection for resolving types
       # @param limits [Limits, nil] resource limits for DoS protection.
       #   If nil, uses {WSDL.limits}.
-      # @param strictness [Strictness] the strictness configuration
       # @param issues [Array, nil] optional issues collector for recording build problems
-      def initialize(schemas, limits: nil, strictness: WSDL.strictness, issues: nil)
+      def initialize(schemas, limits: nil, issues: nil)
         @schemas = schemas
         @limits = limits || WSDL.limits
-        @strictness = strictness
         @issues = issues
         @depth_exceeded = false
       end

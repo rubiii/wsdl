@@ -59,7 +59,6 @@ module WSDL
       Definition::Builder.new(
         documents:, schemas:,
         limits: parse_options.limits,
-        strictness: parse_options.strictness,
         schema_import_errors: importer.schema_import_errors.freeze,
         provenance: importer.provenance.freeze
       ).build
