@@ -2,7 +2,7 @@
 
 module WSDL
   # Represents a callable SOAP operation.
-  class Operation # rubocop:disable Metrics/ClassLength
+  class Operation
     # Default XML encoding used in SOAP request headers.
     #
     # @return [String]
@@ -123,32 +123,6 @@ module WSDL
       @encoding = value
     end
 
-    # Returns whether XML output is formatted with indentation.
-    #
-    # Defaults to the client's {Config#format_xml} setting. Set per-operation
-    # via {#format_xml=} to override the client default for this operation only.
-    #
-    # @return [Boolean]
-    #
-    # @example Check the current setting
-    #   operation.format_xml  # => true (inherits from client config)
-    #
-    # @example Override per-operation
-    #   operation.format_xml = false
-    #   operation.format_xml  # => false
-    #
-    def format_xml
-      defined?(@format_xml) ? @format_xml : @config.format_xml
-    end
-
-    # Sets whether XML output is formatted with indentation for this operation.
-    #
-    # Overrides the client-level {Config#format_xml} setting for this
-    # operation only. Cleared by {#reset!}.
-    #
-    # @param value [Boolean]
-    attr_writer :format_xml
-
     # Returns canonical operation contract metadata.
     #
     # @return [WSDL::Contract::OperationContract]
@@ -203,15 +177,13 @@ module WSDL
     end
 
     # Clears the prepared request, allowing {#prepare} to be called again.
-    # Also clears any custom HTTP header overrides set via {#http_headers=}
-    # and the per-operation {#format_xml} override.
+    # Also clears any custom HTTP header overrides set via {#http_headers=}.
     #
     # @return [self]
     def reset!
       @request_document = nil
       @security = Security::Config.new
       @http_header_overrides = {}
-      remove_instance_variable(:@format_xml) if defined?(@format_xml)
       self
     end
 
@@ -252,12 +224,23 @@ module WSDL
 
     # Serializes the prepared request envelope to SOAP envelope XML.
     #
+    # By default, returns compact XML (no extra whitespace). Pass
+    # +pretty: true+ to get indented output for debugging or logging.
+    #
+    # @param pretty [Boolean] format XML with indentation (default: false)
     # @return [String]
-    def to_xml
+    #
+    # @example Compact XML (default)
+    #   operation.to_xml
+    #
+    # @example Pretty-printed for inspection
+    #   puts operation.to_xml(pretty: true)
+    #
+    def to_xml(pretty: false)
       ensure_request_definition!
 
       document = prepare_serializable_document(@request_document || Request::Envelope.new)
-      serializer = Request::Serializer.new(document:, soap_version:, format_xml:)
+      serializer = Request::Serializer.new(document:, soap_version:, pretty:)
       return serializer.serialize unless @security.configured?
 
       Security::SecurityHeader.new(@security).apply(serializer.to_document)

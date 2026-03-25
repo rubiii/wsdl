@@ -6,10 +6,10 @@ module WSDL
   module Request
     # Serializes a request envelope into SOAP envelope XML.
     class Serializer
-      def initialize(document:, soap_version:, format_xml:)
+      def initialize(document:, soap_version:, pretty: false)
         @document = document
         @soap_version = soap_version
-        @format_xml = format_xml
+        @pretty = pretty
       end
 
       # @return [Nokogiri::XML::Document]
@@ -37,7 +37,7 @@ module WSDL
 
       def xml_save_options
         save_options = Nokogiri::XML::Node::SaveOptions::AS_XML | Nokogiri::XML::Node::SaveOptions::NO_DECLARATION
-        save_options |= Nokogiri::XML::Node::SaveOptions::FORMAT if @format_xml
+        save_options |= Nokogiri::XML::Node::SaveOptions::FORMAT if @pretty
         save_options
       end
 

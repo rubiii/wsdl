@@ -189,13 +189,11 @@ client = WSDL::Client.new(
 
 ## XML Formatting
 
-Each operation inherits `format_xml` from the client [configuration](configuration.md#xml-formatting) but can override it:
+Request XML is compact by default (no extra whitespace). For debugging, use `pretty: true`:
 
 ```ruby
-operation.format_xml = false  # compact XML for this operation only
+puts operation.to_xml(pretty: true)
 ```
-
-The override is cleared by `operation.reset!`. See [XML Formatting](configuration.md#xml-formatting) for details.
 
 ## RPC/Literal Behavior
 

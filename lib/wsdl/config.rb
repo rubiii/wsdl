@@ -18,8 +18,6 @@ module WSDL
   #   relaxed = config.with(strictness: false)
   #
   class Config
-    # @param format_xml [Boolean] whether to format XML output with indentation.
-    #   Set to `false` for whitespace-sensitive SOAP servers. Defaults to `true`.
     # @param strictness [Strictness, Hash, Boolean, nil] strictness settings.
     #   Accepts a Strictness object, a Hash of settings, +true+ (all strict),
     #   +false+ (all relaxed), or nil (uses {WSDL.strictness}).
@@ -30,18 +28,14 @@ module WSDL
     # @param limits [Limits, nil] resource limits for DoS protection.
     #   If nil, uses {WSDL.limits}.
     #
-    def initialize(format_xml: true, strictness: nil, strict_schema: nil,
+    def initialize(strictness: nil, strict_schema: nil,
                    sandbox_paths: nil, limits: nil)
-      @format_xml = format_xml
       @strictness = resolve_strictness(strictness, strict_schema)
       @sandbox_paths = sandbox_paths
       @limits = Limits.resolve(limits) || WSDL.limits
 
       freeze
     end
-
-    # @return [Boolean] whether to format XML output with indentation
-    attr_reader :format_xml
 
     # @return [Strictness] strictness settings for schema/request validation
     attr_reader :strictness
@@ -55,7 +49,6 @@ module WSDL
     # Creates a new Config with some values changed.
     #
     # @param options [Hash] the settings to override
-    # @option options [Boolean] :format_xml
     # @option options [Strictness, Hash, Boolean] :strictness
     # @option options [Boolean] :strict_schema **deprecated**
     # @option options [Array<String>, nil] :sandbox_paths
@@ -67,7 +60,6 @@ module WSDL
     #
     def with(**options)
       self.class.new(
-        format_xml: options.fetch(:format_xml, @format_xml),
         strictness: options.fetch(:strictness, @strictness),
         strict_schema: options[:strict_schema],
         sandbox_paths: options.fetch(:sandbox_paths, @sandbox_paths),
@@ -78,7 +70,6 @@ module WSDL
     # @return [Hash{Symbol => Object}] the config as a hash
     def to_h
       {
-        format_xml: @format_xml,
         strictness: @strictness,
         sandbox_paths: @sandbox_paths,
         limits: @limits

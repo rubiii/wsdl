@@ -290,7 +290,7 @@ RSpec.describe 'Oracle' do
         end
       end
 
-      result = WSDL::Request::Serializer.new(document:, soap_version: '1.1', format_xml: false).serialize
+      result = WSDL::Request::Serializer.new(document:, soap_version: '1.1').serialize
 
       # Verify defined elements are serialized
       expect(result).to include('<jobID>12345</jobID>')

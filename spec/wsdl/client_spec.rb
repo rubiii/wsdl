@@ -499,22 +499,6 @@ RSpec.describe WSDL::Client do
     it 'returns a Config instance' do
       expect(client.config).to be_a(WSDL::Config)
     end
-
-    it 'defaults format_xml to true' do
-      expect(client.config.format_xml).to be(true)
-    end
-
-    it 'accepts format_xml: false' do
-      client = described_class.new(wsdl, http: http_mock, format_xml: false)
-      expect(client.config.format_xml).to be(false)
-    end
-
-    it 'passes format_xml option to operations' do
-      client = described_class.new(wsdl, http: http_mock, format_xml: false)
-      operation = client.operation(service_name, port_name, operation_name)
-
-      expect(operation.format_xml).to be(false)
-    end
   end
 
   describe '#service_name' do

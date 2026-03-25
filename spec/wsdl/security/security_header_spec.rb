@@ -110,7 +110,7 @@ RSpec.describe WSDL::Security::SecurityHeader do
         document = WSDL::Request::Serializer.new(
           document: WSDL::Request::Envelope.new,
           soap_version: '1.1',
-          format_xml: true
+          pretty: true
         ).to_document
 
         result = header.apply(document)

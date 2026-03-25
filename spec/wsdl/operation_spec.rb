@@ -138,33 +138,27 @@ RSpec.describe WSDL::Operation do
     end
   end
 
-  describe '#format_xml' do
-    it 'defaults to true' do
-      expect(operation.format_xml).to be(true)
+  describe '#to_xml pretty:' do
+    before do
+      operation.prepare do
+        body do
+          tag('ConvertTemp') do
+            tag('Temperature', 30)
+            tag('FromUnit', 'degreeCelsius')
+            tag('ToUnit', 'degreeFahrenheit')
+          end
+        end
+      end
     end
 
-    it 'can be overwritten' do
-      operation.format_xml = false
-      expect(operation.format_xml).to be(false)
+    it 'returns compact XML by default' do
+      xml = operation.to_xml
+      expect(xml.strip).not_to include("\n")
     end
 
-    it 'can be set via config' do
-      config = WSDL::Config.new(format_xml: false)
-      operation = described_class.new(op_data, endpoint, http_mock, config:)
-      expect(operation.format_xml).to be(false)
-    end
-
-    it 'per-operation override takes precedence over config' do
-      config = WSDL::Config.new(format_xml: false)
-      operation = described_class.new(op_data, endpoint, http_mock, config:)
-      operation.format_xml = true
-      expect(operation.format_xml).to be(true)
-    end
-
-    it 'reverts to config default after reset!' do
-      operation.format_xml = false
-      operation.reset!
-      expect(operation.format_xml).to be(true)
+    it 'returns formatted XML when pretty: true' do
+      xml = operation.to_xml(pretty: true)
+      expect(xml).to match(/^\s+</)
     end
   end
 
@@ -582,57 +576,21 @@ RSpec.describe WSDL::Operation do
       expect(serialized_document).to be_a(Nokogiri::XML::Document)
     end
 
-    context 'with format_xml: false' do
-      let(:compact_operation) { described_class.new(op_data, endpoint, http_mock, config: WSDL::Config.new(format_xml: false)) }
-
-      it 'returns compact XML without indentation' do
-        compact_operation.prepare do
-          body do
-            tag('ConvertTemp') do
-              tag('Temperature', 30)
-              tag('FromUnit', 'degreeCelsius')
-              tag('ToUnit', 'degreeFahrenheit')
-            end
+    it 'returns compact XML by default (no indentation)' do
+      operation.prepare do
+        body do
+          tag('ConvertTemp') do
+            tag('Temperature', 30)
+            tag('FromUnit', 'degreeCelsius')
+            tag('ToUnit', 'degreeFahrenheit')
           end
         end
-
-        xml = compact_operation.to_xml
-
-        # Compact XML should not have leading whitespace on lines
-        expect(xml).not_to match(/^\s+</)
-        # Should be on a single line
-        expect(xml.strip).not_to include("\n")
       end
 
-      it 'returns semantically equivalent XML' do
-        compact_operation.prepare do
-          body do
-            tag('ConvertTemp') do
-              tag('Temperature', 30)
-              tag('FromUnit', 'degreeCelsius')
-              tag('ToUnit', 'degreeFahrenheit')
-            end
-          end
-        end
+      xml = operation.to_xml
 
-        expected = Nokogiri.XML(%(
-          <env:Envelope
-              xmlns:ns0="http://www.webserviceX.NET/"
-              xmlns:env="http://www.w3.org/2003/05/soap-envelope">
-            <env:Header/>
-            <env:Body>
-              <ns0:ConvertTemp>
-                <ns0:Temperature>30</ns0:Temperature>
-                <ns0:FromUnit>degreeCelsius</ns0:FromUnit>
-                <ns0:ToUnit>degreeFahrenheit</ns0:ToUnit>
-              </ns0:ConvertTemp>
-            </env:Body>
-          </env:Envelope>
-        ))
-
-        expect(compact_operation.to_xml)
-          .to be_equivalent_to(expected).respecting_element_order
-      end
+      expect(xml).not_to match(/^\s+</)
+      expect(xml.strip).not_to include("\n")
     end
 
     context 'with Strictness.off fallback behavior' do

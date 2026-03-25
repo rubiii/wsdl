@@ -31,15 +31,12 @@ module WSDL
   # @example With custom HTTP adapter
   #   client = WSDL::Client.new('http://example.com/service?wsdl', http: my_adapter)
   #
-  # @example Disable XML formatting for whitespace-sensitive servers
-  #   client = WSDL::Client.new('http://example.com/service?wsdl', format_xml: false)
-  #
   # @example Custom sandbox paths for local imports spanning multiple directories
   #   client = WSDL::Client.new('/path/to/service.wsdl',
   #                             sandbox_paths: ['/path/to', '/other/schemas'])
   #
   # @example Reusable configuration
-  #   config = WSDL::Config.new(format_xml: false, strictness: WSDL::Strictness.off)
+  #   config = WSDL::Config.new(strictness: WSDL::Strictness.off)
   #   client = WSDL::Client.new('http://example.com/service?wsdl', config:)
   #
   class Client

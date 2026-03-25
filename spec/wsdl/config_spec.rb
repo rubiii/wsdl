@@ -5,7 +5,6 @@ RSpec.describe WSDL::Config do
 
   describe '.new' do
     it 'has sensible defaults' do
-      expect(config.format_xml).to be(true)
       expect(config.strictness).to eq(WSDL::Strictness.on)
       expect(config.sandbox_paths).to be_nil
       expect(config.limits).to eq(WSDL.limits)
@@ -14,13 +13,11 @@ RSpec.describe WSDL::Config do
     it 'accepts custom values' do
       custom_limits = WSDL::Limits.new(max_schemas: 200)
       config = described_class.new(
-        format_xml: false,
         strictness: WSDL::Strictness.off,
         sandbox_paths: ['/tmp'],
         limits: custom_limits
       )
 
-      expect(config.format_xml).to be(false)
       expect(config.strictness).to eq(WSDL::Strictness.off)
       expect(config.sandbox_paths).to eq(['/tmp'])
       expect(config.limits).to eq(custom_limits)
@@ -43,20 +40,19 @@ RSpec.describe WSDL::Config do
 
   describe '#with' do
     it 'returns a new Config with overridden values' do
-      modified = config.with(format_xml: false, strictness: WSDL::Strictness.off)
+      modified = config.with(strictness: WSDL::Strictness.off)
 
-      expect(modified.format_xml).to be(false)
       expect(modified.strictness).to eq(WSDL::Strictness.off)
     end
 
     it 'does not mutate the original' do
-      config.with(format_xml: false)
+      config.with(strictness: WSDL::Strictness.off)
 
-      expect(config.format_xml).to be(true)
+      expect(config.strictness).to eq(WSDL::Strictness.on)
     end
 
     it 'returns a frozen instance' do
-      expect(config.with(format_xml: false)).to be_frozen
+      expect(config.with(strictness: WSDL::Strictness.off)).to be_frozen
     end
   end
 
@@ -68,7 +64,7 @@ RSpec.describe WSDL::Config do
     end
 
     it 'is not equal when values differ' do
-      expect(described_class.new(format_xml: true)).not_to eq(described_class.new(format_xml: false))
+      expect(described_class.new).not_to eq(described_class.new(strictness: false))
     end
 
     it 'is not equal to non-Config objects' do
@@ -81,7 +77,6 @@ RSpec.describe WSDL::Config do
       hash = config.to_h
 
       expect(hash).to eq(
-        format_xml: true,
         strictness: WSDL::Strictness.on,
         sandbox_paths: nil,
         limits: WSDL.limits
@@ -100,7 +95,7 @@ RSpec.describe WSDL::Config do
   describe '#inspect' do
     it 'returns a human-readable representation' do
       expect(config.inspect).to start_with('#<WSDL::Config ')
-      expect(config.inspect).to include('format_xml=true')
+      expect(config.inspect).to include('strictness=')
     end
   end
 end

@@ -163,8 +163,7 @@ plain_op.prepare do
 end
 plain_envelope = WSDL::Request::Serializer.new(
   document: plain_op.send(:prepare_serializable_document, plain_op.instance_variable_get(:@request_document)),
-  soap_version: plain_op.soap_version,
-  format_xml: true
+  soap_version: plain_op.soap_version
 ).to_document
 
 signing_report = Benchmark.ips { |x|

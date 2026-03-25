@@ -16,7 +16,6 @@
 
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
-| `format_xml:` | `Boolean` | `true` | Format generated request XML with indentation |
 | `strictness:` | `Hash`, `Boolean` | all strict | Validation strictness (see [Strictness](#strictness)) |
 | `sandbox_paths:`| `Array<String>`, `nil` | auto | Allowed directories for local imports (see [Sandbox Paths](#sandbox-paths)) |
 | `limits:` | `Hash`, `nil` | `WSDL.limits` | Resource limits for DoS protection (see [Limits](#limits)) |
@@ -24,8 +23,7 @@
 ```ruby
 client = WSDL::Client.new(
   '/app/wsdl/service.wsdl',
-  strictness: { schema_imports: false },
-  format_xml: false
+  strictness: { schema_imports: false }
 )
 ```
 
@@ -35,10 +33,10 @@ client = WSDL::Client.new(
 
 ```ruby
 # Direct keyword arguments (most common)
-client = WSDL::Client.new(wsdl, format_xml: false, strictness: false)
+client = WSDL::Client.new(wsdl, strictness: false)
 
 # Reusable Config object
-config = WSDL::Config.new(format_xml: false, strictness: false)
+config = WSDL::Config.new(strictness: false)
 client1 = WSDL::Client.new(wsdl1, config:)
 client2 = WSDL::Client.new(wsdl2, config:)
 
@@ -198,24 +196,11 @@ client = WSDL::Client.new(
 
 ## XML Formatting
 
-Set `format_xml: false` for servers sensitive to XML whitespace:
+Request XML is compact by default (no extra whitespace). For debugging or logging, pass `pretty: true` to `to_xml`:
 
 ```ruby
-client = WSDL::Client.new(wsdl, format_xml: false)
+puts operation.to_xml(pretty: true)
 ```
-
-### Per-operation override
-
-Each operation inherits `format_xml` from the client config but can override it individually:
-
-```ruby
-client = WSDL::Client.new(wsdl)  # format_xml: true by default
-
-operation = client.operation('SendData')
-operation.format_xml = false  # disable formatting for this operation only
-```
-
-This is useful when most operations work fine with formatted XML but a specific operation requires compact output (e.g., a whitespace-sensitive server endpoint). The override is cleared by `operation.reset!`.
 
 ## HTTP Adapter
 
