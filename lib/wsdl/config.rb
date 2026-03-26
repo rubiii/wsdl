@@ -20,19 +20,19 @@ module WSDL
   class Config
     # @param strictness [Strictness, Hash, Boolean, nil] strictness settings.
     #   Accepts a Strictness object, a Hash of settings, +true+ (all strict),
-    #   +false+ (all relaxed), or nil (uses {WSDL.strictness}).
+    #   +false+ (all relaxed), or nil (defaults to all strict).
     # @param strict_schema [Boolean, nil] **deprecated** — use +strictness:+ instead.
     #   +true+ maps to {Strictness.on}, +false+ to {Strictness.off}.
     # @param sandbox_paths [Array<String>, nil] directories where file access is allowed.
     #   When nil (default), sandbox is determined automatically based on WSDL source.
     # @param limits [Limits, nil] resource limits for DoS protection.
-    #   If nil, uses {WSDL.limits}.
+    #   If nil, uses {Limits} defaults.
     #
     def initialize(strictness: nil, strict_schema: nil,
                    sandbox_paths: nil, limits: nil)
       @strictness = resolve_strictness(strictness, strict_schema)
       @sandbox_paths = sandbox_paths
-      @limits = Limits.resolve(limits) || WSDL.limits
+      @limits = Limits.resolve(limits) || Limits.new
 
       freeze
     end
@@ -104,7 +104,7 @@ module WSDL
 
       raise ArgumentError, 'Cannot specify both strictness: and strict_schema:' if resolved && !strict_schema.nil?
 
-      return resolved || WSDL.strictness if strict_schema.nil?
+      return resolved || Strictness.new if strict_schema.nil?
 
       Kernel.warn '[WSDL] strict_schema is deprecated. ' \
                   "Use strictness: WSDL::Strictness.#{strict_schema ? 'on' : 'off'} instead.",

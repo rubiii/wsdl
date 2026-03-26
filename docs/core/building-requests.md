@@ -179,11 +179,11 @@ Configure via `limits:`:
 ```ruby
 client = WSDL::Client.new(
   wsdl,
-  limits: WSDL.limits.with(
+  limits: {
     max_request_elements: 50_000,
     max_request_depth: 200,
     max_request_attributes: 5_000
-  )
+  }
 )
 ```
 

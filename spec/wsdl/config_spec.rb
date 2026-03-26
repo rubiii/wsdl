@@ -7,7 +7,7 @@ RSpec.describe WSDL::Config do
     it 'has sensible defaults' do
       expect(config.strictness).to eq(WSDL::Strictness.on)
       expect(config.sandbox_paths).to be_nil
-      expect(config.limits).to eq(WSDL.limits)
+      expect(config.limits).to eq(WSDL::Limits.new)
     end
 
     it 'accepts custom values' do
@@ -28,9 +28,9 @@ RSpec.describe WSDL::Config do
       expect(config.strictness).to eq(WSDL::Strictness.off)
     end
 
-    it 'resolves nil limits to WSDL.limits' do
+    it 'resolves nil limits to Limits defaults' do
       config = described_class.new(limits: nil)
-      expect(config.limits).to eq(WSDL.limits)
+      expect(config.limits).to eq(WSDL::Limits.new)
     end
 
     it 'is frozen after construction' do
@@ -79,7 +79,7 @@ RSpec.describe WSDL::Config do
       expect(hash).to eq(
         strictness: WSDL::Strictness.on,
         sandbox_paths: nil,
-        limits: WSDL.limits
+        limits: WSDL::Limits.new
       )
     end
   end

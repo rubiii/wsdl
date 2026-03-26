@@ -291,40 +291,13 @@ RSpec.describe WSDL::Limits do
     end
   end
 
-  describe 'global accessor' do
-    after do
-      # Reset to default after each test
-      WSDL.limits = nil
+  describe 'no global accessor' do
+    it 'does not expose WSDL.limits' do
+      expect(WSDL).not_to respond_to(:limits)
     end
 
-    describe 'WSDL.limits' do
-      it 'returns a default Limits instance' do
-        expect(WSDL.limits).to be_a(described_class)
-      end
-
-      it 'returns the same instance on subsequent calls' do
-        first_call = WSDL.limits
-        second_call = WSDL.limits
-        expect(first_call).to equal(second_call)
-      end
-    end
-
-    describe 'WSDL.limits=' do
-      it 'allows setting a custom Limits instance' do
-        custom = described_class.new(max_schemas: 200)
-        WSDL.limits = custom
-
-        expect(WSDL.limits).to eq(custom)
-      end
-
-      it 'resets to default when set to nil' do
-        custom = described_class.new(max_schemas: 200)
-        WSDL.limits = custom
-        WSDL.limits = nil
-
-        # Next call should create a new default instance
-        expect(WSDL.limits.max_schemas).to eq(50)
-      end
+    it 'does not expose WSDL.limits=' do
+      expect(WSDL).not_to respond_to(:limits=)
     end
   end
 

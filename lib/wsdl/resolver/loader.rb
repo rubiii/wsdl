@@ -40,12 +40,12 @@ module WSDL
       # @param sandbox_paths [Array<String>, nil] directories where file access is allowed.
       #   When nil, file access is disabled and all imports must use URLs.
       # @param limits [Limits, nil] resource limits for DoS protection.
-      #   If nil, uses {WSDL.limits}.
+      #   If nil, uses {Limits} defaults.
       #
       def initialize(http, sandbox_paths: nil, limits: nil)
         @http = http
         @sandbox_paths = normalize_sandbox_paths(sandbox_paths)
-        @limits = limits || WSDL.limits
+        @limits = limits || Limits.new
         @total_bytes_downloaded = 0
       end
 

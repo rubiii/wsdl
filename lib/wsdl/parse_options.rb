@@ -15,15 +15,15 @@ module WSDL
     # Constructs a {ParseOptions} with sensible defaults.
     #
     # @param sandbox_paths [Array<String>, nil] sandbox paths (default: `nil`, auto-resolved by Source)
-    # @param limits [Limits, nil] resource limits (default: {WSDL.limits})
-    # @param strictness [Strictness, nil] strictness settings (default: {WSDL.strictness})
+    # @param limits [Limits, nil] resource limits (default: {Limits} defaults)
+    # @param strictness [Strictness, nil] strictness settings (default: all strict)
     # @return [ParseOptions]
     #
     def self.default(sandbox_paths: nil, limits: nil, strictness: nil)
       new(
         sandbox_paths:,
-        limits: limits || WSDL.limits,
-        strictness: strictness || WSDL.strictness
+        limits: limits || Limits.new,
+        strictness: strictness || Strictness.new
       )
     end
   }

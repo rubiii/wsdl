@@ -11,18 +11,17 @@ module WSDL
   # These limits add protection against resource exhaustion attacks.
   #
   # @example Using default limits
-  #   client = WSDL::Client.new('http://example.com/service?wsdl')
-  #   # Uses WSDL.limits by default
+  #   definition = WSDL.parse('http://example.com/service?wsdl')
   #
-  # @example Customizing limits globally
-  #   WSDL.limits = WSDL::Limits.new(max_document_size: 20 * 1024 * 1024)
+  # @example Customizing limits
+  #   definition = WSDL.parse(url, limits: { max_schemas: 100 })
   #
-  # @example Customizing limits per-client
-  #   custom_limits = WSDL.limits.with(max_schemas: 100)
-  #   client = WSDL::Client.new('http://example.com/service?wsdl', limits: custom_limits)
+  # @example Customizing with a Limits object
+  #   custom = WSDL::Limits.new(max_document_size: 20 * 1024 * 1024)
+  #   definition = WSDL.parse(url, limits: custom)
   #
   # @example Disabling a specific limit
-  #   unlimited_schemas = WSDL.limits.with(max_schemas: nil)
+  #   definition = WSDL.parse(url, limits: { max_schemas: nil })
   #
   class Limits
     # Default maximum size for a single WSDL or schema document (10 MB).

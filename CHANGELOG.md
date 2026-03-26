@@ -38,6 +38,7 @@ All notable changes to this project will be documented in this file.
 - Removed `InvalidHTTPAdapterError` (was only used for `cache_key` validation).
 - `WSDL::HTTPAdapter` renamed to `WSDL::HTTP::Client`. Config, RedirectGuard, and Response moved into the `WSDL::HTTP` namespace. `WSDL.http_adapter` accessor renamed to `WSDL.http_client`.
 - `WSDL::HTTPResponse` renamed to `WSDL::HTTP::Response`.
+- Removed `WSDL.strictness` and `WSDL.limits` global setters. Pass `strictness:` and `limits:` as kwargs on `WSDL.parse` or `Client.new` instead. Defaults are sensible — no configuration needed for most use cases.
 - I/O concerns extracted from `Parser` into `WSDL::Resolver` namespace (`Resolver::Source`, `Resolver::Loader`, `Resolver::Importer`). Old `Source`, `Parser::Resolver`, and `Parser::Importer` classes removed.
 - Element tree building is always best-effort. Unresolvable types, missing elements, and resource limits are recorded as build issues rather than raising exceptions. Operations are included in the `Definition` with whatever data was successfully collected.
 - `BindingOperation#find_input_child_nodes` returns `[]` for missing `<input>` instead of raising.

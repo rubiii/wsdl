@@ -578,8 +578,8 @@ RSpec.describe WSDL::Client do
   end
 
   describe '#config.limits' do
-    it 'uses WSDL.limits by default' do
-      expect(client.config.limits).to eq(WSDL.limits)
+    it 'uses Limits defaults when none provided' do
+      expect(client.config.limits).to eq(WSDL::Limits.new)
     end
 
     it 'accepts custom limits' do

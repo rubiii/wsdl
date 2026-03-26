@@ -14,7 +14,7 @@ module WSDL
   #   WSDL::Client.new(wsdl, strictness: false)
   #
   # @example Derive with one setting changed
-  #   WSDL.strictness.with(schema_imports: false)
+  #   WSDL::Strictness.new.with(schema_imports: false)
   #
   class Strictness
     # @param schema_imports [Boolean] raise on failed schema imports (default: true).

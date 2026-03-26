@@ -30,12 +30,6 @@ module WSDL
     # @return [Class] the HTTP client class (defaults to {HTTP::Client})
     attr_reader :http_client
 
-    # @return [Limits] the default limits instance
-    attr_reader :limits
-
-    # @return [Strictness] the default strictness settings
-    attr_reader :strictness
-
     # Returns the logger for the WSDL library.
     #
     # Defaults to a silent {Log::NullLogger} that discards all output.
@@ -79,34 +73,6 @@ module WSDL
       @http_client = client || HTTP::Client
     end
 
-    # Sets the default resource limits. Pass +nil+ to restore defaults.
-    #
-    # This is a global setting. Set it once at boot time, before creating
-    # any clients or spawning threads.
-    #
-    # @example
-    #   WSDL.limits = WSDL::Limits.new(max_schemas: 200)
-    #
-    # @param value [Limits, Hash, nil] a limits instance, hash of settings, or +nil+ to reset
-    # @see Limits
-    def limits=(value)
-      @limits = Limits.resolve(value) || Limits.new
-    end
-
-    # Sets the default strictness settings. Pass +nil+ to restore defaults.
-    #
-    # This is a global setting. Set it once at boot time, before creating
-    # any clients or spawning threads.
-    #
-    # @example
-    #   WSDL.strictness = { schema_imports: false }
-    #
-    # @param value [Strictness, Hash, Boolean, nil] a strictness instance, hash, boolean, or +nil+ to reset
-    # @see Strictness
-    def strictness=(value)
-      @strictness = Strictness.resolve(value) || Strictness.new
-    end
-
     # Parses a WSDL and returns a frozen {Definition}.
     #
     # Accepts a URL or file path. Uses the parsing pipeline internally
@@ -116,8 +82,9 @@ module WSDL
     # @param source [String] WSDL URL or file path
     # @param http [Object, nil] HTTP client for fetching (defaults to {.http_client})
     # @param strictness [Strictness, Hash, Boolean, nil] strictness settings
+    #   (defaults to all strict)
     # @param sandbox_paths [Array<String>, nil] allowed directories for file access
-    # @param limits [Limits, Hash, nil] resource limits
+    # @param limits [Limits, Hash, nil] resource limits (defaults to {Limits} defaults)
     # @return [Definition] the frozen definition
     #
     # @example Parse from URL
@@ -134,8 +101,8 @@ module WSDL
 
       parse_options = ParseOptions.new(
         sandbox_paths:,
-        limits: Limits.resolve(limits) || self.limits,
-        strictness: Strictness.resolve(strictness) || self.strictness
+        limits: Limits.resolve(limits) || Limits.new,
+        strictness: Strictness.resolve(strictness) || Strictness.new
       )
       Parser.parse(source, http, parse_options)
     end
@@ -209,7 +176,5 @@ module WSDL
 
   # Initialize defaults. These must be set before spawning threads.
   @http_client = HTTP::Client
-  @limits       = Limits.new
-  @strictness   = Strictness.new
-  @logger       = Log::NullLogger.new
+  @logger = Log::NullLogger.new
 end

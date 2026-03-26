@@ -110,7 +110,7 @@ RSpec.describe WSDL::XML::ElementBuilder do
         expect { builder.build([part]) }.not_to raise_error
       end
 
-      it 'uses WSDL.limits by default' do
+      it 'uses Limits defaults when none provided' do
         builder = described_class.new(nested_schemas)
 
         # Default limits should allow normal nesting (50 levels)

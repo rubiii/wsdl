@@ -339,8 +339,8 @@ RSpec.describe WSDL::Resolver::Loader do
 
   describe 'resource limits' do
     describe '#limits' do
-      it 'uses WSDL.limits by default' do
-        expect(loader.limits).to eq(WSDL.limits)
+      it 'uses Limits defaults when none provided' do
+        expect(loader.limits).to eq(WSDL::Limits.new)
       end
 
       it 'accepts custom limits' do

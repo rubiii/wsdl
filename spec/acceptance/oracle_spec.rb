@@ -260,7 +260,7 @@ RSpec.describe 'Oracle' do
       context = WSDL::Request::DSLContext.new(
         document:,
         security: WSDL::Security::Config.new,
-        limits: WSDL.limits
+        limits: WSDL::Limits.new
       )
 
       context.instance_exec do

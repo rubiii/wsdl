@@ -18,7 +18,7 @@
 |--------|------|---------|-------------|
 | `strictness:` | `Hash`, `Boolean` | all strict | Validation strictness (see [Strictness](#strictness)) |
 | `sandbox_paths:`| `Array<String>`, `nil` | auto | Allowed directories for local imports (see [Sandbox Paths](#sandbox-paths)) |
-| `limits:` | `Hash`, `nil` | `WSDL.limits` | Resource limits for DoS protection (see [Limits](#limits)) |
+| `limits:` | `Hash`, `nil` | sensible defaults | Resource limits for DoS protection (see [Limits](#limits)) |
 
 ```ruby
 client = WSDL::Client.new(
@@ -48,16 +48,15 @@ Config is frozen after construction, like `Limits`.
 
 ## Global Defaults
 
-Four module-level settings apply to all new clients:
+Two module-level settings apply to all new clients:
 
 ```ruby
-WSDL.http_client = MyHTTPClient             # default: WSDL::HTTP::Client
-WSDL.limits = { max_schemas: 200 }             # default: sensible defaults
-WSDL.strictness = false                        # default: all strict (true)
-WSDL.logger = Rails.logger                     # default: silent (NullLogger)
+WSDL.http_client = MyHTTPClient   # default: WSDL::HTTP::Client
+WSDL.logger = Rails.logger        # default: silent (NullLogger)
 ```
 
-Pass `nil` to any setter to restore its default value.
+Pass `nil` to any setter to restore its default value. Limits and strictness
+are not global — pass them as kwargs on `WSDL.parse` or `Client.new`.
 
 > **Thread safety:** These are global settings shared across all clients.
 > Set them once at boot time (e.g. in a Rails initializer), before creating
@@ -131,23 +130,23 @@ Limits protect against resource exhaustion from malicious or oversized WSDL docu
 
 Set any limit to `nil` to disable it.
 
-### Global default
+### On WSDL.parse
 
 ```ruby
-WSDL.limits = WSDL::Limits.new(max_schemas: 200)
+definition = WSDL.parse(url, limits: { max_schemas: 200 })
 ```
 
-### Override a single value
+### On Client.new
 
 ```ruby
-WSDL.limits = WSDL.limits.with(max_schemas: 200)
+client = WSDL::Client.new(wsdl, limits: { max_document_size: 20 * 1024 * 1024 })
 ```
 
-### Per-client
+### As a Limits object
 
 ```ruby
-custom_limits = WSDL.limits.with(max_document_size: 20 * 1024 * 1024)
-client = WSDL::Client.new(wsdl, limits: custom_limits)
+custom = WSDL::Limits.new(max_schemas: 200, max_document_size: 20 * 1024 * 1024)
+definition = WSDL.parse(url, limits: custom)
 ```
 
 ### When to increase limits

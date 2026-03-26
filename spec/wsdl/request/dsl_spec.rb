@@ -100,7 +100,7 @@ RSpec.describe 'Request DSL' do
     limited_client = WSDL::Client.new(
       fixture('wsdl/temperature'),
       strictness: WSDL::Strictness.off,
-      limits: WSDL.limits.with(max_request_elements: 2)
+      limits: WSDL::Limits.new.with(max_request_elements: 2)
     )
     limited_operation = limited_client.operation('ConvertTemperature', 'ConvertTemperatureSoap12', 'ConvertTemp')
 
@@ -287,7 +287,7 @@ RSpec.describe 'Request DSL' do
     limited_client = WSDL::Client.new(
       fixture('wsdl/temperature'),
       strictness: WSDL::Strictness.off,
-      limits: WSDL.limits.with(max_request_depth: 1)
+      limits: WSDL::Limits.new.with(max_request_depth: 1)
     )
     limited_operation = limited_client.operation('ConvertTemperature', 'ConvertTemperatureSoap12', 'ConvertTemp')
 
@@ -304,7 +304,7 @@ RSpec.describe 'Request DSL' do
     limited_client = WSDL::Client.new(
       fixture('wsdl/temperature'),
       strictness: WSDL::Strictness.off,
-      limits: WSDL.limits.with(max_request_attributes: 1)
+      limits: WSDL::Limits.new.with(max_request_attributes: 1)
     )
     limited_operation = limited_client.operation('ConvertTemperature', 'ConvertTemperatureSoap12', 'ConvertTemp')
 

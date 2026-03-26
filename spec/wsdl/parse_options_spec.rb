@@ -6,8 +6,8 @@ RSpec.describe WSDL::ParseOptions do
       options = described_class.default
 
       expect(options.sandbox_paths).to be_nil
-      expect(options.limits).to eq(WSDL.limits)
-      expect(options.strictness).to eq(WSDL::Strictness.on)
+      expect(options.limits).to eq(WSDL::Limits.new)
+      expect(options.strictness).to eq(WSDL::Strictness.new)
     end
 
     it 'accepts custom sandbox_paths' do
@@ -21,9 +21,9 @@ RSpec.describe WSDL::ParseOptions do
       expect(options.limits).to eq(custom_limits)
     end
 
-    it 'falls back to WSDL.limits when limits is nil' do
+    it 'falls back to Limits defaults when limits is nil' do
       options = described_class.default(limits: nil)
-      expect(options.limits).to eq(WSDL.limits)
+      expect(options.limits).to eq(WSDL::Limits.new)
     end
 
     it 'stores Strictness.on correctly' do
