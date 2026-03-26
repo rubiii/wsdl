@@ -4,5 +4,5 @@ module WSDL
   # The current version of the WSDL gem.
   #
   # @return [String] the semantic version string
-  VERSION = '1.0.0'
+  VERSION = '1.1.0'
 end

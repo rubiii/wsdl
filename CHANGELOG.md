@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## [1.1.0] — UNRELEASED
+## [1.1.0] — 2026-03-26
 
 **Upgrading?** See the [migration guide](#migrating-from-10) below.
 
@@ -203,5 +203,6 @@ Initial public release.
 - **base64** for encoding/decoding
 - All cryptography delegated to Ruby's built-in **OpenSSL**
 
-[Unreleased]: https://github.com/rubiii/wsdl/compare/v1.0.0...HEAD
+[Unreleased]: https://github.com/rubiii/wsdl/compare/v1.1.0...HEAD
+[1.1.0]: https://github.com/rubiii/wsdl/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/rubiii/wsdl/releases/tag/v1.0.0
