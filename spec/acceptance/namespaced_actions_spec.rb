@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 RSpec.describe 'Namespaced actions example' do
-  subject(:client) { WSDL::Client.new fixture('wsdl/namespaced_actions') }
+  subject(:client) { WSDL::Client.new WSDL.parse(fixture('wsdl/namespaced_actions')) }
 
   it 'returns a map of services and ports' do
     expect(client.services).to eq(

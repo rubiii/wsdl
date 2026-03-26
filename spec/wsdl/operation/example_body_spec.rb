@@ -2,7 +2,7 @@
 
 RSpec.describe WSDL::Operation do
   let(:add_logins) do
-    client = WSDL::Client.new fixture('wsdl/bronto')
+    client = WSDL::Client.new WSDL.parse(fixture('wsdl/bronto'))
 
     service_name = :BrontoSoapApiImplService
     port_name    = :BrontoSoapApiImplPort
@@ -11,7 +11,7 @@ RSpec.describe WSDL::Operation do
   end
 
   let(:get_mu_bets_lite) do
-    client = WSDL::Client.new fixture('wsdl/betfair')
+    client = WSDL::Client.new WSDL.parse(fixture('wsdl/betfair'))
 
     service_name = port_name = :BFExchangeService
     client.operation(service_name, port_name, :getMUBetsLite)

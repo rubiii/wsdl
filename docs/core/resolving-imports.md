@@ -14,10 +14,10 @@ Set behavior through [`strictness:`](configuration.md#strictness).
 
 ```ruby
 # Strict (default)
-WSDL::Client.new('/app/wsdl/service.wsdl', strictness: Strictness.on)
+WSDL.parse('/app/wsdl/service.wsdl', strictness: Strictness.on)
 
 # Best effort
-WSDL::Client.new('/app/wsdl/service.wsdl', strictness: Strictness.off)
+WSDL.parse('/app/wsdl/service.wsdl', strictness: Strictness.off)
 ```
 
 `Strictness.on`:
@@ -43,13 +43,13 @@ Fatal security/path errors still raise in both modes.
 Without explicit [`sandbox_paths`](configuration.md#sandbox-paths), file-based WSDLs are sandboxed to the WSDL directory.
 
 ```ruby
-client = WSDL::Client.new('/app/wsdl/system/service.wsdl')
+definition = WSDL.parse('/app/wsdl/system/service.wsdl')
 ```
 
 For sibling directories, configure both paths:
 
 ```ruby
-client = WSDL::Client.new(
+definition = WSDL.parse(
   '/app/wsdl/system/service.wsdl',
   sandbox_paths: ['/app/wsdl/system', '/app/wsdl/common']
 )

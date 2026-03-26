@@ -8,10 +8,10 @@ module WSDL
   # WSDLs rather than turning everything off.
   #
   # @example Disable only schema import strictness
-  #   WSDL::Client.new(wsdl, strictness: { schema_imports: false })
+  #   WSDL.parse(url, strictness: { schema_imports: false })
   #
   # @example Disable all strictness
-  #   WSDL::Client.new(wsdl, strictness: false)
+  #   WSDL.parse(url, strictness: false)
   #
   # @example Derive with one setting changed
   #   WSDL::Strictness.new.with(schema_imports: false)

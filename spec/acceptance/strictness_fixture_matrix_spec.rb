@@ -46,7 +46,7 @@ RSpec.describe 'Strictness fixture matrix' do
 
   it 'parses clean fixtures without build issues' do
     clean_fixtures.each do |fixture_key|
-      client = WSDL::Client.new(fixture(fixture_key))
+      client = WSDL::Client.new(WSDL.parse(fixture(fixture_key)))
 
       expect(client.definition.build_issues).to(
         be_empty,
@@ -66,7 +66,7 @@ RSpec.describe 'Strictness fixture matrix' do
 
   it 'records build issues for fixtures with unresolvable references' do
     fixtures_with_build_issues.each do |fixture_key|
-      client = WSDL::Client.new(fixture(fixture_key))
+      client = WSDL::Client.new(WSDL.parse(fixture(fixture_key)))
 
       expect(client.definition.build_issues).not_to be_empty,
         "expected build issues for #{fixture_key}"
@@ -85,14 +85,14 @@ RSpec.describe 'Strictness fixture matrix' do
   it 'raises SchemaImportError for fixtures with unresolvable imports in strict mode' do
     fixtures_with_import_errors.each do |fixture_key, strict_error|
       expect {
-        WSDL::Client.new(fixture(fixture_key), strictness: WSDL::Strictness.on)
+        WSDL::Client.new(WSDL.parse(fixture(fixture_key), strictness: WSDL::Strictness.on))
       }.to raise_error(strict_error), "expected Strictness.on to fail for #{fixture_key}"
     end
   end
 
   it 'parses fixtures with import errors in lenient mode with build issues' do
     fixtures_with_import_errors.each_key do |fixture_key|
-      client = WSDL::Client.new(fixture(fixture_key), strictness: WSDL::Strictness.off)
+      client = WSDL::Client.new(WSDL.parse(fixture(fixture_key), strictness: WSDL::Strictness.off))
 
       expect(client.definition.build_issues).not_to be_empty,
         "expected build issues for #{fixture_key} in lenient mode"
@@ -104,18 +104,18 @@ RSpec.describe 'Strictness fixture matrix' do
       wsdl_path = fixture(fixture_key)
 
       expect {
-        WSDL::Client.new(wsdl_path, strictness: WSDL::Strictness.on)
+        WSDL::Client.new(WSDL.parse(wsdl_path, strictness: WSDL::Strictness.on))
       }.to raise_error(WSDL::PathRestrictionError)
 
       expect {
-        WSDL::Client.new(wsdl_path, strictness: WSDL::Strictness.off)
+        WSDL::Client.new(WSDL.parse(wsdl_path, strictness: WSDL::Strictness.off))
       }.to raise_error(WSDL::PathRestrictionError)
 
       system_dir = File.dirname(File.expand_path(wsdl_path))
       common_dir = File.expand_path('../common_v32_0', system_dir)
 
       expect {
-        WSDL::Client.new(wsdl_path, sandbox_paths: [system_dir, common_dir])
+        WSDL::Client.new(WSDL.parse(wsdl_path, sandbox_paths: [system_dir, common_dir]))
       }.not_to raise_error, "expected sandbox_paths to resolve #{fixture_key}"
     end
   end

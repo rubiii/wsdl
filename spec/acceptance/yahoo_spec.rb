@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 RSpec.describe 'Yahoo\'s AccountService' do
-  subject(:client) { WSDL::Client.new fixture('wsdl/yahoo') }
+  subject(:client) { WSDL::Client.new WSDL.parse(fixture('wsdl/yahoo')) }
 
   let(:service_name) { :AccountServiceService }
   let(:port_name)    { :AccountService }

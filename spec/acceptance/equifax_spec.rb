@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 RSpec.describe 'Equifax' do
-  subject(:client) { WSDL::Client.new fixture('wsdl/equifax') }
+  subject(:client) { WSDL::Client.new WSDL.parse(fixture('wsdl/equifax')) }
 
   let(:service_name) { :canadav2 }
   let(:port_name)    { :canadaHttpPortV2 }

@@ -40,7 +40,7 @@ WSDL::TestService.define(:crowd, wsdl: 'wsdl/crowd') do
 end
 
 RSpec.describe 'Atlassian Crowd' do
-  subject(:client) { WSDL::Client.new(service.wsdl_url) }
+  subject(:client) { WSDL::Client.new(WSDL.parse(service.wsdl_url)) }
 
   let(:service) { WSDL::TestService[:crowd] }
   let(:service_name) { :SecurityServer }

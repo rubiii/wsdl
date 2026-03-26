@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 RSpec.describe 'Bronto' do
-  subject(:client) { WSDL::Client.new fixture('wsdl/bronto') }
+  subject(:client) { WSDL::Client.new WSDL.parse(fixture('wsdl/bronto')) }
 
   let(:service_name) { :BrontoSoapApiImplService }
   let(:port_name)    { :BrontoSoapApiImplPort }

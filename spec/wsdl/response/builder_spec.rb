@@ -2,7 +2,7 @@
 
 RSpec.describe WSDL::Response::Builder do
   def schema_elements(fixture, operation_name:, service: nil, port: nil)
-    client = WSDL::Client.new(fixture(fixture))
+    client = WSDL::Client.new(WSDL.parse(fixture(fixture)))
 
     if service
       client.operation(service, port, operation_name)

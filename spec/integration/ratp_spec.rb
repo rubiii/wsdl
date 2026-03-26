@@ -34,7 +34,7 @@ WSDL::TestService.define(:ratp, wsdl: 'wsdl/ratp') do
 end
 
 RSpec.describe 'RATP' do
-  subject(:client) { WSDL::Client.new(service.wsdl_url) }
+  subject(:client) { WSDL::Client.new(WSDL.parse(service.wsdl_url)) }
 
   let(:service) { WSDL::TestService[:ratp] }
   let(:service_name) { :Wsiv }

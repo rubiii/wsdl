@@ -62,7 +62,7 @@ WSDL::TestService.define(:betfair, wsdl: 'wsdl/betfair') do
 end
 
 RSpec.describe 'Betfair' do
-  subject(:client) { WSDL::Client.new(service.wsdl_url) }
+  subject(:client) { WSDL::Client.new(WSDL.parse(service.wsdl_url)) }
 
   let(:service) { WSDL::TestService[:betfair] }
   let(:service_name) { :BFExchangeService }

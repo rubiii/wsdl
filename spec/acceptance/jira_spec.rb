@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 RSpec.describe 'Atlassian Jira' do
-  subject(:client) { WSDL::Client.new fixture('wsdl/jira') }
+  subject(:client) { WSDL::Client.new WSDL.parse(fixture('wsdl/jira')) }
 
   it 'returns a map of services and ports' do
     expect(client.services).to eq(

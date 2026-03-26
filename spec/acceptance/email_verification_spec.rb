@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 RSpec.describe 'EmailVerification service' do
-  subject(:client) { WSDL::Client.new fixture('wsdl/email_verification') }
+  subject(:client) { WSDL::Client.new WSDL.parse(fixture('wsdl/email_verification')) }
 
   let(:service_name) { :EmailVerNoTestEmail }
   let(:port_name)    { :EmailVerNoTestEmailSoap12 }

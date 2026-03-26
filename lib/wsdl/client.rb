@@ -1,73 +1,61 @@
 # frozen_string_literal: true
 
 module WSDL
-  # Main entry point for working with WSDL documents.
+  # Wraps a {Definition} with an HTTP client for inspecting services
+  # and executing SOAP operations.
   #
-  # This class provides a high-level interface for parsing WSDL documents,
-  # inspecting services and operations, and executing SOAP requests.
-  #
-  # @example From a Definition (recommended)
+  # @example Basic usage
   #   definition = WSDL.parse('http://example.com/service?wsdl')
   #   client = WSDL::Client.new(definition)
   #   operation = client.operation('GetData')
   #
-  # @example From a URL (parses on initialization)
-  #   client = WSDL::Client.new('http://example.com/service?wsdl')
-  #   client.services
-  #   # => {"ExampleService" => {ports: {"ExamplePort" => {type: "...", location: "..."}}}}
-  #
-  # @example Calling an operation (single service/port WSDL)
-  #   client = WSDL::Client.new('http://example.com/service?wsdl')
+  # @example Calling an operation
+  #   definition = WSDL.parse('http://example.com/service?wsdl')
+  #   client = WSDL::Client.new(definition)
   #   operation = client.operation('GetData')
   #   operation.prepare do
   #     tag('GetData') { tag('id', 123) }
   #   end
   #   response = operation.invoke
   #
-  # @example Calling an operation (multi-service WSDL)
-  #   client = WSDL::Client.new('http://example.com/service?wsdl')
+  # @example Multi-service WSDL
+  #   client = WSDL::Client.new(definition)
   #   operation = client.operation('ExampleService', 'ExamplePort', 'GetData')
   #
   # @example With custom HTTP client
-  #   client = WSDL::Client.new('http://example.com/service?wsdl', http: my_client)
+  #   client = WSDL::Client.new(definition, http: my_client)
   #
-  # @example Custom sandbox paths for local imports spanning multiple directories
-  #   client = WSDL::Client.new('/path/to/service.wsdl',
-  #                             sandbox_paths: ['/path/to', '/other/schemas'])
-  #
-  # @example Reusable configuration
+  # @example With runtime options
   #   config = WSDL::Config.new(strictness: WSDL::Strictness.off)
-  #   client = WSDL::Client.new('http://example.com/service?wsdl', config:)
+  #   client = WSDL::Client.new(definition, config:)
   #
   class Client
-    # Creates a new Client instance.
+    # Creates a new Client instance from a pre-built {Definition}.
     #
-    # Accepts either a {Definition} (recommended) or a WSDL URL/file path.
-    # When a Definition is provided, no parsing occurs — the Client
-    # operates entirely from the pre-built definition.
+    # Use {WSDL.parse} to create a Definition from a URL or file path.
+    # Parse-time options (strictness, limits, sandbox_paths) belong on
+    # {WSDL.parse}, not here.
     #
-    # @param wsdl [Definition, String] a {Definition} instance, URL, or file path
+    # @param definition [Definition] a frozen {Definition} from {WSDL.parse} or {WSDL.load}
     # @param http [Object, nil] an optional HTTP client instance
     #   (defaults to a new instance of {WSDL.http_client})
-    # @param config [Config, nil] a reusable {Config} instance grouping behavioral
-    #   options. Any keyword arguments for Config options override the config object.
-    #   Additional keyword arguments are forwarded to {Config#initialize}.
-    #   See {Config#initialize} for the full list of supported options.
+    # @param config [Config, nil] runtime configuration for request validation
+    #   and resource limits. Keyword arguments for {Config} options
+    #   (e.g. +strictness:+, +limits:+) are also accepted directly
+    #   and forwarded to {Config.new}.
     #
-    def initialize(wsdl, http: nil, config: nil, **)
+    # @raise [ArgumentError] if +definition+ is not a {Definition}
+    #
+    def initialize(definition, http: nil, config: nil, **)
+      unless definition.is_a?(Definition)
+        raise ArgumentError,
+          "Client.new requires a Definition (got #{definition.class}). " \
+          'Use WSDL.parse(source) to create one.'
+      end
+
       @config = config ? config.with(**) : Config.new(**)
       @http = http || WSDL.http_client.new
-
-      @definition = if wsdl.is_a?(Definition)
-        wsdl
-      else
-        parse_options = ParseOptions.new(
-          sandbox_paths: @config.sandbox_paths,
-          limits: @config.limits,
-          strictness: @config.strictness
-        )
-        Parser.parse(wsdl, @http, parse_options)
-      end
+      @definition = definition
     end
 
     # Returns the {Definition} for this client's WSDL.

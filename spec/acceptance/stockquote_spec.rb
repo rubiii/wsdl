@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 RSpec.describe 'Stockquote service' do
-  subject(:client) { WSDL::Client.new fixture('wsdl/stockquote') }
+  subject(:client) { WSDL::Client.new WSDL.parse(fixture('wsdl/stockquote')) }
 
   let(:service_name) { :StockQuote }
   let(:port_name)    { :StockQuoteSoap }

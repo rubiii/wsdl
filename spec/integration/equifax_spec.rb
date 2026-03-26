@@ -91,7 +91,7 @@ WSDL::TestService.define(:equifax, wsdl: 'wsdl/equifax') do
 end
 
 RSpec.describe 'Equifax' do
-  subject(:client) { WSDL::Client.new(service.wsdl_url) }
+  subject(:client) { WSDL::Client.new(WSDL.parse(service.wsdl_url)) }
 
   let(:service) { WSDL::TestService[:equifax] }
   let(:service_name) { :canadav2 }

@@ -128,7 +128,7 @@ parsing_report = Benchmark.ips { |x|
 # ---------------------------------------------------------------------------
 # 2. Request Building (operation + prepare + serialize)
 # ---------------------------------------------------------------------------
-small_client = WSDL::Client.new(SMALL_WSDL, http: HTTP, cache: false)
+small_client = WSDL::Client.new(WSDL.parse(SMALL_WSDL, http: HTTP), http: HTTP)
 small_service, small_port = small_client.services.first.then { |name, info| [name, info[:ports].keys.first] }
 small_op_name = small_client.operations(small_service, small_port).first
 

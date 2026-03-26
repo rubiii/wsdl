@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 RSpec.describe 'Temperature service' do
-  subject(:client) { WSDL::Client.new fixture('wsdl/temperature') }
+  subject(:client) { WSDL::Client.new WSDL.parse(fixture('wsdl/temperature')) }
 
   let(:service_name) { :ConvertTemperature }
   let(:port_name)    { :ConvertTemperatureSoap12 }

@@ -13,7 +13,7 @@ WSDL::TestService.define(:telefonkatalogen, wsdl: 'wsdl/telefonkatalogen') do
 end
 
 RSpec.describe 'Telefonkatalogen' do
-  subject(:client) { WSDL::Client.new(service.wsdl_url) }
+  subject(:client) { WSDL::Client.new(WSDL.parse(service.wsdl_url)) }
 
   let(:service) { WSDL::TestService[:telefonkatalogen] }
   let(:service_name) { :SendSms }

@@ -27,7 +27,7 @@ WSDL::TestService.define(:blz_service, wsdl: 'wsdl/blz_service') do
 end
 
 RSpec.describe 'BLZService' do
-  subject(:client) { WSDL::Client.new(service.wsdl_url) }
+  subject(:client) { WSDL::Client.new(WSDL.parse(service.wsdl_url)) }
 
   let(:service) { WSDL::TestService[:blz_service] }
   let(:service_name) { :BLZService }

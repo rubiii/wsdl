@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 RSpec.describe 'Geotrust' do
-  subject(:client) { WSDL::Client.new fixture('wsdl/geotrust') }
+  subject(:client) { WSDL::Client.new WSDL.parse(fixture('wsdl/geotrust')) }
 
   it 'returns a map of services and ports' do
     expect(client.services).to eq(

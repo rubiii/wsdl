@@ -18,7 +18,8 @@ The HTTP client handles WSDL/schema fetching (`get`) and SOAP operation calls (`
 Configure via `client.http`, which returns a `WSDL::HTTP::Config`:
 
 ```ruby
-client = WSDL::Client.new(wsdl)
+definition = WSDL.parse('http://example.com/service?wsdl')
+client = WSDL::Client.new(definition)
 
 # Timeouts
 client.http.open_timeout = 10
@@ -190,8 +191,10 @@ end
 # Global (all new clients)
 WSDL.http_client = MyHTTPClient
 
-# Per-client
-client = WSDL::Client.new(wsdl, http: MyHTTPClient.new)
+# Per-client (use on both parse and client for full control)
+http = MyHTTPClient.new
+definition = WSDL.parse('http://example.com/service?wsdl', http:)
+client = WSDL::Client.new(definition, http:)
 ```
 
 > **Note:** Custom clients are responsible for their own redirect handling and SSRF protection. The built-in protections described above only apply to `WSDL::HTTP::Client`.

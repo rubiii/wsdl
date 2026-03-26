@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 RSpec.describe 'Oracle' do
-  subject(:client) { WSDL::Client.new fixture('wsdl/oracle') }
+  subject(:client) { WSDL::Client.new WSDL.parse(fixture('wsdl/oracle')) }
 
   it 'returns a map of services and ports' do
     expect(client.services).to include(

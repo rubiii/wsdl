@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 RSpec.describe 'Document/Literal example' do
-  subject(:client) { WSDL::Client.new fixture('wsdl/document_literal_wrapped') }
+  subject(:client) { WSDL::Client.new WSDL.parse(fixture('wsdl/document_literal_wrapped')) }
 
   let(:service_name) { :SampleService }
   let(:port_name)    { :Sample }

@@ -6,7 +6,6 @@ RSpec.describe WSDL::Config do
   describe '.new' do
     it 'has sensible defaults' do
       expect(config.strictness).to eq(WSDL::Strictness.on)
-      expect(config.sandbox_paths).to be_nil
       expect(config.limits).to eq(WSDL::Limits.new)
     end
 
@@ -14,12 +13,10 @@ RSpec.describe WSDL::Config do
       custom_limits = WSDL::Limits.new(max_schemas: 200)
       config = described_class.new(
         strictness: WSDL::Strictness.off,
-        sandbox_paths: ['/tmp'],
         limits: custom_limits
       )
 
       expect(config.strictness).to eq(WSDL::Strictness.off)
-      expect(config.sandbox_paths).to eq(['/tmp'])
       expect(config.limits).to eq(custom_limits)
     end
 
@@ -78,7 +75,6 @@ RSpec.describe WSDL::Config do
 
       expect(hash).to eq(
         strictness: WSDL::Strictness.on,
-        sandbox_paths: nil,
         limits: WSDL::Limits.new
       )
     end

@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 RSpec.describe 'Interhome' do
-  subject(:client) { WSDL::Client.new fixture('wsdl/interhome') }
+  subject(:client) { WSDL::Client.new WSDL.parse(fixture('wsdl/interhome')) }
 
   let(:service_name) { :WebService }
   let(:port_name)    { :WebServiceSoap }

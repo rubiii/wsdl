@@ -62,16 +62,19 @@ module WSDL
     # are checked. HTTPS-to-HTTP scheme downgrades are also blocked.
     #
     # @example Configuring timeouts
-    #   client = WSDL::Client.new('https://example.com/service?wsdl')
+    #   definition = WSDL.parse('https://example.com/service?wsdl')
+    #   client = WSDL::Client.new(definition)
     #   client.http.open_timeout = 10
     #   client.http.read_timeout = 60
     #
     # @example Using a custom CA certificate
-    #   client = WSDL::Client.new('https://example.com/service?wsdl')
+    #   definition = WSDL.parse('https://example.com/service?wsdl')
+    #   client = WSDL::Client.new(definition)
     #   client.http.ca_file = '/path/to/ca-bundle.crt'
     #
     # @example Client certificate authentication (mutual TLS)
-    #   client = WSDL::Client.new('https://example.com/service?wsdl')
+    #   definition = WSDL.parse('https://example.com/service?wsdl')
+    #   client = WSDL::Client.new(definition)
     #   client.http.cert = OpenSSL::X509::Certificate.new(File.read('/path/to/client.crt'))
     #   client.http.key = OpenSSL::PKey::RSA.new(File.read('/path/to/client.key'))
     #

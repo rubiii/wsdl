@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 RSpec.describe 'Authentication service' do
-  subject(:client) { WSDL::Client.new fixture('wsdl/authentication') }
+  subject(:client) { WSDL::Client.new WSDL.parse(fixture('wsdl/authentication')) }
 
   it 'returns a map of services and ports' do
     expect(client.services).to eq(

@@ -177,8 +177,9 @@ Request envelope construction enforces [resource limits](configuration.md#limits
 Configure via `limits:`:
 
 ```ruby
+definition = WSDL.parse(url)
 client = WSDL::Client.new(
-  wsdl,
+  definition,
   limits: {
     max_request_elements: 50_000,
     max_request_depth: 200,

@@ -8,7 +8,8 @@ module WSDL
   #
   # @example Rescuing all WSDL errors
   #   begin
-  #     client = WSDL::Client.new('http://example.com/service?wsdl')
+  #     definition = WSDL.parse('http://example.com/service?wsdl')
+  #     client = WSDL::Client.new(definition)
   #     operation = client.operation('Service', 'Port', 'Operation')
   #     operation.invoke
   #   rescue WSDL::Error => e
@@ -25,7 +26,8 @@ module WSDL
   #
   # @example
   #   begin
-  #     client = WSDL::Client.new(wsdl, strictness: WSDL::Strictness.off)
+  #     definition = WSDL.parse(wsdl, strictness: WSDL::Strictness.off)
+  #     client = WSDL::Client.new(definition)
   #   rescue WSDL::FatalError => e
   #     logger.error("Fatal WSDL error: #{e.message}")
   #   end
@@ -77,7 +79,8 @@ module WSDL
   #
   # @example
   #   begin
-  #     client = WSDL::Client.new('http://example.com/service?wsdl')
+  #     definition = WSDL.parse('http://example.com/service?wsdl')
+  #     client = WSDL::Client.new(definition)
   #   rescue WSDL::UnsupportedWSDLVersionError => e
   #     puts "WSDL version not supported: #{e.message}"
   #   end
@@ -125,7 +128,7 @@ module WSDL
   # @example
   #   begin
   #     # WSDL with malicious import: schemaLocation="../../../../etc/passwd"
-  #     client = WSDL::Client.new('/app/wsdl/malicious.wsdl')
+  #     definition = WSDL.parse('/app/wsdl/malicious.wsdl')
   #   rescue WSDL::PathRestrictionError => e
   #     puts "Blocked file access: #{e.message}"
   #   end
@@ -303,7 +306,7 @@ module WSDL
   #
   # @example Catching resource limit errors
   #   begin
-  #     client = WSDL::Client.new('http://example.com/huge.wsdl')
+  #     definition = WSDL.parse('http://example.com/huge.wsdl')
   #   rescue WSDL::ResourceLimitError => e
   #     puts "Limit exceeded: #{e.limit_name}"
   #     puts "Limit: #{e.limit_value}, Actual: #{e.actual_value}"
@@ -311,7 +314,7 @@ module WSDL
   #
   # @example Handling specific limits
   #   begin
-  #     client = WSDL::Client.new(wsdl_url)
+  #     definition = WSDL.parse(wsdl_url)
   #   rescue WSDL::ResourceLimitError => e
   #     case e.limit_name
   #     when :max_document_size
@@ -493,7 +496,7 @@ module WSDL
   #
   # @example Catching unsafe redirects
   #   begin
-  #     client = WSDL::Client.new('https://evil.example.com/service?wsdl')
+  #     definition = WSDL.parse('https://evil.example.com/service?wsdl')
   #   rescue WSDL::UnsafeRedirectError => e
   #     puts "Blocked redirect to: #{e.target_url}"
   #   end

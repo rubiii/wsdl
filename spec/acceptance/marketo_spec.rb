@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 RSpec.describe 'Marketo Marketo Automation Software' do
-  subject(:client) { WSDL::Client.new fixture('wsdl/marketo') }
+  subject(:client) { WSDL::Client.new WSDL.parse(fixture('wsdl/marketo')) }
 
   let(:service_name) { :MktMktowsApiService }
   let(:port_name)    { :MktowsApiSoapPort }

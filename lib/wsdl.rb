@@ -13,12 +13,14 @@ require 'wsdl/log'
 # provides access to its services and operations.
 #
 # @example Basic usage
-#   client = WSDL::Client.new('http://example.com/service?wsdl')
+#   definition = WSDL.parse('http://example.com/service?wsdl')
+#   client = WSDL::Client.new(definition)
 #   client.services
 #   # => {"ExampleService" => {ports: {"ExamplePort" => {type: "...", location: "..."}}}}
 #
 # @example Calling an operation
-#   client = WSDL::Client.new('http://example.com/service?wsdl')
+#   definition = WSDL.parse('http://example.com/service?wsdl')
+#   client = WSDL::Client.new(definition)
 #   operation = client.operation('ExampleService', 'ExamplePort', 'GetData')
 #   operation.prepare do
 #     tag('GetData') { tag('id', 123) }

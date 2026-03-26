@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 RSpec.describe 'Spyne.io service' do
-  subject(:client) { WSDL::Client.new fixture('wsdl/spyne') }
+  subject(:client) { WSDL::Client.new WSDL.parse(fixture('wsdl/spyne')) }
 
   let(:service_name) { :HelloWorldService }
   let(:port_name)    { :Application }

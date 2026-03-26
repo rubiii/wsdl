@@ -39,7 +39,7 @@ WSDL::TestService.define(:xignite, wsdl: 'wsdl/xignite') do
 end
 
 RSpec.describe 'Xignite' do
-  subject(:client) { WSDL::Client.new(service.wsdl_url) }
+  subject(:client) { WSDL::Client.new(WSDL.parse(service.wsdl_url)) }
 
   let(:service) { WSDL::TestService[:xignite] }
   let(:service_name) { :XigniteGlobalMaster }

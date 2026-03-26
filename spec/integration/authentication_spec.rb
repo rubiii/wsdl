@@ -26,7 +26,7 @@ WSDL::TestService.define(:authentication, wsdl: 'wsdl/authentication') do
 end
 
 RSpec.describe 'Authentication service' do
-  subject(:client) { WSDL::Client.new(service.wsdl_url) }
+  subject(:client) { WSDL::Client.new(WSDL.parse(service.wsdl_url)) }
 
   let(:service) { WSDL::TestService[:authentication] }
   let(:service_name) { :AuthenticationWebServiceImplService }

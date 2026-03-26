@@ -368,7 +368,7 @@ RSpec.describe WSDL::Operation do
 
     context 'with unqualified schema elements' do
       it 'rejects namespaced child elements when schema expects unqualified form' do
-        op = WSDL::Client.new(fixture('wsdl/document_literal_wrapped'))
+        op = WSDL::Client.new(WSDL.parse(fixture('wsdl/document_literal_wrapped')))
           .operation('SampleService', 'Sample', 'op1')
 
         expect {
@@ -390,7 +390,7 @@ RSpec.describe WSDL::Operation do
       end
 
       it 'rejects namespaced nested elements when schema expects unqualified form' do
-        op = WSDL::Client.new(fixture('wsdl/document_literal_wrapped'))
+        op = WSDL::Client.new(WSDL.parse(fixture('wsdl/document_literal_wrapped')))
           .operation('SampleService', 'Sample', 'op1')
 
         expect {
@@ -412,7 +412,7 @@ RSpec.describe WSDL::Operation do
       end
 
       it 'accepts unqualified elements where schema expects unqualified form' do
-        op = WSDL::Client.new(fixture('wsdl/document_literal_wrapped'))
+        op = WSDL::Client.new(WSDL.parse(fixture('wsdl/document_literal_wrapped')))
           .operation('SampleService', 'Sample', 'op1')
 
         op.prepare do
@@ -431,7 +431,7 @@ RSpec.describe WSDL::Operation do
       end
 
       it 'rejects namespaced top-level body elements when schema expects unqualified form' do
-        op = WSDL::Client.new(fixture('wsdl/rpc_literal'))
+        op = WSDL::Client.new(WSDL.parse(fixture('wsdl/rpc_literal')))
           .operation('SampleService', 'Sample', 'op1')
 
         expect {
@@ -451,7 +451,8 @@ RSpec.describe WSDL::Operation do
       end
 
       it 'allows namespaced unqualified elements in relaxed mode' do
-        op = WSDL::Client.new(fixture('wsdl/document_literal_wrapped'), strictness: WSDL::Strictness.off)
+        defn = WSDL.parse(fixture('wsdl/document_literal_wrapped'), strictness: WSDL::Strictness.off)
+        op = WSDL::Client.new(defn, strictness: WSDL::Strictness.off)
           .operation('SampleService', 'Sample', 'op1')
 
         op.prepare do

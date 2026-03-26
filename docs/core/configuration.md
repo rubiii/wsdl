@@ -1,44 +1,51 @@
 # Configuration
 
-## Client Options
+## Parse Options
 
-`WSDL::Client.new(wsdl, **options)` accepts infrastructure options directly and forwards behavioral options to `WSDL::Config`:
-
-### Infrastructure options (on Client)
+`WSDL.parse(source, **options)` accepts parse-time options:
 
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
-| `wsdl` | `String` | (required) | HTTP(S) URL or local file path to the WSDL document |
-| `http:` | client instance | `WSDL.http_client.new` | Custom HTTP client (see [HTTP client](#http-client)) |
-| `config:` | `Config`, `nil` | `nil` | Reusable Config object (see [Config](#config)) |
-
-### Behavioral options (via Config)
-
-| Option | Type | Default | Description |
-|--------|------|---------|-------------|
+| `source` | `String` | (required) | HTTP(S) URL or local file path to the WSDL document |
+| `http:` | client instance | `WSDL.http_client.new` | Custom HTTP client for fetching WSDL/schemas |
 | `strictness:` | `Hash`, `Boolean` | all strict | Validation strictness (see [Strictness](#strictness)) |
 | `sandbox_paths:`| `Array<String>`, `nil` | auto | Allowed directories for local imports (see [Sandbox Paths](#sandbox-paths)) |
 | `limits:` | `Hash`, `nil` | sensible defaults | Resource limits for DoS protection (see [Limits](#limits)) |
+| `config:` | `Config`, `nil` | `nil` | Reusable Config object (see [Config](#config)) |
+
+## Client Options
+
+`WSDL::Client.new(definition, **options)` accepts runtime options:
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `definition` | `Definition` | (required) | A parsed WSDL Definition (from `WSDL.parse` or `WSDL.load`) |
+| `http:` | client instance | `WSDL.http_client.new` | Custom HTTP client for SOAP operation calls |
+| `config:` | `Config`, `nil` | `nil` | Reusable Config object (see [Config](#config)) |
+| `strictness:` | `Hash`, `Boolean` | all strict | Validation strictness (see [Strictness](#strictness)) |
+| `limits:` | `Hash`, `nil` | sensible defaults | Resource limits for DoS protection (see [Limits](#limits)) |
 
 ```ruby
-client = WSDL::Client.new(
+definition = WSDL.parse(
   '/app/wsdl/service.wsdl',
   strictness: { schema_imports: false }
 )
+client = WSDL::Client.new(definition)
 ```
 
 ## Config
 
-`WSDL::Config` groups all behavioral settings into a frozen value object. You can pass options directly to the Client (they are forwarded to Config) or create a reusable Config:
+`WSDL::Config` groups all behavioral settings into a frozen value object. You can pass options directly to `WSDL.parse` or `Client.new` (they are forwarded to Config) or create a reusable Config:
 
 ```ruby
 # Direct keyword arguments (most common)
-client = WSDL::Client.new(wsdl, strictness: false)
+definition = WSDL.parse(url, strictness: false)
+client = WSDL::Client.new(definition)
 
 # Reusable Config object
 config = WSDL::Config.new(strictness: false)
-client1 = WSDL::Client.new(wsdl1, config:)
-client2 = WSDL::Client.new(wsdl2, config:)
+definition1 = WSDL.parse(url1, config:)
+definition2 = WSDL.parse(url2, config:)
 
 # Derive a modified copy
 relaxed = config.with(strictness: { schema_imports: false })
@@ -134,12 +141,7 @@ Set any limit to `nil` to disable it.
 
 ```ruby
 definition = WSDL.parse(url, limits: { max_schemas: 200 })
-```
-
-### On Client.new
-
-```ruby
-client = WSDL::Client.new(wsdl, limits: { max_document_size: 20 * 1024 * 1024 })
+definition = WSDL.parse(url, limits: { max_document_size: 20 * 1024 * 1024 })
 ```
 
 ### As a Limits object
@@ -187,10 +189,11 @@ When `sandbox_paths:` is omitted (default):
 Provide explicit paths when imports span sibling directories:
 
 ```ruby
-client = WSDL::Client.new(
+definition = WSDL.parse(
   '/app/wsdl/system/service.wsdl',
   sandbox_paths: ['/app/wsdl/system', '/app/wsdl/common']
 )
+client = WSDL::Client.new(definition)
 ```
 
 ## XML Formatting
@@ -207,7 +210,9 @@ The HTTP client handles WSDL/schema fetching (`get`) and SOAP operation calls (`
 
 
 ```ruby
-client = WSDL::Client.new(wsdl)
+definition = WSDL.parse('http://example.com/service?wsdl')
+client = WSDL::Client.new(definition)
+
 client.http.open_timeout = 10
 client.http.read_timeout = 60
 client.http.ca_file = '/path/to/ca-bundle.crt'

@@ -1,7 +1,10 @@
 # frozen_string_literal: true
 
 RSpec.describe 'Request DSL' do
-  let(:client) { WSDL::Client.new(fixture('wsdl/temperature'), strictness: WSDL::Strictness.off) }
+  let(:client) {
+    WSDL::Client.new(WSDL.parse(fixture('wsdl/temperature'), strictness: WSDL::Strictness.off),
+      strictness: WSDL::Strictness.off)
+  }
   let(:operation) { client.operation('ConvertTemperature', 'ConvertTemperatureSoap12', 'ConvertTemp') }
 
   it 'defaults top-level content to SOAP Body' do
@@ -98,8 +101,7 @@ RSpec.describe 'Request DSL' do
 
   it 'enforces request resource limits during envelope construction' do
     limited_client = WSDL::Client.new(
-      fixture('wsdl/temperature'),
-      strictness: WSDL::Strictness.off,
+      WSDL.parse(fixture('wsdl/temperature'), strictness: WSDL::Strictness.off),
       limits: WSDL::Limits.new.with(max_request_elements: 2)
     )
     limited_operation = limited_client.operation('ConvertTemperature', 'ConvertTemperatureSoap12', 'ConvertTemp')
@@ -285,8 +287,7 @@ RSpec.describe 'Request DSL' do
 
   it 'enforces request depth limits' do
     limited_client = WSDL::Client.new(
-      fixture('wsdl/temperature'),
-      strictness: WSDL::Strictness.off,
+      WSDL.parse(fixture('wsdl/temperature'), strictness: WSDL::Strictness.off),
       limits: WSDL::Limits.new.with(max_request_depth: 1)
     )
     limited_operation = limited_client.operation('ConvertTemperature', 'ConvertTemperatureSoap12', 'ConvertTemp')
@@ -302,8 +303,7 @@ RSpec.describe 'Request DSL' do
 
   it 'enforces request attribute limits' do
     limited_client = WSDL::Client.new(
-      fixture('wsdl/temperature'),
-      strictness: WSDL::Strictness.off,
+      WSDL.parse(fixture('wsdl/temperature'), strictness: WSDL::Strictness.off),
       limits: WSDL::Limits.new.with(max_request_attributes: 1)
     )
     limited_operation = limited_client.operation('ConvertTemperature', 'ConvertTemperatureSoap12', 'ConvertTemp')

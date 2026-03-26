@@ -1,18 +1,17 @@
 # frozen_string_literal: true
 
 module WSDL
-  # Behavioral configuration for {Client} instances.
+  # Runtime configuration for {Client} and {Operation} instances.
   #
-  # Groups all parse-time and request-time settings into a single
-  # frozen value object. Accepts the same keyword arguments as
-  # {Client#initialize} for the behavioral subset (everything
-  # except the WSDL source, HTTP client, and cache).
+  # Controls request validation strictness and resource limits at
+  # call time. Parse-time options (sandbox_paths, etc.) belong on
+  # {WSDL.parse} instead.
   #
   # @example Create with defaults
   #   config = WSDL::Config.new
   #
   # @example Override specific settings
-  #   config = WSDL::Config.new(strictness: { schema_imports: false })
+  #   config = WSDL::Config.new(strictness: { request_validation: false })
   #
   # @example Derive a modified copy
   #   relaxed = config.with(strictness: false)
@@ -23,27 +22,20 @@ module WSDL
     #   +false+ (all relaxed), or nil (defaults to all strict).
     # @param strict_schema [Boolean, nil] **deprecated** — use +strictness:+ instead.
     #   +true+ maps to {Strictness.on}, +false+ to {Strictness.off}.
-    # @param sandbox_paths [Array<String>, nil] directories where file access is allowed.
-    #   When nil (default), sandbox is determined automatically based on WSDL source.
-    # @param limits [Limits, nil] resource limits for DoS protection.
+    # @param limits [Limits, nil] resource limits for request validation.
     #   If nil, uses {Limits} defaults.
     #
-    def initialize(strictness: nil, strict_schema: nil,
-                   sandbox_paths: nil, limits: nil)
+    def initialize(strictness: nil, strict_schema: nil, limits: nil)
       @strictness = resolve_strictness(strictness, strict_schema)
-      @sandbox_paths = sandbox_paths
       @limits = Limits.resolve(limits) || Limits.new
 
       freeze
     end
 
-    # @return [Strictness] strictness settings for schema/request validation
+    # @return [Strictness] strictness settings for request validation
     attr_reader :strictness
 
-    # @return [Array<String>, nil] allowed directories for file access
-    attr_reader :sandbox_paths
-
-    # @return [Limits] resource limits for DoS protection
+    # @return [Limits] resource limits for request validation
     attr_reader :limits
 
     # Creates a new Config with some values changed.
@@ -51,7 +43,6 @@ module WSDL
     # @param options [Hash] the settings to override
     # @option options [Strictness, Hash, Boolean] :strictness
     # @option options [Boolean] :strict_schema **deprecated**
-    # @option options [Array<String>, nil] :sandbox_paths
     # @option options [Limits, nil] :limits
     # @return [Config] a new Config instance with the specified changes
     #
@@ -62,7 +53,6 @@ module WSDL
       self.class.new(
         strictness: options.fetch(:strictness, @strictness),
         strict_schema: options[:strict_schema],
-        sandbox_paths: options.fetch(:sandbox_paths, @sandbox_paths),
         limits: options.fetch(:limits, @limits)
       )
     end
@@ -71,7 +61,6 @@ module WSDL
     def to_h
       {
         strictness: @strictness,
-        sandbox_paths: @sandbox_paths,
         limits: @limits
       }
     end

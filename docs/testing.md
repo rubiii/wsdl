@@ -52,7 +52,7 @@ Acceptance tests in `spec/acceptance/` verify the full parsing pipeline (WSDL â†
 
 ```ruby
 RSpec.describe 'BLZService' do
-  subject(:client) { WSDL::Client.new fixture('wsdl/blz_service') }
+  subject(:client) { WSDL::Client.new WSDL.parse(fixture('wsdl/blz_service')) }
 
   it 'creates an example request' do
     operation = client.operation(:BLZService, :BLZServiceSOAP11port_http, :getBank)
@@ -74,7 +74,7 @@ Integration tests in `spec/integration/` perform full HTTP round-trips against l
 
 ```ruby
 RSpec.describe 'BLZService' do
-  subject(:client) { WSDL::Client.new(service.wsdl_url) }
+  subject(:client) { WSDL::Client.new(WSDL.parse(service.wsdl_url)) }
 
   let(:service) { WSDL::TestService[:blz_service] }
 

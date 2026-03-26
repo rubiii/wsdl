@@ -92,7 +92,7 @@ module WSDL
       #
       # @return [WSDL::Client]
       def client
-        @client ||= WSDL::Client.new(wsdl_path)
+        @client ||= WSDL::Client.new(WSDL.parse(wsdl_path))
       end
 
       # Returns the absolute path to the WSDL fixture file.

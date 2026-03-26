@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 RSpec.describe 'RATP' do
-  subject(:client) { WSDL::Client.new fixture('wsdl/ratp') }
+  subject(:client) { WSDL::Client.new WSDL.parse(fixture('wsdl/ratp')) }
 
   let(:service_name) { :Wsiv }
   let(:port_name)    { :WsivSOAP11port_http }

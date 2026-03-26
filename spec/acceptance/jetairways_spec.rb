@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 RSpec.describe 'Jetairways\'s SessionCreate Service' do
-  subject(:client) { WSDL::Client.new fixture('wsdl/jetairways') }
+  subject(:client) { WSDL::Client.new WSDL.parse(fixture('wsdl/jetairways')) }
 
   let(:service_name) { :SessionCreate }
   let(:port_name)    { :SessionCreateSoap }

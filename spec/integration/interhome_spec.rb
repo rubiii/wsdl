@@ -45,7 +45,7 @@ WSDL::TestService.define(:interhome, wsdl: 'wsdl/interhome') do
 end
 
 RSpec.describe 'Interhome' do
-  subject(:client) { WSDL::Client.new(service.wsdl_url) }
+  subject(:client) { WSDL::Client.new(WSDL.parse(service.wsdl_url)) }
 
   let(:service) { WSDL::TestService[:interhome] }
   let(:service_name) { :WebService }

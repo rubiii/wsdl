@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 RSpec.describe 'DataExchange' do
-  subject(:client) { WSDL::Client.new fixture('wsdl/data_exchange') }
+  subject(:client) { WSDL::Client.new WSDL.parse(fixture('wsdl/data_exchange')) }
 
   it 'returns a map of services and ports' do
     expect(client.services).to eq(

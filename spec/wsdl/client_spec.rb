@@ -3,18 +3,19 @@
 require 'tempfile'
 
 RSpec.describe WSDL::Client do
-  subject(:client) { described_class.new(wsdl, http: http_mock, strictness: WSDL::Strictness.off) }
+  subject(:client) { described_class.new(definition, http: http_mock, strictness: WSDL::Strictness.off) }
 
-  let(:wsdl) { fixture('wsdl/amazon') }
+  let(:wsdl_path) { fixture('wsdl/amazon') }
+  let(:definition) { WSDL.parse(wsdl_path) }
 
   let(:service_name)   { 'AmazonFPS' }
   let(:port_name)      { 'AmazonFPSPort' }
   let(:operation_name) { 'Pay' }
-  let(:fixture_dir)    { File.dirname(File.expand_path(wsdl)) }
+  let(:fixture_dir)    { File.dirname(File.expand_path(wsdl_path)) }
 
   describe '.new' do
-    it 'accepts a local WSDL document' do
-      client = described_class.new(wsdl, http: http_mock)
+    it 'accepts a Definition' do
+      client = described_class.new(definition, http: http_mock)
       expect(client.services).to be_a(Hash)
       expect(client.services).to have_key('AmazonFPS')
     end
@@ -26,15 +27,15 @@ RSpec.describe WSDL::Client do
         end
       end.new
 
-      client = described_class.new(wsdl, http:)
+      client = described_class.new(definition, http:)
       expect(client.services).to have_key('AmazonFPS')
     end
 
     it 'rejects inline XML content' do
-      inline_xml = File.read(wsdl)
+      inline_xml = File.read(wsdl_path)
 
       expect {
-        described_class.new(inline_xml)
+        WSDL.parse(inline_xml)
       }.to raise_error(ArgumentError, /Inline XML WSDL is not supported/)
     end
 
@@ -42,19 +43,19 @@ RSpec.describe WSDL::Client do
       inline_xml = "   \n\t<definitions/>"
 
       expect {
-        described_class.new(inline_xml)
+        WSDL.parse(inline_xml)
       }.to raise_error(ArgumentError, /Inline XML WSDL is not supported/)
     end
 
     it 'rejects file:// URLs' do
       expect {
-        described_class.new('file:///tmp/service.wsdl')
+        WSDL.parse('file:///tmp/service.wsdl')
       }.to raise_error(ArgumentError, %r{file:// URLs are not supported})
     end
 
     it 'rejects unsupported URL schemes' do
       expect {
-        described_class.new('ftp://example.com/service.wsdl')
+        WSDL.parse('ftp://example.com/service.wsdl')
       }.to raise_error(ArgumentError, /Unsupported URL scheme/)
     end
   end
@@ -63,15 +64,15 @@ RSpec.describe WSDL::Client do
     context 'with default sandbox behavior' do
       context 'when loading from a file path' do
         it 'sandboxes to WSDL parent directory' do
-          wsdl_directory = File.dirname(File.expand_path(wsdl))
+          wsdl_directory = File.dirname(File.expand_path(wsdl_path))
           allow(WSDL::Parser).to receive(:parse).and_wrap_original do |method, *args|
-            # Client passes nil sandbox_paths; Parser.parse resolves from source
+            # WSDL.parse passes nil sandbox_paths; Parser.parse resolves from source
             expect(args[2]).to have_attributes(sandbox_paths: nil)
             method.call(*args)
           end
 
-          client = described_class.new(wsdl)
-          sources = client.definition.sources.map { |s| s[:location] }
+          defn = WSDL.parse(wsdl_path)
+          sources = defn.sources.map { |s| s[:location] }
 
           expect(WSDL::Parser).to have_received(:parse)
           expect(sources).to all(start_with(wsdl_directory))
@@ -83,7 +84,7 @@ RSpec.describe WSDL::Client do
           # Default sandbox is the WSDL's parent directory only.
           # Travelport imports ../common_v32_0/ which is outside that sandbox.
           expect {
-            described_class.new(travelport_wsdl)
+            WSDL.parse(travelport_wsdl)
           }.to raise_error(WSDL::PathRestrictionError)
         end
       end
@@ -114,7 +115,7 @@ RSpec.describe WSDL::Client do
           )
 
           expect {
-            described_class.new('http://example.com/service?wsdl', http: http_mock)
+            WSDL.parse('http://example.com/service?wsdl', http: http_mock)
           }.to raise_error(WSDL::PathRestrictionError, /File access is disabled/)
         end
       end
@@ -124,7 +125,7 @@ RSpec.describe WSDL::Client do
 
         it 'raises an ArgumentError' do
           expect {
-            described_class.new(inline_xml)
+            WSDL.parse(inline_xml)
           }.to raise_error(ArgumentError, /Inline XML WSDL is not supported/)
         end
       end
@@ -137,7 +138,8 @@ RSpec.describe WSDL::Client do
 
         # Default sandbox would block ../common_v32_0/ imports.
         # Custom sandbox_paths that include the parent directory allows them.
-        client = described_class.new(travelport_wsdl, sandbox_paths: [travelport_root])
+        defn = WSDL.parse(travelport_wsdl, sandbox_paths: [travelport_root])
+        client = described_class.new(defn)
 
         expect(client.services).not_to be_empty
       end
@@ -150,7 +152,7 @@ RSpec.describe WSDL::Client do
         # The WSDL contains schemaLocation="../../../../etc/passwd"
         # which should be blocked by sandbox restrictions
         expect {
-          described_class.new(malicious_wsdl, http: http_mock)
+          WSDL.parse(malicious_wsdl, http: http_mock)
         }.to raise_error(WSDL::PathRestrictionError)
 
         # But if we try to read a file outside the sandbox directly, it should fail
@@ -163,11 +165,11 @@ RSpec.describe WSDL::Client do
         common_dir = File.expand_path('../common_v32_0', system_dir)
 
         expect {
-          described_class.new(travelport_wsdl, http: http_mock)
+          WSDL.parse(travelport_wsdl, http: http_mock)
         }.to raise_error(WSDL::PathRestrictionError)
 
         expect {
-          described_class.new(travelport_wsdl, http: http_mock, sandbox_paths: [system_dir, common_dir])
+          WSDL.parse(travelport_wsdl, http: http_mock, sandbox_paths: [system_dir, common_dir])
         }.not_to raise_error
       end
     end
@@ -176,7 +178,7 @@ RSpec.describe WSDL::Client do
   describe 'unparseable WSDL input' do
     it 'raises WSDL::Error for an empty file' do
       Tempfile.create(['empty', '.wsdl']) do |f|
-        expect { described_class.new(f.path) }.to raise_error(WSDL::Error, /could not be parsed/)
+        expect { WSDL.parse(f.path) }.to raise_error(WSDL::Error, /could not be parsed/)
       end
     end
 
@@ -184,7 +186,7 @@ RSpec.describe WSDL::Client do
       Tempfile.create(['garbage', '.wsdl']) do |f|
         f.write((0..200).map { rand(0..255).chr(Encoding::BINARY) }.join)
         f.close
-        expect { described_class.new(f.path) }.to raise_error(WSDL::Error, /could not be parsed/)
+        expect { WSDL.parse(f.path) }.to raise_error(WSDL::Error, /could not be parsed/)
       end
     end
 
@@ -192,7 +194,7 @@ RSpec.describe WSDL::Client do
       Tempfile.create(['json', '.wsdl']) do |f|
         f.write('{"service": "test"}')
         f.close
-        expect { described_class.new(f.path) }.to raise_error(WSDL::Error, /could not be parsed/)
+        expect { WSDL.parse(f.path) }.to raise_error(WSDL::Error, /could not be parsed/)
       end
     end
 
@@ -200,7 +202,7 @@ RSpec.describe WSDL::Client do
       Tempfile.create(['truncated', '.wsdl']) do |f|
         f.write(File.read(fixture('wsdl/blz_service'))[0...10])
         f.close
-        expect { described_class.new(f.path) }.to raise_error(WSDL::Error, /could not be parsed/)
+        expect { WSDL.parse(f.path) }.to raise_error(WSDL::Error, /could not be parsed/)
       end
     end
   end
@@ -240,7 +242,8 @@ RSpec.describe WSDL::Client do
       Tempfile.create(['unknown_type', '.wsdl']) do |f|
         f.write(wsdl_with_unknown_type)
         f.close
-        client = described_class.new(f.path)
+        defn = WSDL.parse(f.path)
+        client = described_class.new(defn)
 
         expect(client.definition.build_issues).not_to be_empty
         expect(client.definition.build_issues.first[:error]).to match(/Unknown XSD built-in type/)
@@ -261,7 +264,7 @@ RSpec.describe WSDL::Client do
       Tempfile.create(['unknown_type', '.wsdl']) do |f|
         f.write(wsdl_with_unknown_type)
         f.close
-        client = described_class.new(f.path)
+        client = described_class.new(WSDL.parse(f.path))
 
         expect(client.operations('S', 'P')).to include('Op')
       end
@@ -288,7 +291,7 @@ RSpec.describe WSDL::Client do
       Tempfile.create(['no_input', '.wsdl']) do |f|
         f.write(xml)
         f.close
-        client = described_class.new(f.path)
+        client = described_class.new(WSDL.parse(f.path))
 
         expect(client.operations('S', 'P')).to include('Op')
         expect(client.definition.build_issues).not_to be_empty
@@ -321,7 +324,7 @@ RSpec.describe WSDL::Client do
       Tempfile.create(['ghost_op', '.wsdl']) do |f|
         f.write(xml)
         f.close
-        client = described_class.new(f.path)
+        client = described_class.new(WSDL.parse(f.path))
 
         expect(client.operations('S', 'P')).to include('GhostOp')
         expect(client.definition.build_issues).not_to be_empty
@@ -357,7 +360,7 @@ RSpec.describe WSDL::Client do
       Tempfile.create(['one_way', '.wsdl']) do |f|
         f.write(xml)
         f.close
-        client = described_class.new(f.path)
+        client = described_class.new(WSDL.parse(f.path))
         operation = client.operation('S', 'P', 'Op')
 
         expect(operation.contract.response.body.paths).to eq([])
@@ -369,44 +372,44 @@ RSpec.describe WSDL::Client do
   end
 
   describe 'operation overloading' do
-    let(:overloaded_wsdl) { fixture('parser/operation_overloading') }
+    let(:overloaded_definition) { WSDL.parse(fixture('parser/operation_overloading')) }
 
     it 'raises OperationOverloadError in strict mode' do
-      client = described_class.new(overloaded_wsdl, strictness: WSDL::Strictness.on)
+      client = described_class.new(overloaded_definition, strictness: WSDL::Strictness.on)
 
       expect { client.operation('LookupService', 'LookupPort', 'Lookup') }
         .to raise_error(WSDL::OperationOverloadError, /overloaded.*R2304/)
     end
 
     it 'resolves overloaded operation by input_name in relaxed mode' do
-      client = described_class.new(overloaded_wsdl, strictness: WSDL::Strictness.off)
+      client = described_class.new(overloaded_definition, strictness: WSDL::Strictness.off)
       op = client.operation('LookupService', 'LookupPort', 'Lookup', input_name: :LookupById)
 
       expect(op.contract.request.body.paths.first[:path]).to eq(['LookupByIdReq'])
     end
 
     it 'resolves the other overload by its input_name' do
-      client = described_class.new(overloaded_wsdl, strictness: WSDL::Strictness.off)
+      client = described_class.new(overloaded_definition, strictness: WSDL::Strictness.off)
       op = client.operation('LookupService', 'LookupPort', 'Lookup', input_name: :LookupByName)
 
       expect(op.contract.request.body.paths.first[:path]).to eq(['LookupByNameReq'])
     end
 
     it 'raises ArgumentError without input_name for overloaded operation' do
-      client = described_class.new(overloaded_wsdl, strictness: WSDL::Strictness.off)
+      client = described_class.new(overloaded_definition, strictness: WSDL::Strictness.off)
 
       expect { client.operation('LookupService', 'LookupPort', 'Lookup') }
         .to raise_error(ArgumentError, /overloaded.*Pass input_name.*LookupById.*LookupByName/)
     end
 
     it 'returns overloaded name once in operations list' do
-      client = described_class.new(overloaded_wsdl, strictness: WSDL::Strictness.off)
+      client = described_class.new(overloaded_definition, strictness: WSDL::Strictness.off)
 
       expect(client.operations('LookupService', 'LookupPort').count('Lookup')).to eq(1)
     end
 
     it 'includes overloaded operations with input_name in services hash' do
-      client = described_class.new(overloaded_wsdl, strictness: WSDL::Strictness.off)
+      client = described_class.new(overloaded_definition, strictness: WSDL::Strictness.off)
       port = client.services['LookupService'][:ports]['LookupPort']
 
       expect(port[:operations]).to eq([
@@ -416,7 +419,7 @@ RSpec.describe WSDL::Client do
     end
 
     it 'ignores input_name for non-overloaded operations' do
-      client = described_class.new(fixture('wsdl/blz_service'))
+      client = described_class.new(WSDL.parse(fixture('wsdl/blz_service')))
 
       expect { client.operation(:BLZService, :BLZServiceSOAP11port_http, :getBank, input_name: :anything) }
         .not_to raise_error
@@ -428,13 +431,13 @@ RSpec.describe WSDL::Client do
 
     it 'defaults to strict mode and raises on schema import failures' do
       expect {
-        described_class.new(wsdl_with_missing_schema_import, http: http_mock)
+        WSDL.parse(wsdl_with_missing_schema_import, http: http_mock)
       }.to raise_error(WSDL::SchemaImportError)
     end
 
     it 'tolerates recoverable schema import failures when strictness is off' do
       expect {
-        described_class.new(wsdl_with_missing_schema_import, http: http_mock, strictness: WSDL::Strictness.off)
+        WSDL.parse(wsdl_with_missing_schema_import, http: http_mock, strictness: WSDL::Strictness.off)
       }.not_to raise_error
     end
 
@@ -444,7 +447,7 @@ RSpec.describe WSDL::Client do
         method.call(*args)
       end
 
-      described_class.new(wsdl, http: http_mock, strictness: WSDL::Strictness.on)
+      WSDL.parse(wsdl_path, http: http_mock, strictness: WSDL::Strictness.on)
 
       expect(WSDL::Parser).to have_received(:parse)
     end
@@ -455,7 +458,7 @@ RSpec.describe WSDL::Client do
         method.call(*args)
       end
 
-      described_class.new(wsdl, http: http_mock, strictness: WSDL::Strictness.off)
+      WSDL.parse(wsdl_path, http: http_mock, strictness: WSDL::Strictness.off)
 
       expect(WSDL::Parser).to have_received(:parse)
     end
@@ -490,7 +493,7 @@ RSpec.describe WSDL::Client do
 
     it 'rejects WSDL with DOCTYPE by default' do
       expect {
-        described_class.new(wsdl_with_doctype_file.path, http: http_mock)
+        WSDL.parse(wsdl_with_doctype_file.path, http: http_mock)
       }.to raise_error(WSDL::XMLSecurityError, /DOCTYPE declarations are not allowed/)
     end
   end
@@ -509,19 +512,19 @@ RSpec.describe WSDL::Client do
 
   describe '#config.strictness' do
     it 'defaults to Strictness.on' do
-      strict_client = described_class.new(fixture('wsdl/authentication'), http: http_mock)
+      strict_client = described_class.new(WSDL.parse(fixture('wsdl/authentication'), http: http_mock), http: http_mock)
       expect(strict_client.config.strictness).to eq(WSDL::Strictness.on)
     end
 
     it 'returns Strictness.off when configured with strictness: Strictness.off' do
-      relaxed_client = described_class.new(wsdl, http: http_mock, strictness: WSDL::Strictness.off)
+      relaxed_client = described_class.new(definition, http: http_mock, strictness: WSDL::Strictness.off)
       expect(relaxed_client.config.strictness).to eq(WSDL::Strictness.off)
     end
   end
 
   describe '#http' do
     it 'returns the HTTP client\'s config for customization' do
-      client = described_class.new(wsdl)
+      client = described_class.new(definition)
       expect(client.http).to be_an_instance_of(WSDL::HTTP::Config)
     end
   end
@@ -569,7 +572,7 @@ RSpec.describe WSDL::Client do
       Tempfile.create(['broken_binding', '.wsdl']) do |f|
         f.write(wsdl_xml)
         f.close
-        broken_client = described_class.new(f.path, strictness: false)
+        broken_client = described_class.new(WSDL.parse(f.path, strictness: false))
 
         port = broken_client.services['Svc'][:ports]['P']
         expect(port[:operations]).to eq([])
@@ -584,7 +587,7 @@ RSpec.describe WSDL::Client do
 
     it 'accepts custom limits' do
       custom_limits = WSDL::Limits.new(max_schemas: 200)
-      client_with_limits = described_class.new(wsdl, http: http_mock, limits: custom_limits)
+      client_with_limits = described_class.new(definition, http: http_mock, limits: custom_limits)
 
       expect(client_with_limits.config.limits).to eq(custom_limits)
     end
@@ -596,7 +599,7 @@ RSpec.describe WSDL::Client do
         method.call(*args)
       end
 
-      described_class.new(wsdl, http: http_mock, limits: custom_limits)
+      WSDL.parse(wsdl_path, http: http_mock, limits: custom_limits)
 
       expect(WSDL::Parser).to have_received(:parse)
     end
@@ -607,7 +610,7 @@ RSpec.describe WSDL::Client do
       tiny_limit = WSDL::Limits.new(max_document_size: 10)
 
       expect {
-        described_class.new(wsdl, http: http_mock, limits: tiny_limit)
+        WSDL.parse(wsdl_path, http: http_mock, limits: tiny_limit)
       }.to raise_error(WSDL::ResourceLimitError, /exceeds limit/)
     end
 
@@ -615,7 +618,7 @@ RSpec.describe WSDL::Client do
       generous_limits = WSDL::Limits.new(max_document_size: 10 * 1024 * 1024)
 
       expect {
-        described_class.new(wsdl, http: http_mock, limits: generous_limits)
+        WSDL.parse(wsdl_path, http: http_mock, limits: generous_limits)
       }.not_to raise_error
     end
   end
@@ -651,14 +654,20 @@ RSpec.describe WSDL::Client do
       end
 
       it 'raises when the WSDL has multiple services' do
-        multi_service_client = described_class.new(fixture('wsdl/oracle'), http: http_mock, strictness: WSDL::Strictness.off)
+        multi_service_client = described_class.new(
+          WSDL.parse(fixture('wsdl/oracle'), http: http_mock, strictness: WSDL::Strictness.off),
+          http: http_mock
+        )
 
         expect { multi_service_client.operations }
           .to raise_error(ArgumentError, /Cannot auto-resolve service: expected 1, found \d+/)
       end
 
       it 'raises when the WSDL has multiple ports' do
-        multi_port_client = described_class.new(fixture('wsdl/temperature'), http: http_mock)
+        multi_port_client = described_class.new(
+          WSDL.parse(fixture('wsdl/temperature'), http: http_mock),
+          http: http_mock
+        )
 
         expect { multi_port_client.operations }
           .to raise_error(ArgumentError, /Cannot auto-resolve port.*expected 1, found \d+/)
@@ -715,14 +724,20 @@ RSpec.describe WSDL::Client do
       end
 
       it 'raises when the WSDL has multiple services' do
-        multi_service_client = described_class.new(fixture('wsdl/oracle'), http: http_mock, strictness: WSDL::Strictness.off)
+        multi_service_client = described_class.new(
+          WSDL.parse(fixture('wsdl/oracle'), http: http_mock, strictness: WSDL::Strictness.off),
+          http: http_mock
+        )
 
         expect { multi_service_client.operation(:SomeOperation) }
           .to raise_error(ArgumentError, /Cannot auto-resolve service: expected 1, found \d+/)
       end
 
       it 'raises when the WSDL has multiple ports' do
-        multi_port_client = described_class.new(fixture('wsdl/temperature'), http: http_mock)
+        multi_port_client = described_class.new(
+          WSDL.parse(fixture('wsdl/temperature'), http: http_mock),
+          http: http_mock
+        )
 
         expect { multi_port_client.operation(:ConvertTemp) }
           .to raise_error(ArgumentError, /Cannot auto-resolve port.*expected 1, found \d+/)
@@ -791,8 +806,9 @@ RSpec.describe WSDL::Client do
       }.to raise_error(ArgumentError, /Unknown operation/)
     end
 
-    it 'returns a Definition lazily for URL-based clients' do
-      url_client = described_class.new(fixture('wsdl/amazon'), http: http_mock)
+    it 'returns a frozen Definition' do
+      defn = WSDL.parse(fixture('wsdl/amazon'), http: http_mock)
+      url_client = described_class.new(defn, http: http_mock)
       expect(url_client.definition).to be_a(WSDL::Definition)
       expect(url_client.definition).to be_frozen
     end

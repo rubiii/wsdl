@@ -21,7 +21,7 @@ RSpec.describe WSDL do
       described_class.http_client = client_class
       expect(described_class.http_client).to eq(client_class)
 
-      client = WSDL::Client.new(fixture('wsdl/amazon'), strictness: WSDL::Strictness.off)
+      client = WSDL::Client.new(described_class.parse(fixture('wsdl/amazon'), strictness: WSDL::Strictness.off))
       expect(client.http).to eq('http-config')
     end
   end

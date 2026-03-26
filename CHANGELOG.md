@@ -32,7 +32,7 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
-- `Client.new` with a URL/path eagerly builds the `Definition` during initialization. All service/operation resolution happens upfront — no more lazy resolution that could raise errors later during operation access.
+- `Client.new` only accepts a `Definition` instance. Use `WSDL.parse(source)` to create one. Parse-time options (`strictness:`, `limits:`, `sandbox_paths:`) belong on `WSDL.parse`, runtime options (`strictness:`, `limits:`) on `Client.new`.
 - Removed built-in parse cache (`WSDL.cache`, `Cache` class, `cache:` parameter on `Client.new` and `WSDL.parse`). `Definition` is serializable via `to_h`/`to_json`/`from_h` — cache at the Definition level instead (file, Redis, etc.).
 - Removed `cache_key` contract from HTTP clients. Custom clients no longer need to implement `#cache_key`.
 - Removed `InvalidHTTPAdapterError` (was only used for `cache_key` validation).

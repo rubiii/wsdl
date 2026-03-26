@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 RSpec.describe 'Amazon' do
-  subject(:client) { WSDL::Client.new fixture('wsdl/amazon') }
+  subject(:client) { WSDL::Client.new WSDL.parse(fixture('wsdl/amazon')) }
 
   it 'returns a map of services and ports' do
     expect(client.services).to eq(

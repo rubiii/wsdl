@@ -2,7 +2,12 @@
 
 RSpec.describe 'Juniper' do
   subject(:client) do
-    WSDL::Client.new fixture('wsdl/juniper'), strictness: {
+    WSDL::Client.new WSDL.parse(fixture('wsdl/juniper'), strictness:),
+      strictness:
+  end
+
+  let(:strictness) do
+    {
       schema_imports: false,
       schema_references: false,
       request_validation: false

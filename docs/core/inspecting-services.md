@@ -5,7 +5,8 @@ Use `WSDL::Client` for service/port discovery and `operation.contract` for reque
 ## Services and Ports
 
 ```ruby
-client = WSDL::Client.new('http://example.com/service?wsdl')
+definition = WSDL.parse('http://example.com/service?wsdl')
+client = WSDL::Client.new(definition)
 
 client.services
 # => {

@@ -41,10 +41,11 @@ This is the docs entrypoint.
 ```ruby
 require 'wsdl'
 
-client = WSDL::Client.new('http://example.com/service?wsdl')
+definition = WSDL.parse('http://example.com/service?wsdl')
+client = WSDL::Client.new(definition)
 ```
 
-[`strictness:`](core/configuration.md#strictness) is enabled by default. Set `strictness: Strictness.off` when you need best-effort parsing for incomplete enterprise WSDLs.
+[`strictness:`](core/configuration.md#strictness) is enabled by default. Set `strictness: Strictness.off` on `WSDL.parse` when you need best-effort parsing for incomplete enterprise WSDLs.
 
 ## 2. Discover Services and Operations
 

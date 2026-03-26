@@ -3,7 +3,7 @@
 require 'benchmark'
 
 RSpec.describe 'Economic' do
-  subject(:client) { WSDL::Client.new fixture('wsdl/economic') }
+  subject(:client) { WSDL::Client.new WSDL.parse(fixture('wsdl/economic')) }
 
   it 'returns a map of services and ports' do
     expect(client.services).to eq(

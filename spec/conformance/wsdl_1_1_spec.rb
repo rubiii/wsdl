@@ -109,7 +109,7 @@ RSpec.describe 'WSDL 1.1 conformance' do
 
     # https://www.w3.org/TR/wsdl#_soap:body
     it 'W11-SOAP-6: use=encoded is detected and rejected' do
-      client = WSDL::Client.new fixture('wsdl/data_exchange'), http: http_mock
+      client = WSDL::Client.new WSDL.parse(fixture('wsdl/data_exchange'), http: http_mock), http: http_mock
 
       expect { client.operation('DataExchange', 'DataExchange', 'submit') }
         .to raise_error(WSDL::UnsupportedStyleError, %r{rpc/encoded})
@@ -255,7 +255,7 @@ RSpec.describe 'WSDL 1.1 conformance' do
   describe 'WS-I Basic Profile' do
     # http://www.ws-i.org/Profiles/BasicProfile-1.1-2004-08-24.html#R2304
     it 'WSI-R2304: overloaded portType operations rejected in strict mode' do
-      client = WSDL::Client.new fixture('parser/operation_overloading'),
+      client = WSDL::Client.new WSDL.parse(fixture('parser/operation_overloading'), http: http_mock),
         http: http_mock,
         strictness: WSDL::Strictness.on
 

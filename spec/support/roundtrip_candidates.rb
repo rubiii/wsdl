@@ -41,7 +41,7 @@ module RoundtripCandidates
   end
 
   def candidates_from_local(path)
-    client = WSDL::Client.new(path)
+    client = WSDL::Client.new(WSDL.parse(path))
 
     # Skip fixtures with build issues (unresolvable types, missing elements,
     # resource limits). These operations have incomplete element trees that
@@ -75,12 +75,12 @@ module RoundtripCandidates
       config['mappings'].each do |url, file|
         http_mock.fake_request(url, "wsdl/#{fixture_name}/#{file}")
       end
-      WSDL::Client.new(config['entry_url'], http: http_mock)
+      WSDL::Client.new(WSDL.parse(config['entry_url'], http: http_mock), http: http_mock)
     else
       entry = File.join(dir, config['entry_path'])
-      options = { http: http_mock }
-      options[:sandbox_paths] = [dir] if config['sandbox']
-      WSDL::Client.new(entry, **options)
+      parse_options = { http: http_mock }
+      parse_options[:sandbox_paths] = [dir] if config['sandbox']
+      WSDL::Client.new(WSDL.parse(entry, **parse_options), http: http_mock)
     end
   end
 

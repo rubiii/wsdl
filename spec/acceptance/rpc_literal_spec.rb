@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 RSpec.describe 'RPC/Literal example' do
-  subject(:client) { WSDL::Client.new fixture('wsdl/rpc_literal') }
+  subject(:client) { WSDL::Client.new WSDL.parse(fixture('wsdl/rpc_literal')) }
 
   let(:service_name) { :SampleService }
   let(:port_name)    { :Sample }

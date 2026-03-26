@@ -21,7 +21,7 @@ RSpec.describe 'Schema pattern coverage' do
   end
 
   describe 'recursive types' do
-    subject(:client) { WSDL::Client.new fixture('parser/recursive_types') }
+    subject(:client) { WSDL::Client.new WSDL.parse(fixture('parser/recursive_types')) }
 
     let(:operation) { client.operation(:GetTree) }
 
@@ -53,7 +53,7 @@ RSpec.describe 'Schema pattern coverage' do
   end
 
   describe 'xs:attributeGroup references' do
-    subject(:client) { WSDL::Client.new fixture('parser/attribute_groups') }
+    subject(:client) { WSDL::Client.new WSDL.parse(fixture('parser/attribute_groups')) }
 
     let(:operation) { client.operation(:GetRecord) }
 
@@ -83,7 +83,7 @@ RSpec.describe 'Schema pattern coverage' do
   end
 
   describe 'attribute simpleType derivations' do
-    subject(:client) { WSDL::Client.new fixture('parser/attribute_types') }
+    subject(:client) { WSDL::Client.new WSDL.parse(fixture('parser/attribute_types')) }
 
     let(:operation) { client.operation(:GetEvent) }
 
@@ -128,7 +128,7 @@ RSpec.describe 'Schema pattern coverage' do
   end
 
   describe 'xs:all compositor' do
-    subject(:client) { WSDL::Client.new fixture('parser/xs_all') }
+    subject(:client) { WSDL::Client.new WSDL.parse(fixture('parser/xs_all')) }
 
     let(:operation) { client.operation(:GetAddress) }
 
@@ -164,7 +164,7 @@ RSpec.describe 'Schema pattern coverage' do
   end
 
   describe 'xs:union simpleType' do
-    subject(:client) { WSDL::Client.new fixture('parser/xs_union') }
+    subject(:client) { WSDL::Client.new WSDL.parse(fixture('parser/xs_union')) }
 
     let(:operation) { client.operation(:GetMeasurement) }
 
@@ -185,7 +185,7 @@ RSpec.describe 'Schema pattern coverage' do
   end
 
   describe 'xs:list simpleType' do
-    subject(:client) { WSDL::Client.new fixture('parser/xs_list') }
+    subject(:client) { WSDL::Client.new WSDL.parse(fixture('parser/xs_list')) }
 
     let(:operation) { client.operation(:GetTags) }
 
@@ -221,7 +221,7 @@ RSpec.describe 'Schema pattern coverage' do
   end
 
   describe 'xs:choice compositor' do
-    subject(:client) { WSDL::Client.new fixture('parser/xs_choice') }
+    subject(:client) { WSDL::Client.new WSDL.parse(fixture('parser/xs_choice')) }
 
     let(:operation) { client.operation(:ProcessPayment) }
 
@@ -256,7 +256,7 @@ RSpec.describe 'Schema pattern coverage' do
   end
 
   describe 'xs:group references' do
-    subject(:client) { WSDL::Client.new fixture('parser/xs_group') }
+    subject(:client) { WSDL::Client.new WSDL.parse(fixture('parser/xs_group')) }
 
     let(:operation) { client.operation(:GetContact) }
 
@@ -325,7 +325,7 @@ RSpec.describe 'Schema pattern coverage' do
       file.write(wsdl)
       file.close
 
-      relaxed = WSDL::Client.new(file.path, strictness: { schema_references: false })
+      relaxed = WSDL::Client.new(WSDL.parse(file.path, strictness: { schema_references: false }))
       op = relaxed.operation(:Op)
       paths = op.contract.response.body.paths
       child_names = paths.select { |p| p[:path].size == 2 }.map { |p| p[:path].last }
@@ -337,7 +337,7 @@ RSpec.describe 'Schema pattern coverage' do
   end
 
   describe 'abstract types with xs:extension' do
-    subject(:client) { WSDL::Client.new fixture('parser/abstract_types') }
+    subject(:client) { WSDL::Client.new WSDL.parse(fixture('parser/abstract_types')) }
 
     let(:operation) { client.operation(:GetShape) }
 
@@ -423,7 +423,7 @@ RSpec.describe 'Schema pattern coverage' do
       file.write(wsdl)
       file.close
 
-      relaxed = WSDL::Client.new(file.path, strictness: { schema_references: false })
+      relaxed = WSDL::Client.new(WSDL.parse(file.path, strictness: { schema_references: false }))
       op = relaxed.operation(:Op)
       paths = op.contract.response.body.paths
       data_children = paths.select { |p| p[:path].size == 3 && p[:path][1] == 'data' }

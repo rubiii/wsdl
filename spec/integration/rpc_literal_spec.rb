@@ -15,7 +15,7 @@ WSDL::TestService.define(:rpc_literal, wsdl: 'wsdl/rpc_literal') do
 end
 
 RSpec.describe 'RPC/Literal example' do
-  subject(:client) { WSDL::Client.new(service.wsdl_url) }
+  subject(:client) { WSDL::Client.new(WSDL.parse(service.wsdl_url)) }
 
   let(:service) { WSDL::TestService[:rpc_literal] }
   let(:service_name) { :SampleService }

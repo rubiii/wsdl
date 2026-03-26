@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 RSpec.describe 'BLZService' do
-  subject(:client) { WSDL::Client.new fixture('wsdl/blz_service') }
+  subject(:client) { WSDL::Client.new WSDL.parse(fixture('wsdl/blz_service')) }
 
   let(:service_name) { :BLZService }
   let(:port_name)    { :BLZServiceSOAP11port_http }
