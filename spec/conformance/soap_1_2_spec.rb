@@ -332,7 +332,7 @@ RSpec.describe 'SOAP 1.2 conformance' do
       response = build_response(xml)
       expect(response.fault.code).to eq('env:VersionMismatch')
 
-      upgrade = response.xpath('//env:Upgrade', 'env' => 'http://www.w3.org/2003/05/soap-envelope')
+      upgrade = response.doc.xpath('//env:Upgrade', 'env' => 'http://www.w3.org/2003/05/soap-envelope')
       expect(upgrade).not_to be_empty
     end
   end

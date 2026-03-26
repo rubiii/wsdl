@@ -10,7 +10,6 @@ response = operation.invoke
 response.xml          # raw SOAP XML string
 response.body         # parsed SOAP body hash
 response.header       # parsed SOAP header hash (or nil)
-response.envelope_hash
 ```
 
 ## Schema-Aware Parsing

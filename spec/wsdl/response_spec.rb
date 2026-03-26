@@ -87,56 +87,12 @@ RSpec.describe WSDL::Response do
       end
     end
 
-    describe '#envelope_hash' do
-      it 'returns the complete parsed envelope' do
-        expect(response.envelope_hash[:Envelope][:Body]).to eq({ Response: { Result: '42' } })
-        expect(response.envelope_hash[:Envelope][:Header]).to eq({ SessionId: 'abc123' })
-      end
-    end
-
-    describe '#to_envelope_hash' do
-      it 'aliases #envelope_hash' do
-        expect(response.to_envelope_hash).to eq(response.envelope_hash)
-      end
-    end
-
     describe '#hash' do
       it 'returns an Integer and works as a Hash key' do
         expect(response.hash).to be_a(Integer)
 
         values = { response => :ok }
         expect(values[response]).to eq(:ok)
-      end
-    end
-
-    describe '#xml_namespaces' do
-      it 'returns a hash of namespaces from the document' do
-        expect(response.xml_namespaces).to eq({
-          'xmlns:env' => 'http://schemas.xmlsoap.org/soap/envelope/'
-        })
-      end
-    end
-
-    describe '#xpath' do
-      it 'queries the document using the provided XPath expression' do
-        result = response.xpath('//Result')
-        expect(result.first.text).to eq('42')
-      end
-
-      it 'uses xml_namespaces by default for namespaced queries' do
-        result = response.xpath('//env:Body')
-        expect(result.size).to eq(1)
-      end
-
-      it 'accepts custom namespaces' do
-        custom_ns = { 'soap' => 'http://schemas.xmlsoap.org/soap/envelope/' }
-        result = response.xpath('//soap:Body', custom_ns)
-        expect(result.size).to eq(1)
-      end
-
-      it 'returns an empty NodeSet when no matches are found' do
-        result = response.xpath('//NonExistent')
-        expect(result).to be_empty
       end
     end
   end
@@ -469,29 +425,6 @@ RSpec.describe WSDL::Response do
         response = build_response(xml, output_body_parts:)
 
         expect(response.header).to eq({ SessionId: 'abc123' })
-      end
-    end
-
-    describe '#envelope_hash' do
-      it 'returns the raw hash without schema-aware parsing' do
-        xml = <<-XML
-          <env:Envelope xmlns:env="http://schemas.xmlsoap.org/soap/envelope/">
-            <env:Body>
-              <Response>
-                <Count>42</Count>
-              </Response>
-            </env:Body>
-          </env:Envelope>
-        XML
-
-        count_element = schema_element('Count', type: 'xsd:int')
-        response_element = schema_element('Response', children: [count_element])
-        output_body_parts = [response_element]
-
-        response = build_response(xml, output_body_parts:)
-
-        # envelope_hash does NOT use schema-aware parsing
-        expect(response.envelope_hash[:Envelope][:Body][:Response][:Count]).to eq('42')
       end
     end
   end

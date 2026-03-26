@@ -23,11 +23,6 @@ module WSDL
   #   response = operation.invoke
   #   puts response.xml
   #
-  # @example Using XPath queries
-  #   response = operation.invoke
-  #   users = response.xpath('//ns:User', 'ns' => 'http://example.com/users')
-  #   users.each { |user| puts user.text }
-  #
   # @example Type conversions (with schema)
   #   response = operation.invoke
   #   response.body[:order][:id]       # => 123 (Integer, not "123")
@@ -136,18 +131,6 @@ module WSDL
       @header ||= parse_header
     end
 
-    # Returns the entire parsed SOAP envelope as a Hash.
-    #
-    # Keys are symbolized, preserving original element names.
-    # Note: This method does not use schema-aware parsing.
-    # Use {#body} and {#header} for schema-aware access.
-    #
-    # @return [Hash] the complete parsed envelope
-    def envelope_hash
-      @envelope_hash ||= Parser.parse(doc)
-    end
-    alias to_envelope_hash envelope_hash
-
     # Returns the response as a Nokogiri XML document.
     #
     # Use this when you need full XML manipulation capabilities
@@ -156,34 +139,6 @@ module WSDL
     # @return [Nokogiri::XML::Document] the parsed XML document
     def doc
       @doc ||= XML::Parser.parse(xml)
-    end
-
-    # Executes an XPath query on the response document.
-    #
-    # @param path [String] the XPath expression
-    # @param namespaces [Hash, nil] optional namespace mappings
-    #   (defaults to the namespaces declared in the document)
-    # @return [Nokogiri::XML::NodeSet] the matching nodes
-    # @example Without custom namespaces
-    #   response.xpath('//User')
-    # @example With custom namespaces
-    #   response.xpath('//ns:User', 'ns' => 'http://example.com/users')
-    def xpath(path, namespaces = nil)
-      doc.xpath(path, namespaces || xml_namespaces)
-    end
-
-    # Returns all XML namespaces declared in the response document.
-    #
-    # This is useful for building XPath queries that need to
-    # reference namespaced elements.
-    #
-    # @return [Hash{String => String}] namespace prefix to URI mappings
-    # @example
-    #   response.xml_namespaces
-    #   # => { "xmlns:soap" => "http://schemas.xmlsoap.org/soap/envelope/",
-    #   #      "xmlns:ns1" => "http://example.com/users" }
-    def xml_namespaces
-      @xml_namespaces ||= doc.collect_namespaces
     end
 
     # ============================================================
@@ -252,6 +207,15 @@ module WSDL
     end
 
     private
+
+    # Parses the entire SOAP envelope into a plain Hash (no schema awareness).
+    #
+    # Used internally as a fallback when schema parts are not available.
+    #
+    # @return [Hash] the complete parsed envelope
+    def envelope_hash
+      @envelope_hash ||= Parser.parse(doc)
+    end
 
     # Parses the SOAP body using schema information if available.
     #

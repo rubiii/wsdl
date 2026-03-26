@@ -46,6 +46,8 @@ All notable changes to this project will be documented in this file.
 - `ElementBuilder` always uses lenient schema resolution (`find_*` instead of `fetch_*`) and records issues via the pipeline. Nesting depth and element/attribute count limits are recorded as resource limit issues.
 - Removed `format_xml` option from `Config`, `Client`, and `Operation`. Request XML is now always compact. Use `operation.to_xml(pretty: true)` when formatted output is needed.
 - `response.xml` replaces `response.raw`.
+- Removed `response.envelope_hash` (and `to_envelope_hash` alias) from the public API. Use `response.body` and `response.header` for schema-aware access, or `response.doc` for direct XML access.
+- Removed `response.xpath`. Use `response.doc.xpath` instead.
 
 ### Deprecated
 
