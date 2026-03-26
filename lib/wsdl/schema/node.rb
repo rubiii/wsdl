@@ -55,6 +55,7 @@ module WSDL
       # @param context [Hash] schema context
       # @option context [String] :target_namespace the target namespace URI
       # @option context [String] :element_form_default 'qualified' or 'unqualified'
+      # @option context [Hash] :schema_namespaces cached namespace declarations from the parent schema
       def initialize(xml_node, collection, context = {})
         @xml_node = xml_node
         @collection = collection
@@ -62,7 +63,6 @@ module WSDL
 
         @kind = xml_node.name.to_sym
         @attributes_hash = extract_attributes(xml_node)
-        @namespaces = xml_node.namespaces.freeze
       end
 
       # @return [Symbol] the XSD element type (:element, :complexType, :sequence, etc.)
@@ -71,8 +71,21 @@ module WSDL
       # @return [Nokogiri::XML::Node] the underlying XML node
       attr_reader :xml_node
 
+      # Returns XML namespace declarations in scope.
+      #
+      # Computed lazily because many intermediate schema nodes (sequence,
+      # all, choice, etc.) never have their namespaces accessed externally.
+      # Reuses the cached schema-level namespaces when the node has no
+      # local namespace declarations, avoiding expensive Nokogiri traversal.
+      #
       # @return [Hash{String => String}] XML namespace declarations in scope
-      attr_reader :namespaces
+      def namespaces
+        @namespaces ||= if @context[:schema_namespaces] && @xml_node.namespace_definitions.empty?
+          @context[:schema_namespaces]
+        else
+          @xml_node.namespaces.freeze
+        end
+      end
 
       # @!group Common Attributes
 
@@ -398,7 +411,7 @@ module WSDL
       # @param qname [String] qualified name (prefix:localName)
       # @return [Node, nil] the resolved group node, or nil if not found
       def resolve_group(qname)
-        resolved = QName.parse(qname, namespaces: @namespaces, default_namespace: @context[:target_namespace])
+        resolved = QName.parse(qname, namespaces:, default_namespace: @context[:target_namespace])
         @collection&.find_group(resolved.namespace, resolved.local)
       end
 
@@ -417,7 +430,7 @@ module WSDL
       # @param qname [String] qualified name (prefix:localName)
       # @return [Node, nil] the resolved type node, or nil if not found
       def resolve_type(qname)
-        resolved = QName.parse(qname, namespaces: @namespaces, default_namespace: @context[:target_namespace])
+        resolved = QName.parse(qname, namespaces:, default_namespace: @context[:target_namespace])
         @collection&.find_type(resolved.namespace, resolved.local)
       end
 
@@ -426,7 +439,7 @@ module WSDL
       # @param qname [String] qualified name (prefix:localName)
       # @return [Node, nil] the resolved attribute group node, or nil if not found
       def resolve_attribute_group(qname)
-        resolved = QName.parse(qname, namespaces: @namespaces, default_namespace: @context[:target_namespace])
+        resolved = QName.parse(qname, namespaces:, default_namespace: @context[:target_namespace])
         @collection&.find_attribute_group(resolved.namespace, resolved.local)
       end
 

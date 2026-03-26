@@ -123,9 +123,16 @@ module WSDL
 
       # Returns the context hash for creating child nodes.
       #
-      # @return [Hash] context with namespace and form default
+      # Caches the schema-level namespace declarations so child nodes
+      # can reuse them instead of recomputing from Nokogiri.
+      #
+      # @return [Hash] context with namespace, form default, and cached namespaces
       def context
-        { target_namespace: @target_namespace, element_form_default: @element_form_default }
+        @context ||= {
+          target_namespace: @target_namespace,
+          element_form_default: @element_form_default,
+          schema_namespaces: @schema_node.namespaces.freeze
+        }
       end
 
       # Parses the schema node and populates component collections.
