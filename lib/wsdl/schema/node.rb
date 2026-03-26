@@ -411,8 +411,8 @@ module WSDL
       # @param qname [String] qualified name (prefix:localName)
       # @return [Node, nil] the resolved group node, or nil if not found
       def resolve_group(qname)
-        resolved = QName.parse(qname, namespaces:, default_namespace: @context[:target_namespace])
-        @collection&.find_group(resolved.namespace, resolved.local)
+        namespace, local = QName.resolve(qname, namespaces:, default_namespace: @context[:target_namespace])
+        @collection&.find_group(namespace, local)
       end
 
       # Resolves attribute group reference and returns its attributes.
@@ -430,8 +430,8 @@ module WSDL
       # @param qname [String] qualified name (prefix:localName)
       # @return [Node, nil] the resolved type node, or nil if not found
       def resolve_type(qname)
-        resolved = QName.parse(qname, namespaces:, default_namespace: @context[:target_namespace])
-        @collection&.find_type(resolved.namespace, resolved.local)
+        namespace, local = QName.resolve(qname, namespaces:, default_namespace: @context[:target_namespace])
+        @collection&.find_type(namespace, local)
       end
 
       # Resolves a qualified attribute group name to a Node.
@@ -439,8 +439,8 @@ module WSDL
       # @param qname [String] qualified name (prefix:localName)
       # @return [Node, nil] the resolved attribute group node, or nil if not found
       def resolve_attribute_group(qname)
-        resolved = QName.parse(qname, namespaces:, default_namespace: @context[:target_namespace])
-        @collection&.find_attribute_group(resolved.namespace, resolved.local)
+        namespace, local = QName.resolve(qname, namespaces:, default_namespace: @context[:target_namespace])
+        @collection&.find_attribute_group(namespace, local)
       end
 
       # Validates element count against limits.

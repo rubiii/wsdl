@@ -100,16 +100,16 @@ module WSDL
       end
 
       def resolve_part_schema_element(part)
-        resolved = QName.parse(part[:element], namespaces: part[:namespaces])
-        schema_element = @schemas.find_element(resolved.namespace, resolved.local)
+        namespace, local = QName.resolve(part[:element], namespaces: part[:namespaces])
+        schema_element = @schemas.find_element(namespace, local)
 
         unless schema_element
           record_issue(:build_error, "Unable to find element #{part[:element].inspect} " \
-                                     "in schema namespace #{resolved.namespace.inspect}")
+                                     "in schema namespace #{namespace.inspect}")
           return nil
         end
 
-        [schema_element, resolved.namespace]
+        [schema_element, namespace]
       end
 
       def instantiate_schema_element(schema_element, namespace)
@@ -313,8 +313,8 @@ module WSDL
       def recursive_child_definition?(parent, element)
         return false unless element.type
 
-        resolved = QName.parse(element.type, namespaces: element.namespaces)
-        id = "#{resolved.namespace}:#{resolved.local}"
+        namespace, local = QName.resolve(element.type, namespaces: element.namespaces)
+        id = "#{namespace}:#{local}"
 
         current_parent = parent
 
@@ -353,19 +353,19 @@ module WSDL
       # @param namespaces [Hash] namespace declarations in scope
       # @return [Schema::Node, String] the resolved type
       def find_type(qname, namespaces)
-        resolved = QName.parse(qname, namespaces:)
+        namespace, local = QName.resolve(qname, namespaces:)
 
-        return qname unless resolved.namespace
+        return qname unless namespace
 
-        if resolved.namespace == NS::XSD
-          validate_xsd_builtin_type(resolved.local, qname)
+        if namespace == NS::XSD
+          validate_xsd_builtin_type(local, qname)
           return qname
         end
 
-        type = @schemas.find_type(resolved.namespace, resolved.local)
+        type = @schemas.find_type(namespace, local)
         unless type
           record_issue(:build_error, "Unable to find type #{qname.inspect} " \
-                                     "in schema namespace #{resolved.namespace.inspect}")
+                                     "in schema namespace #{namespace.inspect}")
           return qname
         end
 
@@ -384,12 +384,12 @@ module WSDL
       # @param namespaces [Hash] namespace declarations in scope
       # @return [Schema::Node] the resolved element
       def find_element(qname, namespaces)
-        resolved = QName.parse(qname, namespaces:)
-        element = @schemas.find_element(resolved.namespace, resolved.local)
+        namespace, local = QName.resolve(qname, namespaces:)
+        element = @schemas.find_element(namespace, local)
 
         unless element
           record_issue(:build_error, "Unable to find element #{qname.inspect} " \
-                                     "in schema namespace #{resolved.namespace.inspect}")
+                                     "in schema namespace #{namespace.inspect}")
         end
 
         element
@@ -404,8 +404,8 @@ module WSDL
       # @param namespaces [Hash] namespace declarations in scope
       # @return [Schema::Node, nil] the resolved attribute, or nil if not found
       def find_attribute(qname, namespaces)
-        resolved = QName.parse(qname, namespaces:)
-        @schemas.find_attribute(resolved.namespace, resolved.local)
+        namespace, local = QName.resolve(qname, namespaces:)
+        @schemas.find_attribute(namespace, local)
       end
 
       # Checks nesting depth against limits.

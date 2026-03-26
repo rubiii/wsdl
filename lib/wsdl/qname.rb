@@ -26,6 +26,30 @@ module WSDL
         )
       end
 
+      # Resolves a lexical QName into a namespace/local pair.
+      #
+      # Returns a lightweight two-element Array instead of allocating a
+      # QName instance. Use this on hot paths where only the namespace and
+      # local name are needed and the object identity of a QName is not
+      # required (e.g. schema lookups that immediately destructure the
+      # result).
+      #
+      # @param qname [String] QName text (for example "tns:MyMessage")
+      # @param namespaces [Hash{String => String}] in-scope namespace declarations
+      # @param default_namespace [String, nil] fallback namespace for unprefixed names
+      # @return [Array(String, String)] [namespace, local] pair
+      def resolve(qname, namespaces:, default_namespace: nil)
+        colon = qname.rindex(':')
+
+        if colon
+          prefix = qname[0, colon]
+          local  = qname[(colon + 1)..]
+          [namespaces["xmlns:#{prefix}"], local]
+        else
+          [namespaces['xmlns'] || default_namespace, qname]
+        end
+      end
+
       # Parses a lexical QName into a fully qualified name.
       #
       # @param qname [String] QName text (for example "tns:MyMessage")
@@ -35,23 +59,7 @@ module WSDL
       def parse(qname, namespaces:, default_namespace: nil)
         raise ArgumentError, 'QName must be a non-empty String' unless qname.is_a?(String) && !qname.empty?
 
-        local, prefix = split(qname)
-        namespace = prefix ? namespaces["xmlns:#{prefix}"] : namespaces['xmlns'] || default_namespace
-
-        new(namespace, local)
-      end
-
-      private
-
-      # Splits lexical QName into local and prefix.
-      #
-      # @param qname [String] lexical QName
-      # @return [Array(String, String, nil)] [local, prefix]
-      def split(qname)
-        prefix, separator, local = qname.rpartition(':')
-        return [qname, nil] if separator.empty?
-
-        [local, prefix]
+        new(*resolve(qname, namespaces:, default_namespace:))
       end
     end
 

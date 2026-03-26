@@ -1,15 +1,99 @@
 # frozen_string_literal: true
 
 RSpec.describe WSDL::QName do
-  describe '.parse' do
-    let(:namespaces) do
-      {
-        'xmlns:tns' => 'http://example.com/target',
-        'xmlns:other' => 'http://example.com/other',
-        'xmlns' => 'http://example.com/default'
-      }
+  let(:namespaces) do
+    {
+      'xmlns:tns' => 'http://example.com/target',
+      'xmlns:other' => 'http://example.com/other',
+      'xmlns' => 'http://example.com/default'
+    }
+  end
+
+  describe '.resolve' do
+    context 'with prefixed qname' do
+      it 'returns [namespace, local] pair' do
+        expect(described_class.resolve('tns:User', namespaces:))
+          .to eq(['http://example.com/target', 'User'])
+      end
+
+      it 'handles different prefixes' do
+        expect(described_class.resolve('other:Order', namespaces:))
+          .to eq(['http://example.com/other', 'Order'])
+      end
+
+      it 'returns nil namespace for unknown prefix' do
+        expect(described_class.resolve('unknown:Thing', namespaces:))
+          .to eq([nil, 'Thing'])
+      end
     end
 
+    context 'without prefix' do
+      it 'uses default namespace from xmlns' do
+        expect(described_class.resolve('User', namespaces:))
+          .to eq(['http://example.com/default', 'User'])
+      end
+
+      it 'returns nil when no default namespace' do
+        expect(described_class.resolve('User', namespaces: { 'xmlns:tns' => 'http://example.com' }))
+          .to eq([nil, 'User'])
+      end
+
+      it 'uses explicit default_namespace parameter when no xmlns' do
+        expect(described_class.resolve('User', namespaces: {}, default_namespace: 'http://fallback.com'))
+          .to eq(['http://fallback.com', 'User'])
+      end
+
+      it 'prefers xmlns over default_namespace parameter' do
+        expect(described_class.resolve('User', namespaces:, default_namespace: 'http://fallback.com'))
+          .to eq(['http://example.com/default', 'User'])
+      end
+    end
+
+    context 'with empty namespaces hash' do
+      it 'returns nil namespace for prefixed qname' do
+        expect(described_class.resolve('tns:User', namespaces: {}))
+          .to eq([nil, 'User'])
+      end
+
+      it 'returns nil namespace for unprefixed qname without default' do
+        expect(described_class.resolve('User', namespaces: {}))
+          .to eq([nil, 'User'])
+      end
+
+      it 'uses default_namespace for unprefixed qname' do
+        expect(described_class.resolve('User', namespaces: {}, default_namespace: 'http://default.com'))
+          .to eq(['http://default.com', 'User'])
+      end
+    end
+
+    context 'with XSD namespace prefixes' do
+      let(:xsd_namespaces) do
+        {
+          'xmlns:xs' => 'http://www.w3.org/2001/XMLSchema',
+          'xmlns:xsd' => 'http://www.w3.org/2001/XMLSchema'
+        }
+      end
+
+      it 'expands xs:string' do
+        expect(described_class.resolve('xs:string', namespaces: xsd_namespaces))
+          .to eq(['http://www.w3.org/2001/XMLSchema', 'string'])
+      end
+
+      it 'expands xsd:int' do
+        expect(described_class.resolve('xsd:int', namespaces: xsd_namespaces))
+          .to eq(['http://www.w3.org/2001/XMLSchema', 'int'])
+      end
+    end
+
+    context 'with qnames containing multiple colons' do
+      it 'splits on last colon' do
+        expect(described_class.resolve('ns:some:value', namespaces: { 'xmlns:ns:some' => 'http://example.com' }))
+          .to eq(['http://example.com', 'value'])
+      end
+    end
+  end
+
+  describe '.parse' do
     context 'with prefixed qname' do
       it 'resolves to local name and namespace URI' do
         result = described_class.parse('tns:User', namespaces:)
@@ -98,7 +182,7 @@ RSpec.describe WSDL::QName do
     end
 
     context 'with qnames containing multiple colons' do
-      it 'splits on last colon using rpartition' do
+      it 'splits on last colon' do
         result = described_class.parse('ns:some:value', namespaces: { 'xmlns:ns:some' => 'http://example.com' })
         expect(result.local).to eq('value')
         expect(result.namespace).to eq('http://example.com')
