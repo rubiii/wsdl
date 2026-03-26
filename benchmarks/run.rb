@@ -115,11 +115,11 @@ parsing_report = Benchmark.ips { |x|
   x.config(warmup: 2, time: 5)
 
   x.report('parse: small WSDL (blz_service, 88 lines)') do
-    WSDL::Parser::Result.parse(SMALL_WSDL, HTTP)
+    WSDL::Parser.parse(SMALL_WSDL, HTTP)
   end
 
   x.report('parse: large WSDL (economic, 65k lines)') do
-    WSDL::Parser::Result.parse(LARGE_WSDL, HTTP)
+    WSDL::Parser.parse(LARGE_WSDL, HTTP)
   end
 
   x.compare!
