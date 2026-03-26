@@ -72,7 +72,7 @@ module WSDL
           base_type:,
           use:,
           list: list?
-        }
+        }.freeze
       end
 
       # Compares two attributes by their properties.

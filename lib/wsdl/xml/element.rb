@@ -230,7 +230,7 @@ module WSDL
           name:,
           namespace:,
           form:,
-          type: kind.to_s,
+          type: kind.to_s.freeze,
           xsd_type: base_type,
           min_occurs: min_occurs.to_i,
           max_occurs: definition_max_occurs,
@@ -240,9 +240,9 @@ module WSDL
           any_content: any_content?,
           recursive_type:,
           complex_type_id:,
-          children: children.map(&:to_definition_h),
-          attributes: attributes.map(&:to_definition_h)
-        }
+          children: children.map(&:to_definition_h).freeze,
+          attributes: attributes.map(&:to_definition_h).freeze
+        }.freeze
       end
 
       # Compares two elements by their properties (excluding parent reference).

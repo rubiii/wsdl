@@ -45,15 +45,17 @@ module WSDL
       def build
         @build_issues = []
 
+        sources = @provenance.map(&:freeze).freeze
+        services = build_services
+
         data = {
           schema_version: SCHEMA_VERSION,
           service_name: @documents.service_name,
-          sources: @provenance.dup,
-          build_issues: @build_issues,
-          services: build_services
+          sources:,
+          build_issues: @build_issues.freeze,
+          services:,
+          fingerprint: compute_fingerprint(sources)
         }
-
-        data[:fingerprint] = compute_fingerprint(data[:sources])
 
         Definition.new(data)
       end
@@ -70,18 +72,18 @@ module WSDL
           ports = {}
 
           service.ports.each_value do |port|
-            operations = build_operations(port)
+            operations = build_operations(port).freeze
             ports[port.name] = {
               type: port.type,
               endpoint: port.location,
               operations:
-            }
+            }.freeze
           end
 
-          services[service.name] = { ports: }
+          services[service.name] = { ports: ports.freeze }.freeze
         end
 
-        services
+        services.freeze
       end
 
       # Builds operations for a given port.
@@ -108,7 +110,7 @@ module WSDL
           unless port_type_op
             record_build_issue(op_name,
               "Binding operation #{op_name.inspect} not found in portType #{port_type.name.inspect}")
-            store_operation(operations, op_name, metadata)
+            store_operation(operations, op_name, metadata.freeze)
             next
           end
 
@@ -134,7 +136,7 @@ module WSDL
           metadata[:schema_complete] = schema_complete_for_operation?(op_info)
           metadata[:input] = build_message(op_info.input)
           metadata[:output] = op_info.output ? build_message(op_info.output) : nil
-          store_operation(operations, op_name, metadata)
+          store_operation(operations, op_name, metadata.freeze)
         end
 
         operations
@@ -173,7 +175,7 @@ module WSDL
       def store_operation(operations, name, data)
         if operations.key?(name)
           existing = operations[name]
-          operations[name] = existing.is_a?(Array) ? existing + [data] : [existing, data]
+          operations[name] = (existing.is_a?(Array) ? existing + [data] : [existing, data]).freeze
         else
           operations[name] = data
         end
@@ -185,9 +187,9 @@ module WSDL
       # @return [Hash] message hash with header and body element hashes
       def build_message(message)
         {
-          header: message.header_parts.map(&:to_definition_h),
-          body: message.body_parts.map(&:to_definition_h)
-        }
+          header: message.header_parts.map(&:to_definition_h).freeze,
+          body: message.body_parts.map(&:to_definition_h).freeze
+        }.freeze
       end
 
       # Records a build error issue.

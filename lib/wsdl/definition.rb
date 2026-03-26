@@ -517,23 +517,29 @@ module WSDL
     #
     # @param obj [Object] the object to deep-freeze
     # @return [Object] the frozen object
+    # rubocop:disable Metrics/CyclomaticComplexity
     def deep_freeze(obj)
       case obj
       when Hash
+        return obj if obj.frozen?
+
         obj.each_value do |v|
           deep_freeze(v)
         end
         obj.freeze
       when Array
+        return obj if obj.frozen?
+
         obj.each do |v|
           deep_freeze(v)
         end
         obj.freeze
-      else
-        obj.freeze if obj.respond_to?(:freeze)
+      when String
+        obj.freeze
       end
       obj
     end
+    # rubocop:enable Metrics/CyclomaticComplexity
 
     # Serializes internal data to a JSON-safe hash with string keys.
     #
