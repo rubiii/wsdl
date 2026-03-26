@@ -2,7 +2,9 @@
 
 All notable changes to this project will be documented in this file.
 
-## [Unreleased]
+## [1.1.0] — UNRELEASED
+
+**Upgrading?** See the [migration guide](#migrating-from-10) below.
 
 ### Added
 
@@ -63,6 +65,64 @@ All notable changes to this project will be documented in this file.
 - Unknown XSD built-in types (e.g., `xsd:nonExistentType`) now raise `WSDL::UnresolvedReferenceError` in strict schema mode instead of being silently treated as simple types.
 - Overloaded operations no longer silently overwrite each other. Previously, the second definition just replaced the first.
 - Schema resolution now degrades gracefully when `schema_references` strictness is relaxed.
+
+### Migrating from 1.0
+
+**Client initialization** now takes a `Definition` instead of a URL:
+
+```ruby
+# Before
+client = WSDL::Client.new("service.wsdl")
+
+# After
+definition = WSDL.parse("service.wsdl")
+client     = WSDL::Client.new(definition)
+```
+
+Parse-time options (`strictness:`, `limits:`, `sandbox_paths:`) go on `WSDL.parse`.
+
+**Caching** — the built-in cache is gone. Serialize Definitions instead:
+
+```ruby
+File.write("def.json", definition.to_json)
+definition = WSDL.load(JSON.parse(File.read("def.json")))
+```
+
+**Global setters removed** — pass `strictness:` and `limits:` as kwargs:
+
+```ruby
+# Before
+WSDL.strictness = false
+
+# After
+definition = WSDL.parse("service.wsdl", strictness: false)
+```
+
+**`strict_schema:` deprecated** — use `strictness:` with granular keys:
+
+```ruby
+WSDL.parse(url, strictness: { schema_imports: false, request_validation: false })
+```
+
+**HTTP namespace** changed:
+
+| Before | After |
+|---|---|
+| `WSDL::HTTPAdapter` | `WSDL::HTTP::Client` |
+| `WSDL::HTTPResponse` | `WSDL::HTTP::Response` |
+| `WSDL.http_adapter` | `WSDL.http_client` |
+
+**Response API** changed:
+
+| Before | After |
+|---|---|
+| `response.raw` | `response.xml` |
+| `response.envelope_hash` | `response.body` / `response.header` |
+| `response.xpath(expr)` | `response.doc.xpath(expr)` |
+
+**`format_xml` removed** — use `operation.to_xml(pretty: true)` instead.
+
+**Error handling** — parsing is now best-effort. Use `definition.build_issues` to inspect problems and `definition.verify!` to opt into strict validation.
 
 ## [1.0.0] — 2026-03-06
 
