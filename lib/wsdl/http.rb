@@ -1,5 +1,8 @@
 # frozen_string_literal: true
 
+require 'wsdl/http/response'
+require 'wsdl/http/client'
+
 module WSDL
   # HTTP client and response types for fetching WSDL documents and
   # invoking SOAP operations.

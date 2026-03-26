@@ -1,5 +1,34 @@
 # frozen_string_literal: true
 
+# Load constants first as other classes depend on them
+require 'wsdl/security/constants'
+
+# Load utility modules
+require 'wsdl/security/id_generator'
+require 'wsdl/security/algorithm_mapper'
+require 'wsdl/security/reference'
+require 'wsdl/security/signature_options'
+require 'wsdl/security/request_policy'
+require 'wsdl/security/response_policy'
+require 'wsdl/security/policy'
+require 'wsdl/security/credential_normalizer'
+require 'wsdl/security/request_context'
+require 'wsdl/security/request_materializer'
+require 'wsdl/security/xml_builder_helper'
+
+# Load individual security components
+require 'wsdl/security/timestamp'
+require 'wsdl/security/username_token'
+require 'wsdl/security/canonicalizer'
+require 'wsdl/security/digester'
+require 'wsdl/security/signature'
+require 'wsdl/security/verifier'
+
+# Load configuration and header builder
+require 'wsdl/security/config'
+require 'wsdl/security/response_verification'
+require 'wsdl/security/security_header'
+
 module WSDL
   # WS-Security implementation for SOAP message security.
   #
@@ -41,33 +70,5 @@ module WSDL
   # @see https://docs.oasis-open.org/wss/v1.1/wss-v1.1-spec-os-x509TokenProfile.pdf
   #
   module Security
-    # Load constants first as other classes depend on them
-    require 'wsdl/security/constants'
-
-    # Load utility modules
-    require 'wsdl/security/id_generator'
-    require 'wsdl/security/algorithm_mapper'
-    require 'wsdl/security/reference'
-    require 'wsdl/security/signature_options'
-    require 'wsdl/security/request_policy'
-    require 'wsdl/security/response_policy'
-    require 'wsdl/security/policy'
-    require 'wsdl/security/credential_normalizer'
-    require 'wsdl/security/request_context'
-    require 'wsdl/security/request_materializer'
-    require 'wsdl/security/xml_builder_helper'
-
-    # Load individual security components
-    require 'wsdl/security/timestamp'
-    require 'wsdl/security/username_token'
-    require 'wsdl/security/canonicalizer'
-    require 'wsdl/security/digester'
-    require 'wsdl/security/signature'
-    require 'wsdl/security/verifier'
-
-    # Load configuration and header builder
-    require 'wsdl/security/config'
-    require 'wsdl/security/response_verification'
-    require 'wsdl/security/security_header'
   end
 end

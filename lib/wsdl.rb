@@ -138,11 +138,8 @@ module WSDL
   require 'wsdl/strictness'
   require 'wsdl/parse_options'
   require 'wsdl/resolver'
-  require 'wsdl/resolver/source'
   require 'wsdl/config'
   require 'wsdl/http'
-  require 'wsdl/http/response'
-  require 'wsdl/http/client'
 
   # Load XML utilities
   require 'wsdl/xml/attribute'

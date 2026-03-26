@@ -1,5 +1,9 @@
 # frozen_string_literal: true
 
+require 'wsdl/resolver/source'
+require 'wsdl/resolver/loader'
+require 'wsdl/resolver/importer'
+
 module WSDL
   # I/O and orchestration for resolving WSDL documents and their dependencies.
   #

@@ -1,5 +1,20 @@
 # frozen_string_literal: true
 
+require 'wsdl/parser/message_reference'
+require 'wsdl/parser/header_reference'
+require 'wsdl/parser/binding'
+require 'wsdl/parser/binding_operation'
+require 'wsdl/parser/input_output'
+require 'wsdl/parser/message_info'
+require 'wsdl/parser/operation_info'
+require 'wsdl/parser/operation_map'
+require 'wsdl/parser/port'
+require 'wsdl/parser/port_type'
+require 'wsdl/parser/port_type_operation'
+require 'wsdl/parser/service'
+require 'wsdl/parser/document'
+require 'wsdl/parser/document_collection'
+
 module WSDL
   # WSDL and XSD document parsing.
   #
@@ -13,24 +28,6 @@ module WSDL
   # @api private
   #
   module Parser
-    require 'wsdl/parser/message_reference'
-    require 'wsdl/parser/header_reference'
-    require 'wsdl/parser/binding'
-    require 'wsdl/parser/binding_operation'
-    require 'wsdl/parser/input_output'
-    require 'wsdl/parser/message_info'
-    require 'wsdl/parser/operation_info'
-    require 'wsdl/parser/operation_map'
-    require 'wsdl/parser/port'
-    require 'wsdl/parser/port_type'
-    require 'wsdl/parser/port_type_operation'
-    require 'wsdl/parser/service'
-    require 'wsdl/parser/document'
-    require 'wsdl/parser/document_collection'
-    require 'wsdl/resolver/source'
-    require 'wsdl/resolver/loader'
-    require 'wsdl/resolver/importer'
-
     # Parses a WSDL document and returns a frozen {Definition}.
     #
     # Validates the source, resolves all imports and schemas, and builds
