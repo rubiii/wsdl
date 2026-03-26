@@ -5,8 +5,8 @@ require 'resolv'
 require 'timeout'
 
 module WSDL
-  class HTTPAdapter
-    # SSRF and redirect validation for {HTTPAdapter}.
+  module HTTP
+    # SSRF and redirect validation for {Client}.
     #
     # This module validates redirect targets to prevent Server-Side Request
     # Forgery (SSRF) attacks. It blocks redirects to private/reserved IP

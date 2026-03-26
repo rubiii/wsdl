@@ -1,9 +1,9 @@
 # frozen_string_literal: true
 
-# WebMock intercepts at the net/http socket layer, so the full adapter code
+# WebMock intercepts at the net/http socket layer, so the full client code
 # path (URI parsing, Net::HTTP.new, config, start, request, response parsing)
 # is exercised — unlike the unit spec which mocks Net::HTTP at the class level.
-RSpec.describe WSDL::HTTPAdapter do
+RSpec.describe WSDL::HTTP::Client do
   subject(:http) { described_class.new }
 
   describe '#get' do
@@ -13,7 +13,7 @@ RSpec.describe WSDL::HTTPAdapter do
 
       response = http.get('http://example.com/service.wsdl')
 
-      expect(response).to be_a(WSDL::HTTPResponse)
+      expect(response).to be_a(WSDL::HTTP::Response)
       expect(response.status).to eq(200)
       expect(response.body).to eq('<definitions/>')
       expect(response.headers['content-type']).to eq('text/xml')

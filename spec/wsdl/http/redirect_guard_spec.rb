@@ -1,9 +1,9 @@
 # frozen_string_literal: true
 
-RSpec.describe WSDL::HTTPAdapter::RedirectGuard do
+RSpec.describe WSDL::HTTP::RedirectGuard do
   # Lightweight host class to test the module in isolation,
-  # independent of HTTPAdapter's other concerns.
-  let(:guard) { Class.new { include WSDL::HTTPAdapter::RedirectGuard }.new }
+  # independent of HTTP::Client's other concerns.
+  let(:guard) { Class.new { include WSDL::HTTP::RedirectGuard }.new }
 
   describe 'PRIVATE_IP_RANGES' do
     subject(:ranges) { described_class::PRIVATE_IP_RANGES }

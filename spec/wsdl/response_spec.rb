@@ -2,7 +2,7 @@
 
 RSpec.describe WSDL::Response do
   def build_response(xml, **kwargs)
-    described_class.new(http_response: WSDL::HTTPResponse.new(status: 200, body: xml), **kwargs)
+    described_class.new(http_response: WSDL::HTTP::Response.new(status: 200, body: xml), **kwargs)
   end
 
   let(:soap_response) do
@@ -22,7 +22,7 @@ RSpec.describe WSDL::Response do
 
   describe '#http_status' do
     it 'returns the HTTP status code from the HTTP response' do
-      http_response = WSDL::HTTPResponse.new(status: 500, body: soap_response)
+      http_response = WSDL::HTTP::Response.new(status: 500, body: soap_response)
       response = described_class.new(http_response:)
 
       expect(response.http_status).to eq(500)
@@ -38,7 +38,7 @@ RSpec.describe WSDL::Response do
 
     it 'returns the HTTP headers from the HTTP response' do
       headers = { 'Content-Type' => 'text/xml' }
-      http_response = WSDL::HTTPResponse.new(status: 200, headers:, body: soap_response)
+      http_response = WSDL::HTTP::Response.new(status: 200, headers:, body: soap_response)
       response = described_class.new(http_response:)
 
       expect(response.http_headers).to eq(headers)
@@ -57,8 +57,8 @@ RSpec.describe WSDL::Response do
         expect(response.xml).to be_frozen
       end
 
-      it 'freezes the body extracted from an HTTPResponse' do
-        http_response = WSDL::HTTPResponse.new(status: 200, body: soap_response.dup)
+      it 'freezes the body extracted from an HTTP::Response' do
+        http_response = WSDL::HTTP::Response.new(status: 200, body: soap_response.dup)
         response = described_class.new(http_response:)
 
         expect(response.xml).to be_frozen

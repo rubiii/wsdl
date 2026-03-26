@@ -34,8 +34,11 @@ All notable changes to this project will be documented in this file.
 
 - `Client.new` with a URL/path eagerly builds the `Definition` during initialization. All service/operation resolution happens upfront — no more lazy resolution that could raise errors later during operation access.
 - Removed built-in parse cache (`WSDL.cache`, `Cache` class, `cache:` parameter on `Client.new` and `WSDL.parse`). `Definition` is serializable via `to_h`/`to_json`/`from_h` — cache at the Definition level instead (file, Redis, etc.).
-- Removed `cache_key` contract from HTTP adapters. Custom adapters no longer need to implement `#cache_key`.
+- Removed `cache_key` contract from HTTP clients. Custom clients no longer need to implement `#cache_key`.
 - Removed `InvalidHTTPAdapterError` (was only used for `cache_key` validation).
+- `WSDL::HTTPAdapter` renamed to `WSDL::HTTP::Client`. Config, RedirectGuard, and Response moved into the `WSDL::HTTP` namespace. `WSDL.http_adapter` accessor renamed to `WSDL.http_client`.
+- `WSDL::HTTPResponse` renamed to `WSDL::HTTP::Response`.
+- I/O concerns extracted from `Parser` into `WSDL::Resolver` namespace (`Resolver::Source`, `Resolver::Loader`, `Resolver::Importer`). Old `Source`, `Parser::Resolver`, and `Parser::Importer` classes removed.
 - Element tree building is always best-effort. Unresolvable types, missing elements, and resource limits are recorded as build issues rather than raising exceptions. Operations are included in the `Definition` with whatever data was successfully collected.
 - `BindingOperation#find_input_child_nodes` returns `[]` for missing `<input>` instead of raising.
 - `PortTypeOperation#input` returns `nil` for missing `<input>` (matching how `output` already handled missing `<output>`).
@@ -118,7 +121,7 @@ Initial public release.
 
 ### HTTP
 
-- Stdlib `net/http` adapter with no external HTTP dependencies
+- Stdlib `net/http` client with no external HTTP dependencies
 - HTTPS-only by default with configurable TLS settings
 - Redirect following with SSRF-safe target validation
 - Transparent gzip decompression disabled to prevent gzip bomb attacks
@@ -129,7 +132,7 @@ Initial public release.
 - Global and per-client configuration with thread-safe defaults
 - 11 configurable resource limits (document size, schema count, nesting depth, and more)
 - Pluggable logger (defaults to silent `NullLogger`)
-- Pluggable HTTP adapter
+- Pluggable HTTP client
 
 ### Dependencies
 

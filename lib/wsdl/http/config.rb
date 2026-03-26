@@ -3,7 +3,7 @@
 require 'openssl'
 
 module WSDL
-  class HTTPAdapter
+  module HTTP
     # Default open (connection) timeout in seconds.
     DEFAULT_OPEN_TIMEOUT = 30
 
@@ -20,7 +20,7 @@ module WSDL
     # Holds timeout, SSL, and redirect settings applied to each +Net::HTTP+ request.
     #
     # @example
-    #   config = WSDL::HTTPAdapter::Config.new
+    #   config = WSDL::HTTP::Config.new
     #   config.open_timeout = 10
     #   config.read_timeout = 60
     #   config.ca_file = '/path/to/ca-bundle.crt'

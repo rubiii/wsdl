@@ -56,7 +56,7 @@ module WSDL
   class Response
     # Creates a new Response instance.
     #
-    # @param http_response [HTTPResponse] the HTTP response metadata (status code, headers, body)
+    # @param http_response [HTTP::Response] the HTTP response metadata (status code, headers, body)
     # @param output_body_parts [Array<WSDL::XML::Element>, nil] optional schema elements
     #   describing the expected body structure for type-aware parsing
     # @param output_header_parts [Array<WSDL::XML::Element>, nil] optional schema elements

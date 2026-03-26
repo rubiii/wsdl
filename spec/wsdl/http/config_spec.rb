@@ -1,17 +1,17 @@
 # frozen_string_literal: true
 
-RSpec.describe WSDL::HTTPAdapter::Config do
+RSpec.describe WSDL::HTTP::Config do
   subject(:config) { described_class.new }
 
   describe 'secure defaults' do
     it 'uses sensible timeout defaults' do
-      expect(config.open_timeout).to eq(WSDL::HTTPAdapter::DEFAULT_OPEN_TIMEOUT)
-      expect(config.write_timeout).to eq(WSDL::HTTPAdapter::DEFAULT_WRITE_TIMEOUT)
-      expect(config.read_timeout).to eq(WSDL::HTTPAdapter::DEFAULT_READ_TIMEOUT)
+      expect(config.open_timeout).to eq(WSDL::HTTP::DEFAULT_OPEN_TIMEOUT)
+      expect(config.write_timeout).to eq(WSDL::HTTP::DEFAULT_WRITE_TIMEOUT)
+      expect(config.read_timeout).to eq(WSDL::HTTP::DEFAULT_READ_TIMEOUT)
     end
 
     it 'limits redirects by default' do
-      expect(config.max_redirects).to eq(WSDL::HTTPAdapter::DEFAULT_REDIRECT_LIMIT)
+      expect(config.max_redirects).to eq(WSDL::HTTP::DEFAULT_REDIRECT_LIMIT)
     end
 
     it 'enforces peer verification by default' do

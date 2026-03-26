@@ -19,12 +19,12 @@ module SpecSupport
 
     def get(url)
       entry = @fakes[url] or raise_mock_error!(:get, url)
-      WSDL::HTTPResponse.new(status: entry[:status], body: entry[:body])
+      WSDL::HTTP::Response.new(status: entry[:status], body: entry[:body])
     end
 
     def post(url, _headers, _body)
       entry = @fakes[url] or raise_mock_error!(:post, url)
-      WSDL::HTTPResponse.new(status: entry[:status], body: entry[:body])
+      WSDL::HTTP::Response.new(status: entry[:status], body: entry[:body])
     end
 
     def fake_request(url, fixture = nil, status: 200)

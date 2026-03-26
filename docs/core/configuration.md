@@ -9,7 +9,7 @@
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
 | `wsdl` | `String` | (required) | HTTP(S) URL or local file path to the WSDL document |
-| `http:` | adapter instance | `WSDL.http_adapter.new` | Custom HTTP adapter (see [HTTP Adapter](#http-adapter)) |
+| `http:` | client instance | `WSDL.http_client.new` | Custom HTTP client (see [HTTP client](#http-client)) |
 | `config:` | `Config`, `nil` | `nil` | Reusable Config object (see [Config](#config)) |
 
 ### Behavioral options (via Config)
@@ -51,7 +51,7 @@ Config is frozen after construction, like `Limits`.
 Four module-level settings apply to all new clients:
 
 ```ruby
-WSDL.http_adapter = MyAdapterClass             # default: WSDL::HTTPAdapter
+WSDL.http_client = MyHTTPClient             # default: WSDL::HTTP::Client
 WSDL.limits = { max_schemas: 200 }             # default: sensible defaults
 WSDL.strictness = false                        # default: all strict (true)
 WSDL.logger = Rails.logger                     # default: silent (NullLogger)
@@ -202,9 +202,9 @@ Request XML is compact by default (no extra whitespace). For debugging or loggin
 puts operation.to_xml(pretty: true)
 ```
 
-## HTTP Adapter
+## HTTP Client
 
-The HTTP adapter handles WSDL/schema fetching (`get`) and SOAP operation calls (`post`). The built-in `WSDL::HTTPAdapter` uses Ruby's stdlib `net/http` with secure defaults.
+The HTTP client handles WSDL/schema fetching (`get`) and SOAP operation calls (`post`). The built-in `WSDL::HTTP::Client` uses Ruby's stdlib `net/http` with secure defaults.
 
 
 ```ruby
@@ -214,12 +214,12 @@ client.http.read_timeout = 60
 client.http.ca_file = '/path/to/ca-bundle.crt'
 ```
 
-See [HTTP Adapter](http-adapter.md) for the full security model, blocked IP ranges, custom adapter interface, and configuration options.
+See [HTTP Client](http-client.md) for the full security model, blocked IP ranges, custom client interface, and configuration options.
 
 ## See also
 
 - [Getting Started](../getting_started.md)
-- [HTTP Adapter](http-adapter.md)
+- [HTTP Client](http-client.md)
 - [Error Hierarchy](../reference/errors.md)
 - [Resolving Imports](resolving-imports.md)
 - [Strictness Fixture Matrix](../reference/strictness-fixture-matrix.md)

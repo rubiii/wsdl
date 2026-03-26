@@ -26,7 +26,7 @@ RSpec.describe 'SOAP 1.1 conformance' do
   end
 
   def build_response(xml)
-    WSDL::Response.new(http_response: WSDL::HTTPResponse.new(status: 200, body: xml))
+    WSDL::Response.new(http_response: WSDL::HTTP::Response.new(status: 200, body: xml))
   end
 
   # --------------------------------------------------------------------------

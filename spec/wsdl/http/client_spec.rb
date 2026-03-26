@@ -2,12 +2,12 @@
 
 require 'logger'
 
-RSpec.describe WSDL::HTTPAdapter do
+RSpec.describe WSDL::HTTP::Client do
   subject(:http) { described_class.new }
 
   describe '#config' do
     it 'returns a Config instance' do
-      expect(http.config).to be_an_instance_of(described_class::Config)
+      expect(http.config).to be_an_instance_of(WSDL::HTTP::Config)
     end
   end
 
@@ -477,7 +477,7 @@ RSpec.describe WSDL::HTTPAdapter do
     let(:base_uri) { URI.parse('https://example.com/old/path?q=1') }
 
     def make_response(location)
-      WSDL::HTTPResponse.new(
+      WSDL::HTTP::Response.new(
         status: 302,
         headers: location ? { 'location' => location } : {},
         body: ''
@@ -625,7 +625,7 @@ RSpec.describe WSDL::HTTPAdapter do
         expect(log_output.string).to match(/man-in-the-middle/)
       end
 
-      it 'only logs the warning once per adapter instance' do
+      it 'only logs the warning once per client instance' do
         http.get('https://example.com')
         http.get('https://example.com')
         http.post('https://example.com', {}, 'body')
@@ -633,7 +633,7 @@ RSpec.describe WSDL::HTTPAdapter do
         expect(log_output.string.scan('SSL certificate verification is disabled').length).to eq(1)
       end
 
-      it 'logs again for a new adapter instance' do
+      it 'logs again for a new client instance' do
         http2 = described_class.new
         http2.config.verify_mode = OpenSSL::SSL::VERIFY_NONE
 
@@ -672,7 +672,7 @@ RSpec.describe WSDL::HTTPAdapter do
   end
 
   describe '#get' do
-    it 'returns an HTTPResponse with status, headers, and body' do
+    it 'returns an HTTP::Response with status, headers, and body' do
       net_response = instance_double(Net::HTTPOK, code: '200', body: 'raw get!').tap do |r|
         allow(r).to receive(:each_header).and_yield('content-type', 'text/xml')
       end
@@ -689,7 +689,7 @@ RSpec.describe WSDL::HTTPAdapter do
 
       response = http.get('http://example.com')
 
-      expect(response).to be_a(WSDL::HTTPResponse)
+      expect(response).to be_a(WSDL::HTTP::Response)
       expect(response.status).to eq(200)
       expect(response.headers).to eq('content-type' => 'text/xml')
       expect(response.body).to eq('raw get!')
@@ -697,7 +697,7 @@ RSpec.describe WSDL::HTTPAdapter do
   end
 
   describe '#post' do
-    it 'returns an HTTPResponse with status, headers, and body' do
+    it 'returns an HTTP::Response with status, headers, and body' do
       net_response = instance_double(Net::HTTPOK, code: '200', body: 'raw post!').tap do |r|
         allow(r).to receive(:each_header)
       end
@@ -714,7 +714,7 @@ RSpec.describe WSDL::HTTPAdapter do
 
       response = http.post('http://example.com', { 'Content-Length' => '5' }, 'post request!')
 
-      expect(response).to be_a(WSDL::HTTPResponse)
+      expect(response).to be_a(WSDL::HTTP::Response)
       expect(response.status).to eq(200)
       expect(response.body).to eq('raw post!')
     end
@@ -722,19 +722,19 @@ RSpec.describe WSDL::HTTPAdapter do
 
   describe 'constants' do
     it 'defines DEFAULT_OPEN_TIMEOUT' do
-      expect(described_class::DEFAULT_OPEN_TIMEOUT).to eq(30)
+      expect(WSDL::HTTP::DEFAULT_OPEN_TIMEOUT).to eq(30)
     end
 
     it 'defines DEFAULT_WRITE_TIMEOUT' do
-      expect(described_class::DEFAULT_WRITE_TIMEOUT).to eq(60)
+      expect(WSDL::HTTP::DEFAULT_WRITE_TIMEOUT).to eq(60)
     end
 
     it 'defines DEFAULT_READ_TIMEOUT' do
-      expect(described_class::DEFAULT_READ_TIMEOUT).to eq(120)
+      expect(WSDL::HTTP::DEFAULT_READ_TIMEOUT).to eq(120)
     end
 
     it 'defines DEFAULT_REDIRECT_LIMIT' do
-      expect(described_class::DEFAULT_REDIRECT_LIMIT).to eq(5)
+      expect(WSDL::HTTP::DEFAULT_REDIRECT_LIMIT).to eq(5)
     end
   end
 end

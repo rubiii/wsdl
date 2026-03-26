@@ -38,7 +38,7 @@ module WSDL
     # for the parse pipeline.
     #
     # @param wsdl [String] a URL or local file path to the WSDL document
-    # @param http [Object] an HTTP adapter instance for fetching remote documents
+    # @param http [Object] an HTTP client instance for fetching remote documents
     # @param parse_options [ParseOptions, nil] parse configuration.
     #   When omitted, {ParseOptions.default} is used.
     # @return [Definition] the frozen definition

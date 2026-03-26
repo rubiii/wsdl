@@ -28,8 +28,8 @@ module WSDL
   #   client = WSDL::Client.new('http://example.com/service?wsdl')
   #   operation = client.operation('ExampleService', 'ExamplePort', 'GetData')
   #
-  # @example With custom HTTP adapter
-  #   client = WSDL::Client.new('http://example.com/service?wsdl', http: my_adapter)
+  # @example With custom HTTP client
+  #   client = WSDL::Client.new('http://example.com/service?wsdl', http: my_client)
   #
   # @example Custom sandbox paths for local imports spanning multiple directories
   #   client = WSDL::Client.new('/path/to/service.wsdl',
@@ -47,8 +47,8 @@ module WSDL
     # operates entirely from the pre-built definition.
     #
     # @param wsdl [Definition, String] a {Definition} instance, URL, or file path
-    # @param http [Object, nil] an optional HTTP adapter instance
-    #   (defaults to a new instance of {WSDL.http_adapter})
+    # @param http [Object, nil] an optional HTTP client instance
+    #   (defaults to a new instance of {WSDL.http_client})
     # @param config [Config, nil] a reusable {Config} instance grouping behavioral
     #   options. Any keyword arguments for Config options override the config object.
     #   Additional keyword arguments are forwarded to {Config#initialize}.
@@ -56,7 +56,7 @@ module WSDL
     #
     def initialize(wsdl, http: nil, config: nil, **)
       @config = config ? config.with(**) : Config.new(**)
-      @http = http || WSDL.http_adapter.new
+      @http = http || WSDL.http_client.new
 
       @definition = if wsdl.is_a?(Definition)
         wsdl
@@ -81,9 +81,9 @@ module WSDL
     #
     attr_reader :config
 
-    # Returns the HTTP adapter's config for customizing timeouts, SSL, etc.
+    # Returns the HTTP client's config for customizing timeouts, SSL, etc.
     #
-    # @return [Object] the adapter configuration object
+    # @return [Object] the client configuration object
     #
     def http
       @http.config

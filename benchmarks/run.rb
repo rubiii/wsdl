@@ -15,11 +15,11 @@ class BenchHTTP
   def cache_key = 'bench'
 
   def get(url)
-    WSDL::HTTPResponse.new(status: 200, body: File.read(url))
+    WSDL::HTTP::Response.new(status: 200, body: File.read(url))
   end
 
   def post(_url, _headers, _body)
-    WSDL::HTTPResponse.new(status: 200, body: SMALL_RESPONSE_XML)
+    WSDL::HTTP::Response.new(status: 200, body: SMALL_RESPONSE_XML)
   end
 end
 
@@ -200,11 +200,11 @@ response_report = Benchmark.ips { |x|
   x.config(warmup: 2, time: 5)
 
   x.report('response: parse small (15 lines)') do
-    WSDL::Response.new(http_response: WSDL::HTTPResponse.new(status: 200, body: SMALL_RESPONSE_XML)).body
+    WSDL::Response.new(http_response: WSDL::HTTP::Response.new(status: 200, body: SMALL_RESPONSE_XML)).body
   end
 
   x.report('response: parse large (200 items)') do
-    WSDL::Response.new(http_response: WSDL::HTTPResponse.new(status: 200, body: LARGE_RESPONSE_XML)).body
+    WSDL::Response.new(http_response: WSDL::HTTP::Response.new(status: 200, body: LARGE_RESPONSE_XML)).body
   end
 
   x.compare!

@@ -6,7 +6,7 @@ module WSDL
   # Groups all parse-time and request-time settings into a single
   # frozen value object. Accepts the same keyword arguments as
   # {Client#initialize} for the behavioral subset (everything
-  # except the WSDL source, HTTP adapter, and cache).
+  # except the WSDL source, HTTP client, and cache).
   #
   # @example Create with defaults
   #   config = WSDL::Config.new

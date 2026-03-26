@@ -9,7 +9,7 @@ RSpec.describe WSDL::Resolver::Loader do
   let(:http_test_client) do
     Class.new do
       def get(url)
-        WSDL::HTTPResponse.new(status: 200, body: "raw_response for #{url}")
+        WSDL::HTTP::Response.new(status: 200, body: "raw_response for #{url}")
       end
     end.new
   end
@@ -406,7 +406,7 @@ RSpec.describe WSDL::Resolver::Loader do
             end
 
             def get(_url)
-              WSDL::HTTPResponse.new(status: 200, body: @content)
+              WSDL::HTTP::Response.new(status: 200, body: @content)
             end
           end.new(large_content)
         end
@@ -505,7 +505,7 @@ RSpec.describe WSDL::Resolver::Loader do
           end
 
           def get(_url)
-            WSDL::HTTPResponse.new(status: 200, body: @content)
+            WSDL::HTTP::Response.new(status: 200, body: @content)
           end
         end.new(content)
 

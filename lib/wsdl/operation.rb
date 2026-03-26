@@ -20,7 +20,7 @@ module WSDL
     #
     # @param op_data [Hash{Symbol => Object}] operation hash from {Definition#operation_data}
     # @param endpoint [String] the SOAP endpoint URL
-    # @param http [Object] an HTTP adapter instance
+    # @param http [Object] an HTTP client instance
     # @param config [Config] behavioral configuration
     def initialize(op_data, endpoint, http, config: Config.new)
       @op_data = op_data

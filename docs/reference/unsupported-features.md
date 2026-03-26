@@ -68,7 +68,7 @@ supported. The library processes SOAP envelopes as plain XML.
 
 Both SwA and MTOM use multipart MIME packaging to send binary data alongside the SOAP envelope.
 Supporting them requires a MIME parser, content-ID resolution for `xop:Include` references, and changes
-to the HTTP adapter contract to handle multipart request/response bodies instead of plain XML strings.
+to the HTTP client contract to handle multipart request/response bodies instead of plain XML strings.
 This is a fundamentally different transport model that cuts across the entire request/response pipeline.
 Services that need binary transfer increasingly use REST-based file endpoints or base64 encoding within
 the SOAP body, reducing the practical demand for SwA/MTOM.

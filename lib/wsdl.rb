@@ -27,8 +27,8 @@ require 'wsdl/log'
 #
 module WSDL
   class << self
-    # @return [Class] the HTTP adapter class (defaults to {HTTPAdapter})
-    attr_reader :http_adapter
+    # @return [Class] the HTTP client class (defaults to {HTTP::Client})
+    attr_reader :http_client
 
     # @return [Limits] the default limits instance
     attr_reader :limits
@@ -64,19 +64,19 @@ module WSDL
       @logger = value || Log::NullLogger.new
     end
 
-    # Sets the HTTP adapter class. Pass +nil+ to restore the default.
+    # Sets the HTTP client class. Pass +nil+ to restore the default.
     #
     # This is a global setting. Set it once at boot time, before creating
     # any clients or spawning threads. Changing it after clients exist may
     # cause inconsistent behavior.
     #
     # @example
-    #   WSDL.http_adapter = MyHTTPAdapter
+    #   WSDL.http_client = MyHTTPClient
     #
-    # @param adapter [Class, nil] an HTTP adapter class, or +nil+ to reset
-    # @see file:docs/core/configuration.md#http-adapter HTTP Adapter docs
-    def http_adapter=(adapter)
-      @http_adapter = adapter || HTTPAdapter
+    # @param client [Class, nil] an HTTP client class, or +nil+ to reset
+    # @see file:docs/core/configuration.md#http-client HTTP client docs
+    def http_client=(client)
+      @http_client = client || HTTP::Client
     end
 
     # Sets the default resource limits. Pass +nil+ to restore defaults.
@@ -114,7 +114,7 @@ module WSDL
     # {Client.new}.
     #
     # @param source [String] WSDL URL or file path
-    # @param http [Object, nil] HTTP adapter for fetching (defaults to {.http_adapter})
+    # @param http [Object, nil] HTTP client for fetching (defaults to {.http_client})
     # @param strictness [Strictness, Hash, Boolean, nil] strictness settings
     # @param sandbox_paths [Array<String>, nil] allowed directories for file access
     # @param limits [Limits, Hash, nil] resource limits
@@ -130,7 +130,7 @@ module WSDL
     #   definition = WSDL.parse(url, strictness: false, limits: { max_schemas: 200 })
     #
     def parse(source, http: nil, strictness: nil, sandbox_paths: nil, limits: nil)
-      http ||= http_adapter.new
+      http ||= http_client.new
 
       parse_options = ParseOptions.new(
         sandbox_paths:,
@@ -171,8 +171,9 @@ module WSDL
   require 'wsdl/resolver'
   require 'wsdl/resolver/source'
   require 'wsdl/config'
-  require 'wsdl/http_response'
-  require 'wsdl/http_adapter'
+  require 'wsdl/http'
+  require 'wsdl/http/response'
+  require 'wsdl/http/client'
 
   # Load XML utilities
   require 'wsdl/xml/attribute'
@@ -207,7 +208,7 @@ module WSDL
   require 'wsdl/client'
 
   # Initialize defaults. These must be set before spawning threads.
-  @http_adapter = HTTPAdapter
+  @http_client = HTTP::Client
   @limits       = Limits.new
   @strictness   = Strictness.new
   @logger       = Log::NullLogger.new

@@ -1,6 +1,6 @@
-# HTTP Adapter
+# HTTP Client
 
-The HTTP adapter handles WSDL/schema fetching (`get`) and SOAP operation calls (`post`). The built-in `WSDL::HTTPAdapter` uses Ruby's stdlib `net/http` with no external dependencies and applies secure defaults out of the box.
+The HTTP client handles WSDL/schema fetching (`get`) and SOAP operation calls (`post`). The built-in `WSDL::HTTP::Client` uses Ruby's stdlib `net/http` with no external dependencies and applies secure defaults out of the box.
 
 ## Secure Defaults
 
@@ -15,7 +15,7 @@ The HTTP adapter handles WSDL/schema fetching (`get`) and SOAP operation calls (
 
 ## Configuration
 
-Configure via `client.http`, which returns a `WSDL::HTTPAdapter::Config`:
+Configure via `client.http`, which returns a `WSDL::HTTP::Config`:
 
 ```ruby
 client = WSDL::Client.new(wsdl)
@@ -49,7 +49,7 @@ client.http.verify_mode = OpenSSL::SSL::VERIFY_NONE
 
 ## Redirect Following
 
-The adapter automatically follows HTTP redirects (301, 302, 303, 307, 308) up to `max_redirects` hops. Every redirect target is validated before the connection is made.
+The client automatically follows HTTP redirects (301, 302, 303, 307, 308) up to `max_redirects` hops. Every redirect target is validated before the connection is made.
 
 ### Method handling
 
@@ -78,7 +78,7 @@ Server-Side Request Forgery (SSRF) attacks exploit server-initiated HTTP request
 
 These checks apply to **redirect targets only**, not the initial request URL. The caller controls the initial URL and is responsible for its safety. The threat model is an attacker-controlled redirect from an otherwise legitimate endpoint.
 
-The adapter blocks redirects to all IANA special-purpose address ranges:
+The client blocks redirects to all IANA special-purpose address ranges:
 
 ### Blocked IPv4 ranges
 
@@ -118,7 +118,7 @@ The adapter blocks redirects to all IANA special-purpose address ranges:
 
 ### IPv6 bypass prevention
 
-Several IPv6 representations can encode IPv4 addresses to bypass range checks. The adapter normalizes these before validation:
+Several IPv6 representations can encode IPv4 addresses to bypass range checks. The client normalizes these before validation:
 
 - **IPv4-mapped** (`::ffff:127.0.0.1`) — normalized to native IPv4 via `IPAddr#native`
 - **IPv4-compatible** (`::127.0.0.1`) — normalized to native IPv4 via `IPAddr#native`
@@ -127,7 +127,7 @@ Several IPv6 representations can encode IPv4 addresses to bypass range checks. T
 
 ### DNS rebinding prevention
 
-When a redirect targets a hostname (not an IP literal), the adapter:
+When a redirect targets a hostname (not an IP literal), the client:
 
 1. Resolves the hostname via DNS with a 5-second timeout
 2. Validates **all** returned addresses against the blocked ranges
@@ -143,27 +143,26 @@ DNS resolution timeout applies per redirect hop. Worst-case DNS latency across a
 
 ## Gzip Bomb Protection
 
-The adapter sets `Accept-Encoding: identity` to disable transparent gzip decompression. Without this, a small compressed response could decompress into gigabytes in memory before document size limits can be checked. User-provided `Accept-Encoding` headers override this default.
+The client sets `Accept-Encoding: identity` to disable transparent gzip decompression. Without this, a small compressed response could decompress into gigabytes in memory before document size limits can be checked. User-provided `Accept-Encoding` headers override this default.
 
-## Custom Adapters
+## Custom Clients
 
-Replace the built-in adapter when you need features like connection pooling, proxy support, or instrumentation.
+Replace the built-in client when you need features like connection pooling, proxy support, or instrumentation.
 
-### Adapter interface
+### Client interface
 
-Custom adapters must implement:
+Custom clients must implement:
 
 | Method | Signature | Purpose |
 |--------|-----------|---------|
-| `get` | `get(url) → HTTPResponse` | Fetch WSDL and schema documents |
-| `post` | `post(url, headers, body) → HTTPResponse` | Send SOAP requests |
-| `cache_key` | `cache_key → String` | Stable non-empty identity for cache partitioning |
+| `get` | `get(url) → HTTP::Response` | Fetch WSDL and schema documents |
+| `post` | `post(url, headers, body) → HTTP::Response` | Send SOAP requests |
 | `config` | `config → Object` | Configuration object exposed via `client.http` |
 
 ### Example
 
 ```ruby
-class MyHTTPAdapter
+class MyHTTPClient
   def initialize
     @connection = Faraday.new
   end
@@ -173,33 +172,29 @@ class MyHTTPAdapter
   attr_reader :connection
   alias config connection
 
-  def cache_key
-    'my-http-adapter:v1'
-  end
-
   def get(url)
     resp = @connection.get(url)
-    WSDL::HTTPResponse.new(status: resp.status, headers: resp.headers, body: resp.body)
+    WSDL::HTTP::Response.new(status: resp.status, headers: resp.headers, body: resp.body)
   end
 
   def post(url, headers, body)
     resp = @connection.post(url, body, headers)
-    WSDL::HTTPResponse.new(status: resp.status, headers: resp.headers, body: resp.body)
+    WSDL::HTTP::Response.new(status: resp.status, headers: resp.headers, body: resp.body)
   end
 end
 ```
 
-### Setting the adapter
+### Setting the client
 
 ```ruby
 # Global (all new clients)
-WSDL.http_adapter = MyHTTPAdapter
+WSDL.http_client = MyHTTPClient
 
 # Per-client
-client = WSDL::Client.new(wsdl, http: MyHTTPAdapter.new)
+client = WSDL::Client.new(wsdl, http: MyHTTPClient.new)
 ```
 
-> **Note:** Custom adapters are responsible for their own redirect handling and SSRF protection. The built-in protections described above only apply to `WSDL::HTTPAdapter`.
+> **Note:** Custom clients are responsible for their own redirect handling and SSRF protection. The built-in protections described above only apply to `WSDL::HTTP::Client`.
 
 ## See also
 

@@ -18,7 +18,7 @@ WSDL toolkit for Ruby. Turn WSDL 1.1 documents into inspectable definitions and 
 ## Key Concepts
 
 - **Definition** — Frozen IR of a parsed WSDL service (`lib/wsdl/definition.rb`). Created by `WSDL.parse`, restored by `WSDL.load`. Provides discovery, introspection, provenance, and serialization. Everything downstream operates on the Definition.
-- **Client** — Wraps a Definition with an HTTP adapter for calling operations (`lib/wsdl/client.rb`)
+- **Client** — Wraps a Definition with an HTTP client for calling operations (`lib/wsdl/client.rb`)
 - **Operation** — Callable SOAP operation with body, headers, and security
 - **Parser** — Parses WSDL and XSD documents into intermediate structures consumed by the Definition Builder
 - **Request DSL + Serializer** — `operation.prepare { ... }` builds a `Request::Envelope` and `WSDL::Request::Serializer` / `Operation#to_xml` produce SOAP XML

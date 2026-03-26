@@ -1,25 +1,25 @@
 # frozen_string_literal: true
 
 RSpec.describe WSDL do
-  describe '.http_adapter' do
+  describe '.http_client' do
     after do
       # reset global state!
-      described_class.http_adapter = nil
+      described_class.http_client = nil
     end
 
-    it 'returns the default HTTP adapter class' do
-      expect(described_class.http_adapter).to eq(WSDL::HTTPAdapter)
+    it 'returns the default HTTP client class' do
+      expect(described_class.http_client).to eq(WSDL::HTTP::Client)
     end
 
-    it 'can be changed to use a custom adapter' do
-      adapter_class = Class.new do
+    it 'can be changed to use a custom client' do
+      client_class = Class.new do
         def config
           'http-config'
         end
       end
 
-      described_class.http_adapter = adapter_class
-      expect(described_class.http_adapter).to eq(adapter_class)
+      described_class.http_client = client_class
+      expect(described_class.http_client).to eq(client_class)
 
       client = WSDL::Client.new(fixture('wsdl/amazon'), strictness: WSDL::Strictness.off)
       expect(client.http).to eq('http-config')

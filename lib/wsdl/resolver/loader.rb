@@ -24,11 +24,11 @@ module WSDL
     # - When `sandbox_paths` is nil: file access is disabled (URL-only mode)
     #
     # @example Resolving a URL (no file access needed)
-    #   loader = Loader.new(http_adapter)
+    #   loader = Loader.new(http_client)
     #   xml = loader.resolve('http://example.com/service?wsdl')
     #
     # @example Resolving a local file with sandboxing
-    #   loader = Loader.new(http_adapter, sandbox_paths: ['/app/wsdl'])
+    #   loader = Loader.new(http_client, sandbox_paths: ['/app/wsdl'])
     #   xml = loader.resolve('/app/wsdl/service.wsdl')
     #
     # @api private
@@ -36,7 +36,7 @@ module WSDL
     class Loader
       # Creates a new Loader instance.
       #
-      # @param http [Object] an HTTP adapter instance that responds to `get(url)`
+      # @param http [Object] an HTTP client instance that responds to `get(url)`
       # @param sandbox_paths [Array<String>, nil] directories where file access is allowed.
       #   When nil, file access is disabled and all imports must use URLs.
       # @param limits [Limits, nil] resource limits for DoS protection.

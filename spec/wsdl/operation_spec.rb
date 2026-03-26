@@ -641,7 +641,7 @@ RSpec.describe WSDL::Operation do
 
         # Override the fake to return a large body
         allow(http_mock).to receive(:post).and_return(
-          WSDL::HTTPResponse.new(status: 200, body: large_body)
+          WSDL::HTTP::Response.new(status: 200, body: large_body)
         )
 
         limits = WSDL::Limits.new(max_response_size: 512)
@@ -668,7 +668,7 @@ RSpec.describe WSDL::Operation do
         large_body = 'x' * (20 * 1024 * 1024)
 
         allow(http_mock).to receive(:post).and_return(
-          WSDL::HTTPResponse.new(status: 200, body: large_body)
+          WSDL::HTTP::Response.new(status: 200, body: large_body)
         )
 
         limits = WSDL::Limits.new(max_response_size: nil)

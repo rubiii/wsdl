@@ -19,7 +19,7 @@ RSpec.describe WSDL::Client do
       expect(client.services).to have_key('AmazonFPS')
     end
 
-    it 'also accepts a custom HTTP adapter' do
+    it 'also accepts a custom HTTP client' do
       http = Class.new do
         def get(_url)
           raise 'should not fetch'
@@ -110,7 +110,7 @@ RSpec.describe WSDL::Client do
 
           http_mock.fake_request('http://example.com/service?wsdl', status: 200)
           allow(http_mock).to receive(:get).with('http://example.com/service?wsdl').and_return(
-            WSDL::HTTPResponse.new(status: 200, body: wsdl_with_file_import)
+            WSDL::HTTP::Response.new(status: 200, body: wsdl_with_file_import)
           )
 
           expect {
@@ -520,9 +520,9 @@ RSpec.describe WSDL::Client do
   end
 
   describe '#http' do
-    it 'returns the HTTP adapter\'s config for customization' do
+    it 'returns the HTTP client\'s config for customization' do
       client = described_class.new(wsdl)
-      expect(client.http).to be_an_instance_of(WSDL::HTTPAdapter::Config)
+      expect(client.http).to be_an_instance_of(WSDL::HTTP::Config)
     end
   end
 
