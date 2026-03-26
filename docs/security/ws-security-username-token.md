@@ -14,13 +14,6 @@ operation.prepare do
 end
 ```
 
-## See also
-
-- [WS-Security Overview](ws-security.md)
-- [WS-Security Signatures](ws-security-signatures.md)
-- [WS-Security Troubleshooting](ws-security-troubleshooting.md)
-- [Handling Responses](../core/handling-responses.md)
-
 ## Password Digest
 
 ```ruby
@@ -74,3 +67,10 @@ operation.prepare do
   end
 end
 ```
+
+## See also
+
+- [WS-Security Overview](ws-security.md)
+- [WS-Security Signatures](ws-security-signatures.md)
+- [WS-Security Troubleshooting](ws-security-troubleshooting.md)
+- [Handling Responses](../core/handling-responses.md)

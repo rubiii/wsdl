@@ -106,6 +106,8 @@ Modes:
 ## See also
 
 - [Getting Started](../getting_started.md)
+- [Building Requests](building-requests.md)
+- [Configuration](configuration.md)
 - [Error Hierarchy](../reference/errors.md)
 - [WS-Security Overview](../security/ws-security.md)
 - [WS-Security Troubleshooting](../security/ws-security-troubleshooting.md)

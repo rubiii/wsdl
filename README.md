@@ -16,6 +16,11 @@ Or in `Gemfile`:
 gem 'wsdl'
 ```
 
+## Requirements
+
+- Ruby 3.3+
+- [Nokogiri](https://nokogiri.org/) >= 1.19.1 (installed automatically)
+
 ## Quickstart
 
 ```ruby
@@ -28,9 +33,6 @@ client = WSDL::Client.new(definition)
 # The definition is serializable — cache it to skip re-parsing
 File.write('cache.json', definition.to_json)
 definition = WSDL.load(JSON.parse(File.read('cache.json')))
-
-# Or use the shorthand (parses on initialization)
-client = WSDL::Client.new('http://example.com/service?wsdl')
 
 # Discover available services, ports, and operations
 client.services     # => { "OrderService" => { ports: { "OrderPort" => { ... } } } }
@@ -68,6 +70,12 @@ response.body
 # => { "GetOrderResponse" => { "order" => { "id" => 123, "total" => 0.9999e2,
 #        "shipped" => true, "items" => [{ "name" => "Widget" }] } } }
 
+# Check for SOAP faults
+if response.fault?
+  fault = response.fault
+  puts "#{fault.code}: #{fault.reason}"   # => "soap:Server: Order not found"
+end
+
 # Access HTTP metadata and raw XML when needed
 response.http_status   # => 200
 response.xml           # => "<?xml version=\"1.0\" ...>"
@@ -75,7 +83,14 @@ response.xml           # => "<?xml version=\"1.0\" ...>"
 
 ## Documentation
 
-See [Getting Started](docs/getting_started.md) for the documentation entrypoint and guide map.
+See [Getting Started](docs/getting_started.md) for the full guide map.
+
+- [Inspecting Services](docs/core/inspecting-services.md) — discover operations and inspect contracts
+- [Building Requests](docs/core/building-requests.md) — request DSL, headers, namespaces, templates
+- [Handling Responses](docs/core/handling-responses.md) — parsing, faults, security verification
+- [Configuration](docs/core/configuration.md) — strictness, limits, caching, HTTP client
+- [WS-Security](docs/security/ws-security.md) — UsernameToken, signatures, timestamps
+- [Error Reference](docs/reference/errors.md) — full error hierarchy and rescue patterns
 
 ## Features
 
@@ -87,6 +102,10 @@ See [Getting Started](docs/getting_started.md) for the documentation entrypoint 
 - **Response Verification** — Validate signatures and timestamps on incoming messages
 - **Schema-Aware Parsing** — Type conversion and array handling based on XSD metadata
 - **Security Hardening** — DOCTYPE rejection, resource limits, and sandboxed file access
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines. Security issues: [SECURITY.md](SECURITY.md).
 
 ## License
 

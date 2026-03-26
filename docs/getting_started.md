@@ -6,10 +6,11 @@ This is the docs entrypoint.
 
 ### Core
 
-- [Building Requests](core/building-requests.md)
 - [Inspecting Services](core/inspecting-services.md)
+- [Building Requests](core/building-requests.md)
 - [Handling Responses](core/handling-responses.md)
 - [Configuration](core/configuration.md)
+- [HTTP Client](core/http-client.md)
 - [Resolving Imports](core/resolving-imports.md)
 
 ### Security
@@ -26,13 +27,16 @@ This is the docs entrypoint.
 - [Unsupported Features](reference/unsupported-features.md)
 - [Strictness Fixture Matrix](reference/strictness-fixture-matrix.md)
 - [Specifications and References](reference/specifications.md)
+- [Performance Benchmarks](reference/benchmarks.md)
 
 ## Recommended Path
 
 1. Read this page end to end.
 2. Continue with [Building Requests](core/building-requests.md).
 3. Then read [Handling Responses](core/handling-responses.md).
-4. Add [WS-Security Overview](security/ws-security.md) when integrating with secure SOAP endpoints.
+4. Review [Configuration](core/configuration.md) for strictness, limits, and caching.
+5. See [HTTP Client](core/http-client.md) for timeouts, SSL, and custom clients.
+6. Add [WS-Security Overview](security/ws-security.md) when integrating with secure SOAP endpoints.
 
 ## Quickstart
 
@@ -137,8 +141,21 @@ else
 end
 ```
 
+For debugging, inspect the request XML before sending:
+
+```ruby
+operation.prepare do
+  tag('GetOrder') { tag('orderId', 123) }
+end
+
+puts operation.to_xml(pretty: true)
+```
+
 ## Next
 
 - Build robust request payloads: [Building Requests](core/building-requests.md)
 - Understand response parsing and verification: [Handling Responses](core/handling-responses.md)
+- Configure strictness, limits, and caching: [Configuration](core/configuration.md)
+- Tune timeouts and SSL: [HTTP Client](core/http-client.md)
 - Add signatures and trust policy: [WS-Security Signatures](security/ws-security-signatures.md)
+- Handle errors: [Error Hierarchy](reference/errors.md)
