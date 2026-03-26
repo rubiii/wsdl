@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'digest'
+require 'socket'
 require 'timeout'
 require 'uri'
 require 'wsdl/xml/parser'

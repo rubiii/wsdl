@@ -2,6 +2,7 @@
 
 require 'ipaddr'
 require 'resolv'
+require 'socket'
 require 'timeout'
 
 module WSDL
