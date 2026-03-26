@@ -26,6 +26,7 @@ module WSDL
     #     puts "Complex type with #{node.elements.count} elements"
     #   end
     #
+    # rubocop:disable Metrics/ClassLength
     class Node
       # Node kinds that terminate element collection (contain no child elements).
       ELEMENT_TERMINATORS = Set[
@@ -192,17 +193,16 @@ module WSDL
         return memo if ELEMENT_TERMINATORS.include?(kind)
         return resolve_group_ref(memo, limits:) if kind == :group && ref
 
-        include_base_type_elements(memo, limits:) if kind == :extension
-
-        children.each do |child|
-          if ELEMENT_KINDS.include?(child.kind)
-            memo << child
-            validate_element_count!(memo.size, limits)
-          else
-            memo = child.elements(memo, limits:)
-          end
+        if @cached_elements
+          memo.concat(@cached_elements)
+          validate_element_count!(memo.size, limits)
+          return memo
         end
 
+        before = memo.size
+        include_base_type_elements(memo, limits:) if kind == :extension
+        collect_child_elements(memo, limits:)
+        @cached_elements = memo[before..].freeze if kind == :complexType
         memo
       end
 
@@ -218,18 +218,17 @@ module WSDL
       # @raise [ResourceLimitError] if attribute count exceeds max_attributes_per_element
       def attributes(memo = [], limits: nil)
         return memo if ATTRIBUTE_TERMINATORS.include?(kind)
-
         return resolve_attribute_group_ref(memo, limits:) if kind == :attributeGroup && ref
 
-        children.each do |child|
-          if ATTRIBUTE_KINDS.include?(child.kind)
-            memo << child
-            validate_attribute_count!(memo.size, limits)
-          else
-            memo = child.attributes(memo, limits:)
-          end
+        if @cached_attributes
+          memo.concat(@cached_attributes)
+          validate_attribute_count!(memo.size, limits)
+          return memo
         end
 
+        before = memo.size
+        memo = collect_child_attributes(memo, limits:)
+        @cached_attributes = memo[before..].freeze if kind == :complexType
         memo
       end
 
@@ -278,6 +277,7 @@ module WSDL
       # @return [String, nil] the type ID in "namespace:name" format
       def type_id
         return nil unless %i[complexType element].include?(kind)
+        return nil unless name
 
         "#{namespace}:#{name}"
       end
@@ -384,6 +384,46 @@ module WSDL
         xml_node.attributes.transform_values(&:value)
       end
 
+      # Collects element nodes from immediate children.
+      #
+      # Walks children, appending element/any nodes to the memo and
+      # recursing into compositor nodes (sequence, all, choice).
+      #
+      # @param memo [Array<Node>] accumulator for elements
+      # @param limits [Limits, nil] resource limits for validation
+      # @return [void]
+      def collect_child_elements(memo, limits:)
+        children.each do |child|
+          if ELEMENT_KINDS.include?(child.kind)
+            memo << child
+            validate_element_count!(memo.size, limits)
+          else
+            child.elements(memo, limits:)
+          end
+        end
+      end
+
+      # Collects attribute nodes from immediate children.
+      #
+      # Walks children, appending attribute nodes to the memo and
+      # recursing into non-attribute nodes. Returns the memo because
+      # attribute group resolution may produce a new array.
+      #
+      # @param memo [Array<Node>] accumulator for attributes
+      # @param limits [Limits, nil] resource limits for validation
+      # @return [Array<Node>] the (possibly new) memo array
+      def collect_child_attributes(memo, limits:)
+        children.each do |child|
+          if ATTRIBUTE_KINDS.include?(child.kind)
+            memo << child
+            validate_attribute_count!(memo.size, limits)
+          else
+            memo = child.attributes(memo, limits:)
+          end
+        end
+        memo
+      end
+
       # Includes elements from the base type for extensions.
       #
       # @param memo [Array<Node>] accumulator for elements
@@ -480,5 +520,6 @@ module WSDL
         )
       end
     end
+    # rubocop:enable Metrics/ClassLength
   end
 end
