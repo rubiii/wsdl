@@ -21,8 +21,9 @@ module WSDL
       # @param limits [Limits] resource limits for element building
       # @param issues [Array, nil] optional issues collector for recording build problems
       # rubocop:disable Metrics/ParameterLists -- per-operation + build context
+      # @param [Object, nil] element_builder
       def initialize(name, binding_operation, port_type_operation,
-                     documents:, schemas:, limits:, issues: nil)
+                     documents:, schemas:, limits:, issues: nil, element_builder: nil)
         @name = name
         @binding_operation = binding_operation
         @port_type_operation = port_type_operation
@@ -30,6 +31,7 @@ module WSDL
         @schemas = schemas
         @limits = limits
         @issues = issues
+        @element_builder = element_builder
       end
       # rubocop:enable Metrics/ParameterLists
 
@@ -72,7 +74,8 @@ module WSDL
         @input ||= Input.new(
           @binding_operation, @port_type_operation,
           documents: @documents, schemas: @schemas,
-          limits: @limits, issues: @issues
+          limits: @limits, issues: @issues,
+          element_builder: @element_builder
         )
       end
 
@@ -91,7 +94,8 @@ module WSDL
         @output = Output.new(
           @binding_operation, @port_type_operation,
           documents: @documents, schemas: @schemas,
-          limits: @limits, issues: @issues
+          limits: @limits, issues: @issues,
+          element_builder: @element_builder
         )
       end
 

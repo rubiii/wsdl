@@ -98,6 +98,7 @@ module WSDL
         binding = port.fetch_binding(@documents)
         port_type = binding.fetch_port_type(@documents)
         operations = {}
+        element_builder = XML::ElementBuilder.new(@schemas, limits: @limits, issues: @build_issues)
 
         binding.operations.to_a.each do |op_entry|
           op_name = op_entry[:name]
@@ -117,7 +118,8 @@ module WSDL
           op_info = Parser::OperationInfo.new(
             op_name, binding_op, port_type_op,
             documents: @documents, schemas: @schemas,
-            limits: @limits, issues: @build_issues
+            limits: @limits, issues: @build_issues,
+            element_builder:
           )
 
           metadata[:soap_action] = op_info.soap_action

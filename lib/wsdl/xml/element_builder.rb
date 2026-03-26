@@ -42,6 +42,7 @@ module WSDL
         @limits = limits || Limits.new
         @issues = issues
         @depth_exceeded = false
+        @type_cache = {}
       end
 
       # Builds Element trees from WSDL message parts.
@@ -54,6 +55,7 @@ module WSDL
       # @return [Array<Element>] the built element trees
       # @raise [ResourceLimitError] if type nesting depth exceeds limits
       def build(parts)
+        @depth_exceeded = false
         parts.filter_map { |part|
           if part[:type]
             build_type_element(part)
@@ -150,18 +152,38 @@ module WSDL
       # @param type [Schema::Node] the schema node
       # @param depth [Integer] the current nesting depth
       # @return [void]
+      # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity -- type dispatch + caching
       def handle_schema_node_type(element, type, depth: 1)
         case type.kind
         when :complexType
-          element.complex_type_id = type.type_id
+          type_id = type.type_id
+          element.complex_type_id = type_id
+
+          cache_key = type_id ? "#{type_id}@#{depth}" : nil
+          if cache_key && (cached = @type_cache[cache_key])
+            element.children = cached[:children]
+            element.any_content = cached[:has_any]
+            element.attributes = cached[:attributes]
+            return
+          end
+
           children_and_wildcards = child_elements(element, type, depth:)
           element.children = children_and_wildcards[:elements]
           element.any_content = children_and_wildcards[:has_any]
           element.attributes = element_attributes(type)
+
+          if cache_key && !children_and_wildcards[:has_recursive]
+            @type_cache[cache_key] = {
+              children: element.children,
+              has_any: element.any_content,
+              attributes: element.attributes
+            }
+          end
         when :simpleType
           apply_simple_type(element, type)
         end
       end
+      # rubocop:enable Metrics/AbcSize
 
       # Applies simple type information to an element or attribute.
       #
@@ -239,11 +261,12 @@ module WSDL
       # @param depth [Integer] the current nesting depth (default: 1)
       # @return [Hash] a hash with :elements (Array<Element>) and :has_any (Boolean)
       # @raise [ResourceLimitError] if nesting depth exceeds max_type_nesting_depth
-      # rubocop:disable Metrics/AbcSize, Metrics/MethodLength, Metrics/BlockLength, Metrics/PerceivedComplexity, Metrics/CyclomaticComplexity -- cohesive element-building logic
+      # rubocop:disable Metrics/AbcSize, Metrics/BlockLength, Metrics/PerceivedComplexity, Metrics/MethodLength -- cohesive element-building logic
       def child_elements(parent, type, depth: 1)
         return { elements: [], has_any: false } unless within_nesting_depth?(depth, type)
 
         has_any = false
+        has_recursive = false
         elements = []
 
         resolve_schema_elements(type).each do |child_element|
@@ -275,6 +298,7 @@ module WSDL
 
           if recursive_child_definition?(parent, child_element)
             el.recursive_type = child_element.type
+            has_recursive = true # -- used in return hash
           else
             child_type = find_type_for_element(child_element)
             handle_type(el, child_type, depth: depth + 1)
@@ -283,9 +307,9 @@ module WSDL
           elements << el.freeze
         end
 
-        { elements:, has_any: }
+        { elements:, has_any:, has_recursive: }
       end
-      # rubocop:enable Metrics/AbcSize, Metrics/MethodLength, Metrics/BlockLength, Metrics/PerceivedComplexity, Metrics/CyclomaticComplexity
+      # rubocop:enable Metrics/AbcSize, Metrics/BlockLength, Metrics/PerceivedComplexity, Metrics/CyclomaticComplexity, Metrics/MethodLength
 
       # Resolves child elements from a schema type node.
       #
