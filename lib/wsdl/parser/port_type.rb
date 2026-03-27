@@ -36,14 +36,19 @@ module WSDL
 
       # Parses and returns all operations from the port type node.
       #
+      # All wsdl:operation children share the same namespace scope from
+      # the parent wsdl:portType element, so we resolve it once and
+      # share the frozen hash across every operation.
+      #
       # @return [OperationMap] the parsed operations
       def operations!
         map = OperationMap.new
+        namespaces = @port_type_node.namespaces.freeze
 
         @port_type_node.element_children.each do |operation_node|
           next unless operation_node.name == 'operation'
 
-          map.add(operation_node['name'], PortTypeOperation.new(operation_node))
+          map.add(operation_node['name'], PortTypeOperation.new(operation_node, namespaces:))
         end
 
         map

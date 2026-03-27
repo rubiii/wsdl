@@ -15,8 +15,11 @@ module WSDL
       # Creates a new PortTypeOperation from a WSDL operation XML node.
       #
       # @param operation_node [Nokogiri::XML::Node] the wsdl:operation element within a portType
-      def initialize(operation_node)
+      # @param namespaces [Hash{String => String}, nil] pre-resolved namespace
+      #   declarations shared across sibling operations under the same portType
+      def initialize(operation_node, namespaces: nil)
         @operation_node = operation_node
+        @namespaces = namespaces
 
         @name = operation_node['name']
         @input_node = find_node('input')
@@ -69,10 +72,12 @@ module WSDL
         @operation_node.element_children.find { |node| node.name == node_name }
       end
 
-      # Returns the cached namespace declarations for this operation's scope.
+      # Returns the namespace declarations for this operation's scope.
       #
-      # All children of the same wsdl:operation element share the same
-      # namespace scope, so we resolve it once and reuse the frozen hash.
+      # When a pre-resolved hash was passed via the constructor (shared
+      # across sibling operations by {PortType#operations}), it is
+      # returned directly. Otherwise, falls back to resolving from the
+      # operation node and freezing the result.
       #
       # @return [Hash{String => String}] frozen namespace declarations
       def namespaces
