@@ -21,6 +21,29 @@ RSpec.describe WSDL::XML::Element do
     el
   end
 
+  describe '#children' do
+    subject(:element) { described_class.new }
+
+    it 'defaults to a shared empty frozen array' do
+      expect(element.children).to eq([])
+      expect(element.children).to be_frozen
+      expect(element.children).to be(described_class::EMPTY_CHILDREN)
+    end
+
+    it 'shares the same empty array instance across elements' do
+      other = described_class.new
+      expect(element.children).to be(other.children)
+    end
+
+    it 'can be replaced with a populated array' do
+      child = build_element(name: 'child', base_type: 'xsd:string')
+      element.children = [child]
+
+      expect(element.children).to eq([child])
+      expect(element.children).not_to be(described_class::EMPTY_CHILDREN)
+    end
+  end
+
   describe '#attributes' do
     subject(:element) { described_class.new }
 

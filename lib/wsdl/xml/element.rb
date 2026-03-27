@@ -20,6 +20,11 @@ module WSDL
     # @api private
     #
     class Element
+      # Canonical frozen empty array shared for elements without children.
+      #
+      # @return [Array<Element>]
+      EMPTY_CHILDREN = [].freeze
+
       # Canonical frozen empty array shared for elements without attributes.
       #
       # @return [Array<WSDL::XML::Attribute>]
@@ -27,7 +32,7 @@ module WSDL
 
       # Creates a new Element with default values.
       def initialize
-        @children    = []
+        @children    = EMPTY_CHILDREN
         @attributes  = EMPTY_ATTRIBUTES
         @recursive   = false
         @singular    = true
