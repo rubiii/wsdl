@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1774645505987,
+  "lastUpdate": 1774645877597,
   "repoUrl": "https://github.com/rubiii/wsdl",
   "entries": {
     "Benchmark": [
@@ -1188,6 +1188,72 @@ window.BENCHMARK_DATA = {
             "value": 92.69,
             "unit": "i/s",
             "range": "± 8.6%"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "me@rubiii.com",
+            "name": "rubiii",
+            "username": "rubiii"
+          },
+          "committer": {
+            "email": "me@rubiii.com",
+            "name": "rubiii",
+            "username": "rubiii"
+          },
+          "distinct": true,
+          "id": "9e30c82087c65c74232f7349c09765fce3b3de12",
+          "message": "Fix ThreatScanner allocation blowup on Ruby 3.3\n\nopen_tag_start? allocated a fresh Array on every `<` character.\nRuby 3.4 optimizes this away, but 3.3 does not. Replace with a\nfrozen Set constant matching the existing WHITESPACE_BYTES and\nQUOTE_BYTES pattern.",
+          "timestamp": "2026-03-27T22:10:06+01:00",
+          "tree_id": "7f29ead91def7025b24dbd1337ad95733c0f9c97",
+          "url": "https://github.com/rubiii/wsdl/commit/9e30c82087c65c74232f7349c09765fce3b3de12"
+        },
+        "date": 1774645877066,
+        "tool": "customBiggerIsBetter",
+        "benches": [
+          {
+            "name": "parse: small WSDL (blz_service, 88 lines)",
+            "value": 999.21,
+            "unit": "i/s",
+            "range": "± 16.6%"
+          },
+          {
+            "name": "parse: large WSDL (economic, 65k lines)",
+            "value": 1.46,
+            "unit": "i/s",
+            "range": "± 0.0%"
+          },
+          {
+            "name": "request: build + serialize",
+            "value": 10262.46,
+            "unit": "i/s",
+            "range": "± 8.1%"
+          },
+          {
+            "name": "sign: X.509 SHA-256 + Timestamp",
+            "value": 847.07,
+            "unit": "i/s",
+            "range": "± 14.8%"
+          },
+          {
+            "name": "verify: signature + timestamp",
+            "value": 611.73,
+            "unit": "i/s",
+            "range": "± 15.0%"
+          },
+          {
+            "name": "response: parse small (15 lines)",
+            "value": 8613.26,
+            "unit": "i/s",
+            "range": "± 8.6%"
+          },
+          {
+            "name": "response: parse large (200 items)",
+            "value": 83.03,
+            "unit": "i/s",
+            "range": "± 10.8%"
           }
         ]
       }
