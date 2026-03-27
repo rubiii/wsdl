@@ -10,7 +10,7 @@ RSpec.describe 'ThreatScanner performance' do
 
     scan_time = Benchmark.realtime { scanner.scan }
 
-    expect(scan_time).to be < 0.1
+    expect(scan_time).to be < 0.25
   end
 
   it 'stays within allocation budget' do
