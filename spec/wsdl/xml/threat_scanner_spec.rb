@@ -85,6 +85,33 @@ RSpec.describe WSDL::XML::ThreatScanner do
       scanner = described_class.new('')
       expect(scanner.scan_attribute_threats).to be_empty
     end
+
+    it 'handles equals signs in text content' do
+      scanner = described_class.new('<root>a=b and c=d</root>')
+      expect(scanner.scan_attribute_threats).to be_empty
+    end
+
+    it 'handles mixed single and double quoted attributes' do
+      scanner = described_class.new(%(<root a="one" b='two' c="three"/>))
+      expect(scanner.scan_attribute_threats).to be_empty
+    end
+
+    it 'handles unclosed quote gracefully' do
+      scanner = described_class.new('<root attr="unclosed/>')
+      expect(scanner.scan_attribute_threats).to be_empty
+    end
+
+    it 'handles tab and carriage return around the equals sign' do
+      scanner = described_class.new(%(<root attr\t=\r\n"value"/>))
+      expect(scanner.scan_attribute_threats).to be_empty
+    end
+
+    it 'measures multiple large attributes independently' do
+      large = 'x' * 10_001
+      scanner = described_class.new(%(<root a="#{large}" b='#{large}'/>))
+      threats = scanner.scan_attribute_threats
+      expect(threats.count(:large_attribute)).to eq(2)
+    end
   end
 
   describe '#scan' do

@@ -58,6 +58,14 @@ module WSDL
       # @return [Set<Integer>]
       QUOTE_BYTES = Set[DOUBLE_QUOTE_BYTE, SINGLE_QUOTE_BYTE].freeze
 
+      # Pre-computed binary quote character strings, keyed by byte value.
+      # Avoids allocating a new String via +Integer#chr+ on every call.
+      # @return [Hash{Integer => String}]
+      QUOTE_CHARS = {
+        DOUBLE_QUOTE_BYTE => '"'.b.freeze,
+        SINGLE_QUOTE_BYTE => "'".b.freeze
+      }.freeze
+
       # @!endgroup
 
       # @param xml_string [String] the XML string to scan
@@ -116,11 +124,12 @@ module WSDL
           eq_pos = @bin.index('=', pos)
           break unless eq_pos
 
-          value_length, pos = measure_attribute_value(eq_pos)
-          next unless value_length
+          measure_attribute_value(eq_pos)
+          pos = @measured_next_pos
+          next unless @measured_value_length
 
-          total_size += value_length
-          threats << :large_attribute if value_length > MAX_ATTRIBUTE_VALUE_SIZE
+          total_size += @measured_value_length
+          threats << :large_attribute if @measured_value_length > MAX_ATTRIBUTE_VALUE_SIZE
         end
 
         threats << :large_attributes_total if total_size > MAX_TOTAL_ATTRIBUTE_SIZE
@@ -130,17 +139,28 @@ module WSDL
       private
 
       # Measures a single attribute value starting from the +=+ position.
+      # Sets +@measured_value_length+ and +@measured_next_pos+ to avoid
+      # allocating a return array on every call.
       #
       # @param eq_pos [Integer] position of the +=+ sign
-      # @return [Array(Integer, Integer), Array(nil, Integer)] value length and next scan position
+      # @return [void]
       def measure_attribute_value(eq_pos)
-        quote_pos, quote_byte = find_opening_quote(eq_pos + 1)
-        return [nil, eq_pos + 1] unless quote_byte
+        find_opening_quote(eq_pos + 1)
+        unless @opening_quote_byte
+          @measured_value_length = nil
+          @measured_next_pos = eq_pos + 1
+          return
+        end
 
-        close_pos = find_closing_quote(quote_pos, quote_byte)
-        return [nil, eq_pos + 1] unless close_pos
+        close_pos = find_closing_quote(@opening_quote_pos, @opening_quote_byte)
+        unless close_pos
+          @measured_value_length = nil
+          @measured_next_pos = eq_pos + 1
+          return
+        end
 
-        [close_pos - quote_pos - 1, close_pos + 1]
+        @measured_value_length = close_pos - @opening_quote_pos - 1
+        @measured_next_pos = close_pos + 1
       end
 
       # Checks if the byte following +<+ starts an open tag.
@@ -162,10 +182,12 @@ module WSDL
         byte.between?(65, 90) || byte.between?(97, 122)
       end
 
-      # Skips whitespace after a position and returns the quote position and byte.
+      # Skips whitespace after a position and sets +@opening_quote_pos+ and
+      # +@opening_quote_byte+. Sets +@opening_quote_byte+ to +nil+ when no
+      # quote character is found at the resulting position.
       #
       # @param pos [Integer] starting position (after +=+)
-      # @return [Array(Integer, Integer), Array(Integer, nil)] position and quote byte
+      # @return [void]
       def find_opening_quote(pos)
         byte = @bin.getbyte(pos)
 
@@ -174,7 +196,8 @@ module WSDL
           byte = @bin.getbyte(pos)
         end
 
-        [pos, QUOTE_BYTES.include?(byte) ? byte : nil]
+        @opening_quote_pos = pos
+        @opening_quote_byte = QUOTE_BYTES.include?(byte) ? byte : nil
       end
 
       # Finds the closing quote matching the opening quote byte.
@@ -183,7 +206,7 @@ module WSDL
       # @param quote_byte [Integer] the opening quote byte value
       # @return [Integer, nil] position of the closing quote
       def find_closing_quote(quote_pos, quote_byte)
-        @bin.index(quote_byte.chr, quote_pos + 1)
+        @bin.index(QUOTE_CHARS[quote_byte], quote_pos + 1)
       end
     end
   end
