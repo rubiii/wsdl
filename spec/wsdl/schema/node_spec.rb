@@ -184,6 +184,79 @@ RSpec.describe WSDL::Schema::Node do
     end
   end
 
+  describe 'attribute caching' do
+    it 'returns the same object on repeated reads for present attributes' do
+      node = new_node('<xs:element name="test" type="xs:int" ref="tns:Foo"
+                                   default="x" fixed="y"
+                                   xmlns:xs="http://www.w3.org/2001/XMLSchema"/>')
+
+      expect(node.name).to equal(node.name)
+      expect(node.type).to equal(node.type)
+      expect(node.ref).to equal(node.ref)
+      expect(node.default).to equal(node.default)
+      expect(node.fixed).to equal(node.fixed)
+    end
+
+    it 'returns the same object for base attribute' do
+      node = new_node('<xs:extension base="tns:BaseType" xmlns:xs="http://www.w3.org/2001/XMLSchema"/>')
+
+      expect(node.base).to equal(node.base)
+    end
+
+    it 'caches nil when the attribute is absent' do
+      node = new_node('<xs:element xmlns:xs="http://www.w3.org/2001/XMLSchema"/>')
+
+      # Nokogiri allocates a new String per Node#[] call, so we can verify
+      # caching by checking that the underlying node is only queried once.
+      xml_node = node.xml_node
+      allow(xml_node).to receive(:[]).and_call_original
+
+      node.name
+      node.name
+      node.type
+      node.type
+
+      expect(xml_node).to have_received(:[]).with('name').once
+      expect(xml_node).to have_received(:[]).with('type').once
+    end
+
+    it 'returns the same object for attributes with defaults' do
+      node = new_node('<xs:element name="test" maxOccurs="unbounded" minOccurs="0"
+                                   xmlns:xs="http://www.w3.org/2001/XMLSchema"/>')
+
+      expect(node.max_occurs).to equal(node.max_occurs)
+      expect(node.min_occurs).to equal(node.min_occurs)
+    end
+
+    it 'returns the same object for use and form' do
+      node = new_node('<xs:attribute name="x" use="required" form="qualified"
+                                     xmlns:xs="http://www.w3.org/2001/XMLSchema"/>')
+
+      expect(node.use).to equal(node.use)
+      expect(node.form).to equal(node.form)
+    end
+
+    it 'caches the nillable boolean' do
+      node = new_node('<xs:element name="test" nillable="true" xmlns:xs="http://www.w3.org/2001/XMLSchema"/>')
+
+      xml_node = node.xml_node
+      allow(xml_node).to receive(:[]).and_call_original
+
+      node.nillable?
+      node.nillable?
+
+      expect(xml_node).to have_received(:[]).with('nillable').once
+    end
+
+    it 'returns the same object for wildcard attributes' do
+      node = new_node('<xs:any namespace="##other" processContents="lax"
+                                xmlns:xs="http://www.w3.org/2001/XMLSchema"/>')
+
+      expect(node.namespace_constraint).to equal(node.namespace_constraint)
+      expect(node.process_contents).to equal(node.process_contents)
+    end
+  end
+
   describe '#namespaces' do
     it 'returns namespace declarations in scope' do
       node = new_node('<xs:element name="test" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:tns="http://example.com"/>')

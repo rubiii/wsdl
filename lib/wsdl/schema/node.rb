@@ -91,42 +91,58 @@ module WSDL
 
       # @return [String, nil] the local name of this node
       def name
-        @xml_node['name']
+        return @name if defined?(@name)
+
+        @name = @xml_node['name']
       end
 
       # @return [String, nil] the qualified type reference
       def type
-        @xml_node['type']
+        return @type if defined?(@type)
+
+        @type = @xml_node['type']
       end
 
       # @return [String, nil] the qualified element/attribute reference
       def ref
-        @xml_node['ref']
+        return @ref if defined?(@ref)
+
+        @ref = @xml_node['ref']
       end
 
       # @return [String, nil] the base type for restrictions/extensions
       def base
-        @xml_node['base']
+        return @base if defined?(@base)
+
+        @base = @xml_node['base']
       end
 
       # @return [String] the use constraint ('optional' or 'required')
       def use
-        @xml_node['use'] || 'optional'
+        return @use if defined?(@use)
+
+        @use = @xml_node['use'] || 'optional'
       end
 
       # @return [String, nil] the default value
       def default
-        @xml_node['default']
+        return @default if defined?(@default)
+
+        @default = @xml_node['default']
       end
 
       # @return [String, nil] the fixed value
       def fixed
-        @xml_node['fixed']
+        return @fixed if defined?(@fixed)
+
+        @fixed = @xml_node['fixed']
       end
 
       # @return [Boolean] whether this element allows nil values (xsi:nil="true")
       def nillable?
-        @xml_node['nillable'] == 'true'
+        return @nillable if defined?(@nillable)
+
+        @nillable = @xml_node['nillable'] == 'true'
       end
 
       # @return [String, nil] the target namespace URI
@@ -138,8 +154,10 @@ module WSDL
       #
       # @return [String] 'qualified' or 'unqualified'
       def form
-        @xml_node['form'] ||
-          (@context[:element_form_default] == 'qualified' ? 'qualified' : 'unqualified')
+        return @form if defined?(@form)
+
+        @form = @xml_node['form'] ||
+                (@context[:element_form_default] == 'qualified' ? 'qualified' : 'unqualified')
       end
 
       # Accesses any attribute from the underlying node.
@@ -294,14 +312,18 @@ module WSDL
       #
       # @return [String] '##any', '##other', '##local', '##targetNamespace', or a URI
       def namespace_constraint
-        @xml_node['namespace'] || '##any'
+        return @namespace_constraint if defined?(@namespace_constraint)
+
+        @namespace_constraint = @xml_node['namespace'] || '##any'
       end
 
       # Returns how wildcard content should be validated.
       #
       # @return [String] 'strict', 'lax', or 'skip'
       def process_contents
-        @xml_node['processContents'] || 'strict'
+        return @process_contents if defined?(@process_contents)
+
+        @process_contents = @xml_node['processContents'] || 'strict'
       end
 
       # @!endgroup
@@ -310,12 +332,16 @@ module WSDL
 
       # @return [String] the maxOccurs value ('1', 'unbounded', etc.)
       def max_occurs
-        @xml_node['maxOccurs'] || '1'
+        return @max_occurs if defined?(@max_occurs)
+
+        @max_occurs = @xml_node['maxOccurs'] || '1'
       end
 
       # @return [String] the minOccurs value ('0', '1', etc.)
       def min_occurs
-        @xml_node['minOccurs'] || '1'
+        return @min_occurs if defined?(@min_occurs)
+
+        @min_occurs = @xml_node['minOccurs'] || '1'
       end
 
       # Returns whether this element can appear multiple times.
