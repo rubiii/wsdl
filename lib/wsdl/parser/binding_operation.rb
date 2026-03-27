@@ -11,27 +11,28 @@ module WSDL
     # @api private
     #
     class BindingOperation
+      # Shared empty frozen array used as default for header node lists.
+      # @return [Array] empty frozen array
+      # @api private
+      EMPTY_NODES = [].freeze
+
       # Creates a new BindingOperation from a WSDL operation XML node.
+      #
+      # Categorizes all child elements in a single pass to avoid repeated
+      # Nokogiri element_children traversals and node_name allocations.
       #
       # @param operation_node [Nokogiri::XML::Node] the wsdl:operation element within a binding
       # @param defaults [Hash] default values inherited from the parent binding
       # @option defaults [String] :style the default operation style ('document' or 'rpc')
       def initialize(operation_node, defaults = {})
         @operation_node = operation_node
+        @has_input = false
+        @input_body_node = nil
+        @input_header_nodes = EMPTY_NODES
+        @output_body_node = nil
+        @output_header_nodes = EMPTY_NODES
 
-        if (soap_operation_node = find_soap_operation_node)
-          namespace = soap_operation_node.first
-          node = soap_operation_node.last
-
-          @soap_namespace = namespace
-          @soap_action = node['soapAction']
-          @style = node['style'] || defaults[:style]
-        end
-
-        @input_wrapper = find_wrapper_node('input')
-        @output_wrapper = find_wrapper_node('output')
-        @input_name = @input_wrapper&.[]('name')
-        @output_name = @output_wrapper&.[]('name')
+        categorize_children!(defaults)
       end
 
       # @return [String, nil] the SOAPAction HTTP header value
@@ -60,7 +61,7 @@ module WSDL
       #
       # @return [Boolean] true if the binding operation defines an input
       def input?
-        !!@input_wrapper
+        @has_input
       end
 
       # Returns the input header definitions for this operation.
@@ -74,10 +75,7 @@ module WSDL
       #
       # @return [Array<HeaderReference>] the input header references
       def input_headers
-        return @input_headers if @input_headers
-
-        header_nodes = find_input_child_nodes('header') || []
-        @input_headers = build_headers(header_nodes)
+        @input_headers ||= @input_header_nodes.map { |node| HeaderReference.from_node(node) }
       end
 
       # Returns the input body definition for this operation.
@@ -89,19 +87,7 @@ module WSDL
       #
       # @return [Hash] the input body definition
       def input_body
-        return @input_body if @input_body
-
-        input_body = {}
-
-        if (body_node = find_input_child_nodes('body').first)
-          input_body = {
-            encoding_style: body_node['encodingStyle'],
-            namespace: body_node['namespace'],
-            use: body_node['use']
-          }
-        end
-
-        @input_body = input_body
+        @input_body ||= build_body(@input_body_node)
       end
 
       # Returns the output header definitions for this operation.
@@ -115,10 +101,7 @@ module WSDL
       #
       # @return [Array<HeaderReference>] the output header references
       def output_headers
-        return @output_headers if @output_headers
-
-        header_nodes = find_output_child_nodes('header') || []
-        @output_headers = build_headers(header_nodes)
+        @output_headers ||= @output_header_nodes.map { |node| HeaderReference.from_node(node) }
       end
 
       # Returns the output body definition for this operation.
@@ -130,76 +113,98 @@ module WSDL
       #
       # @return [Hash] the output body definition
       def output_body
-        return @output_body if @output_body
-
-        output_body = {}
-
-        if (body_node = find_output_child_nodes('body')&.first)
-          output_body = {
-            encoding_style: body_node['encodingStyle'],
-            namespace: body_node['namespace'],
-            use: body_node['use']
-          }
-        end
-
-        @output_body = output_body
+        @output_body ||= build_body(@output_body_node)
       end
 
       private
 
-      # Finds child nodes of a specific type within the input element.
+      # Single-pass categorization of all operation children.
       #
-      # Returns an empty array when the binding has no input element.
+      # Traverses element_children once to find the SOAP operation, input, and
+      # output nodes. Also pre-categorizes each wrapper's children (body/header
+      # nodes) to avoid repeated element_children calls when accessors are invoked.
       #
-      # @param child_name [String] the name of the child element to find
-      # @return [Array<Nokogiri::XML::Node>] the matching child nodes
-      def find_input_child_nodes(child_name)
-        return [] unless @input_wrapper
-
-        @input_wrapper.element_children.select { |node| node.name == child_name }
+      # @param defaults [Hash] default values inherited from the parent binding
+      # @return [void]
+      def categorize_children!(defaults)
+        @operation_node.element_children.each do |child|
+          case child.name
+          when 'operation'
+            extract_soap_operation!(child, defaults)
+          when 'input'
+            @has_input = true
+            @input_name = child['name']
+            categorize_input_children!(child)
+          when 'output'
+            @output_name = child['name']
+            categorize_output_children!(child)
+          end
+        end
       end
 
-      # Finds child nodes of a specific type within the output element.
+      # Extracts SOAP operation metadata from a soap:operation or soap12:operation node.
       #
-      # @param child_name [String] the name of the child element to find
-      # @return [Array<Nokogiri::XML::Node>, nil] the matching child nodes
-      def find_output_child_nodes(child_name)
-        return unless @output_wrapper
+      # @param node [Nokogiri::XML::Node] a child element of the binding operation
+      # @param defaults [Hash] default values inherited from the parent binding
+      # @return [void]
+      def extract_soap_operation!(node, defaults)
+        namespace = node.namespace&.href
 
-        @output_wrapper.element_children.select { |node| node.name == child_name }
+        soap11 = namespace == NS::WSDL_SOAP_1_1
+        soap12 = namespace == NS::WSDL_SOAP_1_2
+        return unless soap11 || soap12
+
+        @soap_namespace = namespace
+        @soap_action = node['soapAction']
+        @style = node['style'] || defaults[:style]
       end
 
-      # Finds a wrapper node (input or output) within the operation element.
+      # Pre-categorizes the input wrapper's children into body and header nodes.
       #
-      # @param direction [String] 'input' or 'output'
-      # @return [Nokogiri::XML::Node, nil] the wrapper node
-      def find_wrapper_node(direction)
-        @operation_node.element_children.find { |n| n.name == direction }
-      end
+      # @param wrapper [Nokogiri::XML::Node] the input wrapper node
+      # @return [void]
+      def categorize_input_children!(wrapper)
+        headers = nil
 
-      # Builds normalized header metadata from SOAP header nodes.
-      #
-      # @param header_nodes [Array<Nokogiri::XML::Node>] SOAP header nodes
-      # @return [Array<HeaderReference>] normalized header metadata
-      def build_headers(header_nodes)
-        header_nodes.map { |header_node| HeaderReference.from_node(header_node) }
-      end
-
-      # Finds the SOAP operation element within this binding operation.
-      #
-      # @return [Array<String, Nokogiri::XML::Node>, nil] a tuple of [namespace, node], or nil if not found
-      def find_soap_operation_node
-        @operation_node.element_children.each do |node|
-          namespace = node.namespace.href
-
-          soap11    = namespace == NS::WSDL_SOAP_1_1
-          soap12    = namespace == NS::WSDL_SOAP_1_2
-          operation = node.name == 'operation'
-
-          return [namespace, node] if (soap11 || soap12) && operation
+        wrapper.element_children.each do |child|
+          case child.name
+          when 'body'   then @input_body_node = child
+          when 'header' then (headers ||= []) << child
+          end
         end
 
-        nil
+        @input_header_nodes = headers if headers
+      end
+
+      # Pre-categorizes the output wrapper's children into body and header nodes.
+      #
+      # @param wrapper [Nokogiri::XML::Node] the output wrapper node
+      # @return [void]
+      def categorize_output_children!(wrapper)
+        headers = nil
+
+        wrapper.element_children.each do |child|
+          case child.name
+          when 'body'   then @output_body_node = child
+          when 'header' then (headers ||= []) << child
+          end
+        end
+
+        @output_header_nodes = headers if headers
+      end
+
+      # Builds a body definition hash from a SOAP body node.
+      #
+      # @param body_node [Nokogiri::XML::Node, nil] the soap:body node
+      # @return [Hash] the body definition
+      def build_body(body_node)
+        return {} unless body_node
+
+        {
+          encoding_style: body_node['encodingStyle'],
+          namespace: body_node['namespace'],
+          use: body_node['use']
+        }
       end
     end
   end
