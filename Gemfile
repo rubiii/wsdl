@@ -29,6 +29,7 @@ group :development do
   gem 'rubocop-rspec', require: false
   gem 'rubocop-yard', require: false
   gem 'simplecov', '~> 0.22', require: false
+  gem 'stackprof', require: false
   gem 'webmock', '~> 3.24', require: false
   gem 'yard', require: false
   gem 'yard-markdown-relative-links', require: false
