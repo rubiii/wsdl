@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1774539955542,
+  "lastUpdate": 1774621559743,
   "repoUrl": "https://github.com/rubiii/wsdl",
   "entries": {
     "Benchmark": [
@@ -924,6 +924,72 @@ window.BENCHMARK_DATA = {
             "value": 93.62,
             "unit": "i/s",
             "range": "± 2.1%"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "me@rubiii.com",
+            "name": "rubiii",
+            "username": "rubiii"
+          },
+          "committer": {
+            "email": "me@rubiii.com",
+            "name": "rubiii",
+            "username": "rubiii"
+          },
+          "distinct": true,
+          "id": "3fd722d66d8612bb0e3ccdfc839fd3662c4dafd1",
+          "message": "Delegate Schema::Node attributes to Nokogiri directly\n\nRemove the eager @attributes_hash that materialized all XML attributes\ninto a Ruby Hash on every Node construction. All attribute accessors now\ndelegate to Nokogiri's C-level Node#[] lookup which returns the same\nString values without the intermediate Hash + Attr object allocations.",
+          "timestamp": "2026-03-27T15:19:52+01:00",
+          "tree_id": "917d42f26e5c67325901617632f39e5b72d148c5",
+          "url": "https://github.com/rubiii/wsdl/commit/3fd722d66d8612bb0e3ccdfc839fd3662c4dafd1"
+        },
+        "date": 1774621559340,
+        "tool": "customBiggerIsBetter",
+        "benches": [
+          {
+            "name": "parse: small WSDL (blz_service, 88 lines)",
+            "value": 905.1,
+            "unit": "i/s",
+            "range": "± 13.4%"
+          },
+          {
+            "name": "parse: large WSDL (economic, 65k lines)",
+            "value": 1.28,
+            "unit": "i/s",
+            "range": "± 0.0%"
+          },
+          {
+            "name": "request: build + serialize",
+            "value": 8770.01,
+            "unit": "i/s",
+            "range": "± 6.7%"
+          },
+          {
+            "name": "sign: X.509 SHA-256 + Timestamp",
+            "value": 632.99,
+            "unit": "i/s",
+            "range": "± 10.6%"
+          },
+          {
+            "name": "verify: signature + timestamp",
+            "value": 625.91,
+            "unit": "i/s",
+            "range": "± 16.3%"
+          },
+          {
+            "name": "response: parse small (15 lines)",
+            "value": 8048.22,
+            "unit": "i/s",
+            "range": "± 8.4%"
+          },
+          {
+            "name": "response: parse large (200 items)",
+            "value": 88.6,
+            "unit": "i/s",
+            "range": "± 7.9%"
           }
         ]
       }
