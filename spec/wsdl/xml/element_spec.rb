@@ -84,6 +84,45 @@ RSpec.describe WSDL::XML::Element do
     end
   end
 
+  describe '#freeze' do
+    it 'freezes the children array' do
+      child = build_element(name: 'child', base_type: 'xsd:string')
+      element = build_element
+      element.children = [child]
+
+      expect(element.children).not_to be_frozen
+      element.freeze
+      expect(element.children).to be_frozen
+    end
+
+    it 'eagerly computes the definition hash' do
+      element = build_element(base_type: 'xsd:string')
+      element.freeze
+
+      hash = element.to_definition_h
+      expect(hash).to be_frozen
+      expect(hash[:name]).to eq('user')
+      expect(hash[:type]).to eq('simple')
+    end
+
+    it 'caches the definition hash so repeated calls return the same object' do
+      element = build_element(base_type: 'xsd:string')
+      element.freeze
+
+      first_result = element.to_definition_h
+      expect(first_result).to be(element.to_definition_h)
+    end
+
+    it 'is idempotent' do
+      element = build_element(base_type: 'xsd:string')
+      element.freeze
+      hash_before = element.to_definition_h
+
+      expect { element.freeze }.not_to raise_error
+      expect(element.to_definition_h).to be(hash_before)
+    end
+  end
+
   describe '#to_definition_h' do
     it 'converts a simple element to a hash' do
       element = build_element(base_type: 'xsd:string')
@@ -180,6 +219,53 @@ RSpec.describe WSDL::XML::Element do
       hash = root.to_definition_h
       expect(hash[:children].first[:children].first[:name]).to eq('value')
       expect(hash[:children].first[:children].first[:type]).to eq('simple')
+    end
+
+    context 'when the element is frozen' do
+      it 'returns the same object on repeated calls' do
+        element = build_element(base_type: 'xsd:string')
+        element.freeze
+
+        first_call = element.to_definition_h
+        second_call = element.to_definition_h
+
+        expect(first_call).to be(second_call)
+      end
+
+      it 'returns the same child hash objects for shared children' do
+        child = build_element(name: 'shared', namespace: nil, form: 'unqualified', base_type: 'xsd:string')
+        child.freeze
+
+        parent_a = build_element(name: 'a')
+        parent_a.children = [child]
+        parent_a.freeze
+
+        parent_b = build_element(name: 'b')
+        parent_b.children = [child]
+        parent_b.freeze
+
+        child_hash_a = parent_a.to_definition_h[:children].first
+        child_hash_b = parent_b.to_definition_h[:children].first
+
+        expect(child_hash_a).to be(child_hash_b)
+      end
+
+      it 'produces correct results for a deep frozen tree' do
+        leaf = build_element(name: 'value', namespace: nil, form: 'unqualified', base_type: 'xsd:string')
+        leaf.freeze
+        mid = build_element(name: 'item', namespace: nil, form: 'unqualified')
+        mid.children = [leaf]
+        mid.freeze
+        root = build_element(name: 'items')
+        root.children = [mid]
+        root.freeze
+
+        hash = root.to_definition_h
+        expect(hash[:name]).to eq('items')
+        expect(hash[:children].first[:name]).to eq('item')
+        expect(hash[:children].first[:children].first[:name]).to eq('value')
+        expect(hash[:children].first[:children].first[:type]).to eq('simple')
+      end
     end
   end
 

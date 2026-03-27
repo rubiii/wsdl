@@ -38,15 +38,16 @@ module WSDL
 
       # Creates a new Element with default values.
       def initialize
-        @children    = EMPTY_CHILDREN
-        @attributes  = EMPTY_ATTRIBUTES
-        @recursive   = false
-        @singular    = true
-        @min_occurs  = '1'
-        @max_occurs  = '1'
-        @any_content = false
-        @nillable    = false
-        @list        = false
+        @children     = EMPTY_CHILDREN
+        @attributes   = EMPTY_ATTRIBUTES
+        @definition_h = nil
+        @recursive    = false
+        @singular     = true
+        @min_occurs   = '1'
+        @max_occurs   = '1'
+        @any_content  = false
+        @nillable     = false
+        @list         = false
       end
 
       # @!attribute [rw] parent
@@ -207,14 +208,22 @@ module WSDL
         @attributes = normalized.empty? ? EMPTY_ATTRIBUTES : normalized.dup.freeze
       end
 
-      # Deep-freezes this element by also freezing the mutable +@children+ array.
+      # Deep-freezes this element by also freezing the mutable +@children+ array
+      # and eagerly computing the {#to_definition_h} result.
       #
       # The +@attributes+ array is already frozen by the custom setter,
       # so only +@children+ needs explicit freezing here.
       #
+      # Computing +@definition_h+ before +super+ ensures child elements
+      # (which are already frozen at this point) return their cached hashes,
+      # eliminating redundant hash construction for shared type-cache children.
+      #
       # @return [self]
       def freeze
+        return self if frozen?
+
         @children.freeze
+        @definition_h = build_definition_h
         super
       end
 
@@ -236,24 +245,8 @@ module WSDL
       #   #      recursive_type: nil, complex_type_id: nil,
       #   #      children: [...], attributes: [...] }
       #
-      def to_definition_h # rubocop:disable Metrics/AbcSize
-        {
-          name:,
-          namespace:,
-          form:,
-          type: KIND_STRINGS.fetch(kind),
-          xsd_type: base_type,
-          min_occurs: min_occurs.to_i,
-          max_occurs: definition_max_occurs,
-          nillable: nillable?,
-          singular: singular?,
-          list: list?,
-          any_content: any_content?,
-          recursive_type:,
-          complex_type_id:,
-          children: children.map(&:to_definition_h).freeze,
-          attributes: attributes.map(&:to_definition_h).freeze
-        }.freeze
+      def to_definition_h
+        @definition_h || build_definition_h
       end
 
       # Compares two elements by their properties (excluding parent reference).
@@ -344,6 +337,32 @@ module WSDL
       # rubocop:enable Metrics/AbcSize, Metrics/CyclomaticComplexity
 
       private
+
+      # Builds a definition-oriented hash from element properties.
+      #
+      # Extracted from {#to_definition_h} so it can be called eagerly
+      # during {#freeze} and lazily for unfrozen elements.
+      #
+      # @return [Hash{Symbol => Object}] definition-compatible element hash
+      def build_definition_h # rubocop:disable Metrics/AbcSize
+        {
+          name:,
+          namespace:,
+          form:,
+          type: KIND_STRINGS.fetch(kind),
+          xsd_type: base_type,
+          min_occurs: min_occurs.to_i,
+          max_occurs: definition_max_occurs,
+          nillable: nillable?,
+          singular: singular?,
+          list: list?,
+          any_content: any_content?,
+          recursive_type:,
+          complex_type_id:,
+          children: children.map(&:to_definition_h).freeze,
+          attributes: attributes.map(&:to_definition_h).freeze
+        }.freeze
+      end
 
       # @return [Integer, Float] max_occurs as a numeric value for definition hashes
       def definition_max_occurs
