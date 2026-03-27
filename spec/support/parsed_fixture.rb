@@ -14,19 +14,12 @@ module SpecSupport
 
     def initialize(fixture_path)
       wsdl_path = Fixture.path(fixture_path)
-      http = HTTPMock.new
+      result = WSDL::Parser.import(wsdl_path, HTTPMock.new)
 
-      @documents = WSDL::Parser::DocumentCollection.new
-      @schemas = WSDL::Schema::Collection.new
-
-      source = WSDL::Resolver::Source.validate_wsdl!(wsdl_path)
-      sandbox_paths = source.resolve_sandbox_paths(nil)
-      loader = WSDL::Resolver::Loader.new(http, sandbox_paths:, limits: WSDL::Limits.new)
-      importer = WSDL::Resolver::Importer.new(loader, @documents, @schemas, WSDL::ParseOptions.default)
-      importer.import(source.value)
-
-      @provenance = importer.provenance.freeze
-      @schema_import_errors = importer.schema_import_errors.freeze
+      @documents = result.documents
+      @schemas = result.schemas
+      @provenance = result.provenance
+      @schema_import_errors = result.schema_import_errors
     end
 
     # Finds the first complex type with children in the schema collection.

@@ -101,12 +101,12 @@ module WSDL
     def parse(source, http: nil, strictness: nil, sandbox_paths: nil, limits: nil)
       http ||= http_client.new
 
-      parse_options = ParseOptions.new(
+      Parser.parse(
+        source, http,
         sandbox_paths:,
         limits: Limits.resolve(limits) || Limits.new,
         strictness: Strictness.resolve(strictness) || Strictness.new
       )
-      Parser.parse(source, http, parse_options)
     end
 
     # Restores a {Definition} from a serialized Hash.

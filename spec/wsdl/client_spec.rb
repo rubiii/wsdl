@@ -65,10 +65,10 @@ RSpec.describe WSDL::Client do
       context 'when loading from a file path' do
         it 'sandboxes to WSDL parent directory' do
           wsdl_directory = File.dirname(File.expand_path(wsdl_path))
-          allow(WSDL::Parser).to receive(:parse).and_wrap_original do |method, *args|
+          allow(WSDL::Parser).to receive(:parse).and_wrap_original do |method, *args, **kwargs|
             # WSDL.parse passes nil sandbox_paths; Parser.parse resolves from source
-            expect(args[2]).to have_attributes(sandbox_paths: nil)
-            method.call(*args)
+            expect(kwargs[:sandbox_paths]).to be_nil
+            method.call(*args, **kwargs)
           end
 
           defn = WSDL.parse(wsdl_path)
@@ -442,9 +442,9 @@ RSpec.describe WSDL::Client do
     end
 
     it 'passes Strictness.on to parser' do
-      allow(WSDL::Parser).to receive(:parse).and_wrap_original do |method, *args|
-        expect(args[2]).to have_attributes(strictness: WSDL::Strictness.on)
-        method.call(*args)
+      allow(WSDL::Parser).to receive(:parse).and_wrap_original do |method, *args, **kwargs|
+        expect(kwargs[:strictness]).to eq(WSDL::Strictness.on)
+        method.call(*args, **kwargs)
       end
 
       WSDL.parse(wsdl_path, http: http_mock, strictness: WSDL::Strictness.on)
@@ -453,9 +453,9 @@ RSpec.describe WSDL::Client do
     end
 
     it 'passes Strictness.off to parser' do
-      allow(WSDL::Parser).to receive(:parse).and_wrap_original do |method, *args|
-        expect(args[2]).to have_attributes(strictness: WSDL::Strictness.off)
-        method.call(*args)
+      allow(WSDL::Parser).to receive(:parse).and_wrap_original do |method, *args, **kwargs|
+        expect(kwargs[:strictness]).to eq(WSDL::Strictness.off)
+        method.call(*args, **kwargs)
       end
 
       WSDL.parse(wsdl_path, http: http_mock, strictness: WSDL::Strictness.off)
@@ -594,9 +594,9 @@ RSpec.describe WSDL::Client do
 
     it 'passes limits to the parser' do
       custom_limits = WSDL::Limits.new(max_document_size: 5 * 1024 * 1024)
-      allow(WSDL::Parser).to receive(:parse).and_wrap_original do |method, *args|
-        expect(args[2]).to have_attributes(limits: custom_limits)
-        method.call(*args)
+      allow(WSDL::Parser).to receive(:parse).and_wrap_original do |method, *args, **kwargs|
+        expect(kwargs[:limits]).to eq(custom_limits)
+        method.call(*args, **kwargs)
       end
 
       WSDL.parse(wsdl_path, http: http_mock, limits: custom_limits)

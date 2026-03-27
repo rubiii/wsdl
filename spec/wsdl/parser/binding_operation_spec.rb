@@ -239,16 +239,10 @@ RSpec.describe WSDL::Parser::BindingOperation do
     end
   end
 
-  def get_binding_operation(fixture_path, binding_name, operation_name) # rubocop:disable Metrics/AbcSize
-    documents = WSDL::Parser::DocumentCollection.new
-    schemas = WSDL::Schema::Collection.new
-    source = WSDL::Resolver::Source.validate_wsdl!(fixture(fixture_path))
-    loader = WSDL::Resolver::Loader.new(http_mock,
-      sandbox_paths: [File.dirname(File.expand_path(fixture(fixture_path)))])
-    importer = WSDL::Resolver::Importer.new(loader, documents, schemas, WSDL::ParseOptions.default)
-    importer.import(source.value)
+  def get_binding_operation(fixture_path, binding_name, operation_name)
+    result = WSDL::Parser.import(fixture(fixture_path), http_mock)
 
-    document = documents.first
+    document = result.documents.first
     _, binding = document.bindings.find { |qname, _| qname.local == binding_name }
     binding.operations.fetch(operation_name)
   end

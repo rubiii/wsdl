@@ -85,13 +85,8 @@ RSpec.describe WSDL::Parser::Input do
 
   def import_wsdl(wsdl_xml)
     wsdl_path = write_wsdl_file(wsdl_xml)
-    documents = WSDL::Parser::DocumentCollection.new
-    schemas = WSDL::Schema::Collection.new
-    source = WSDL::Resolver::Source.validate_wsdl!(wsdl_path)
-    loader = WSDL::Resolver::Loader.new(http_mock, sandbox_paths: [File.dirname(File.expand_path(wsdl_path))])
-    importer = WSDL::Resolver::Importer.new(loader, documents, schemas, WSDL::ParseOptions.default)
-    importer.import(source.value)
-    [documents, schemas]
+    result = WSDL::Parser.import(wsdl_path, http_mock)
+    [result.documents, result.schemas]
   end
 
   def resolve_operations(documents, service_name, port_name, operation_name)

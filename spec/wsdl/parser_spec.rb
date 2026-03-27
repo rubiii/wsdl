@@ -57,11 +57,8 @@ RSpec.describe WSDL::Parser do
         expect {
           described_class.parse(
             travelport, http_mock,
-            WSDL::ParseOptions.new(
-              sandbox_paths: [File.expand_path('spec/fixtures/wsdl/travelport')],
-              limits: WSDL::Limits.new(max_schemas: 1),
-              strictness: WSDL::Strictness.new
-            )
+            sandbox_paths: [File.expand_path('spec/fixtures/wsdl/travelport')],
+            limits: WSDL::Limits.new(max_schemas: 1)
           )
         }.to raise_error(WSDL::ResourceLimitError, /max_schemas/)
       end
@@ -92,17 +89,60 @@ RSpec.describe WSDL::Parser do
         # accesses them. The conformance spec (W11-NAME-1) tests the scenario
         # where duplicates are actually encountered during message resolution.
         # Here we verify the DocumentCollection detects duplicates on access.
-        documents = WSDL::Parser::DocumentCollection.new
-        schemas = WSDL::Schema::Collection.new
-        source = WSDL::Resolver::Source.validate_wsdl!(fixture('parser/duplicate_definitions/root'))
-        sandbox = [File.dirname(File.expand_path(fixture('parser/duplicate_definitions/root')))]
-        loader = WSDL::Resolver::Loader.new(http_mock, sandbox_paths: sandbox)
-        importer = WSDL::Resolver::Importer.new(loader, documents, schemas, WSDL::ParseOptions.default)
-        importer.import(source.value)
+        result = described_class.import(fixture('parser/duplicate_definitions/root'), http_mock)
 
-        expect { documents.messages }.to raise_error(WSDL::DuplicateDefinitionError) { |error|
+        expect { result.documents.messages }.to raise_error(WSDL::DuplicateDefinitionError) { |error|
           expect(error.component_type).to eq(:message)
         }
+      end
+    end
+  end
+
+  describe '.import' do
+    it 'returns an ImportResult' do
+      result = described_class.import(fixture('wsdl/authentication'), http_mock)
+
+      expect(result).to be_a(WSDL::Parser::ImportResult)
+    end
+
+    it 'contains parsed documents' do
+      result = described_class.import(fixture('wsdl/authentication'), http_mock)
+
+      expect(result.documents).to be_a(WSDL::Parser::DocumentCollection)
+      expect(result.documents.first).to be_a(WSDL::Parser::Document)
+    end
+
+    it 'contains parsed schemas' do
+      result = described_class.import(fixture('wsdl/authentication'), http_mock)
+
+      expect(result.schemas).to be_a(WSDL::Schema::Collection)
+      expect(result.schemas.count).to be_positive
+    end
+
+    it 'records provenance for resolved documents' do
+      result = described_class.import(fixture('wsdl/authentication'), http_mock)
+
+      expect(result.provenance).not_to be_empty
+      expect(result.provenance).to be_frozen
+      expect(result.provenance.first).to include(status: 'resolved')
+    end
+
+    it 'collects schema import errors in lenient mode' do
+      result = described_class.import(
+        fixture('wsdl/juniper'), http_mock,
+        strictness: WSDL::Strictness.off
+      )
+
+      expect(result.documents).to be_a(WSDL::Parser::DocumentCollection)
+      expect(result.schema_import_errors).not_to be_empty
+      expect(result.schema_import_errors).to be_frozen
+    end
+
+    describe 'source validation' do
+      it 'rejects inline XML content' do
+        expect {
+          described_class.import('<definitions/>', http_mock)
+        }.to raise_error(ArgumentError, /Inline XML/)
       end
     end
   end

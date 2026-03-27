@@ -13,15 +13,9 @@ RSpec.describe 'WSDL 1.1 conformance' do
   describe 'Document Structure' do
     # https://www.w3.org/TR/wsdl#_messages
     it 'W11-NAME-1: duplicate message names across imports raise DuplicateDefinitionError' do
-      wsdl = fixture('parser/duplicate_definitions/root')
-      documents = WSDL::Parser::DocumentCollection.new
-      schemas = WSDL::Schema::Collection.new
-      source = WSDL::Resolver::Source.validate_wsdl!(wsdl)
-      loader = WSDL::Resolver::Loader.new(http_mock, sandbox_paths: [File.dirname(File.expand_path(wsdl))])
-      importer = WSDL::Resolver::Importer.new(loader, documents, schemas, WSDL::ParseOptions.default)
-      importer.import(source.value)
+      result = WSDL::Parser.import(fixture('parser/duplicate_definitions/root'), http_mock)
 
-      expect { documents.messages }
+      expect { result.documents.messages }
         .to raise_error(WSDL::DuplicateDefinitionError) { |error|
           expect(error.component_type).to eq(:message)
         }

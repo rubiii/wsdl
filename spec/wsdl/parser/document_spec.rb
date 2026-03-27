@@ -209,14 +209,7 @@ RSpec.describe WSDL::Parser::Document do
   end
 
   def get_documents(fixture_path)
-    documents = WSDL::Parser::DocumentCollection.new
-    schemas = WSDL::Schema::Collection.new
-    source = WSDL::Resolver::Source.validate_wsdl!(fixture(fixture_path))
-    loader = WSDL::Resolver::Loader.new(http_mock,
-      sandbox_paths: [File.dirname(File.expand_path(fixture(fixture_path)))])
-    importer = WSDL::Resolver::Importer.new(loader, documents, schemas, WSDL::ParseOptions.default)
-    importer.import(source.value)
-    documents
+    WSDL::Parser.import(fixture(fixture_path), http_mock).documents
   end
 
   def local_keys(collection)

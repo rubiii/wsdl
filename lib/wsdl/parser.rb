@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require 'wsdl/parser/import_result'
 require 'wsdl/parser/message_reference'
 require 'wsdl/parser/header_reference'
 require 'wsdl/parser/binding'
@@ -22,44 +23,65 @@ module WSDL
   # referenced XML schemas into structured objects. I/O (fetching,
   # sandboxing, import orchestration) lives in {Resolver}.
   #
-  # The main entry point is {.parse}, which coordinates the
-  # {Resolver} and {Definition::Builder} to return a frozen {Definition}.
+  # The two entry points are:
+  # - {.import} — resolves and imports WSDL documents and schemas
+  # - {.parse} — imports and builds a frozen {Definition}
   #
   # @api private
   #
   module Parser
-    # Parses a WSDL document and returns a frozen {Definition}.
+    # Resolves and imports a WSDL document and all its dependencies.
     #
-    # Validates the source, resolves all imports and schemas, and builds
-    # the Definition IR in a single pass. This is the primary entry point
-    # for the parse pipeline.
+    # Validates the source, resolves imports, and returns the parsed
+    # documents and schemas without building a {Definition}. Use this
+    # when you need access to the intermediate parse structures.
     #
     # @param wsdl [String] a URL or local file path to the WSDL document
     # @param http [Object] an HTTP client instance for fetching remote documents
-    # @param parse_options [ParseOptions, nil] parse configuration.
-    #   When omitted, {ParseOptions.default} is used.
-    # @return [Definition] the frozen definition
-    #
-    # rubocop:disable Metrics/AbcSize -- straightforward factory: validate, import, build
-    def self.parse(wsdl, http, parse_options = nil, **)
-      parse_options ||= ParseOptions.default(**)
+    # @param sandbox_paths [Array<String>, nil] directories where file access is allowed
+    # @param limits [Limits, nil] resource limits for DoS protection
+    # @param strictness [Strictness, nil] strictness settings for schema validation
+    # @return [ImportResult] the imported documents, schemas, and metadata
+    def self.import(wsdl, http, sandbox_paths: nil, limits: nil, strictness: nil)
+      parse_options = ParseOptions.default(sandbox_paths:, limits:, strictness:)
 
       documents = DocumentCollection.new
       schemas = Schema::Collection.new
 
-      source = WSDL::Resolver::Source.validate_wsdl!(wsdl)
+      source = Resolver::Source.validate_wsdl!(wsdl)
       resolved_sandbox_paths = source.resolve_sandbox_paths(parse_options.sandbox_paths)
-      loader = WSDL::Resolver::Loader.new(http, sandbox_paths: resolved_sandbox_paths, limits: parse_options.limits)
-      importer = WSDL::Resolver::Importer.new(loader, documents, schemas, parse_options)
+      loader = Resolver::Loader.new(http, sandbox_paths: resolved_sandbox_paths, limits: parse_options.limits)
+      importer = Resolver::Importer.new(loader, documents, schemas, parse_options)
       importer.import(source.value)
 
-      Definition::Builder.new(
+      ImportResult.new(
         documents:, schemas:,
-        limits: parse_options.limits,
-        schema_import_errors: importer.schema_import_errors.freeze,
-        provenance: importer.provenance.freeze
+        provenance: importer.provenance.freeze,
+        schema_import_errors: importer.schema_import_errors.freeze
+      )
+    end
+
+    # Parses a WSDL document and returns a frozen {Definition}.
+    #
+    # Validates the source, resolves all imports and schemas, and builds
+    # the Definition IR. This is the primary entry point for the parse
+    # pipeline.
+    #
+    # @param wsdl [String] a URL or local file path to the WSDL document
+    # @param http [Object] an HTTP client instance for fetching remote documents
+    # @param sandbox_paths [Array<String>, nil] directories where file access is allowed
+    # @param limits [Limits, nil] resource limits for DoS protection
+    # @param strictness [Strictness, nil] strictness settings for schema validation
+    # @return [Definition] the frozen definition
+    def self.parse(wsdl, http, sandbox_paths: nil, limits: nil, strictness: nil)
+      result = import(wsdl, http, sandbox_paths:, limits:, strictness:)
+
+      Definition::Builder.new(
+        documents: result.documents, schemas: result.schemas,
+        limits: limits || Limits.new,
+        schema_import_errors: result.schema_import_errors,
+        provenance: result.provenance
       ).build
     end
-    # rubocop:enable Metrics/AbcSize
   end
 end
