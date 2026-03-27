@@ -63,7 +63,6 @@ module WSDL
         @context = context
 
         @kind = xml_node.name.to_sym
-        @attributes_hash = extract_attributes(xml_node)
       end
 
       # @return [Symbol] the XSD element type (:element, :complexType, :sequence, etc.)
@@ -92,42 +91,42 @@ module WSDL
 
       # @return [String, nil] the local name of this node
       def name
-        @attributes_hash['name']
+        @xml_node['name']
       end
 
       # @return [String, nil] the qualified type reference
       def type
-        @attributes_hash['type']
+        @xml_node['type']
       end
 
       # @return [String, nil] the qualified element/attribute reference
       def ref
-        @attributes_hash['ref']
+        @xml_node['ref']
       end
 
       # @return [String, nil] the base type for restrictions/extensions
       def base
-        @attributes_hash['base']
+        @xml_node['base']
       end
 
       # @return [String] the use constraint ('optional' or 'required')
       def use
-        @attributes_hash['use'] || 'optional'
+        @xml_node['use'] || 'optional'
       end
 
       # @return [String, nil] the default value
       def default
-        @attributes_hash['default']
+        @xml_node['default']
       end
 
       # @return [String, nil] the fixed value
       def fixed
-        @attributes_hash['fixed']
+        @xml_node['fixed']
       end
 
       # @return [Boolean] whether this element allows nil values (xsi:nil="true")
       def nillable?
-        @attributes_hash['nillable'] == 'true'
+        @xml_node['nillable'] == 'true'
       end
 
       # @return [String, nil] the target namespace URI
@@ -139,7 +138,7 @@ module WSDL
       #
       # @return [String] 'qualified' or 'unqualified'
       def form
-        @attributes_hash['form'] ||
+        @xml_node['form'] ||
           (@context[:element_form_default] == 'qualified' ? 'qualified' : 'unqualified')
       end
 
@@ -148,7 +147,7 @@ module WSDL
       # @param attr_name [String] the attribute name
       # @return [String, nil] the attribute value
       def [](attr_name)
-        @attributes_hash[attr_name]
+        @xml_node[attr_name]
       end
 
       # @!endgroup
@@ -295,14 +294,14 @@ module WSDL
       #
       # @return [String] '##any', '##other', '##local', '##targetNamespace', or a URI
       def namespace_constraint
-        @attributes_hash['namespace'] || '##any'
+        @xml_node['namespace'] || '##any'
       end
 
       # Returns how wildcard content should be validated.
       #
       # @return [String] 'strict', 'lax', or 'skip'
       def process_contents
-        @attributes_hash['processContents'] || 'strict'
+        @xml_node['processContents'] || 'strict'
       end
 
       # @!endgroup
@@ -311,12 +310,12 @@ module WSDL
 
       # @return [String] the maxOccurs value ('1', 'unbounded', etc.)
       def max_occurs
-        @attributes_hash['maxOccurs'] || '1'
+        @xml_node['maxOccurs'] || '1'
       end
 
       # @return [String] the minOccurs value ('0', '1', etc.)
       def min_occurs
-        @attributes_hash['minOccurs'] || '1'
+        @xml_node['minOccurs'] || '1'
       end
 
       # Returns whether this element can appear multiple times.
@@ -370,19 +369,11 @@ module WSDL
       #
       # @return [String] formatted debug string
       def inspect
-        attrs = @attributes_hash.map { |k, v| "#{k}=#{v.inspect}" }.join(' ')
+        attrs = @xml_node.attribute_nodes.map { |a| "#{a.name}=#{a.value.inspect}" }.join(' ')
         "#<Schema::Node:#{kind} #{attrs}>"
       end
 
       private
-
-      # Extracts attributes from XML node into a hash.
-      #
-      # @param xml_node [Nokogiri::XML::Node] the XML node
-      # @return [Hash{String => String}] attribute name to value mapping
-      def extract_attributes(xml_node)
-        xml_node.attributes.transform_values(&:value)
-      end
 
       # Collects element nodes from immediate children.
       #
