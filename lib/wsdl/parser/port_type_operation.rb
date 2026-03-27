@@ -69,12 +69,22 @@ module WSDL
         @operation_node.element_children.find { |node| node.name == node_name }
       end
 
+      # Returns the cached namespace declarations for this operation's scope.
+      #
+      # All children of the same wsdl:operation element share the same
+      # namespace scope, so we resolve it once and reuse the frozen hash.
+      #
+      # @return [Hash{String => String}] frozen namespace declarations
+      def namespaces
+        @namespaces ||= @operation_node.namespaces.freeze
+      end
+
       # Parses an input or output node into a message reference.
       #
       # @param node [Nokogiri::XML::Node] the input or output node
       # @return [MessageReference] parsed message reference
       def parse_node(node)
-        MessageReference.from_node(node)
+        MessageReference.from_node(node, namespaces:)
       end
     end
   end

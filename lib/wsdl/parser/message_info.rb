@@ -42,8 +42,13 @@ module WSDL
 
       # Parses and returns all parts from the message node.
       #
+      # All wsdl:part children inherit the same namespace scope from
+      # the parent wsdl:message element, so we resolve it once and
+      # share the frozen hash across every part.
+      #
       # @return [Array<Hash>] the parsed parts
       def parts!
+        namespaces = @message_node.namespaces.freeze
         parts = []
 
         @message_node.element_children.each do |part|
@@ -53,7 +58,7 @@ module WSDL
             name: part['name'],
             type: part['type'],
             element: part['element'],
-            namespaces: part.namespaces
+            namespaces:
           }
         end
 

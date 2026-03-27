@@ -1,7 +1,7 @@
 ---
 name: commit
 description: Analyze changes, stage files, and provide a commit message — never run git commit
-allowed-tools: Read, Write, Bash(git diff *), Bash(git status *), Bash(git log *), Bash(git add *), Bash(.claude/scripts/*)
+allowed-tools: Read, Bash(git diff *), Bash(git status *), Bash(git log *), Bash(git add *), Bash(rm -f /tmp/commit_msg.txt), Bash(cat * > /tmp/commit_msg.txt), Bash(.claude/scripts/*)
 ---
 
 # Commit
@@ -81,7 +81,7 @@ Cleanup leftovers from lenient migration
 ## Output
 
 1. Output the commit message as plain text (for the user to review)
-2. Write the message to `/tmp/commit_msg.txt` using the **Write** tool (never Bash)
+2. Write the message to `/tmp/commit_msg.txt` using Bash with a heredoc: `cat <<'EOF' > /tmp/commit_msg.txt`
 3. Run `.claude/scripts/clipboard.sh /tmp/commit_msg.txt` to copy it to the clipboard
 
 Then confirm to the user that the message is on their clipboard.
