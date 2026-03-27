@@ -58,6 +58,10 @@ module WSDL
       # @return [Set<Integer>]
       QUOTE_BYTES = Set[DOUBLE_QUOTE_BYTE, SINGLE_QUOTE_BYTE].freeze
 
+      # Non-open-tag byte values: closing (+/+), declaration (+!+), processing instruction (+?+).
+      # @return [Set<Integer>]
+      NON_OPEN_TAG_BYTES = Set[SLASH_BYTE, BANG_BYTE, QUESTION_BYTE].freeze
+
       # Pre-computed binary quote character strings, keyed by byte value.
       # Avoids allocating a new String via +Integer#chr+ on every call.
       # @return [Hash{Integer => String}]
@@ -169,7 +173,7 @@ module WSDL
       # @return [Boolean]
       def open_tag_start?(byte)
         return false unless byte
-        return false if [SLASH_BYTE, BANG_BYTE, QUESTION_BYTE].include?(byte)
+        return false if NON_OPEN_TAG_BYTES.include?(byte)
 
         ascii_letter?(byte)
       end
