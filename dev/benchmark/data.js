@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1774621559743,
+  "lastUpdate": 1774638474542,
   "repoUrl": "https://github.com/rubiii/wsdl",
   "entries": {
     "Benchmark": [
@@ -990,6 +990,72 @@ window.BENCHMARK_DATA = {
             "value": 88.6,
             "unit": "i/s",
             "range": "± 7.9%"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "me@rubiii.com",
+            "name": "rubiii",
+            "username": "rubiii"
+          },
+          "committer": {
+            "email": "me@rubiii.com",
+            "name": "rubiii",
+            "username": "rubiii"
+          },
+          "distinct": true,
+          "id": "429b96fc48d68c8464c8db7d5d5fa6827313a0b5",
+          "message": "Cache Schema::Node attribute reads\n\nNokogiri allocates a new Ruby String for every Node#[] call.\nSchema::Node\naccessors (name, type, ref, base, etc.) delegate to Node#[] and are read\nmultiple times per node during element building — up to 6x for `type`.",
+          "timestamp": "2026-03-27T20:06:31+01:00",
+          "tree_id": "ab59d9f6fa50d4835913edebd3bcba2fd124c794",
+          "url": "https://github.com/rubiii/wsdl/commit/429b96fc48d68c8464c8db7d5d5fa6827313a0b5"
+        },
+        "date": 1774638474075,
+        "tool": "customBiggerIsBetter",
+        "benches": [
+          {
+            "name": "parse: small WSDL (blz_service, 88 lines)",
+            "value": 1013.62,
+            "unit": "i/s",
+            "range": "± 18.6%"
+          },
+          {
+            "name": "parse: large WSDL (economic, 65k lines)",
+            "value": 1.5,
+            "unit": "i/s",
+            "range": "± 0.0%"
+          },
+          {
+            "name": "request: build + serialize",
+            "value": 10396.3,
+            "unit": "i/s",
+            "range": "± 7.8%"
+          },
+          {
+            "name": "sign: X.509 SHA-256 + Timestamp",
+            "value": 842.57,
+            "unit": "i/s",
+            "range": "± 16.0%"
+          },
+          {
+            "name": "verify: signature + timestamp",
+            "value": 623.27,
+            "unit": "i/s",
+            "range": "± 13.5%"
+          },
+          {
+            "name": "response: parse small (15 lines)",
+            "value": 8792.09,
+            "unit": "i/s",
+            "range": "± 9.8%"
+          },
+          {
+            "name": "response: parse large (200 items)",
+            "value": 86.72,
+            "unit": "i/s",
+            "range": "± 10.4%"
           }
         ]
       }
