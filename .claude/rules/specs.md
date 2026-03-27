@@ -13,6 +13,7 @@ paths:
 - **Integration tests** (`spec/integration/`): Full HTTP round-trips against `TestService` mock server. Auto-tagged `:test_service`.
 - **Conformance tests** (`spec/conformance/`): W3C/OASIS spec compliance. Each test references an assertion ID and spec URL.
 - **Property tests** (`spec/property/`): Rantly-based generative testing for invariants.
+- **Performance tests** (`spec/performance/`): Allocation budgets and timing. Auto-tagged `:performance`. Tag wall-time examples with `:timing`. Use `count_allocations { }` for deterministic allocation measurement.
 
 ## Helpers
 

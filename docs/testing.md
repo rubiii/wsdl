@@ -1,13 +1,20 @@
 # Testing
 
-The test suite is organized in layers: unit, acceptance, integration, conformance, and property-based tests. All checks run with `bundle exec rake ci`.
+The test suite is organized in layers: unit, acceptance, integration, conformance, property-based, and performance tests. All checks run with `bundle exec rake ci`.
 
 ## Running Tests
 
 | Command | Purpose |
 |---------|---------|
 | `bundle exec rspec` | Run all tests |
-| `bundle exec rake benchmark` | Performance benchmarks |
+| `bundle exec rake benchmark` | Performance benchmarks (IPS, tracked in CI) |
+| `bundle exec rake benchmark:specs` | Performance specs (allocation budgets + timing) |
+| `bundle exec rake profile:wall` | Wall-time StackProf profile |
+| `bundle exec rake profile:cpu` | CPU StackProf profile |
+| `bundle exec rake profile:objects` | Object allocation StackProf profile |
+| `bundle exec rake profile:all` | Run all three profiles |
+| `bundle exec rake profile:report[dump]` | Print a StackProf dump report |
+| `bundle exec rake profile:method[dump,Method]` | Drill into a method in a StackProf dump |
 | `bundle exec rake ci` | Full CI (lint + docs + tests) |
 
 Environment variables:
@@ -27,6 +34,7 @@ spec/
 ├── integration/    # Integration tests (live mock services)
 ├── conformance/    # W3C/OASIS specification conformance
 ├── property/       # Property-based tests (Rantly)
+├── performance/    # Performance tests (allocation budgets, timing)
 ├── fixtures/       # WSDLs, responses, security certs, parser edge cases
 └── support/        # Helpers, mock server, test infrastructure
 ```
@@ -151,6 +159,53 @@ it 'something potentially expensive', :with_timeout do
 end
 ```
 
+## Performance Tests
+
+Performance tests in `spec/performance/` guard against allocation regressions and timing degradation. They run as part of the normal test suite — every `bundle exec rspec` and `rake ci` run includes them, so regressions are caught immediately during development.
+
+```sh
+bundle exec rake benchmark:specs                               # Run only performance specs
+```
+
+Two types of specs:
+
+**Allocation-budget specs** are deterministic — they count Ruby object allocations, not wall time. A component exceeding its allocation ceiling fails the build.
+
+**Timing specs** (tagged `:timing`) measure wall-clock time with generous thresholds (typically 5-10x headroom over actual). If a timing test ever becomes flaky on a specific CI runner, exclude it with `--tag ~timing` as a targeted fix.
+
+```ruby
+RSpec.describe 'Parse pipeline performance' do
+  let(:wsdl) { fixture('wsdl/economic') }
+
+  it 'stays within allocation budget' do
+    allocs = count_allocations { WSDL::Parser.parse(wsdl, http_mock) }
+    expect(allocs).to be < 1_000_000
+  end
+
+  it 'parses within acceptable time', :timing do
+    parse_time = Benchmark.realtime { WSDL::Parser.parse(wsdl, http_mock) }
+    expect(parse_time).to be < 2.0
+  end
+end
+```
+
+The `count_allocations` helper (from `spec/support/allocation_helpers.rb`) disables GC and measures `GC.stat(:total_allocated_objects)` delta for deterministic results.
+
+### Profiling
+
+StackProf profiling tasks provide a smooth workflow for investigating performance:
+
+```sh
+bundle exec rake profile:wall                                  # Wall-time profile
+bundle exec rake profile:cpu                                   # CPU profile
+bundle exec rake profile:objects                               # Object allocation profile
+bundle exec rake profile:all                                   # All three modes
+bundle exec rake profile:report[tmp/stackprof-large-wall.dump] # Print top methods
+bundle exec rake profile:method[tmp/stackprof-large-wall.dump,WSDL::XML::Element#freeze]
+```
+
+Profile dumps are written to `tmp/` and can be inspected with `stackprof` directly or via the Rake helpers.
+
 ## Coverage
 
 SimpleCov enforces minimum coverage on every run:
@@ -189,7 +244,8 @@ Multi-file WSDLs use a `manifest.yml` that maps HTTP import URLs to local files,
 | `schema_attribute(...)` | `spec/support/schema_element_helper.rb` | Build mock `WSDL::XML::Attribute` instances |
 | `request_body_paths(op)` | `spec/support/contract_helper.rb` | Inspect request contract paths |
 | `request_template(op)` | `spec/support/contract_helper.rb` | Inspect request contract template |
-| `http_mock` | `spec/support/http_mock.rb` | WebMock-based HTTP stubbing |
+| `http_mock` | `spec/support/http_mock.rb` | Hash-based HTTP stubbing |
+| `count_allocations { }` | `spec/support/allocation_helpers.rb` | Measure object allocations in a block |
 | `RoundtripCandidates` | `spec/support/roundtrip_candidates.rb` | Shared candidate discovery and manifest loading for round-trip tests |
 
 ## See also

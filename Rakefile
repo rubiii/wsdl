@@ -63,6 +63,36 @@ task :benchmark do
   ruby 'benchmarks/run.rb'
 end
 
+namespace :benchmark do
+  desc 'Run performance specs (allocation budgets + timing)'
+  task :specs do
+    sh 'bundle exec rspec spec/performance/ --format documentation'
+  end
+end
+
+namespace :profile do
+  modes = {
+    wall: 'Wall-time', cpu: 'CPU',
+    objects: 'Object allocation', all: 'All (wall + cpu + objects)'
+  }
+  modes.each do |mode, label|
+    desc "#{label} profile of large WSDL parse"
+    task(mode) { ruby "benchmarks/profile.rb #{mode}" }
+  end
+
+  desc 'Print a StackProf dump report'
+  task :report, [:dump] do |_t, args|
+    abort 'Usage: rake profile:report[path/to/dump]' unless args[:dump]
+    sh 'bundle', 'exec', 'stackprof', args[:dump], '--text', '--limit', '30'
+  end
+
+  desc 'Drill into a specific method in a StackProf dump'
+  task :method, [:dump, :method_name] do |_t, args|
+    abort 'Usage: rake profile:method[path/to/dump,ClassName#method]' unless args[:dump] && args[:method_name]
+    sh 'bundle', 'exec', 'stackprof', args[:dump], '--method', args[:method_name]
+  end
+end
+
 task ci: %i[lint yard:audit spec]
 
 task :default do

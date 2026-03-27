@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require 'benchmark'
-
 RSpec.describe 'Economic' do
   subject(:client) { WSDL::Client.new WSDL.parse(fixture('wsdl/economic')) }
 
@@ -3097,15 +3095,5 @@ RSpec.describe 'Economic' do
         list: false
 }
     ])
-  end
-
-  it 'has an ok parse-time for huge wsdl files' do
-    parse_time = Benchmark.realtime do
-      client.operations('EconomicWebService', 'EconomicWebServiceSoap')
-    end
-
-    # this probably needs to be increased for CI
-    # but it should prevent major performance problems.
-    expect(parse_time).to be < 1.0
   end
 end
