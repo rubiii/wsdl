@@ -1,6 +1,10 @@
 # frozen_string_literal: true
 
 RSpec.describe WSDL::QName do
+  after do
+    described_class.clear_resolve_cache
+  end
+
   let(:namespaces) do
     {
       'xmlns:tns' => 'http://example.com/target',
@@ -90,6 +94,91 @@ RSpec.describe WSDL::QName do
         expect(described_class.resolve('ns:some:value', namespaces: { 'xmlns:ns:some' => 'http://example.com' }))
           .to eq(['http://example.com', 'value'])
       end
+    end
+
+    context 'with caching' do
+      it 'returns the same frozen array for repeated calls with the same namespaces hash' do
+        result1 = described_class.resolve('tns:User', namespaces:)
+        result2 = described_class.resolve('tns:User', namespaces:)
+
+        expect(result1).to be_frozen
+        expect(result1).to equal(result2)
+      end
+
+      it 'caches unprefixed qname results within the same namespaces hash' do
+        result1 = described_class.resolve('User', namespaces:)
+        result2 = described_class.resolve('User', namespaces:)
+
+        expect(result1).to equal(result2)
+      end
+
+      it 'returns separate results for different namespaces hashes with the same content' do
+        ns1 = { 'xmlns:tns' => 'http://example.com/one' }
+        ns2 = { 'xmlns:tns' => 'http://example.com/two' }
+
+        result1 = described_class.resolve('tns:User', namespaces: ns1)
+        result2 = described_class.resolve('tns:User', namespaces: ns2)
+
+        expect(result1).not_to equal(result2)
+        expect(result1).to eq(['http://example.com/one', 'User'])
+        expect(result2).to eq(['http://example.com/two', 'User'])
+      end
+
+      it 'isolates scopes with different default_namespace values on the same namespaces hash' do
+        ns = { 'xmlns:tns' => 'http://example.com' }
+
+        result1 = described_class.resolve('User', namespaces: ns, default_namespace: 'http://a.com')
+        result2 = described_class.resolve('User', namespaces: ns, default_namespace: 'http://b.com')
+
+        expect(result1).not_to equal(result2)
+        expect(result1).to eq(['http://a.com', 'User'])
+        expect(result2).to eq(['http://b.com', 'User'])
+      end
+
+      it 'caches results for the same default_namespace and namespaces hash' do
+        ns = { 'xmlns:tns' => 'http://example.com' }
+
+        result1 = described_class.resolve('User', namespaces: ns, default_namespace: 'http://a.com')
+        result2 = described_class.resolve('User', namespaces: ns, default_namespace: 'http://a.com')
+
+        expect(result1).to equal(result2)
+      end
+
+      it 'interns xmlns prefix keys across different namespaces hashes' do
+        lookup_keys = []
+        ns1 = { 'xmlns:tns' => 'http://example.com/one' }
+        ns2 = { 'xmlns:tns' => 'http://example.com/two' }
+
+        # Intercept [] to capture the actual key objects used for lookup.
+        [ns1, ns2].each do |ns|
+          ns.define_singleton_method(:fetch_key_recorder) do
+            lookup_keys
+          end
+          original_bracket = ns.method(:[])
+          ns.define_singleton_method(:[]) do |key|
+            fetch_key_recorder << key
+            original_bracket.call(key)
+          end
+        end
+
+        described_class.resolve('tns:A', namespaces: ns1)
+        described_class.resolve('tns:B', namespaces: ns2)
+
+        xmlns_keys = lookup_keys.select { |k| k.start_with?('xmlns:') }
+        expect(xmlns_keys.size).to eq(2)
+        expect(xmlns_keys[0]).to equal(xmlns_keys[1])
+      end
+    end
+  end
+
+  describe '.clear_resolve_cache' do
+    it 'clears cached results so subsequent calls produce fresh arrays' do
+      result_before = described_class.resolve('tns:User', namespaces:)
+      described_class.clear_resolve_cache
+      result_after = described_class.resolve('tns:User', namespaces:)
+
+      expect(result_before).to eq(result_after)
+      expect(result_before).not_to equal(result_after)
     end
   end
 

@@ -30,6 +30,12 @@ module WSDL
       # @return [Array<WSDL::XML::Attribute>]
       EMPTY_ATTRIBUTES = [].freeze
 
+      # Pre-frozen kind strings used in {#to_definition_h} to avoid
+      # per-call +Symbol#to_s+ allocations.
+      #
+      # @return [Hash{Symbol => String}]
+      KIND_STRINGS = { simple: 'simple', complex: 'complex', recursive: 'recursive' }.freeze
+
       # Creates a new Element with default values.
       def initialize
         @children    = EMPTY_CHILDREN
@@ -235,7 +241,7 @@ module WSDL
           name:,
           namespace:,
           form:,
-          type: kind.to_s.freeze,
+          type: KIND_STRINGS.fetch(kind),
           xsd_type: base_type,
           min_occurs: min_occurs.to_i,
           max_occurs: definition_max_occurs,

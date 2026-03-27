@@ -28,27 +28,88 @@ module WSDL
 
       # Resolves a lexical QName into a namespace/local pair.
       #
-      # Returns a lightweight two-element Array instead of allocating a
-      # QName instance. Use this on hot paths where only the namespace and
+      # Returns a lightweight frozen two-element Array instead of allocating
+      # a QName instance. Use this on hot paths where only the namespace and
       # local name are needed and the object identity of a QName is not
       # required (e.g. schema lookups that immediately destructure the
       # result).
       #
+      # Results are cached by namespaces hash identity so that
+      # repeated lookups of the same QName within the same namespace scope
+      # return the identical frozen Array without any new allocations.
+      #
       # @param qname [String] QName text (for example "tns:MyMessage")
       # @param namespaces [Hash{String => String}] in-scope namespace declarations
       # @param default_namespace [String, nil] fallback namespace for unprefixed names
-      # @return [Array(String, String)] [namespace, local] pair
+      # @return [Array(String, String)] frozen [namespace, local] pair
       def resolve(qname, namespaces:, default_namespace: nil)
+        cache = resolve_scope_cache(namespaces, default_namespace)
+        cache[qname] ||= resolve_uncached(qname, namespaces, default_namespace)
+      end
+
+      # Clears all internal resolve caches.
+      #
+      # Call this between independent parse runs in long-lived processes
+      # to release cached namespace lookup results.
+      #
+      # @return [void]
+      def clear_resolve_cache
+        @resolve_cache = {}.compare_by_identity
+        @resolve_dns_cache = {}.compare_by_identity
+        @prefix_cache = {}
+        nil
+      end
+
+      private
+
+      # Returns the inner cache hash for the given namespace scope.
+      #
+      # When +default_namespace+ is nil (the common case), the cache is a
+      # single identity-keyed hash keyed by the +namespaces+ object itself.
+      # When present, a second level keyed by the +default_namespace+ string
+      # isolates scopes that share the same namespaces hash but differ in
+      # their fallback.
+      #
+      # Using +compare_by_identity+ means only the exact same Hash object
+      # shares a cache bucket — structurally equal but distinct hashes get
+      # their own scope. This also keeps a strong reference to the
+      # namespaces hash, preventing GC from reclaiming it while cached.
+      #
+      # @param namespaces [Hash{String => String}] in-scope namespace declarations
+      # @param default_namespace [String, nil] fallback namespace for unprefixed names
+      # @return [Hash{String => Array}] qname-to-result cache for this scope
+      def resolve_scope_cache(namespaces, default_namespace)
+        if default_namespace
+          ns_cache = ((@resolve_dns_cache ||= {}.compare_by_identity)[namespaces] ||= {})
+          ns_cache[default_namespace] ||= {}
+        else
+          ((@resolve_cache ||= {}.compare_by_identity)[namespaces] ||= {})
+        end
+      end
+
+      # Performs the actual QName resolution without caching.
+      #
+      # Interns the +xmlns:prefix+ lookup key so that repeated prefixes
+      # (e.g. "tns", "xs") share a single frozen String allocation.
+      #
+      # @param qname [String] QName text
+      # @param namespaces [Hash{String => String}] in-scope namespace declarations
+      # @param default_namespace [String, nil] fallback namespace
+      # @return [Array(String, String)] frozen [namespace, local] pair
+      def resolve_uncached(qname, namespaces, default_namespace)
         colon = qname.rindex(':')
 
         if colon
           prefix = qname[0, colon]
           local  = qname[(colon + 1)..]
-          [namespaces["xmlns:#{prefix}"], local]
+          key = ((@prefix_cache ||= {})[prefix] ||= -"xmlns:#{prefix}")
+          [namespaces[key], local].freeze
         else
-          [namespaces['xmlns'] || default_namespace, qname]
+          [namespaces['xmlns'] || default_namespace, qname].freeze
         end
       end
+
+      public
 
       # Parses a lexical QName into a fully qualified name.
       #
