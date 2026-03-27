@@ -20,11 +20,6 @@ RSpec.describe WSDL::Config do
       expect(config.limits).to eq(custom_limits)
     end
 
-    it 'accepts deprecated strict_schema: false and maps to Strictness.off' do
-      config = described_class.new(strict_schema: false)
-      expect(config.strictness).to eq(WSDL::Strictness.off)
-    end
-
     it 'resolves nil limits to Limits defaults' do
       config = described_class.new(limits: nil)
       expect(config.limits).to eq(WSDL::Limits.new)

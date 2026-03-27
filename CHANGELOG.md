@@ -20,7 +20,7 @@ All notable changes to this project will be documented in this file.
 - `client.services` now includes an `operations` array for each port, listing all available operations. Overloaded operations include `input_name` for disambiguation.
 - Extract XML attributes from response elements into the parsed hash with `_`-prefixed keys (e.g., `transactionKey="TXN-123"` → `_transactionKey: "TXN-123"`). Attributes are type-coerced when schema metadata is available.
 - One-way operations (no `<output>` message) are now supported. Response contract returns empty elements and `output_style` returns `nil`.
-- `strictness:` replaces the `strict_schema` boolean with granular control over 4 validation concerns: `schema_imports`, `schema_references`, `operation_overloading`, `request_validation`. Accepts a hash (`strictness: { schema_imports: false }`), boolean (`strictness: false`), or object.
+- `strictness:` provides granular control over 4 validation concerns: `schema_imports`, `schema_references`, `operation_overloading`, `request_validation`. Accepts a hash (`strictness: { schema_imports: false }`), boolean (`strictness: false`), or object.
 - All `ResourceLimitError` and strictness error messages now include copy-pasteable fix examples (e.g., `limits: { max_schemas: 51 }`, `strictness: { schema_imports: false }`).
 - `limits:` now accepts a hash shorthand (`limits: { max_schemas: 200 }`) in addition to a `Limits` object.
 - All 46 XSD built-in types are now explicitly handled by `TypeCoercer`. List types (`IDREFS`, `ENTITIES`, `NMTOKENS`) are now get coerced into arrays.
@@ -52,7 +52,7 @@ All notable changes to this project will be documented in this file.
 - Removed `response.envelope_hash` (and `to_envelope_hash` alias) from the public API. Use `response.body` and `response.header` for schema-aware access, or `response.doc` for direct XML access.
 - Removed `response.xpath`. Use `response.doc.xpath` instead.
 
-### Deprecated
+### Removed
 
 - `strict_schema:` keyword on `Client.new` and `Config.new`. Use `strictness:` instead.
 
@@ -98,7 +98,7 @@ WSDL.strictness = false
 definition = WSDL.parse("service.wsdl", strictness: false)
 ```
 
-**`strict_schema:` deprecated** — use `strictness:` with granular keys:
+**`strict_schema:` removed** — use `strictness:` with granular keys:
 
 ```ruby
 WSDL.parse(url, strictness: { schema_imports: false, request_validation: false })

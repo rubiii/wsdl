@@ -20,13 +20,11 @@ module WSDL
     # @param strictness [Strictness, Hash, Boolean, nil] strictness settings.
     #   Accepts a Strictness object, a Hash of settings, +true+ (all strict),
     #   +false+ (all relaxed), or nil (defaults to all strict).
-    # @param strict_schema [Boolean, nil] **deprecated** — use +strictness:+ instead.
-    #   +true+ maps to {Strictness.on}, +false+ to {Strictness.off}.
     # @param limits [Limits, nil] resource limits for request validation.
     #   If nil, uses {Limits} defaults.
     #
-    def initialize(strictness: nil, strict_schema: nil, limits: nil)
-      @strictness = resolve_strictness(strictness, strict_schema)
+    def initialize(strictness: nil, limits: nil)
+      @strictness = Strictness.resolve(strictness) || Strictness.new
       @limits = Limits.resolve(limits) || Limits.new
 
       freeze
@@ -42,7 +40,6 @@ module WSDL
     #
     # @param options [Hash] the settings to override
     # @option options [Strictness, Hash, Boolean] :strictness
-    # @option options [Boolean] :strict_schema **deprecated**
     # @option options [Limits, nil] :limits
     # @return [Config] a new Config instance with the specified changes
     #
@@ -52,7 +49,6 @@ module WSDL
     def with(**options)
       self.class.new(
         strictness: options.fetch(:strictness, @strictness),
-        strict_schema: options[:strict_schema],
         limits: options.fetch(:limits, @limits)
       )
     end
@@ -84,21 +80,6 @@ module WSDL
     def inspect
       parts = to_h.map { |key, value| "#{key}=#{value.inspect}" }.join(' ')
       "#<#{self.class.name} #{parts}>"
-    end
-
-    private
-
-    def resolve_strictness(strictness, strict_schema)
-      resolved = Strictness.resolve(strictness)
-
-      raise ArgumentError, 'Cannot specify both strictness: and strict_schema:' if resolved && !strict_schema.nil?
-
-      return resolved || Strictness.new if strict_schema.nil?
-
-      Kernel.warn '[WSDL] strict_schema is deprecated. ' \
-                  "Use strictness: WSDL::Strictness.#{strict_schema ? 'on' : 'off'} instead.",
-        uplevel: 2
-      strict_schema ? Strictness.on : Strictness.off
     end
   end
 end

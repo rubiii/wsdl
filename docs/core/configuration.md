@@ -97,8 +97,6 @@ strictness: { schema_imports: false, schema_references: false }
 
 When an error is raised due to a strictness check, the error message tells you exactly which setting to disable.
 
-> **Deprecated:** `strict_schema: true/false` still works but emits a deprecation warning.
-
 ## Caching
 
 The built-in parser cache has been removed. `Definition` is serializable via `to_h`/`to_json` and restorable via `WSDL.load` — cache at the Definition level instead:
