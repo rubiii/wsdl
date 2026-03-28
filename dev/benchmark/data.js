@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1774731309584,
+  "lastUpdate": 1774734708557,
   "repoUrl": "https://github.com/rubiii/wsdl",
   "entries": {
     "Benchmark": [
@@ -1650,6 +1650,72 @@ window.BENCHMARK_DATA = {
             "value": 91.88,
             "unit": "i/s",
             "range": "± 1.1%"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "me@rubiii.com",
+            "name": "rubiii",
+            "username": "rubiii"
+          },
+          "committer": {
+            "email": "me@rubiii.com",
+            "name": "rubiii",
+            "username": "rubiii"
+          },
+          "distinct": true,
+          "id": "8287790fc138b5dbab574416adc44a0c5a817cbe",
+          "message": "Fix Verifier#valid? returning stale timestamp results\n\nCrypto verification (phases 1-5) is deterministic for a given\ndocument and is now cached after the first evaluation. Timestamp\nfreshness (phase 6) is time-dependent and is re-evaluated on every\ncall so that a Verifier held across a time boundary correctly\ndetects expiration.",
+          "timestamp": "2026-03-28T22:42:46+01:00",
+          "tree_id": "b09987d47b9725eec218fcffbc76a7a84deecbcd",
+          "url": "https://github.com/rubiii/wsdl/commit/8287790fc138b5dbab574416adc44a0c5a817cbe"
+        },
+        "date": 1774734707653,
+        "tool": "customBiggerIsBetter",
+        "benches": [
+          {
+            "name": "parse: small WSDL (blz_service, 88 lines)",
+            "value": 921.62,
+            "unit": "i/s",
+            "range": "± 6.8%"
+          },
+          {
+            "name": "parse: large WSDL (economic, 65k lines)",
+            "value": 1.44,
+            "unit": "i/s",
+            "range": "± 0.0%"
+          },
+          {
+            "name": "request: build + serialize",
+            "value": 8568.02,
+            "unit": "i/s",
+            "range": "± 2.8%"
+          },
+          {
+            "name": "sign: X.509 SHA-256 + Timestamp",
+            "value": 648.1,
+            "unit": "i/s",
+            "range": "± 2.0%"
+          },
+          {
+            "name": "verify: signature + timestamp",
+            "value": 638.89,
+            "unit": "i/s",
+            "range": "± 3.6%"
+          },
+          {
+            "name": "response: parse small (15 lines)",
+            "value": 7732.73,
+            "unit": "i/s",
+            "range": "± 2.5%"
+          },
+          {
+            "name": "response: parse large (200 items)",
+            "value": 84.38,
+            "unit": "i/s",
+            "range": "± 3.6%"
           }
         ]
       }
