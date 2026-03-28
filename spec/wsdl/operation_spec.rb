@@ -803,4 +803,68 @@ RSpec.describe WSDL::Operation do
         .to raise_error(WSDL::RequestDefinitionError, /requires a request definition/)
     end
   end
+
+  describe 'eager initialization of derived fields' do
+    # These tests verify that read-only derived fields are computed during
+    # construction, not lazily on first access. This eliminates data races
+    # when an Operation is read from multiple threads (the mutable
+    # prepare/reset!/invoke state remains single-threaded by contract).
+    #
+    # Each test inspects ivars directly because calling the public accessor
+    # would trigger lazy init and mask the defect we're guarding against.
+
+    it 'builds the contract before any method is called' do
+      fresh_op = described_class.new(op_data, endpoint, http_mock)
+      expect(fresh_op.instance_variable_get(:@contract)).to be_a(WSDL::Contract::OperationContract)
+    end
+
+    it 'builds input body parts before any method is called' do
+      fresh_op = described_class.new(op_data, endpoint, http_mock)
+      parts = fresh_op.instance_variable_get(:@input_body_parts)
+      expect(parts).to be_an(Array)
+      expect(parts).not_to be_empty
+      expect(parts).to be_frozen
+    end
+
+    it 'builds input header parts before any method is called' do
+      fresh_op = described_class.new(op_data, endpoint, http_mock)
+      parts = fresh_op.instance_variable_get(:@input_header_parts)
+      expect(parts).to be_an(Array)
+      expect(parts).to be_frozen
+    end
+
+    it 'builds output body parts before any method is called' do
+      fresh_op = described_class.new(op_data, endpoint, http_mock)
+      parts = fresh_op.instance_variable_get(:@output_body_parts)
+      expect(parts).to be_an(Array)
+      expect(parts).not_to be_empty
+      expect(parts).to be_frozen
+    end
+
+    it 'builds output header parts before any method is called' do
+      fresh_op = described_class.new(op_data, endpoint, http_mock)
+      # The old code used `defined?(@output_header_parts)` for lazy init,
+      # so the ivar would not exist at all until first access.
+      expect(fresh_op.instance_variable_defined?(:@output_header_parts)).to be(true)
+    end
+
+    context 'with an RPC/literal operation' do
+      let(:definition) { WSDL::Parser.parse fixture('wsdl/rpc_literal'), http_mock }
+      let(:op_data)    { definition.operation_data('SampleService', 'Sample', 'op1') }
+      let(:endpoint)   { definition.endpoint('SampleService', 'Sample') }
+
+      it 'builds the RPC wrapper before any method is called' do
+        fresh_op = described_class.new(op_data, endpoint, http_mock)
+        expect(fresh_op.instance_variable_get(:@rpc_wrapper)).to be_a(WSDL::Request::RPCWrapper)
+      end
+    end
+
+    context 'with a document/literal operation' do
+      it 'explicitly sets rpc_wrapper to nil (not left undefined)' do
+        fresh_op = described_class.new(op_data, endpoint, http_mock)
+        expect(fresh_op.instance_variable_defined?(:@rpc_wrapper)).to be(true)
+        expect(fresh_op.instance_variable_get(:@rpc_wrapper)).to be_nil
+      end
+    end
+  end
 end

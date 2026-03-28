@@ -2,6 +2,11 @@
 
 module WSDL
   # Represents a callable SOAP operation.
+  #
+  # Operation instances carry mutable per-request state ({#prepare}, {#reset!},
+  # {#invoke}) and are therefore **not thread-safe**. Create a separate
+  # Operation per thread or per request. The underlying {Definition} is
+  # frozen and safe to share.
   class Operation
     # Default XML encoding used in SOAP request headers.
     #
@@ -17,6 +22,10 @@ module WSDL
     }.freeze
 
     # Creates a new Operation from Definition operation data.
+    #
+    # All read-only derived fields (contract, element parts, RPC wrapper)
+    # are eagerly computed from the frozen +op_data+ during construction
+    # so they are safe for concurrent reads without synchronization.
     #
     # @param op_data [Hash{Symbol => Object}] operation hash from {Definition#operation_data}
     # @param endpoint [String] the SOAP endpoint URL
@@ -35,6 +44,8 @@ module WSDL
       @request_document = nil
       @security = Security::Config.new
       @http_header_overrides = {}
+
+      build_derived_fields(op_data)
     end
 
     # Returns the operation name from the WSDL definition.
@@ -126,15 +137,7 @@ module WSDL
     # Returns canonical operation contract metadata.
     #
     # @return [WSDL::Contract::OperationContract]
-    def contract
-      @contract ||= Contract::OperationContract.new(
-        input_header_parts:,
-        input_body_parts:,
-        output_header_parts: output_header_parts || [],
-        output_body_parts: output_body_parts || [],
-        input_style:
-      )
-    end
+    attr_reader :contract
 
     # Prepares request envelope from DSL and validates it immediately.
     #
@@ -154,10 +157,8 @@ module WSDL
       context = Request::DSLContext.new(document:, security:, limits: @config.limits)
       context.instance_exec(&block)
 
-      validation_contract = request_validation_contract
-
       Request::Validator.new(
-        contract: validation_contract,
+        contract:,
         strictness: @config.strictness,
         schema_complete: @op_data[:schema_complete]
       ).validate!(document)
@@ -302,28 +303,16 @@ module WSDL
     private
 
     # @return [Array<Definition::ElementHash>] input header part elements
-    def input_header_parts
-      @input_header_parts ||= wrap_elements(@op_data.dig(:input, :header))
-    end
+    attr_reader :input_header_parts
 
     # @return [Array<Definition::ElementHash>] input body part elements
-    def input_body_parts
-      @input_body_parts ||= wrap_elements(@op_data.dig(:input, :body))
-    end
+    attr_reader :input_body_parts
 
     # @return [Array<Definition::ElementHash>, nil] output header part elements
-    def output_header_parts
-      return @output_header_parts if defined?(@output_header_parts)
-
-      @output_header_parts = @op_data[:output] ? wrap_elements(@op_data[:output][:header]) : nil
-    end
+    attr_reader :output_header_parts
 
     # @return [Array<Definition::ElementHash>, nil] output body part elements
-    def output_body_parts
-      return @output_body_parts if defined?(@output_body_parts)
-
-      @output_body_parts = @op_data[:output] ? wrap_elements(@op_data[:output][:body]) : nil
-    end
+    attr_reader :output_body_parts
 
     # @return [Array<Definition::ElementHash>] wrapped element hashes
     def wrap_elements(hashes)
@@ -349,16 +338,9 @@ module WSDL
     end
 
     def prepare_serializable_document(document)
-      return document unless rpc_literal?
+      return document unless @rpc_wrapper
 
-      rpc_wrapper.wrap(document)
-    end
-
-    def rpc_wrapper
-      @rpc_wrapper ||= Request::RPCWrapper.new(
-        operation_name: name,
-        namespace_uri: @op_data[:rpc_input_namespace]
-      )
+      @rpc_wrapper.wrap(document)
     end
 
     def rpc_literal?
@@ -373,39 +355,43 @@ module WSDL
         "Operation #{name.inspect} requires a request definition via operation.prepare { ... }"
     end
 
-    def request_validation_contract
-      contract
-    rescue UnresolvedReferenceError => e
-      raise if @config.strictness.schema_references
-      raise unless schema_unresolved_reference?(e)
-
-      fallback_validation_contract
+    # Eagerly computes all read-only derived fields from frozen op_data.
+    #
+    # Called once during {#initialize} so these fields are safe for
+    # concurrent reads without synchronization.
+    #
+    # @param op_data [Hash{Symbol => Object}] operation hash
+    # @return [void]
+    def build_derived_fields(op_data)
+      @input_header_parts = wrap_elements(op_data.dig(:input, :header))
+      @input_body_parts = wrap_elements(op_data.dig(:input, :body))
+      @output_header_parts = op_data[:output] ? wrap_elements(op_data[:output][:header]) : nil
+      @output_body_parts = op_data[:output] ? wrap_elements(op_data[:output][:body]) : nil
+      @contract = build_contract
+      @rpc_wrapper = rpc_literal? ? build_rpc_wrapper : nil
     end
 
-    def fallback_validation_contract
-      @fallback_validation_contract ||= begin
-        header = Contract::PartContract.new([], section: :header)
-        body = Contract::PartContract.new([], section: :body)
-        request = Contract::MessageContract.new(header:, body:)
-        validation_contract_type.new(request:, style: input_style)
-      end
+    # Builds the frozen {Contract::OperationContract} from pre-computed parts.
+    #
+    # @return [Contract::OperationContract]
+    def build_contract
+      Contract::OperationContract.new(
+        input_header_parts: @input_header_parts,
+        input_body_parts: @input_body_parts,
+        output_header_parts: @output_header_parts || [],
+        output_body_parts: @output_body_parts || [],
+        input_style:
+      )
     end
 
-    def validation_contract_type
-      @validation_contract_type ||= Data.define(:request, :style)
-    end
-
-    def schema_unresolved_reference?(error)
-      schema_reference_types = %i[
-        schema_namespace
-        type
-        simple_type
-        complex_type
-        element
-        attribute
-        attribute_group
-      ]
-      schema_reference_types.include?(error.reference_type)
+    # Builds the {Request::RPCWrapper} for RPC/literal operations.
+    #
+    # @return [Request::RPCWrapper]
+    def build_rpc_wrapper
+      Request::RPCWrapper.new(
+        operation_name: name,
+        namespace_uri: @op_data[:rpc_input_namespace]
+      )
     end
   end
 end
