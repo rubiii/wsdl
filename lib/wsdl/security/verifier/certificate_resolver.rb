@@ -36,14 +36,6 @@ module WSDL
         # X.509 certificates are typically 1-4 KB; 100 KB is extremely generous.
         MAX_ENCODED_TOKEN_SIZE = 100_000
 
-        # Pattern for valid XML element IDs (NCName production).
-        #
-        # This is used before interpolating IDs into XPath expressions to
-        # prevent XPath injection.
-        #
-        # @see https://www.w3.org/TR/xml-id/
-        VALID_ID_PATTERN = /\A[a-zA-Z_][a-zA-Z0-9_.-]*\z/
-
         # @return [OpenSSL::X509::Certificate, nil] the resolved certificate
         attr_reader :certificate
 

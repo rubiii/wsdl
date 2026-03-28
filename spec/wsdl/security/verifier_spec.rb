@@ -497,6 +497,28 @@ RSpec.describe WSDL::Security::Verifier, :verifier_helpers do
     end
   end
 
+  describe 'VALID_ID_PATTERN' do
+    it 'is defined on the Verifier class' do
+      expect(described_class::VALID_ID_PATTERN).to be_a(Regexp)
+    end
+
+    it 'matches valid NCName element IDs' do
+      pattern = described_class::VALID_ID_PATTERN
+      valid_ids = %w[Body-123 Timestamp-abc _underscore simple A]
+
+      expect(valid_ids).to all(match(pattern))
+    end
+
+    it 'rejects XPath injection attempts' do
+      pattern = described_class::VALID_ID_PATTERN
+      bad_ids = ["test'inject", 'id | //password', 'foo" or "1"="1', 'id[1]', '@attr']
+
+      bad_ids.each do |bad_id|
+        expect(bad_id).not_to match(pattern)
+      end
+    end
+  end
+
   describe 'XPath injection protection' do
     def response_with_reference(id)
       <<~XML

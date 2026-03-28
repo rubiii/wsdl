@@ -30,12 +30,6 @@ module WSDL
       class ReferenceValidator < Base
         # Local alias for canonicalization algorithm constants
         C14N = Constants::Algorithms::Canonicalization
-        # Pattern for valid XML element IDs (NCName production).
-        # This prevents XPath injection by rejecting IDs containing quotes,
-        # brackets, operators, or other characters that could alter XPath semantics.
-        #
-        # @see https://www.w3.org/TR/xml-id/
-        VALID_ID_PATTERN = /\A[a-zA-Z_][a-zA-Z0-9_.-]*\z/
 
         # Creates a new reference validator.
         #

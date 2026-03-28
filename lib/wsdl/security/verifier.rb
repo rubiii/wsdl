@@ -68,6 +68,13 @@ module WSDL
       # @return [Module]
       SignatureNS = Constants::NS::Signature
 
+      # Pattern for valid XML element IDs (NCName production).
+      # Inherited from {Base} which defines the canonical pattern.
+      #
+      # @return [Regexp]
+      # @see Base::VALID_ID_PATTERN
+      VALID_ID_PATTERN = Base::VALID_ID_PATTERN
+
       # @return [Array<String>] errors encountered during verification
       attr_reader :errors
 
@@ -145,7 +152,7 @@ module WSDL
       #
       # @return [Array<String>] element names (e.g., ['Body', 'Timestamp'])
       def signed_elements
-        signed_element_ids.filter_map { |id| safe_find_element_by_id(id)&.name }
+        signed_element_ids.filter_map { |id| find_element_by_id(id)&.name }
       end
 
       # Returns the signature algorithm URI.
@@ -365,18 +372,18 @@ module WSDL
         structure_validator.signature_node&.at_xpath('ds:SignedInfo', ns)
       end
 
-      # Safely finds an element by ID with validation.
-      # Returns nil and records error for invalid IDs.
+      # Finds an element by its ID attribute with XPath injection protection.
+      #
+      # Validates the ID format before interpolating into XPath expressions.
+      # This is a defense-in-depth measure: every XPath interpolation site is
+      # safe independently of its callers.
       #
       # @param id [String] the element ID
       # @return [Nokogiri::XML::Element, nil] the element or nil
-      def safe_find_element_by_id(id)
+      # @api private
+      def find_element_by_id(id)
         return nil unless valid_element_id?(id)
 
-        find_element_by_id(id)
-      end
-
-      def find_element_by_id(id)
         @document.at_xpath("//*[@wsu:Id='#{id}']", ns) ||
           @document.at_xpath("//*[@Id='#{id}']") ||
           @document.at_xpath("//*[@xml:id='#{id}']")
@@ -388,7 +395,7 @@ module WSDL
       # @return [Boolean] true if valid
       def valid_element_id?(id)
         return add_error('Reference URI is empty') if id.nil? || id.empty?
-        return true if id.match?(Verifier::ReferenceValidator::VALID_ID_PATTERN)
+        return true if id.match?(VALID_ID_PATTERN)
 
         add_error("Invalid element ID format (possible XPath injection): #{id.inspect}")
       end

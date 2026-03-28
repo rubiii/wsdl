@@ -42,6 +42,17 @@ module WSDL
         # SOAP namespace URIs for both versions.
         SOAP_NAMESPACES = [SOAPNS::V1_1, SOAPNS::V1_2].freeze
 
+        # Pattern for valid XML element IDs (NCName production).
+        # This prevents XPath injection by rejecting IDs containing quotes,
+        # brackets, operators, or other characters that could alter XPath semantics.
+        #
+        # Used by the Verifier and all sub-validators as the canonical validation
+        # pattern for element IDs before interpolation into XPath expressions.
+        #
+        # @return [Regexp]
+        # @see https://www.w3.org/TR/xml-id/
+        VALID_ID_PATTERN = /\A[a-zA-Z_][a-zA-Z0-9_.-]*\z/
+
         # @return [Array<String>] errors encountered during validation
         attr_reader :errors
 
