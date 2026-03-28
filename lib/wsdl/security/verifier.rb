@@ -111,25 +111,30 @@ module WSDL
         @validate_timestamp = validate_timestamp
         @clock_skew = clock_skew
         @errors = []
-        @verified = nil
         @certificate = normalize_certificate(certificate) if certificate
       end
 
       # Returns whether the signature (and timestamp, if enabled) is valid.
       #
-      # Performs full verification including:
-      # 1. Structural validation (XSW protection)
-      # 2. Certificate resolution
-      # 3. Certificate validation (validity period and chain)
-      # 4. Reference digest verification
-      # 5. Cryptographic signature verification
-      # 6. Timestamp freshness validation (if enabled and timestamp present)
+      # Phases 1-5 (structural, certificate, reference, and signature
+      # verification) are deterministic for a given document and are
+      # cached after the first evaluation.
+      #
+      # Phase 6 (timestamp freshness) is time-dependent and is
+      # re-evaluated on every call so that a Verifier held across a
+      # time boundary correctly detects expiration.
       #
       # @return [Boolean] true if signature is present and valid
       def valid?
-        return @verified unless @verified.nil?
+        verify_crypto unless defined?(@crypto_valid)
 
-        @verified = perform_verification
+        # Reset errors to the crypto baseline for this evaluation
+        @errors = @crypto_errors.dup
+
+        return false unless @crypto_valid
+
+        # Phase 6: Timestamp freshness — always re-evaluate
+        run_timestamp_validation
       end
 
       # Returns whether a signature is present in the document.
@@ -197,13 +202,13 @@ module WSDL
 
       # Returns timestamp validation errors.
       #
-      # This exposes timestamp-specific diagnostics from the memoized
-      # timestamp validator without rerunning a full verification pipeline.
+      # Each call re-evaluates timestamp freshness against the current
+      # time, ensuring errors reflect the latest state.
       #
       # @return [Array<String>] timestamp validation errors
       def timestamp_errors
         validator = timestamp_validator
-        validator.valid? if validator.errors.empty?
+        validator.valid?
         validator.errors.dup
       end
 
@@ -231,26 +236,23 @@ module WSDL
       # Main Verification Flow
       # ============================================================
 
-      def perform_verification
+      # Runs phases 1-5 (deterministic) and caches the result.
+      #
+      # @return [void]
+      def verify_crypto
         @errors = []
 
         # Phase 1: Structural validation (fast, before expensive crypto)
-        return false unless run_structure_validation
-
         # Phase 2: Certificate resolution
-        return false unless run_certificate_resolution
-
         # Phase 3: Certificate validation (validity + chain)
-        return false unless run_certificate_validation
-
         # Phase 4: Reference validation (digests and element positions)
-        return false unless run_reference_validation
-
         # Phase 5: Cryptographic signature verification
-        return false unless run_signature_validation
-
-        # Phase 6: Timestamp validation (after signature, so signed timestamp is verified)
-        run_timestamp_validation
+        @crypto_valid = run_structure_validation &&
+                        run_certificate_resolution &&
+                        run_certificate_validation &&
+                        run_reference_validation &&
+                        run_signature_validation
+        @crypto_errors = @errors.dup
       end
 
       # ============================================================

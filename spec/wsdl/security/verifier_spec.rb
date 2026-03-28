@@ -236,13 +236,78 @@ RSpec.describe WSDL::Security::Verifier, :verifier_helpers do
       end
     end
 
-    context 'caching' do
-      let(:verifier) { described_class.new(signed_soap_response) }
-
-      it 'caches the verification result' do
+    context 'repeated calls' do
+      it 'returns consistent results for unchanged conditions' do
+        verifier = described_class.new(signed_soap_response)
         first_result = verifier.valid?
         second_result = verifier.valid?
         expect(first_result).to eq(second_result)
+      end
+
+      it 're-evaluates timestamp freshness on subsequent calls' do
+        now = Time.now.utc
+        envelope = <<~XML
+          <?xml version="1.0" encoding="UTF-8"?>
+          <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+            <soap:Header/>
+            <soap:Body xmlns:wsu="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd" wsu:Id="Body-freshness">
+              <Data>Test</Data>
+            </soap:Body>
+          </soap:Envelope>
+        XML
+
+        config = WSDL::Security::Config.new
+        config.timestamp(created_at: now, expires_at: now + 60)
+        config.signature(certificate:, private_key:)
+
+        header = WSDL::Security::SecurityHeader.new(config)
+        signed_xml = header.apply(envelope)
+
+        verifier = described_class.new(signed_xml, clock_skew: 0)
+
+        # First call: valid (timestamp not yet expired)
+        expect(verifier.valid?).to be true
+
+        # Second call: time has advanced past expiry
+        allow(Time).to receive(:now).and_return(now + 120)
+        expect(verifier.valid?).to be false
+        expect(verifier.errors).to include(match(/expired/i))
+      end
+
+      it 'does not accumulate crypto errors across calls' do
+        verifier = described_class.new(unsigned_soap_response)
+        verifier.valid?
+        first_errors = verifier.errors.dup
+
+        verifier.valid?
+        expect(verifier.errors).to eq(first_errors)
+      end
+
+      it 'does not accumulate timestamp errors across calls' do
+        past_time = Time.now.utc - 600
+        envelope = <<~XML
+          <?xml version="1.0" encoding="UTF-8"?>
+          <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+            <soap:Header/>
+            <soap:Body xmlns:wsu="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd" wsu:Id="Body-noaccum">
+              <Data>Test</Data>
+            </soap:Body>
+          </soap:Envelope>
+        XML
+
+        config = WSDL::Security::Config.new
+        config.timestamp(created_at: past_time, expires_at: past_time + 60)
+        config.signature(certificate:, private_key:)
+
+        header = WSDL::Security::SecurityHeader.new(config)
+        signed_xml = header.apply(envelope)
+
+        verifier = described_class.new(signed_xml, clock_skew: 0)
+        verifier.valid?
+        first_errors = verifier.errors.dup
+
+        verifier.valid?
+        expect(verifier.errors).to eq(first_errors)
       end
     end
   end
@@ -362,6 +427,37 @@ RSpec.describe WSDL::Security::Verifier, :verifier_helpers do
       second_errors = verifier.timestamp_errors
 
       expect(second_errors).to eq(first_errors)
+    end
+
+    it 're-evaluates freshness on each call' do
+      now = Time.now.utc
+      xml = <<~XML
+        <?xml version="1.0" encoding="UTF-8"?>
+        <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"
+                       xmlns:wsse="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd"
+                       xmlns:wsu="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd">
+          <soap:Header>
+            <wsse:Security soap:mustUnderstand="1">
+              <wsu:Timestamp wsu:Id="Timestamp-fresh">
+                <wsu:Created>#{now.xmlschema}</wsu:Created>
+                <wsu:Expires>#{(now + 60).xmlschema}</wsu:Expires>
+              </wsu:Timestamp>
+            </wsse:Security>
+          </soap:Header>
+          <soap:Body>
+            <Response>OK</Response>
+          </soap:Body>
+        </soap:Envelope>
+      XML
+
+      verifier = described_class.new(xml, clock_skew: 0)
+
+      # Fresh — no errors
+      expect(verifier.timestamp_errors).to be_empty
+
+      # Expired — errors reflect current state
+      allow(Time).to receive(:now).and_return(now + 120)
+      expect(verifier.timestamp_errors).to include(match(/Timestamp has expired/))
     end
   end
 

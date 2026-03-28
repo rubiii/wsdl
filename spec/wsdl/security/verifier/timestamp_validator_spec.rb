@@ -550,6 +550,81 @@ RSpec.describe WSDL::Security::Verifier::TimestampValidator do
     end
   end
 
+  describe 'repeated calls' do
+    context 'when timestamp freshness changes between calls' do
+      let(:validator) { described_class.new(document, clock_skew: 300) }
+      let(:xml) do
+        build_timestamp_xml(
+          created: '2025-01-15T11:58:00Z',
+          expires: '2025-01-15T12:03:00Z'
+        )
+      end
+
+      it 're-evaluates freshness on each call' do
+        # First call: timestamp is valid at reference time 12:00
+        allow(Time).to receive(:now).and_return(Time.utc(2025, 1, 15, 12, 0, 0))
+        expect(validator.valid?).to be true
+
+        # Second call: timestamp has expired (10 minutes past expiry, beyond 5-minute skew)
+        allow(Time).to receive(:now).and_return(Time.utc(2025, 1, 15, 12, 10, 0))
+        expect(validator.valid?).to be false
+      end
+
+      it 'transitions from invalid back to valid when time conditions change' do
+        # First call: too far in the future (created is 6 minutes ahead of reference, beyond 5-minute skew)
+        allow(Time).to receive(:now).and_return(Time.utc(2025, 1, 15, 11, 52, 0))
+        expect(validator.valid?).to be false
+
+        # Second call: now within acceptable range
+        allow(Time).to receive(:now).and_return(Time.utc(2025, 1, 15, 12, 0, 0))
+        expect(validator.valid?).to be true
+        expect(validator.errors).to be_empty
+      end
+    end
+
+    context 'when validation fails repeatedly' do
+      let(:xml) do
+        build_timestamp_xml(
+          created: '2025-01-15T11:50:00Z',
+          expires: '2025-01-15T11:54:00Z' # expired relative to reference_time 12:00
+        )
+      end
+
+      it 'does not accumulate errors across calls' do
+        validator.valid?
+        first_error_count = validator.errors.size
+
+        validator.valid?
+        expect(validator.errors.size).to eq(first_error_count)
+      end
+
+      it 'maintains accurate error messages across calls' do
+        validator.valid?
+        first_errors = validator.errors.dup
+
+        validator.valid?
+        expect(validator.errors).to eq(first_errors)
+      end
+    end
+
+    context 'when parse errors exist' do
+      let(:xml) do
+        build_timestamp_xml(
+          created: 'not-a-valid-time',
+          expires: '2025-01-15T12:03:00Z'
+        )
+      end
+
+      it 'preserves parse errors across calls without duplication' do
+        validator.valid?
+        first_errors = validator.errors.dup
+
+        validator.valid?
+        expect(validator.errors).to eq(first_errors)
+      end
+    end
+  end
+
   describe 'edge cases' do
     context 'with subsecond precision in timestamps' do
       let(:xml) do

@@ -75,6 +75,12 @@ module WSDL
 
         # Validates the timestamp freshness.
         #
+        # Each call re-evaluates freshness against the current time,
+        # ensuring that a Verifier held across a time boundary correctly
+        # detects expiration. Parse errors (malformed values detected
+        # during the one-time parse) are preserved across calls; only
+        # validation errors (freshness checks) are cleared and re-run.
+        #
         # Returns true if:
         # - No timestamp is present (timestamps are optional per spec)
         # - Timestamp is present and within acceptable time bounds
@@ -91,6 +97,11 @@ module WSDL
 
           return true unless timestamp_present?
           return false unless @parsed_values_valid
+
+          # Clear validation errors from previous calls to prevent
+          # accumulation. Parse errors are guarded above by
+          # @parsed_values_valid which returns false before this point.
+          @errors.clear
 
           validate_created && validate_expires
         end
