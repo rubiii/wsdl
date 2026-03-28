@@ -77,4 +77,27 @@ RSpec.describe WSDL do
       }.to raise_error(ArgumentError, /schema version mismatch/)
     end
   end
+
+  describe '.dump' do
+    let(:definition) { described_class.parse(fixture('wsdl/authentication')) }
+
+    it 'serializes a Definition to a hash' do
+      hash = described_class.dump(definition)
+
+      expect(hash).to be_a(Hash)
+      expect(hash).to have_key('schema_version')
+      expect(hash).to have_key('service_name')
+    end
+
+    it 'produces the same hash as Definition#to_h' do
+      expect(described_class.dump(definition)).to eq(definition.to_h)
+    end
+
+    it 'round-trips through load' do
+      restored = described_class.load(described_class.dump(definition))
+
+      expect(restored.service_name).to eq(definition.service_name)
+      expect(restored.fingerprint).to eq(definition.fingerprint)
+    end
+  end
 end

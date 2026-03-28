@@ -109,4 +109,44 @@ RSpec.describe WSDL do
       end
     end
   end
+
+  describe '.dump' do
+    let(:definition) { described_class.parse(fixture('wsdl/authentication'), http: http_mock) }
+
+    it 'returns a serializable hash' do
+      hash = described_class.dump(definition)
+
+      expect(hash).to be_a(Hash)
+      expect(hash.keys).to all(be_a(String))
+    end
+
+    it 'produces the same hash as Definition#to_h' do
+      expect(described_class.dump(definition)).to eq(definition.to_h)
+    end
+
+    it 'is the inverse of .load' do
+      restored = described_class.load(described_class.dump(definition))
+
+      expect(restored.service_name).to eq(definition.service_name)
+      expect(restored.fingerprint).to eq(definition.fingerprint)
+      expect(restored.to_h).to eq(definition.to_h)
+    end
+
+    it 'round-trips through JSON with .load' do
+      json = JSON.generate(described_class.dump(definition))
+      restored = described_class.load(JSON.parse(json))
+
+      expect(restored.service_name).to eq(definition.service_name)
+      expect(restored.fingerprint).to eq(definition.fingerprint)
+    end
+
+    it 'round-trips every standard fixture' do
+      %w[authentication temperature blz_service bronto].each do |name|
+        original = described_class.parse(fixture("wsdl/#{name}"), http: http_mock)
+        restored = described_class.load(described_class.dump(original))
+
+        expect(restored.to_h).to eq(original.to_h), "#{name}: dump/load round-trip mismatch"
+      end
+    end
+  end
 end

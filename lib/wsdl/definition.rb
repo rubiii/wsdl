@@ -292,7 +292,7 @@ module WSDL
     # Serializes this Definition to a plain Hash.
     #
     # The hash is suitable for JSON serialization and can be restored
-    # via {WSDL.load} or {.from_h}.
+    # via {WSDL.load} or {.from_h}. Equivalent to calling {WSDL.dump}.
     #
     # @return [Hash{String => Object}] serializable hash with string keys
     def to_h

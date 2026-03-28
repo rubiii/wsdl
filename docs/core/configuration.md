@@ -100,7 +100,7 @@ When an error is raised due to a strictness check, the error message tells you e
 
 ## Caching
 
-The built-in parser cache has been removed. `Definition` is serializable via `to_h`/`to_json` and restorable via `WSDL.load` — cache at the Definition level instead:
+The built-in parser cache has been removed. `Definition` is serializable via `WSDL.dump`/`to_h`/`to_json` and restorable via `WSDL.load` — cache at the Definition level instead:
 
 ```ruby
 # Parse once
