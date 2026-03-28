@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1774645877597,
+  "lastUpdate": 1774707815719,
   "repoUrl": "https://github.com/rubiii/wsdl",
   "entries": {
     "Benchmark": [
@@ -1254,6 +1254,72 @@ window.BENCHMARK_DATA = {
             "value": 83.03,
             "unit": "i/s",
             "range": "± 10.8%"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "me@rubiii.com",
+            "name": "rubiii",
+            "username": "rubiii"
+          },
+          "committer": {
+            "email": "me@rubiii.com",
+            "name": "rubiii",
+            "username": "rubiii"
+          },
+          "distinct": true,
+          "id": "4532f0ed073b864b3fbff575ea89288b12ac31b3",
+          "message": "Extract build_single_operation and OperationInfo delegators\n\nRefactors the large build_operations loop into two focused methods\n(build_single_operation, populate_operation_metadata) and adds\ninput?, rpc_input_namespace, rpc_output_namespace delegators to\nOperationInfo so the builder goes through the facade instead of\nreaching into binding internals.\n\n* Add builder edge-case tests: missing portType op, missing input\n  element, overloaded operations, unresolved binding reference\n* Add OperationInfo spec covering the new delegator methods",
+          "timestamp": "2026-03-28T15:21:45+01:00",
+          "tree_id": "8e50a214e3b354b8a19a3e9eb182d0c6f833ea82",
+          "url": "https://github.com/rubiii/wsdl/commit/4532f0ed073b864b3fbff575ea89288b12ac31b3"
+        },
+        "date": 1774707815363,
+        "tool": "customBiggerIsBetter",
+        "benches": [
+          {
+            "name": "parse: small WSDL (blz_service, 88 lines)",
+            "value": 1014.12,
+            "unit": "i/s",
+            "range": "± 4.7%"
+          },
+          {
+            "name": "parse: large WSDL (economic, 65k lines)",
+            "value": 1.65,
+            "unit": "i/s",
+            "range": "± 0.0%"
+          },
+          {
+            "name": "request: build + serialize",
+            "value": 10935.22,
+            "unit": "i/s",
+            "range": "± 2.4%"
+          },
+          {
+            "name": "sign: X.509 SHA-256 + Timestamp",
+            "value": 670.49,
+            "unit": "i/s",
+            "range": "± 1.5%"
+          },
+          {
+            "name": "verify: signature + timestamp",
+            "value": 690.79,
+            "unit": "i/s",
+            "range": "± 3.0%"
+          },
+          {
+            "name": "response: parse small (15 lines)",
+            "value": 9162.84,
+            "unit": "i/s",
+            "range": "± 2.4%"
+          },
+          {
+            "name": "response: parse large (200 items)",
+            "value": 78.38,
+            "unit": "i/s",
+            "range": "± 5.1%"
           }
         ]
       }
