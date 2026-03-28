@@ -819,8 +819,10 @@ RSpec.describe WSDL::Security::SecurityHeader do
       end
 
       describe 'no WS-Addressing headers' do
-        it 'does not fail when no WS-Addressing headers are present' do
-          expect { header.apply(basic_envelope) }.not_to raise_error
+        it 'produces a valid signature when no WS-Addressing headers are present' do
+          result = header.apply(basic_envelope)
+          verifier = WSDL::Security::Verifier.new(result)
+          expect(verifier.valid?).to be true
         end
 
         it 'still signs the body' do
