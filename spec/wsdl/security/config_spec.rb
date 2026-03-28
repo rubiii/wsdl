@@ -293,22 +293,25 @@ RSpec.describe WSDL::Security::Config do
   end
 
   describe '#inspect' do
-    it 'falls back to simple output when inspect internals raise' do
-      broken_config = Class.new(described_class) do
-        private
+    it 'shows base flags for unconfigured config' do
+      output = config.inspect
 
-        def inspect_base_parts
-          raise StandardError, 'broken'
-        end
-      end.new
-
-      broken_config.username_token('admin', 'secret')
-      output = broken_config.inspect
-
-      expect(output).to include('username_token=true')
+      expect(output).to include('WSDL::Security::Config')
+      expect(output).to include('username_token=false')
       expect(output).to include('timestamp=false')
       expect(output).to include('signature=false')
       expect(output).to include('verify_response=false')
+      expect(output).to include('verify_mode=:disabled')
+    end
+
+    it 'includes signature details with certificate subject' do
+      config.signature(certificate:, private_key:, digest_algorithm: :sha512)
+      output = config.inspect
+
+      expect(output).to include('signature=true')
+      expect(output).to include('signature.certificate="/CN=Test Certificate"')
+      expect(output).to include('signature.private_key=[REDACTED]')
+      expect(output).to include('signature.algorithm=:sha512')
     end
 
     it 'redacts secrets and keeps useful metadata' do

@@ -243,9 +243,6 @@ module WSDL
         parts.concat(inspect_username_token_parts) if @policy.request.username_token
         parts.concat(inspect_signature_parts) if @policy.request.signature
         "#<#{self.class.name} #{parts.join(' ')}>"
-      rescue StandardError
-        "#<#{self.class.name} username_token=#{username_token?} timestamp=#{timestamp?} " \
-        "signature=#{signature?} verify_response=#{verify_response?}>"
       end
 
       private
