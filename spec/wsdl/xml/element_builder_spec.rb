@@ -86,7 +86,7 @@ RSpec.describe WSDL::XML::ElementBuilder do
         expect(elements.first.name).to eq('Root')
       end
 
-      it 'allows nesting when depth is within limit' do
+      it 'builds full element tree when depth is within limit' do
         generous_limit = WSDL::Limits.new(max_type_nesting_depth: 50)
         builder = described_class.new(nested_schemas, limits: generous_limit)
 
@@ -95,10 +95,16 @@ RSpec.describe WSDL::XML::ElementBuilder do
           namespaces: { 'xmlns:tns' => 'http://example.com/nested' }
         }
 
-        expect { builder.build([part]) }.not_to raise_error
+        elements = builder.build([part])
+
+        expect(elements.size).to eq(1)
+        root = elements.first
+        expect(root.name).to eq('Root')
+        expect(root.children.first.name).to eq('level2')
+        expect(root.children.first.children.first.name).to eq('level3')
       end
 
-      it 'allows unlimited nesting when limit is nil' do
+      it 'resolves every nesting level when limit is nil (unlimited)' do
         unlimited = WSDL::Limits.new(max_type_nesting_depth: nil)
         builder = described_class.new(nested_schemas, limits: unlimited)
 
@@ -107,19 +113,30 @@ RSpec.describe WSDL::XML::ElementBuilder do
           namespaces: { 'xmlns:tns' => 'http://example.com/nested' }
         }
 
-        expect { builder.build([part]) }.not_to raise_error
+        elements = builder.build([part])
+
+        node = elements.first
+        %w[level2 level3 level4 level5 value].each do |name|
+          node = node.children.first
+          expect(node.name).to eq(name)
+        end
+        expect(node.base_type).to eq('xs:string')
+        expect(node.children).to be_empty
       end
 
-      it 'uses Limits defaults when none provided' do
+      it 'builds element tree with default Limits' do
         builder = described_class.new(nested_schemas)
 
-        # Default limits should allow normal nesting (50 levels)
         part = {
           element: 'tns:Root',
           namespaces: { 'xmlns:tns' => 'http://example.com/nested' }
         }
 
-        expect { builder.build([part]) }.not_to raise_error
+        elements = builder.build([part])
+
+        expect(elements.size).to eq(1)
+        expect(elements.first.name).to eq('Root')
+        expect(elements.first.children).not_to be_empty
       end
     end
 
@@ -166,7 +183,7 @@ RSpec.describe WSDL::XML::ElementBuilder do
         expect(limit_issues.first[:error]).to match(/Element count.*exceeds limit/)
       end
 
-      it 'allows elements when within limit' do
+      it 'builds all child elements when within limit' do
         generous_limit = WSDL::Limits.new(max_elements_per_type: 100)
         builder = described_class.new(simple_schemas, limits: generous_limit)
 
@@ -175,7 +192,11 @@ RSpec.describe WSDL::XML::ElementBuilder do
           namespaces: { 'xmlns:tns' => 'http://example.com/simple' }
         }
 
-        expect { builder.build([part]) }.not_to raise_error
+        elements = builder.build([part])
+
+        expect(elements.size).to eq(1)
+        expect(elements.first.name).to eq('Simple')
+        expect(elements.first.children.map(&:name)).to eq(%w[field1 field2])
       end
     end
   end
