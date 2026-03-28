@@ -65,7 +65,9 @@ module WSDL
     #
     # Validates the source, resolves all imports and schemas, and builds
     # the Definition IR. This is the primary entry point for the parse
-    # pipeline.
+    # pipeline. The {QName} resolve cache is automatically cleared when
+    # this method returns (even on exception) so that namespace hashes
+    # and their referenced Nokogiri nodes can be garbage-collected.
     #
     # @param wsdl [String] a URL or local file path to the WSDL document
     # @param http [Object] an HTTP client instance for fetching remote documents
@@ -82,6 +84,8 @@ module WSDL
         schema_import_errors: result.schema_import_errors,
         provenance: result.provenance
       ).build
+    ensure
+      QName.clear_resolve_cache
     end
   end
 end

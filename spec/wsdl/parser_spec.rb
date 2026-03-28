@@ -2,6 +2,49 @@
 
 RSpec.describe WSDL::Parser do
   describe '.parse' do
+    describe 'QName cache lifecycle' do
+      after do
+        WSDL::QName.clear_resolve_cache
+      end
+
+      it 'clears the QName resolve cache after a successful parse' do
+        # Seed the cache before parsing. If the ensure block in
+        # Parser.parse is removed, both the seed and any entries added
+        # by the build phase survive — failing the assertions below.
+        ns = { 'xmlns:tns' => 'http://example.com' }
+        WSDL::QName.resolve('tns:Seed', namespaces: ns)
+
+        expect(WSDL::QName.instance_variable_get(:@resolve_cache)).not_to be_empty
+
+        described_class.parse(fixture('wsdl/authentication'), http_mock)
+
+        expect(WSDL::QName.instance_variable_get(:@resolve_cache)).to be_empty
+        expect(WSDL::QName.instance_variable_get(:@resolve_dns_cache)).to be_empty
+        expect(WSDL::QName.instance_variable_get(:@prefix_cache)).to be_empty
+      end
+
+      it 'clears the QName resolve cache even when parse raises' do
+        # Seed the cache so we can verify the ensure block fires on
+        # the exception path, not just the happy path.
+        ns = { 'xmlns:tns' => 'http://example.com' }
+        WSDL::QName.resolve('tns:Seed', namespaces: ns)
+
+        expect(WSDL::QName.instance_variable_get(:@resolve_cache)).not_to be_empty
+
+        expect {
+          described_class.parse(
+            fixture('wsdl/travelport/system_v32_0/System'), http_mock,
+            sandbox_paths: [File.expand_path('spec/fixtures/wsdl/travelport')],
+            limits: WSDL::Limits.new(max_schemas: 1)
+          )
+        }.to raise_error(WSDL::ResourceLimitError)
+
+        expect(WSDL::QName.instance_variable_get(:@resolve_cache)).to be_empty
+        expect(WSDL::QName.instance_variable_get(:@resolve_dns_cache)).to be_empty
+        expect(WSDL::QName.instance_variable_get(:@prefix_cache)).to be_empty
+      end
+    end
+
     it 'returns a frozen Definition' do
       definition = described_class.parse(fixture('wsdl/authentication'), http_mock)
 

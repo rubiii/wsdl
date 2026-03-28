@@ -49,8 +49,13 @@ module WSDL
 
       # Clears all internal resolve caches.
       #
-      # Call this between independent parse runs in long-lived processes
-      # to release cached namespace lookup results.
+      # Called automatically by {Parser.parse} after every parse run
+      # (via +ensure+) so that cached namespace hashes and their
+      # referenced Nokogiri nodes can be garbage-collected. In normal
+      # usage you do not need to call this yourself.
+      #
+      # Call it manually only if you use {Parser.import} directly
+      # without going through {Parser.parse}.
       #
       # @return [void]
       def clear_resolve_cache
