@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## [1.1.0] — 2026-03-26
+## [1.1.0] — UNRELEASED
 
 **Upgrading?** See the [migration guide](#migrating-from-10) below.
 
