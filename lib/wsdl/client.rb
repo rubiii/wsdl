@@ -4,6 +4,11 @@ module WSDL
   # Wraps a {Definition} with an HTTP client for inspecting services
   # and executing SOAP operations.
   #
+  # Client instances are thread-safe after construction. All instance state
+  # is either frozen ({Definition}, {Config}, {#services}) or only read
+  # (the HTTP client). {Operation} instances returned by {#operation} are
+  # **not** thread-safe — create one per thread or per request.
+  #
   # @example Basic usage
   #   definition = WSDL.parse('http://example.com/service?wsdl')
   #   client = WSDL::Client.new(definition)
@@ -56,6 +61,7 @@ module WSDL
       @config = config ? config.with(**) : Config.new(**)
       @http = http || WSDL.http_client.new
       @definition = definition
+      @services = build_services.freeze
     end
 
     # Returns the {Definition} for this client's WSDL.
@@ -82,29 +88,17 @@ module WSDL
     # Each port includes an +operations+ array. Overloaded operations
     # (same name, different messages) include +input_name+ for disambiguation.
     #
-    # @return [Hash] a hash of service names to their port definitions
+    # The hash is eagerly built and frozen at construction time so that
+    # Client instances can be safely shared across threads.
+    #
+    # @return [Hash] a frozen hash of service names to their port definitions
     #
     # @example
     #   client.services
     #   # => {"ServiceName" => {ports: {"PortName" => {type: "...", location: "...",
     #   #      operations: [{name: "Op1"}, {name: "Op2"}]}}}}
     #
-    # rubocop:disable Metrics/AbcSize -- reconstructs legacy hash structure
-    def services
-      @services ||= definition.services.to_h { |svc|
-        ports = definition.ports(svc[:name]).to_h { |port|
-          port_soap_type = definition.port_type(svc[:name], port[:name])
-          ops = definition.operations(svc[:name], port[:name]).map { |op|
-            entry = { name: op[:name] }
-            entry[:input_name] = op[:input_name] if op[:input_name]
-            entry
-          }
-          [port[:name], { type: port_soap_type, location: port[:endpoint], operations: ops }]
-        }
-        [svc[:name], { ports: }]
-      }
-    end
-    # rubocop:enable Metrics/AbcSize
+    attr_reader :services
 
     # Returns the name of the primary service defined by the WSDL.
     #
@@ -197,6 +191,26 @@ module WSDL
       raise ArgumentError, "Unknown service #{service_name.inspect} or port #{port_name.inspect}.\n" \
                            "Here is a list of known services and port:\n#{services.inspect}"
     end
+
+    # Builds the services hash from the Definition.
+    #
+    # @return [Hash{String => Hash}] service names mapped to port definitions
+    # rubocop:disable Metrics/AbcSize -- reconstructs hash structure from Definition
+    def build_services
+      definition.services.to_h { |svc|
+        ports = definition.ports(svc[:name]).to_h { |port|
+          port_soap_type = definition.port_type(svc[:name], port[:name])
+          ops = definition.operations(svc[:name], port[:name]).map { |op|
+            entry = { name: op[:name] }
+            entry[:input_name] = op[:input_name] if op[:input_name]
+            entry.freeze
+          }
+          [port[:name], { type: port_soap_type, location: port[:endpoint], operations: ops.freeze }.freeze]
+        }
+        [svc[:name], { ports: ports.freeze }.freeze]
+      }
+    end
+    # rubocop:enable Metrics/AbcSize
 
     # Builds an Operation from Definition data.
     #

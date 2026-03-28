@@ -560,6 +560,27 @@ RSpec.describe WSDL::Client do
       )
     end
 
+    it 'returns a frozen hash' do
+      services = client.services
+      expect(services).to be_frozen
+    end
+
+    it 'deeply freezes nested port and operation structures' do
+      services = client.services
+      service = services['AmazonFPS']
+      port = service[:ports]['AmazonFPSPort']
+
+      expect(service).to be_frozen
+      expect(service[:ports]).to be_frozen
+      expect(port).to be_frozen
+      expect(port[:operations]).to be_frozen
+      expect(port[:operations].first).to be_frozen
+    end
+
+    it 'returns the same object on repeated calls' do
+      expect(client.services).to equal(client.services)
+    end
+
     it 'returns empty operations for ports with unresolvable bindings' do
       wsdl_xml = <<~WSDL
         <definitions xmlns="http://schemas.xmlsoap.org/wsdl/"
