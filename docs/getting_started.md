@@ -12,6 +12,7 @@ This is the docs entrypoint.
 - [Configuration](core/configuration.md)
 - [HTTP Client](core/http-client.md)
 - [Resolving Imports](core/resolving-imports.md)
+- [Thread Safety](core/thread-safety.md)
 
 ### Security
 

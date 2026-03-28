@@ -68,7 +68,8 @@ are not global — pass them as kwargs on `WSDL.parse` or `Client.new`.
 > **Thread safety:** These are global settings shared across all clients.
 > Set them once at boot time (e.g. in a Rails initializer), before creating
 > any clients or spawning threads. Changing them after clients exist may
-> cause inconsistent behavior.
+> cause inconsistent behavior. See [Thread Safety](thread-safety.md) for
+> the full concurrency guide.
 
 ## Strictness
 
@@ -225,4 +226,5 @@ See [HTTP Client](http-client.md) for the full security model, blocked IP ranges
 - [Error Hierarchy](../reference/errors.md)
 - [Resolving Imports](resolving-imports.md)
 - [Strictness Fixture Matrix](../reference/strictness-fixture-matrix.md)
+- [Thread Safety](thread-safety.md)
 - [Specifications and References](../reference/specifications.md)
