@@ -88,12 +88,11 @@ module WSDL
 
       # Builds operations for a given port.
       #
-      # Resolves binding and port_type once, then iterates all operations
-      # directly.
+      # Resolves binding and port_type once, then delegates each operation
+      # to {#build_single_operation}.
       #
       # @param port [Parser::Port] the port
       # @return [Hash{String => Hash, Array<Hash>}] operation data keyed by name
-      # rubocop:disable Metrics/AbcSize, Metrics/MethodLength, Metrics/BlockLength, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
       def build_operations(port)
         binding = port.fetch_binding(@documents)
         port_type = binding.fetch_port_type(@documents)
@@ -101,44 +100,8 @@ module WSDL
         element_builder = XML::ElementBuilder.new(@schemas, limits: @limits, issues: @build_issues)
 
         binding.operations.to_a.each do |op_entry|
-          op_name = op_entry[:name]
-          input_name = op_entry[:input_name]
-          metadata = default_operation(op_name, input_name:)
-
-          binding_op = binding.operations.fetch(op_name, input_name:)
-          port_type_op = port_type.operations.fetch(op_name, input_name:) { nil }
-
-          unless port_type_op
-            record_build_issue(op_name,
-              "Binding operation #{op_name.inspect} not found in portType #{port_type.name.inspect}")
-            store_operation(operations, op_name, metadata.freeze)
-            next
-          end
-
-          op_info = Parser::OperationInfo.new(
-            op_name, binding_op, port_type_op,
-            documents: @documents, schemas: @schemas,
-            limits: @limits, issues: @build_issues,
-            element_builder:
-          )
-
-          metadata[:soap_action] = op_info.soap_action
-          metadata[:soap_version] = op_info.soap_version
-
-          if binding_op.input?
-            metadata[:input_style] = op_info.input_style
-            metadata[:output_style] = op_info.output_style
-            metadata[:rpc_input_namespace] = binding_op.input_body[:namespace]
-            metadata[:rpc_output_namespace] = binding_op.output_body&.dig(:namespace)
-          else
-            record_build_issue(op_name,
-              "Binding operation #{op_name.inspect} is missing a required <input> element")
-          end
-
-          metadata[:schema_complete] = schema_complete_for_operation?(op_info)
-          metadata[:input] = build_message(op_info.input)
-          metadata[:output] = op_info.output ? build_message(op_info.output) : nil
-          store_operation(operations, op_name, metadata.freeze)
+          metadata = build_single_operation(op_entry, binding, port_type, element_builder)
+          store_operation(operations, op_entry[:name], metadata.freeze)
         end
 
         operations
@@ -146,14 +109,79 @@ module WSDL
         record_build_issue(nil, e.message)
         {}
       end
-      # rubocop:enable Metrics/AbcSize, Metrics/MethodLength, Metrics/BlockLength, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
+
+      # Builds a single operation's metadata hash.
+      #
+      # Resolves binding and port type operations, validates the port type
+      # match, and populates the metadata from the resolved operation info.
+      # Returns a default metadata hash when the port type operation is missing.
+      #
+      # @param op_entry [Hash] operation entry from {Parser::OperationMap#to_a}
+      # @param binding [Parser::Binding] the resolved binding
+      # @param port_type [Parser::PortType] the resolved port type
+      # @param element_builder [XML::ElementBuilder] shared element builder
+      # @return [Hash] operation metadata
+      def build_single_operation(op_entry, binding, port_type, element_builder)
+        op_name = op_entry[:name]
+        metadata = default_operation(op_name, input_name: op_entry[:input_name])
+
+        binding_op = binding.operations.fetch(op_name, input_name: op_entry[:input_name])
+        port_type_op = port_type.operations.fetch(op_name, input_name: op_entry[:input_name]) { nil }
+
+        unless port_type_op
+          record_build_issue(op_name,
+            "Binding operation #{op_name.inspect} not found in portType #{port_type.name.inspect}")
+          return metadata
+        end
+
+        op_info = Parser::OperationInfo.new(
+          op_name, binding_op, port_type_op,
+          documents: @documents, schemas: @schemas,
+          limits: @limits, issues: @build_issues,
+          element_builder:
+        )
+
+        populate_operation_metadata(metadata, op_name, op_info)
+        metadata
+      end
+
+      # Populates an operation metadata hash from resolved operation info.
+      #
+      # Sets SOAP protocol fields, binding styles, schema completeness,
+      # and resolved input/output messages. All data is accessed through the
+      # {Parser::OperationInfo} facade rather than reaching into lower-level
+      # binding or port type objects directly.
+      #
+      # @param metadata [Hash] the operation metadata hash to populate
+      # @param op_name [String] the operation name (for error reporting)
+      # @param op_info [Parser::OperationInfo] the resolved operation info
+      # @return [void]
+      # rubocop:disable Metrics/AbcSize -- data-mapping method; high ABC from 9 hash assignments, not complexity
+      def populate_operation_metadata(metadata, op_name, op_info)
+        metadata[:soap_action] = op_info.soap_action
+        metadata[:soap_version] = op_info.soap_version
+
+        if op_info.input?
+          metadata[:input_style] = op_info.input_style
+          metadata[:output_style] = op_info.output_style
+          metadata[:rpc_input_namespace] = op_info.rpc_input_namespace
+          metadata[:rpc_output_namespace] = op_info.rpc_output_namespace
+        else
+          record_build_issue(op_name,
+            "Binding operation #{op_name.inspect} is missing a required <input> element")
+        end
+
+        metadata[:schema_complete] = schema_complete_for_operation?(op_info)
+        metadata[:input] = build_message(op_info.input)
+        metadata[:output] = op_info.output ? build_message(op_info.output) : nil
+      end
+      # rubocop:enable Metrics/AbcSize
 
       # Returns an operation hash with safe defaults.
       #
-      # Each field starts as nil/empty. The loop in {#build_operations}
-      # progressively enhances the hash with binding-level metadata and
-      # resolved message data. If any step fails, the rescue stores
-      # whatever was captured up to that point.
+      # Each field starts as nil/empty. {#build_single_operation} and
+      # {#populate_operation_metadata} progressively enhance the hash
+      # with binding-level metadata and resolved message data.
       #
       # @param name [String] the operation name
       # @param input_name [String, nil] disambiguator for overloaded operations

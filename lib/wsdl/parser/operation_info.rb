@@ -38,12 +38,6 @@ module WSDL
       # @return [String] the name of this operation
       attr_reader :name
 
-      # @return [BindingOperation] the binding operation with protocol details
-      attr_reader :binding_operation
-
-      # @return [PortTypeOperation] the port type operation with interface details
-      attr_reader :port_type_operation
-
       # Returns the SOAP action for this operation.
       #
       # The SOAP action is typically used as an HTTP header value to indicate
@@ -97,6 +91,27 @@ module WSDL
           limits: @limits, issues: @issues,
           element_builder: @element_builder
         )
+      end
+
+      # Returns whether the binding operation defines an input element.
+      #
+      # @return [Boolean] true if the binding has an +<input>+ element
+      def input?
+        @binding_operation.input?
+      end
+
+      # Returns the RPC input namespace from the binding's input body.
+      #
+      # @return [String, nil] the namespace URI, or nil if not specified
+      def rpc_input_namespace
+        @binding_operation.input_body[:namespace]
+      end
+
+      # Returns the RPC output namespace from the binding's output body.
+      #
+      # @return [String, nil] the namespace URI, or nil if not specified
+      def rpc_output_namespace
+        @binding_operation.output_body[:namespace]
       end
 
       # Returns the input style for this operation.
