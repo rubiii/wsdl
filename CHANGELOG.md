@@ -8,8 +8,8 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
-- `WSDL.parse` and `WSDL.load` entry points for explicit control over when fetching/parsing happens. `WSDL.parse` returns a frozen, serializable `Definition`. `WSDL.load` restores one from a cached hash.
-- `WSDL::Definition` — frozen intermediate representation of everything the library knows about a WSDL service. Provides discovery (`services`, `ports`, `operations`), introspection (`input`, `input_header`, `output`, `output_header`), DSL generation (`to_dsl`), provenance (`sources`, `fingerprint`), and serialization (`to_h`, `to_json`).
+- `WSDL.parse`, `WSDL.dump`, and `WSDL.load` entry points for explicit control over when fetching/parsing happens. `WSDL.parse` returns a frozen, serializable `Definition`. `WSDL.dump` serializes one to a hash. `WSDL.load` restores one from a cached hash.
+- `WSDL::Definition` — frozen intermediate representation of everything the library knows about a WSDL service. Provides discovery (`services`, `ports`, `operations`), introspection (`input`, `input_header`, `output`, `output_header`), DSL generation (`to_dsl`), provenance (`sources`, `fingerprint`), and serialization (`WSDL.dump`, `to_h`, `to_json`).
 - `Client.new` accepts a `Definition` as its first argument, skipping parsing entirely. All `Client` methods route through the `Definition`.
 - `Definition#verify!` raises `DefinitionError` if any operations could not be fully resolved. This is the opt-in strict check — parsing itself is always best-effort.
 - `Definition#build_issues` provides transparency into operations that could not be fully resolved, with error details for each.
@@ -31,11 +31,14 @@ All notable changes to this project will be documented in this file.
 - `Attribute#to_h` provides a consistent hash representation. Contract `paths` and `tree` now return identical attribute metadata including `name`, `type`, `required`, and `list`.
 - `operation.invoke { ... }` accepts an optional block, combining `prepare` and `invoke` into a single call.
 - `operation.to_xml(pretty: true)` for formatted XML output. Request XML is compact by default.
+- `Client` is thread-safe. Multiple threads can share a `Client` and create `Operation` instances concurrently.
+- Type coercion failures are now logged at debug level, making silent string fallbacks visible.
 
 ### Changed
 
 - `Client.new` only accepts a `Definition` instance. Use `WSDL.parse(source)` to create one. Parse-time options (`strictness:`, `limits:`, `sandbox_paths:`) belong on `WSDL.parse`, runtime options (`strictness:`, `limits:`) on `Client.new`.
-- Removed built-in parse cache (`WSDL.cache`, `Cache` class, `cache:` parameter on `Client.new` and `WSDL.parse`). `Definition` is serializable via `to_h`/`to_json`/`from_h` — cache at the Definition level instead (file, Redis, etc.).
+- Removed built-in parse cache (`WSDL.cache`, `Cache` class, `cache:` parameter on `Client.new` and `WSDL.parse`). `Definition` is serializable via `WSDL.dump`/`to_h`/`to_json`/`from_h` — cache at the Definition level instead (file, Redis, etc.).
+- Nokogiri dependency relaxed from `~> 1.19, >= 1.19.1` to `>= 1.19.1` to allow Nokogiri 1.20+.
 - Removed `cache_key` contract from HTTP clients. Custom clients no longer need to implement `#cache_key`.
 - Removed `InvalidHTTPAdapterError` (was only used for `cache_key` validation).
 - `WSDL::HTTPAdapter` renamed to `WSDL::HTTP::Client`. Config, RedirectGuard, and Response moved into the `WSDL::HTTP` namespace. `WSDL.http_adapter` accessor renamed to `WSDL.http_client`.
@@ -65,6 +68,9 @@ All notable changes to this project will be documented in this file.
 - Unknown XSD built-in types (e.g., `xsd:nonExistentType`) now raise `WSDL::UnresolvedReferenceError` in strict schema mode instead of being silently treated as simple types.
 - Overloaded operations no longer silently overwrite each other. Previously, the second definition just replaced the first.
 - Schema resolution now degrades gracefully when `schema_references` strictness is relaxed.
+- Integer type coercion no longer interprets leading zeros as octal (`"010"` → `10`, not `8`). XSD integers are strictly base-10 per §3.3.13.1.
+- Float/double coercion now handles XSD special values `INF`, `-INF`, and `NaN` per §3.2.4.1/§3.2.5.1.
+- `Verifier#find_element_by_id` now validates the ID format itself (defense-in-depth) instead of relying on callers to pre-validate, hardening against XPath injection.
 
 ### Migrating from 1.0
 
