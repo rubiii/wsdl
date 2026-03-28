@@ -86,7 +86,7 @@ RSpec.describe WSDL::Definition do
 
       expect(elements).to be_an(Array)
       expect(elements).not_to be_empty
-      expect(elements.first).to include(name: a_kind_of(String), type: anything, required: a_kind_of(Object))
+      expect(elements.first).to include(name: 'authenticate', type: 'complex', required: true)
     end
 
     it 'uses human-readable type strings' do
