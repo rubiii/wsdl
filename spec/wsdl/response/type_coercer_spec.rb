@@ -36,6 +36,23 @@ RSpec.describe WSDL::Response::TypeCoercer do
       expect(value).to be_a(Float)
     end
 
+    it 'converts XSD float special values' do
+      expect(described_class.coerce('INF', 'xsd:float')).to eq(Float::INFINITY)
+      expect(described_class.coerce('-INF', 'xsd:float')).to eq(-Float::INFINITY)
+      expect(described_class.coerce('NaN', 'xsd:float')).to be_nan
+    end
+
+    it 'converts XSD double special values' do
+      expect(described_class.coerce('INF', 'xsd:double')).to eq(Float::INFINITY)
+      expect(described_class.coerce('-INF', 'xsd:double')).to eq(-Float::INFINITY)
+      expect(described_class.coerce('NaN', 'xsd:double')).to be_nan
+    end
+
+    it 'converts integers with leading zeros as base-10' do
+      expect(described_class.coerce('010', 'xsd:int')).to eq(10)
+      expect(described_class.coerce('099', 'xsd:int')).to eq(99)
+    end
+
     it 'converts boolean lexical values' do
       expect(described_class.coerce('true', 'xsd:boolean')).to be(true)
       expect(described_class.coerce('1', 'xsd:boolean')).to be(true)
@@ -252,8 +269,12 @@ RSpec.describe WSDL::Response::TypeCoercer do
 
     it 'does not log when coercion succeeds' do
       described_class.coerce('42', 'xsd:int')
+      described_class.coerce('010', 'xsd:int')
       described_class.coerce('99.99', 'xsd:decimal')
       described_class.coerce('3.14', 'xsd:double')
+      described_class.coerce('INF', 'xsd:float')
+      described_class.coerce('-INF', 'xsd:double')
+      described_class.coerce('NaN', 'xsd:float')
       described_class.coerce('true', 'xsd:boolean')
       described_class.coerce('2024-01-15', 'xsd:date')
       described_class.coerce('2024-01-15T10:30:00Z', 'xsd:dateTime')

@@ -85,6 +85,17 @@ module WSDL
         list: ->(value) { convert_list(value) }
       }.freeze
 
+      # XSD float/double special value lexical representations.
+      #
+      # Per XSD Part 2 §3.2.4.1 and §3.2.5.1, these are `INF`, `-INF`, and `NaN`.
+      #
+      # @return [Hash{String => Float}]
+      FLOAT_SPECIAL_VALUES = {
+        'INF' => Float::INFINITY,
+        '-INF' => -Float::INFINITY,
+        'NaN' => Float::NAN
+      }.freeze
+
       # Matches ISO8601 timezone suffixes accepted for XSD dateTime/time parsing.
       #
       # @return [Regexp]
@@ -114,7 +125,7 @@ module WSDL
         end
 
         def convert_integer(value)
-          Integer(value)
+          Integer(value, 10)
         rescue ArgumentError
           coercion_fallback(value, 'integer')
         end
@@ -126,7 +137,9 @@ module WSDL
         end
 
         def convert_float(value)
-          Float(value)
+          FLOAT_SPECIAL_VALUES.fetch(value) do
+            Float(value)
+          end
         rescue ArgumentError
           coercion_fallback(value, 'float')
         end

@@ -87,6 +87,34 @@ RSpec.describe 'XML Schema conformance' do
       it 'XSD-INT-7: non-numeric values fall back to string' do
         expect(coerce('abc', 'xsd:int')).to eq('abc')
       end
+
+      # https://www.w3.org/TR/xmlschema-2/#integer
+      it 'XSD-INT-8: values beyond xsd:int 32-bit range are accepted' do
+        expect(coerce('2147483648', 'xsd:int')).to eq(2_147_483_648)
+        expect(coerce('-2147483649', 'xsd:int')).to eq(-2_147_483_649)
+      end
+
+      # https://www.w3.org/TR/xmlschema-2/#integer
+      it 'XSD-INT-9: very large integers are accepted' do
+        huge = '9' * 100
+        expect(coerce(huge, 'xsd:integer')).to eq((10**100) - 1)
+      end
+
+      # https://www.w3.org/TR/xmlschema-2/#integer
+      # §3.3.13.1: "An optional leading sign is allowed. If the sign is omitted, '+' is assumed."
+      it 'XSD-INT-10: leading plus sign is accepted' do
+        expect(coerce('+42', 'xsd:int')).to eq(42)
+      end
+
+      # https://www.w3.org/TR/xmlschema-2/#integer
+      # §3.3.13.1: lexical space is decimal digits (#x30-#x39) — strictly base-10.
+      # Leading zeros are allowed in lexical form (prohibited only in canonical form).
+      it 'XSD-INT-11: leading zeros are parsed as base-10' do
+        expect(coerce('010', 'xsd:int')).to eq(10)
+        expect(coerce('099', 'xsd:int')).to eq(99)
+        expect(coerce('007', 'xsd:byte')).to eq(7)
+        expect(coerce('0100', 'xsd:short')).to eq(100)
+      end
     end
 
     describe 'decimal' do
@@ -100,6 +128,27 @@ RSpec.describe 'XML Schema conformance' do
       it 'XSD-DEC-2: preserves arbitrary precision' do
         result = coerce('123456789.123456789', 'xsd:decimal')
         expect(result).to eq(BigDecimal('123456789.123456789'))
+      end
+
+      # https://www.w3.org/TR/xmlschema-2/#decimal
+      # §3.2.3.1: "An optional leading sign is allowed. If the sign is omitted, '+' is assumed."
+      it 'XSD-DEC-3: leading plus sign is accepted' do
+        expect(coerce('+99.99', 'xsd:decimal')).to eq(BigDecimal('99.99'))
+      end
+
+      # https://www.w3.org/TR/xmlschema-2/#decimal
+      # §3.2.3.1: minimum 18 decimal digits must be supported.
+      it 'XSD-DEC-4: preserves 50+ decimal places' do
+        value = "3.#{'1' * 50}"
+        result = coerce(value, 'xsd:decimal')
+        expect(result).to eq(BigDecimal(value))
+      end
+
+      # https://www.w3.org/TR/xmlschema-2/#decimal
+      # §3.2.3.1: "If the fractional part is zero, the period and following zero(es) can be omitted."
+      it 'XSD-DEC-5: integer value without decimal point' do
+        result = coerce('210', 'xsd:decimal')
+        expect(result).to eq(BigDecimal('210'))
       end
     end
 
@@ -116,6 +165,55 @@ RSpec.describe 'XML Schema conformance' do
         result = coerce('3.141592653589793', 'xsd:double')
         expect(result).to be_a(Float)
         expect(result).to be_within(1e-15).of(3.141592653589793)
+      end
+
+      # https://www.w3.org/TR/xmlschema-2/#float
+      # §3.2.4.1: "The special values positive and negative infinity and not-a-number
+      # have lexical representations INF, -INF and NaN, respectively."
+      it 'XSD-FLT-3: xsd:float INF coerces to positive infinity' do
+        result = coerce('INF', 'xsd:float')
+        expect(result).to eq(Float::INFINITY)
+      end
+
+      # https://www.w3.org/TR/xmlschema-2/#float
+      it 'XSD-FLT-4: xsd:float -INF coerces to negative infinity' do
+        result = coerce('-INF', 'xsd:float')
+        expect(result).to eq(-Float::INFINITY)
+      end
+
+      # https://www.w3.org/TR/xmlschema-2/#float
+      it 'XSD-FLT-5: xsd:float NaN coerces to not-a-number' do
+        result = coerce('NaN', 'xsd:float')
+        expect(result).to be_a(Float)
+        expect(result).to be_nan
+      end
+
+      # https://www.w3.org/TR/xmlschema-2/#double
+      # §3.2.5.1: same special value lexical rules as float.
+      it 'XSD-FLT-6: xsd:double INF coerces to positive infinity' do
+        result = coerce('INF', 'xsd:double')
+        expect(result).to eq(Float::INFINITY)
+      end
+
+      # https://www.w3.org/TR/xmlschema-2/#double
+      it 'XSD-FLT-7: xsd:double -INF coerces to negative infinity' do
+        result = coerce('-INF', 'xsd:double')
+        expect(result).to eq(-Float::INFINITY)
+      end
+
+      # https://www.w3.org/TR/xmlschema-2/#double
+      it 'XSD-FLT-8: xsd:double NaN coerces to not-a-number' do
+        result = coerce('NaN', 'xsd:double')
+        expect(result).to be_a(Float)
+        expect(result).to be_nan
+      end
+
+      # https://www.w3.org/TR/xmlschema-2/#float
+      # §3.2.4.1: "Lexical representations for zero may take a positive or negative sign."
+      it 'XSD-FLT-9: negative zero is accepted' do
+        result = coerce('-0', 'xsd:float')
+        expect(result).to be_a(Float)
+        expect(result).to be_zero
       end
     end
 
@@ -144,6 +242,51 @@ RSpec.describe 'XML Schema conformance' do
         expect(result).to eq('2025-01-15T10:30:00')
         expect(result).to be_a(String)
       end
+
+      # https://www.w3.org/TR/xmlschema-2/#dateTime
+      # §3.2.7.1: fractional seconds "('.' s+)?" — one or more digits after the dot.
+      it 'XSD-DT-4: fractional seconds with UTC timezone' do
+        result = coerce('2025-01-15T10:30:00.123456Z', 'xsd:dateTime')
+        expect(result).to be_a(Time)
+        expect(result.nsec).to eq(123_456_000)
+      end
+
+      # https://www.w3.org/TR/xmlschema-2/#dateTime
+      it 'XSD-DT-5: fractional seconds with offset timezone' do
+        result = coerce('2025-06-15T14:30:00.500+02:00', 'xsd:dateTime')
+        expect(result).to be_a(Time)
+        expect(result.utc_offset).to eq(7200)
+      end
+
+      # https://www.w3.org/TR/xmlschema-2/#dateTime
+      # §3.2.7.3: timezone hour magnitude limited to at most 14;
+      # when 14, minutes must be 0.
+      it 'XSD-DT-6: maximum positive offset +14:00' do
+        result = coerce('2025-01-15T10:30:00+14:00', 'xsd:dateTime')
+        expect(result).to be_a(Time)
+        expect(result.utc_offset).to eq(50_400)
+      end
+
+      # https://www.w3.org/TR/xmlschema-2/#dateTime
+      it 'XSD-DT-7: maximum negative offset -14:00' do
+        result = coerce('2025-01-15T10:30:00-14:00', 'xsd:dateTime')
+        expect(result).to be_a(Time)
+        expect(result.utc_offset).to eq(-50_400)
+      end
+
+      # https://www.w3.org/TR/xmlschema-2/#dateTime
+      it 'XSD-DT-8: half-hour offset +05:30' do
+        result = coerce('2025-01-15T10:30:00+05:30', 'xsd:dateTime')
+        expect(result).to be_a(Time)
+        expect(result.utc_offset).to eq(19_800)
+      end
+
+      # https://www.w3.org/TR/xmlschema-2/#dateTime
+      it 'XSD-DT-9: fractional seconds without timezone stays as string' do
+        result = coerce('2025-01-15T10:30:00.500', 'xsd:dateTime')
+        expect(result).to eq('2025-01-15T10:30:00.500')
+        expect(result).to be_a(String)
+      end
     end
 
     describe 'date' do
@@ -159,6 +302,15 @@ RSpec.describe 'XML Schema conformance' do
       it 'XSD-DATE-2: invalid date stays as string' do
         expect(coerce('not-a-date', 'xsd:date')).to eq('not-a-date')
       end
+
+      # https://www.w3.org/TR/xmlschema-2/#date
+      # §3.2.9.1: date allows an optional timezone suffix ("zzzzzz?").
+      # Ruby's Date.iso8601 does not support timezone suffixes, so
+      # these valid XSD dates fall back to string preservation.
+      it 'XSD-DATE-3: date with timezone falls back to string' do
+        expect(coerce('2025-01-15Z', 'xsd:date')).to eq('2025-01-15Z')
+        expect(coerce('2025-01-15+05:30', 'xsd:date')).to eq('2025-01-15+05:30')
+      end
     end
 
     describe 'time' do
@@ -173,6 +325,21 @@ RSpec.describe 'XML Schema conformance' do
       it 'XSD-TIME-2: xsd:time without timezone stays as string' do
         result = coerce('10:30:00', 'xsd:time')
         expect(result).to eq('10:30:00')
+      end
+
+      # https://www.w3.org/TR/xmlschema-2/#time
+      # §3.2.8.1: fractional seconds same as dateTime ("('.' s+)?").
+      it 'XSD-TIME-3: fractional seconds with timezone' do
+        result = coerce('10:30:00.500Z', 'xsd:time')
+        expect(result).to be_a(Time)
+        expect(result.nsec).to eq(500_000_000)
+      end
+
+      # https://www.w3.org/TR/xmlschema-2/#time
+      it 'XSD-TIME-4: offset timezone +05:30' do
+        result = coerce('14:30:00+05:30', 'xsd:time')
+        expect(result).to be_a(Time)
+        expect(result.utc_offset).to eq(19_800)
       end
     end
 
