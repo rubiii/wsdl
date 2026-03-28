@@ -58,6 +58,17 @@ module WSDL
         @definitions.each(&)
       end
 
+      # Releases all references to the Nokogiri DOM from every definition
+      # in the collection.
+      #
+      # Called by {Parser.parse} after the Definition IR is built so the GC
+      # can reclaim the DOM trees while the collection is still reachable.
+      #
+      # @return [void]
+      def release_dom_references!
+        @definitions.each(&:release_dom_references!)
+      end
+
       # @!group Lookups
 
       # Finds a global element by namespace and name.

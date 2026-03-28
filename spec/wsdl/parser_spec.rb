@@ -47,6 +47,23 @@ RSpec.describe WSDL::Parser do
       end
     end
 
+    describe 'DOM reference lifecycle' do
+      it 'releases DOM references from schemas after a successful parse' do
+        expect_any_instance_of(WSDL::Schema::Collection).to receive(:release_dom_references!).and_call_original # rubocop:disable RSpec/AnyInstance
+
+        described_class.parse(fixture('wsdl/authentication'), http_mock)
+      end
+
+      it 'releases DOM references from schemas when parsing a large multi-schema WSDL' do
+        expect_any_instance_of(WSDL::Schema::Collection).to receive(:release_dom_references!).and_call_original # rubocop:disable RSpec/AnyInstance
+
+        described_class.parse(
+          fixture('wsdl/travelport/system_v32_0/System'), http_mock,
+          sandbox_paths: [File.expand_path('spec/fixtures/wsdl/travelport')]
+        )
+      end
+    end
+
     it 'returns a frozen Definition' do
       definition = described_class.parse(fixture('wsdl/authentication'), http_mock)
 

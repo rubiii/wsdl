@@ -953,6 +953,77 @@ RSpec.describe WSDL::Schema::Node do
     end
   end
 
+  describe '#release_dom_references!' do
+    it 'clears the underlying XML node reference' do
+      node = new_node('<xs:element name="test" xmlns:xs="http://www.w3.org/2001/XMLSchema"/>')
+      expect(node.xml_node).not_to be_nil
+
+      node.release_dom_references!
+
+      expect(node.xml_node).to be_nil
+    end
+
+    it 'clears cached children' do
+      node = new_node('
+        <xs:complexType name="T" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+          <xs:sequence>
+            <xs:element name="a" type="xs:string"/>
+          </xs:sequence>
+        </xs:complexType>
+      ')
+      node.children # populate cache
+
+      node.release_dom_references!
+
+      expect(node.instance_variable_get(:@children)).to be_nil
+    end
+
+    it 'clears cached elements on complexType nodes' do
+      node = new_node('
+        <xs:complexType name="T" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+          <xs:sequence>
+            <xs:element name="a" type="xs:string"/>
+          </xs:sequence>
+        </xs:complexType>
+      ')
+      node.elements # populate @cached_elements
+
+      node.release_dom_references!
+
+      expect(node.instance_variable_get(:@cached_elements)).to be_nil
+    end
+
+    it 'clears cached attributes on complexType nodes' do
+      node = new_node('
+        <xs:complexType name="T" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+          <xs:attribute name="id" type="xs:int"/>
+        </xs:complexType>
+      ')
+      node.attributes # populate @cached_attributes
+
+      node.release_dom_references!
+
+      expect(node.instance_variable_get(:@cached_attributes)).to be_nil
+    end
+
+    it 'preserves the node kind' do
+      node = new_node('<xs:element name="test" xmlns:xs="http://www.w3.org/2001/XMLSchema"/>')
+
+      node.release_dom_references!
+
+      expect(node.kind).to eq(:element)
+    end
+
+    it 'is safe to call multiple times' do
+      node = new_node('<xs:element name="test" xmlns:xs="http://www.w3.org/2001/XMLSchema"/>')
+
+      node.release_dom_references!
+      node.release_dom_references!
+
+      expect(node.xml_node).to be_nil
+    end
+  end
+
   describe 'resource limits' do
     describe 'max_elements_per_type' do
       it 'raises ResourceLimitError when element count exceeds limit' do

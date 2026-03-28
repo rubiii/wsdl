@@ -101,7 +101,38 @@ module WSDL
         @includes.concat(other.includes)
       end
 
+      # Releases all references to the Nokogiri DOM from this definition
+      # and every {Node} it contains.
+      #
+      # Called by {Collection#release_dom_references!} after the Definition IR
+      # has been built, so the GC can reclaim the DOM trees while the
+      # collection is still reachable on the call stack.
+      #
+      # Preserves metadata ({#target_namespace}, {#element_form_default},
+      # component hash keys) so the definition remains inspectable.
+      #
+      # @return [void]
+      def release_dom_references!
+        @schema_node = nil
+
+        each_node(&:release_dom_references!)
+      end
+
       private
+
+      # Yields every {Node} in the definition's component collections.
+      #
+      # @yield [node] each schema node
+      # @yieldparam node [Node]
+      # @return [void]
+      def each_node(&)
+        @elements.each_value(&)
+        @complex_types.each_value(&)
+        @simple_types.each_value(&)
+        @attributes.each_value(&)
+        @attribute_groups.each_value(&)
+        @groups.each_value(&)
+      end
 
       # Merges other_hash into target, logging a warning for each key conflict.
       #

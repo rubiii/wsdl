@@ -360,6 +360,32 @@ RSpec.describe WSDL::Schema::Collection do
     end
   end
 
+  describe '#release_dom_references!' do
+    def new_definition(xml, collection = nil)
+      node = Nokogiri.XML(xml).root
+      WSDL::Schema::Definition.new(node, collection)
+    end
+
+    it 'releases DOM references from all definitions' do
+      definition = new_definition('
+        <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+          <xs:element name="User" type="xs:string"/>
+        </xs:schema>
+      ')
+      collection << definition
+
+      collection.release_dom_references!
+
+      definition.elements.each_value do |node|
+        expect(node.xml_node).to be_nil
+      end
+    end
+
+    it 'handles an empty collection' do
+      expect { collection.release_dom_references! }.not_to raise_error
+    end
+  end
+
   describe 'missing namespace behavior' do
     it 'returns nil for unknown namespace even when other schemas exist' do
       definition = instance_double(
@@ -860,6 +886,72 @@ RSpec.describe WSDL::Schema::Definition do
 
       attributes = user_type.attributes
       expect(attributes.map(&:name)).to eq(['version'])
+    end
+  end
+
+  describe '#release_dom_references!' do
+    it 'clears the underlying schema node' do
+      definition = new_definition('
+        <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+          <xs:element name="User" type="xs:string"/>
+        </xs:schema>
+      ')
+
+      definition.release_dom_references!
+
+      expect(definition.instance_variable_get(:@schema_node)).to be_nil
+    end
+
+    it 'releases DOM references from all component nodes' do
+      definition = new_definition('
+        <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+          <xs:element name="User" type="xs:string"/>
+          <xs:complexType name="UserType">
+            <xs:sequence/>
+          </xs:complexType>
+          <xs:simpleType name="StatusType">
+            <xs:restriction base="xs:string"/>
+          </xs:simpleType>
+          <xs:attribute name="id" type="xs:int"/>
+          <xs:attributeGroup name="CommonAttrs">
+            <xs:attribute name="lang" type="xs:string"/>
+          </xs:attributeGroup>
+          <xs:group name="AddressGroup">
+            <xs:sequence>
+              <xs:element name="street" type="xs:string"/>
+            </xs:sequence>
+          </xs:group>
+        </xs:schema>
+      ')
+
+      definition.release_dom_references!
+
+      all_nodes = definition.elements.values +
+                  definition.complex_types.values +
+                  definition.simple_types.values +
+                  definition.attributes.values +
+                  definition.attribute_groups.values +
+                  definition.groups.values
+
+      all_nodes.each do |node|
+        expect(node.xml_node).to be_nil
+      end
+    end
+
+    it 'preserves metadata accessors' do
+      definition = new_definition('
+        <xs:schema targetNamespace="http://example.com"
+                   elementFormDefault="qualified"
+                   xmlns:xs="http://www.w3.org/2001/XMLSchema">
+          <xs:element name="User" type="xs:string"/>
+        </xs:schema>
+      ')
+
+      definition.release_dom_references!
+
+      expect(definition.target_namespace).to eq('http://example.com')
+      expect(definition.element_form_default).to eq('qualified')
+      expect(definition.elements.keys).to eq(['User'])
     end
   end
 end

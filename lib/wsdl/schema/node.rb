@@ -68,7 +68,8 @@ module WSDL
       # @return [Symbol] the XSD element type (:element, :complexType, :sequence, etc.)
       attr_reader :kind
 
-      # @return [Nokogiri::XML::Node] the underlying XML node
+      # @return [Nokogiri::XML::Node, nil] the underlying XML node
+      #   (nil after {#release_dom_references!})
       attr_reader :xml_node
 
       # Returns XML namespace declarations in scope.
@@ -169,6 +170,24 @@ module WSDL
       end
 
       # @!endgroup
+
+      # Releases all references to the Nokogiri DOM.
+      #
+      # After {Definition::Builder} extracts data into the frozen Definition IR,
+      # the DOM nodes are no longer needed. Calling this method nils out the
+      # Nokogiri reference and any cached child/element/attribute arrays so the
+      # GC can reclaim the DOM while the {Schema::Collection} is still reachable.
+      #
+      # Safe to call multiple times. Preserves {#kind} and any already-extracted
+      # scalar attributes (+@name+, +@type+, etc.) since those are plain Ruby strings.
+      #
+      # @return [void]
+      def release_dom_references!
+        @xml_node = nil
+        @children = nil
+        @cached_elements = nil
+        @cached_attributes = nil
+      end
 
       # @!group Children & Traversal
 
