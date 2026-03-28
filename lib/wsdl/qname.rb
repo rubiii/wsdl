@@ -75,15 +75,21 @@ module WSDL
       # their own scope. This also keeps a strong reference to the
       # namespaces hash, preventing GC from reclaiming it while cached.
       #
+      # The top-level cache hashes (+@resolve_cache+, +@resolve_dns_cache+,
+      # +@prefix_cache+) are eagerly initialized at class load time by
+      # +clear_resolve_cache+ so they are never +nil+. This avoids a race
+      # condition where two threads could each create separate cache
+      # instances via +||=+, silently discarding one thread's entries.
+      #
       # @param namespaces [Hash{String => String}] in-scope namespace declarations
       # @param default_namespace [String, nil] fallback namespace for unprefixed names
       # @return [Hash{String => Array}] qname-to-result cache for this scope
       def resolve_scope_cache(namespaces, default_namespace)
         if default_namespace
-          ns_cache = ((@resolve_dns_cache ||= {}.compare_by_identity)[namespaces] ||= {})
+          ns_cache = (@resolve_dns_cache[namespaces] ||= {})
           ns_cache[default_namespace] ||= {}
         else
-          ((@resolve_cache ||= {}.compare_by_identity)[namespaces] ||= {})
+          (@resolve_cache[namespaces] ||= {})
         end
       end
 
@@ -102,7 +108,7 @@ module WSDL
         if colon
           prefix = qname[0, colon]
           local  = qname[(colon + 1)..]
-          key = ((@prefix_cache ||= {})[prefix] ||= -"xmlns:#{prefix}")
+          key = (@prefix_cache[prefix] ||= -"xmlns:#{prefix}")
           [namespaces[key], local].freeze
         else
           [namespaces['xmlns'] || default_namespace, qname].freeze
@@ -123,6 +129,10 @@ module WSDL
         new(*resolve(qname, namespaces:, default_namespace:))
       end
     end
+
+    # Eagerly initialize class-level caches so they are never +nil+.
+    # This prevents race conditions in threaded environments (e.g. Puma, Sidekiq).
+    clear_resolve_cache
 
     # Returns a readable representation used in errors.
     #

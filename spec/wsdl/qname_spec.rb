@@ -171,6 +171,49 @@ RSpec.describe WSDL::QName do
     end
   end
 
+  describe 'eager cache initialization' do
+    # 1. Caches are eagerly initialized at class load time (never nil).
+    # 2. No lazy ||= fallbacks top-level cache variables, so the code
+    # crashes immediately if the caches are nil.
+    #
+    # Together these guarantee that two threads can never race on creating
+    # the cache hashes themselves. The tests below verify both properties
+    # deterministically — no thread timing luck required.
+
+    it 'raises NoMethodError when @resolve_cache is nil (no lazy fallback)' do
+      original = described_class.instance_variable_get(:@resolve_cache)
+      described_class.instance_variable_set(:@resolve_cache, nil)
+
+      expect {
+        described_class.resolve('tns:A', namespaces: { 'xmlns:tns' => 'http://example.com' })
+      }.to raise_error(NoMethodError)
+    ensure
+      described_class.instance_variable_set(:@resolve_cache, original)
+    end
+
+    it 'raises NoMethodError when @resolve_dns_cache is nil (no lazy fallback)' do
+      original = described_class.instance_variable_get(:@resolve_dns_cache)
+      described_class.instance_variable_set(:@resolve_dns_cache, nil)
+
+      expect {
+        described_class.resolve('Local', namespaces: {}, default_namespace: 'http://example.com')
+      }.to raise_error(NoMethodError)
+    ensure
+      described_class.instance_variable_set(:@resolve_dns_cache, original)
+    end
+
+    it 'raises NoMethodError when @prefix_cache is nil (no lazy fallback)' do
+      original = described_class.instance_variable_get(:@prefix_cache)
+      described_class.instance_variable_set(:@prefix_cache, nil)
+
+      expect {
+        described_class.resolve('tns:A', namespaces: { 'xmlns:tns' => 'http://example.com' })
+      }.to raise_error(NoMethodError)
+    ensure
+      described_class.instance_variable_set(:@prefix_cache, original)
+    end
+  end
+
   describe '.clear_resolve_cache' do
     it 'clears cached results so subsequent calls produce fresh arrays' do
       result_before = described_class.resolve('tns:User', namespaces:)
