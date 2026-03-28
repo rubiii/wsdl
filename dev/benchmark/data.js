@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1774726446292,
+  "lastUpdate": 1774731309584,
   "repoUrl": "https://github.com/rubiii/wsdl",
   "entries": {
     "Benchmark": [
@@ -1584,6 +1584,72 @@ window.BENCHMARK_DATA = {
             "value": 82.92,
             "unit": "i/s",
             "range": "± 4.8%"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "me@rubiii.com",
+            "name": "rubiii",
+            "username": "rubiii"
+          },
+          "committer": {
+            "email": "me@rubiii.com",
+            "name": "rubiii",
+            "username": "rubiii"
+          },
+          "distinct": true,
+          "id": "73b7d168ae24ef54ef9721d055a1b7946876f7ba",
+          "message": "Release Nokogiri DOM references after Definition building\n\nAfter Definition::Builder extracts all data into the frozen IR,\nSchema::Node objects still hold @xml_node references that keep the\nentire Nokogiri DOM alive until Parser.parse returns. This adds\nrelease_dom_references! cascading through Collection → Definition →\nNode to nil out DOM references in the ensure block, allowing the GC\nto reclaim DOM trees while the schema collection is still on the stack.",
+          "timestamp": "2026-03-28T21:47:28+01:00",
+          "tree_id": "61665c6bf91b0c270eb073bd9f985438863b1844",
+          "url": "https://github.com/rubiii/wsdl/commit/73b7d168ae24ef54ef9721d055a1b7946876f7ba"
+        },
+        "date": 1774731308812,
+        "tool": "customBiggerIsBetter",
+        "benches": [
+          {
+            "name": "parse: small WSDL (blz_service, 88 lines)",
+            "value": 1065.06,
+            "unit": "i/s",
+            "range": "± 4.9%"
+          },
+          {
+            "name": "parse: large WSDL (economic, 65k lines)",
+            "value": 1.69,
+            "unit": "i/s",
+            "range": "± 0.0%"
+          },
+          {
+            "name": "request: build + serialize",
+            "value": 10393.15,
+            "unit": "i/s",
+            "range": "± 0.4%"
+          },
+          {
+            "name": "sign: X.509 SHA-256 + Timestamp",
+            "value": 956.74,
+            "unit": "i/s",
+            "range": "± 1.7%"
+          },
+          {
+            "name": "verify: signature + timestamp",
+            "value": 659.1,
+            "unit": "i/s",
+            "range": "± 2.6%"
+          },
+          {
+            "name": "response: parse small (15 lines)",
+            "value": 9149.22,
+            "unit": "i/s",
+            "range": "± 0.7%"
+          },
+          {
+            "name": "response: parse large (200 items)",
+            "value": 91.88,
+            "unit": "i/s",
+            "range": "± 1.1%"
           }
         ]
       }
