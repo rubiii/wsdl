@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require 'logger'
+
 RSpec.describe WSDL::Parser do
   describe '.parse' do
     describe 'QName cache lifecycle' do
@@ -170,15 +172,47 @@ RSpec.describe WSDL::Parser do
       expect(result.provenance.first).to include(status: 'resolved')
     end
 
-    it 'collects schema import errors in lenient mode' do
-      result = described_class.import(
-        fixture('wsdl/juniper'), http_mock,
-        strictness: WSDL::Strictness.off
-      )
+    describe 'lenient schema import mode' do
+      let(:result) do
+        described_class.import(
+          fixture('wsdl/juniper'), http_mock,
+          strictness: WSDL::Strictness.off
+        )
+      end
 
-      expect(result.documents).to be_a(WSDL::Parser::DocumentCollection)
-      expect(result.schema_import_errors).not_to be_empty
-      expect(result.schema_import_errors).to be_frozen
+      it 'collects SchemaImportError instances with error attributes' do
+        errors = result.schema_import_errors
+
+        expect(errors).not_to be_empty
+        expect(errors).to be_frozen
+        expect(errors).to all(be_a(WSDL::SchemaImportError))
+
+        error = errors.first
+        expect(error.location).to eq('SystemService?xsd=xsd0.xsd')
+        expect(error.action).to eq('import')
+        expect(error.message).to include('Failed to resolve XML Schema import')
+      end
+
+      it 'logs tolerated schema import errors at warn level' do
+        log_output = StringIO.new
+        WSDL.logger = Logger.new(log_output)
+
+        described_class.import(
+          fixture('wsdl/juniper'), http_mock,
+          strictness: WSDL::Strictness.off
+        )
+
+        expect(log_output.string).to include('WARN')
+        expect(log_output.string).to include('Failed to resolve XML Schema import')
+      end
+
+      it 'records failed imports in provenance' do
+        failed = result.provenance.select { |p| p[:status] == 'failed' }
+
+        expect(failed).not_to be_empty
+        expect(failed.first[:error]).to include('Failed to resolve XML Schema import')
+        expect(failed.first[:digest]).to be_nil
+      end
     end
 
     describe 'source validation' do

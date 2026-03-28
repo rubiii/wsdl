@@ -436,9 +436,13 @@ RSpec.describe WSDL::Client do
     end
 
     it 'tolerates recoverable schema import failures when strictness is off' do
-      expect {
-        WSDL.parse(wsdl_with_missing_schema_import, http: http_mock, strictness: WSDL::Strictness.off)
-      }.not_to raise_error
+      definition = WSDL.parse(
+        wsdl_with_missing_schema_import, http: http_mock,
+        strictness: WSDL::Strictness.off
+      )
+
+      expect(definition).to be_a(WSDL::Definition)
+      expect(definition.sources.any? { |s| s[:status] == 'failed' }).to be(true)
     end
 
     it 'passes Strictness.on to parser' do
