@@ -11,6 +11,8 @@ module WSDL
     #
     # @api private
     class TypeCoercer
+      include Log
+
       # XSD simple types mapped to string coercion.
       #
       # Includes primitive string types, Gregorian date fragments (which can
@@ -114,32 +116,32 @@ module WSDL
         def convert_integer(value)
           Integer(value)
         rescue ArgumentError
-          value
+          coercion_fallback(value, 'integer')
         end
 
         def convert_decimal(value)
           BigDecimal(value)
         rescue ArgumentError
-          value
+          coercion_fallback(value, 'decimal')
         end
 
         def convert_float(value)
           Float(value)
         rescue ArgumentError
-          value
+          coercion_fallback(value, 'float')
         end
 
         def convert_boolean(value)
           return true if %w[true 1].include?(value)
           return false if %w[false 0].include?(value)
 
-          value
+          coercion_fallback(value, 'boolean')
         end
 
         def convert_date(value)
           Date.iso8601(value)
         rescue ArgumentError
-          value
+          coercion_fallback(value, 'date')
         end
 
         def convert_datetime(value)
@@ -148,7 +150,7 @@ module WSDL
 
           Time.xmlschema(value)
         rescue ArgumentError
-          value
+          coercion_fallback(value, 'dateTime')
         end
 
         def convert_time(value)
@@ -157,7 +159,7 @@ module WSDL
 
           Time.xmlschema("1970-01-01T#{value}")
         rescue ArgumentError
-          value
+          coercion_fallback(value, 'time')
         end
 
         def convert_base64(value)
@@ -176,6 +178,16 @@ module WSDL
 
         def explicit_timezone?(value)
           TIMEZONE_SUFFIX.match?(value)
+        end
+
+        # Logs a coercion failure at debug level and returns the original value.
+        #
+        # @param value [String] the value that could not be coerced
+        # @param target_type [String] the XSD type name that was attempted
+        # @return [String] the original value, unchanged
+        def coercion_fallback(value, target_type)
+          logger.debug("Type coercion failed: cannot convert #{value.inspect} to #{target_type}")
+          value
         end
       end
     end

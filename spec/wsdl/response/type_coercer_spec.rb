@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require 'logger'
+
 RSpec.describe WSDL::Response::TypeCoercer do
   describe '.coerce' do
     it 'leaves unknown types untouched' do
@@ -182,6 +184,89 @@ RSpec.describe WSDL::Response::TypeCoercer do
 
     it 'returns single-element array for single list value' do
       expect(described_class.coerce('single', 'xsd:IDREFS')).to eq(%w[single])
+    end
+  end
+
+  describe 'coercion fallback logging' do
+    let(:log_output) { StringIO.new }
+
+    before do
+      WSDL.logger = Logger.new(log_output, level: Logger::DEBUG)
+    end
+
+    it 'logs when integer coercion fails' do
+      described_class.coerce('abc', 'xsd:int')
+
+      expect(log_output.string).to include('Type coercion failed')
+      expect(log_output.string).to include('"abc"')
+      expect(log_output.string).to include('to integer')
+    end
+
+    it 'logs when decimal coercion fails' do
+      described_class.coerce('not-a-number', 'xsd:decimal')
+
+      expect(log_output.string).to include('Type coercion failed')
+      expect(log_output.string).to include('"not-a-number"')
+      expect(log_output.string).to include('to decimal')
+    end
+
+    it 'logs when float coercion fails' do
+      described_class.coerce('not-a-float', 'xsd:float')
+
+      expect(log_output.string).to include('Type coercion failed')
+      expect(log_output.string).to include('"not-a-float"')
+      expect(log_output.string).to include('to float')
+    end
+
+    it 'logs when boolean coercion fails' do
+      described_class.coerce('yes', 'xsd:boolean')
+
+      expect(log_output.string).to include('Type coercion failed')
+      expect(log_output.string).to include('"yes"')
+      expect(log_output.string).to include('to boolean')
+    end
+
+    it 'logs when date coercion fails' do
+      described_class.coerce('01/15/2024', 'xsd:date')
+
+      expect(log_output.string).to include('Type coercion failed')
+      expect(log_output.string).to include('"01/15/2024"')
+      expect(log_output.string).to include('to date')
+    end
+
+    it 'logs when dateTime coercion fails' do
+      described_class.coerce('9999-99-99T99:99:99Z', 'xsd:dateTime')
+
+      expect(log_output.string).to include('Type coercion failed')
+      expect(log_output.string).to include('"9999-99-99T99:99:99Z"')
+      expect(log_output.string).to include('to dateTime')
+    end
+
+    it 'logs when time coercion fails' do
+      described_class.coerce('99:99:99Z', 'xsd:time')
+
+      expect(log_output.string).to include('Type coercion failed')
+      expect(log_output.string).to include('"99:99:99Z"')
+      expect(log_output.string).to include('to time')
+    end
+
+    it 'does not log when coercion succeeds' do
+      described_class.coerce('42', 'xsd:int')
+      described_class.coerce('99.99', 'xsd:decimal')
+      described_class.coerce('3.14', 'xsd:double')
+      described_class.coerce('true', 'xsd:boolean')
+      described_class.coerce('2024-01-15', 'xsd:date')
+      described_class.coerce('2024-01-15T10:30:00Z', 'xsd:dateTime')
+      described_class.coerce('10:30:00Z', 'xsd:time')
+
+      expect(log_output.string).not_to include('Type coercion failed')
+    end
+
+    it 'does not log for dateTime without explicit timezone' do
+      described_class.coerce('2024-01-15T10:30:00', 'xsd:dateTime')
+      described_class.coerce('10:30:00', 'xsd:time')
+
+      expect(log_output.string).not_to include('Type coercion failed')
     end
   end
 end
