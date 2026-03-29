@@ -17,7 +17,7 @@ module WSDL
       # Bump when the internal hash structure changes.
       #
       # @return [Integer]
-      SCHEMA_VERSION = 1
+      SCHEMA_VERSION = 2
 
       # Empty message placeholder for operations whose element resolution fails.
       #

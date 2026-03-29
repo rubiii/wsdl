@@ -13,6 +13,10 @@ RSpec.describe WSDL::Definition::Builder do
       expect(definition.schema_version).to eq(described_class::SCHEMA_VERSION)
     end
 
+    it 'uses schema version 2' do
+      expect(definition.schema_version).to eq(2)
+    end
+
     it 'stores service_name' do
       expect(definition.service_name).to eq('AuthenticationWebServiceImplService')
     end
@@ -154,6 +158,15 @@ RSpec.describe WSDL::Definition::Builder do
       expect {
         WSDL::Definition.from_h(hash)
       }.to raise_error(ArgumentError, /schema version mismatch/)
+    end
+
+    it 'rejects schema version 1' do
+      hash = definition.to_h
+      hash['schema_version'] = 1
+
+      expect {
+        WSDL::Definition.from_h(hash)
+      }.to raise_error(ArgumentError, /schema version mismatch.*re-parse/m)
     end
 
     it 'preserves element type strings through round-trip' do
