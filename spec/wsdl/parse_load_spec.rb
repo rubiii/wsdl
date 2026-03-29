@@ -32,7 +32,7 @@ RSpec.describe WSDL do
       definition = described_class.parse(fixture('wsdl/authentication'), http: http_mock)
 
       expect(definition.sources).not_to be_empty
-      expect(definition.sources.first[:digest]).to match(/\A[a-f0-9]{64}\z/)
+      expect(definition.sources.first['digest']).to match(/\A[a-f0-9]{64}\z/)
     end
 
     it 'computes a fingerprint' do
@@ -46,7 +46,7 @@ RSpec.describe WSDL do
         strictness: { schema_imports: false })
 
       expect(definition).to be_a(WSDL::Definition)
-      expect(definition.sources.any? { |s| s[:status] == 'failed' }).to be true
+      expect(definition.sources.any? { |s| s['status'] == 'failed' }).to be true
     end
 
     it 'accepts limits option' do
@@ -92,7 +92,7 @@ RSpec.describe WSDL do
     end
 
     it 'raises on schema version mismatch' do
-      hash = definition.to_h
+      hash = definition.to_h.dup
       hash['schema_version'] = 999
 
       expect {

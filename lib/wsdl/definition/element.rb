@@ -14,14 +14,14 @@ module WSDL
       # @return [Array] shared empty frozen array for absent children/attributes
       EMPTY_ARRAY = [].freeze
 
-      # @param data [Hash{Symbol => Object}] element hash from {XML::Element#to_definition_h}
+      # @param data [Hash{String => Object}] element hash from {XML::Element#to_definition_h}
       def initialize(data)
         @data = data
 
-        children = data[:children]
+        children = data['children']
         @children = children ? children.map { |c| self.class.new(c) }.freeze : EMPTY_ARRAY
 
-        attributes = data[:attributes]
+        attributes = data['attributes']
         @attributes = attributes ? attributes.map { |a| Attribute.new(a) }.freeze : EMPTY_ARRAY
 
         freeze
@@ -29,83 +29,83 @@ module WSDL
 
       # @return [String] local element name
       def name
-        @data[:name]
+        @data['name']
       end
 
       # @return [String, nil] namespace URI
       def namespace
-        @data[:namespace]
+        @data['namespace']
       end
 
       # @return [String] element form ('qualified' or 'unqualified')
       def form
-        @data.fetch(:form, 'qualified')
+        @data.fetch('form', 'qualified')
       end
 
       # @return [Symbol] element kind (:simple, :complex, or :recursive)
       def kind
-        @data[:type].to_sym
+        @data['type'].to_sym
       end
 
       # @return [String, nil] base type name (e.g. 'xsd:string')
       def base_type
-        @data[:xsd_type]
+        @data['xsd_type']
       end
 
       # @return [Boolean] true if this is a simple type element
       def simple_type?
-        @data[:type] == 'simple'
+        @data['type'] == 'simple'
       end
 
       # @return [Boolean] true if this is a complex or recursive type element
       def complex_type?
-        %w[complex recursive].include?(@data[:type])
+        %w[complex recursive].include?(@data['type'])
       end
 
       # @return [Boolean] true if this element appears at most once
       def singular?
-        @data.fetch(:max_occurs, 1) == 1
+        @data.fetch('max_occurs', 1) == 1
       end
 
       # @return [Boolean] true if this is an xs:list type
       def list?
-        @data.fetch(:list, false)
+        @data.fetch('list', false)
       end
 
       # @return [Boolean] true if this element can be nil (xsi:nil="true")
       def nillable?
-        @data.fetch(:nillable, false)
+        @data.fetch('nillable', false)
       end
 
       # @return [Boolean] true if this element allows xs:any wildcard content
       def any_content?
-        @data.fetch(:any_content, false)
+        @data.fetch('any_content', false)
       end
 
       # @return [Boolean] true if this element has a recursive type definition
       def recursive?
-        @data[:type] == 'recursive'
+        @data['type'] == 'recursive'
       end
 
       # @return [String, nil] the recursive type name
       def recursive_type
-        @data[:recursive_type]
+        @data['recursive_type']
       end
 
       # @return [String] minOccurs as a string (for Validator compatibility)
       def min_occurs
-        @data.fetch(:min_occurs, 1).to_s
+        @data.fetch('min_occurs', 1).to_s
       end
 
       # @return [String] maxOccurs as a string ('unbounded' for infinity)
       def max_occurs
-        value = @data.fetch(:max_occurs, 1)
+        value = @data.fetch('max_occurs', 1)
         value == 'unbounded' ? 'unbounded' : value.to_s
       end
 
       # @return [Boolean] true if the element is optional (minOccurs=0)
       def optional?
-        @data.fetch(:min_occurs, 1).zero?
+        @data.fetch('min_occurs', 1).zero?
       end
 
       # @return [Boolean] true if the element is required (minOccurs>0)
@@ -119,7 +119,7 @@ module WSDL
       # @return [Array<Attribute>] attribute definitions
       attr_reader :attributes
 
-      # @return [Hash{Symbol => Object}] the underlying element data
+      # @return [Hash{String => Object}] the underlying element data
       def to_h
         @data
       end
@@ -140,7 +140,7 @@ module WSDL
           min_occurs:, max_occurs:, kind:
         }
         data[:attributes] = attributes.map(&:to_h) unless attributes.empty?
-        case @data[:type]
+        case @data['type']
         when 'recursive' then data[:recursive_type] = recursive_type
         when 'simple'
           data[:type] = base_type
@@ -148,7 +148,7 @@ module WSDL
         when 'complex' then data[:any_content] = any_content?
         end
         memo << [new_stack, data]
-        children.each { |child| child.to_a(memo, new_stack) } if @data[:type] == 'complex'
+        children.each { |child| child.to_a(memo, new_stack) } if @data['type'] == 'complex'
         memo
       end
       # rubocop:enable Metrics/AbcSize, Metrics/CyclomaticComplexity
@@ -159,7 +159,7 @@ module WSDL
     # @api private
     #
     class Attribute
-      # @param data [Hash{Symbol => Object}] attribute hash from {XML::Attribute#to_definition_h}
+      # @param data [Hash{String => Object}] attribute hash from {XML::Attribute#to_definition_h}
       def initialize(data)
         @data = data
         freeze
@@ -167,27 +167,27 @@ module WSDL
 
       # @return [String] attribute name
       def name
-        @data[:name]
+        @data['name']
       end
 
       # @return [String] base type name (e.g. 'xsd:string')
       def base_type
-        @data[:base_type]
+        @data['base_type']
       end
 
       # @return [Boolean] true if this is an xs:list type
       def list?
-        @data[:list]
+        @data['list']
       end
 
       # @return [String] use constraint ('optional' or 'required')
       def use
-        @data[:use]
+        @data['use']
       end
 
       # @return [Boolean] true if the attribute is optional
       def optional?
-        @data[:use] == 'optional'
+        @data['use'] == 'optional'
       end
 
       # Returns an introspection-compatible hash matching {XML::Attribute#to_h}.
@@ -197,7 +197,7 @@ module WSDL
         { name:, type: base_type, required: !optional?, list: list? }
       end
 
-      # @return [Hash{Symbol => Object}] the underlying definition data
+      # @return [Hash{String => Object}] the underlying definition data
       def to_definition_h
         @data
       end

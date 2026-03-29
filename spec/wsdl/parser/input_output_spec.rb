@@ -16,7 +16,7 @@ RSpec.describe WSDL::Parser::Input do
 
       expect(input.header_parts).to be_empty
       expect(issues).not_to be_empty
-      expect(issues.first[:error]).to match(/@message is missing/)
+      expect(issues.first['error']).to match(/@message is missing/)
     end
 
     it 'skips headers with missing part attribute and records issue' do
@@ -25,7 +25,7 @@ RSpec.describe WSDL::Parser::Input do
 
       expect(input.header_parts).to be_empty
       expect(issues).not_to be_empty
-      expect(issues.first[:error]).to match(/@part is missing/)
+      expect(issues.first['error']).to match(/@part is missing/)
     end
 
     it 'skips headers with empty message attribute and records issue' do
@@ -50,7 +50,7 @@ RSpec.describe WSDL::Parser::Input do
 
       expect(input.header_parts).to be_empty
       expect(issues).not_to be_empty
-      expect(issues.first[:error]).to match(/Unable to find part "missing"/)
+      expect(issues.first['error']).to match(/Unable to find part "missing"/)
     end
 
     it 'skips output headers referencing missing message parts and records issue' do
@@ -59,7 +59,7 @@ RSpec.describe WSDL::Parser::Input do
 
       expect(output.header_parts).to be_empty
       expect(issues).not_to be_empty
-      expect(issues.first[:error]).to match(/Unable to find part "missing_out"/)
+      expect(issues.first['error']).to match(/Unable to find part "missing_out"/)
     end
   end
 

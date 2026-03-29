@@ -27,7 +27,7 @@ module WSDL
     # are eagerly computed from the frozen +op_data+ during construction
     # so they are safe for concurrent reads without synchronization.
     #
-    # @param op_data [Hash{Symbol => Object}] operation hash from {Definition#operation_data}
+    # @param op_data [Hash{String => Object}] operation hash from {Definition#operation_data}
     # @param endpoint [String] the SOAP endpoint URL
     # @param http [Object] an HTTP client instance
     # @param config [Config] behavioral configuration
@@ -37,8 +37,8 @@ module WSDL
       @config = config
 
       @endpoint = endpoint
-      @soap_version = op_data[:soap_version]
-      @soap_action = op_data[:soap_action]
+      @soap_version = op_data['soap_version']
+      @soap_action = op_data['soap_action']
       @encoding = ENCODING
 
       @request_document = nil
@@ -56,7 +56,7 @@ module WSDL
     #   operation.name  # => "getBank"
     #
     def name
-      @op_data[:name]
+      @op_data['name']
     end
 
     attr_reader :endpoint, :soap_version, :soap_action, :encoding
@@ -87,7 +87,7 @@ module WSDL
     #   operation.output_namespace  # => "http://apiNamespace.com"
     #
     def output_namespace
-      @op_data[:rpc_output_namespace]
+      @op_data['rpc_output_namespace']
     end
 
     # Overrides the SOAP endpoint URL for this operation.
@@ -160,7 +160,7 @@ module WSDL
       Request::Validator.new(
         contract:,
         strictness: @config.strictness,
-        schema_complete: @op_data[:schema_complete]
+        schema_complete: @op_data['schema_complete']
       ).validate!(document)
 
       Request::SecurityConflictDetector.new(document:, security:).validate!
@@ -287,7 +287,7 @@ module WSDL
     # @api private
     # @return [String] e.g. `document/literal`
     def input_style
-      @op_data[:input_style]
+      @op_data['input_style']
     end
 
     # Low-level output binding style from the WSDL.
@@ -297,7 +297,7 @@ module WSDL
     # @api private
     # @return [String] e.g. `document/literal`
     def output_style
-      @op_data[:output_style]
+      @op_data['output_style']
     end
 
     private
@@ -360,13 +360,13 @@ module WSDL
     # Called once during {#initialize} so these fields are safe for
     # concurrent reads without synchronization.
     #
-    # @param op_data [Hash{Symbol => Object}] operation hash
+    # @param op_data [Hash{String => Object}] operation hash
     # @return [void]
     def build_derived_fields(op_data)
-      @input_header_parts = wrap_elements(op_data.dig(:input, :header))
-      @input_body_parts = wrap_elements(op_data.dig(:input, :body))
-      @output_header_parts = op_data[:output] ? wrap_elements(op_data[:output][:header]) : nil
-      @output_body_parts = op_data[:output] ? wrap_elements(op_data[:output][:body]) : nil
+      @input_header_parts = wrap_elements(op_data.dig('input', 'header'))
+      @input_body_parts = wrap_elements(op_data.dig('input', 'body'))
+      @output_header_parts = op_data['output'] ? wrap_elements(op_data['output']['header']) : nil
+      @output_body_parts = op_data['output'] ? wrap_elements(op_data['output']['body']) : nil
       @contract = build_contract
       @rpc_wrapper = rpc_literal? ? build_rpc_wrapper : nil
     end
@@ -390,7 +390,7 @@ module WSDL
     def build_rpc_wrapper
       Request::RPCWrapper.new(
         operation_name: name,
-        namespace_uri: @op_data[:rpc_input_namespace]
+        namespace_uri: @op_data['rpc_input_namespace']
       )
     end
   end

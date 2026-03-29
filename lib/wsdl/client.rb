@@ -264,14 +264,14 @@ module WSDL
 
     # Raises if the operation style is not supported.
     #
-    # @param op_data [Hash{Symbol => Object}] operation data hash
+    # @param op_data [Hash{String => Object}] operation data hash
     # @raise [UnsupportedStyleError] if the operation style is not supported
     #
     def verify_operation_style!(op_data)
-      return unless op_data[:input_style] == 'rpc/encoded'
+      return unless op_data['input_style'] == 'rpc/encoded'
 
       raise UnsupportedStyleError,
-        "#{op_data[:name].inspect} is an #{op_data[:input_style].inspect} style operation.\n" \
+        "#{op_data['name'].inspect} is an #{op_data['input_style'].inspect} style operation.\n" \
         'Currently this style is not supported.'
     end
   end

@@ -32,7 +32,7 @@ module WSDL
     # This constructor is intended for internal use by {Builder} and {.from_h}.
     # Users should create Definitions via {WSDL.parse} or {WSDL.load}.
     #
-    # @param data [Hash{Symbol => Object}] the internal definition data
+    # @param data [Hash{String => Object}] the internal definition data
     # @api private
     def initialize(data)
       @data = deep_freeze(data)
@@ -43,14 +43,14 @@ module WSDL
     #
     # @return [Integer]
     def schema_version
-      @data[:schema_version]
+      @data['schema_version']
     end
 
     # Returns the name of the primary service.
     #
     # @return [String, nil] the service name
     def service_name
-      @data[:service_name]
+      @data['service_name']
     end
 
     # Returns the content-based fingerprint for this Definition.
@@ -61,7 +61,7 @@ module WSDL
     #
     # @return [String] SHA-256 fingerprint (e.g. "sha256:a1b2c3...")
     def fingerprint
-      @data[:fingerprint]
+      @data['fingerprint']
     end
 
     # Returns source provenance for all documents fetched during parsing.
@@ -70,14 +70,14 @@ module WSDL
     # and any error. Provides transparency into what was resolved and
     # enables change detection.
     #
-    # @return [Array<Hash{Symbol => Object}>] provenance entries
+    # @return [Array<Hash{String => Object}>] provenance entries
     #
     # @example
     #   definition.sources
-    #   # => [{ location: "http://...", status: :resolved, digest: "sha256:...", error: nil },
-    #   #     { location: "http://...", status: :failed, digest: nil, error: "404 Not Found" }]
+    #   # => [{ "location" => "http://...", "status" => "resolved", "digest" => "sha256:...", "error" => nil },
+    #   #     { "location" => "http://...", "status" => "failed", "digest" => nil, "error" => "404 Not Found" }]
     def sources
-      @data[:sources]
+      @data['sources']
     end
 
     # Returns build issues encountered during Definition construction.
@@ -86,14 +86,14 @@ module WSDL
     # and the reason. These operations are included in the Definition
     # with empty message parts.
     #
-    # @return [Array<Hash{Symbol => String}>] build issue entries with
-    #   +:operation+ and +:error+ keys
+    # @return [Array<Hash{String => Object}>] build issue entries with
+    #   +"operation"+ and +"error"+ keys
     #
     # @example
     #   definition.build_issues
-    #   # => [{ operation: "GetStatus", error: "Unable to find element ..." }]
+    #   # => [{ "operation" => "GetStatus", "error" => "Unable to find element ..." }]
     def build_issues
-      @data[:build_issues] || []
+      @data['build_issues'] || []
     end
 
     # Raises if any build issues were recorded during construction.
@@ -122,8 +122,8 @@ module WSDL
     #   definition.services
     #   # => [{ name: "UserService", ports: ["UserPort", "AdminPort"] }]
     def services
-      @data[:services].map do |name, data|
-        { name:, ports: data[:ports].keys }
+      @data['services'].map do |name, data|
+        { name:, ports: data['ports'].keys }
       end
     end
 
@@ -137,7 +137,7 @@ module WSDL
     #   # => [{ service: "UserService", name: "UserPort", endpoint: "http://..." }]
     def ports(service_name = nil)
       each_port(service_name).map do |svc_name, port_name, port_data|
-        { service: svc_name, name: port_name, endpoint: port_data[:endpoint] }
+        { service: svc_name, name: port_name, endpoint: port_data['endpoint'] }
       end
     end
 
@@ -155,10 +155,10 @@ module WSDL
       result = []
       each_operation(service_name, port_name) do |svc, port, op|
         entry = {
-          service: svc, port:, name: op[:name],
-          style: op[:input_style], soap_action: op[:soap_action]
+          service: svc, port:, name: op['name'],
+          style: op['input_style'], soap_action: op['soap_action']
         }
-        entry[:input_name] = op[:input_name] if op[:input_name]
+        entry[:input_name] = op['input_name'] if op['input_name']
         result << entry
       end
       result
@@ -174,7 +174,7 @@ module WSDL
     # @return [Array<Hash>] element structure with human-readable types
     def input(*)
       op = resolve_operation(*)
-      op[:input][:body].map { |el| project_element(Element.new(el)) }
+      op['input']['body'].map { |el| project_element(Element.new(el)) }
     end
 
     # Returns a developer-friendly view of an operation's input headers.
@@ -184,7 +184,7 @@ module WSDL
     # @return [Array<Hash>] header element structure
     def input_header(*)
       op = resolve_operation(*)
-      op[:input][:header].map { |el| project_element(Element.new(el)) }
+      op['input']['header'].map { |el| project_element(Element.new(el)) }
     end
 
     # Returns a developer-friendly view of an operation's output body.
@@ -194,9 +194,9 @@ module WSDL
     # @return [Array<Hash>] element structure with human-readable types
     def output(*)
       op = resolve_operation(*)
-      return [] unless op[:output]
+      return [] unless op['output']
 
-      op[:output][:body].map { |el| project_element(Element.new(el)) }
+      op['output']['body'].map { |el| project_element(Element.new(el)) }
     end
 
     # Returns a developer-friendly view of an operation's output headers.
@@ -206,9 +206,9 @@ module WSDL
     # @return [Array<Hash>] header element structure
     def output_header(*)
       op = resolve_operation(*)
-      return [] unless op[:output]
+      return [] unless op['output']
 
-      op[:output][:header].map { |el| project_element(Element.new(el)) }
+      op['output']['header'].map { |el| project_element(Element.new(el)) }
     end
 
     # Returns the full internal operation data for use by Client/Operation.
@@ -237,8 +237,8 @@ module WSDL
     def to_dsl(*)
       op = resolve_operation(*)
       lines = []
-      append_dsl_section(lines, 'header', op[:input][:header].map { |el| Element.new(el) })
-      append_dsl_section(lines, 'body', op[:input][:body].map { |el| Element.new(el) })
+      append_dsl_section(lines, 'header', op['input']['header'].map { |el| Element.new(el) })
+      append_dsl_section(lines, 'body', op['input']['body'].map { |el| Element.new(el) })
       lines.join("\n")
     end
 
@@ -249,7 +249,7 @@ module WSDL
     # @return [String] the endpoint URL
     # @api private
     def endpoint(service_name, port_name)
-      @data[:services][service_name][:ports][port_name][:endpoint]
+      @data['services'][service_name]['ports'][port_name]['endpoint']
     end
 
     # Returns the SOAP type namespace URI for a port.
@@ -259,7 +259,7 @@ module WSDL
     # @return [String] the SOAP namespace URI
     # @api private
     def port_type(service_name, port_name)
-      @data[:services][service_name][:ports][port_name][:type]
+      @data['services'][service_name]['ports'][port_name]['type']
     end
 
     # Resolves the single service and port for auto-resolution.
@@ -269,7 +269,7 @@ module WSDL
     # @api private
     # rubocop:disable Metrics/AbcSize -- validation requires multiple checks
     def resolve_service_and_port
-      svcs = @data[:services]
+      svcs = @data['services']
       if svcs.size != 1
         names = svcs.keys.map(&:inspect).join(', ')
         raise ArgumentError, "Cannot auto-resolve service: expected 1, found #{svcs.size} (#{names}). " \
@@ -277,7 +277,7 @@ module WSDL
       end
 
       svc_name = svcs.keys.first
-      ports = svcs[svc_name][:ports]
+      ports = svcs[svc_name]['ports']
       if ports.size != 1
         names = ports.keys.map(&:inspect).join(', ')
         raise ArgumentError, "Cannot auto-resolve port for service #{svc_name.inspect}: " \
@@ -296,14 +296,14 @@ module WSDL
     #
     # @return [Hash{String => Object}] serializable hash with string keys
     def to_h
-      serialize(@data)
+      @data
     end
 
     # Serializes this Definition to a JSON string.
     #
     # @return [String] JSON representation
     def to_json(*)
-      JSON.generate(to_h, *)
+      JSON.generate(@data, *)
     end
 
     # Restores a Definition from a serialized Hash.
@@ -321,7 +321,7 @@ module WSDL
           "\nTo parse a WSDL file, use: WSDL.parse(source)"
       end
 
-      version = hash['schema_version'] || hash[:schema_version]
+      version = hash['schema_version']
 
       unless version == Builder::SCHEMA_VERSION
         raise ArgumentError,
@@ -329,7 +329,7 @@ module WSDL
           "got #{version.inspect}. Please re-parse the WSDL with WSDL.parse."
       end
 
-      new(deserialize(hash))
+      new(hash)
     end
 
     private
@@ -369,7 +369,7 @@ module WSDL
     # @return [Hash] operation data
     # @raise [ArgumentError] if not found
     def resolve_explicit_operation(svc, port, operation, input_name: nil)
-      ops = @data.dig(:services, svc, :ports, port, :operations)
+      ops = @data.dig('services', svc, 'ports', port, 'operations')
       raise ArgumentError, unknown_operation_message(svc, port, operation) unless ops&.key?(operation)
 
       entry = ops[operation]
@@ -387,16 +387,16 @@ module WSDL
     # @raise [ArgumentError] if ambiguous
     def disambiguate_overload(entries, operation, input_name)
       unless input_name
-        available = entries.filter_map { |e| e[:input_name] }
+        available = entries.filter_map { |e| e['input_name'] }
         raise ArgumentError,
           "Operation #{operation.inspect} is overloaded. Pass input_name: to disambiguate. " \
           "Available: #{available.inspect}"
       end
 
-      match = entries.find { |e| e[:input_name] == input_name }
+      match = entries.find { |e| e['input_name'] == input_name }
       return match if match
 
-      available = entries.filter_map { |e| e[:input_name] }
+      available = entries.filter_map { |e| e['input_name'] }
       raise ArgumentError,
         "No overload of #{operation.inspect} matches input_name: #{input_name.inspect}. " \
         "Available: #{available.inspect}"
@@ -404,7 +404,7 @@ module WSDL
 
     # @return [String] error message for unknown operations
     def unknown_operation_message(service, port, operation)
-      ops = @data.dig(:services, service, :ports, port, :operations)
+      ops = @data.dig('services', service, 'ports', port, 'operations')
       if ops
         "Unknown operation #{operation.inspect} for " \
           "service #{service.inspect} and port #{port.inspect}.\n" \
@@ -421,10 +421,10 @@ module WSDL
     # @return [Array]
     def each_port(service_name = nil)
       result = []
-      @data[:services].each do |svc_name, svc_data|
+      @data['services'].each do |svc_name, svc_data|
         next if service_name && svc_name != service_name
 
-        svc_data[:ports].each do |port_name, port_data|
+        svc_data['ports'].each do |port_name, port_data|
           result << [svc_name, port_name, port_data]
         end
       end
@@ -440,7 +440,7 @@ module WSDL
       each_port(service_name).each do |svc_name, p_name, port_data|
         next if port_name && p_name != port_name
 
-        port_data[:operations].each_value do |op_or_ops|
+        port_data['operations'].each_value do |op_or_ops|
           ops = op_or_ops.is_a?(Array) ? op_or_ops : [op_or_ops]
           ops.each { |op| yield svc_name, p_name, op }
         end
@@ -547,38 +547,5 @@ module WSDL
       obj
     end
     # rubocop:enable Metrics/CyclomaticComplexity
-
-    # Serializes internal data to a JSON-safe hash with string keys.
-    #
-    # Internal data uses symbol keys. This method converts to string
-    # keys for JSON compatibility. No symbol values exist in the
-    # internal format — type and status fields use strings to ensure
-    # clean round-tripping.
-    #
-    # @param obj [Object] the object to serialize
-    # @return [Object] JSON-safe value
-    def serialize(obj)
-      case obj
-      when Hash  then obj.transform_keys(&:to_s).transform_values { |v| serialize(v) }
-      when Array then obj.map { |v| serialize(v) }
-      else obj
-      end
-    end
-
-    # Deserializes a JSON-parsed hash back to internal format with symbol keys.
-    #
-    # Only transforms hash keys (string → symbol). All other values
-    # pass through unchanged — no guessing about which strings are symbols.
-    #
-    # @param obj [Object] the object to deserialize
-    # @return [Object] internal-format value
-    def self.deserialize(obj)
-      case obj
-      when Hash  then obj.to_h { |k, v| [k.to_sym, deserialize(v)] }
-      when Array then obj.map { |v| deserialize(v) }
-      else obj
-      end
-    end
-    private_class_method :deserialize
   end
 end

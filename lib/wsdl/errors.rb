@@ -551,7 +551,7 @@ module WSDL
       @issues = issues
 
       shown = issues.first(DISPLAY_LIMIT).map { |i|
-        i[:operation] ? "  #{i[:operation]}: #{i[:error]}" : "  #{i[:error]}"
+        i['operation'] ? "  #{i['operation']}: #{i['error']}" : "  #{i['error']}"
       }
       remaining = issues.size - DISPLAY_LIMIT
       shown << "  ... and #{remaining} more" if remaining.positive?

@@ -599,7 +599,7 @@ RSpec.describe WSDL::Operation do
         definition = parse_definition(header_missing_part_wsdl)
 
         expect(definition.build_issues).not_to be_empty
-        expect(definition.build_issues.first[:error]).to include('soap:header')
+        expect(definition.build_issues.first['error']).to include('soap:header')
       end
     end
   end

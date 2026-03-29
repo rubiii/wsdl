@@ -22,7 +22,7 @@ module WSDL
       # Empty message placeholder for operations whose element resolution fails.
       #
       # @return [Hash]
-      EMPTY_MESSAGE = { header: [], body: [] }.freeze
+      EMPTY_MESSAGE = { 'header' => [], 'body' => [] }.freeze
 
       # Creates a new Builder.
       #
@@ -49,12 +49,12 @@ module WSDL
         services = build_services
 
         data = {
-          schema_version: SCHEMA_VERSION,
-          service_name: @documents.service_name,
-          sources:,
-          build_issues: @build_issues.freeze,
-          services:,
-          fingerprint: compute_fingerprint(sources)
+          'schema_version' => SCHEMA_VERSION,
+          'service_name' => @documents.service_name,
+          'sources' => sources,
+          'build_issues' => @build_issues.freeze,
+          'services' => services,
+          'fingerprint' => compute_fingerprint(sources)
         }
 
         Definition.new(data)
@@ -74,13 +74,13 @@ module WSDL
           service.ports.each_value do |port|
             operations = build_operations(port).freeze
             ports[port.name] = {
-              type: port.type,
-              endpoint: port.location,
-              operations:
+              'type' => port.type,
+              'endpoint' => port.location,
+              'operations' => operations
             }.freeze
           end
 
-          services[service.name] = { ports: ports.freeze }.freeze
+          services[service.name] = { 'ports' => ports.freeze }.freeze
         end
 
         services.freeze
@@ -158,22 +158,22 @@ module WSDL
       # @return [void]
       # rubocop:disable Metrics/AbcSize -- data-mapping method; high ABC from 9 hash assignments, not complexity
       def populate_operation_metadata(metadata, op_name, op_info)
-        metadata[:soap_action] = op_info.soap_action
-        metadata[:soap_version] = op_info.soap_version
+        metadata['soap_action'] = op_info.soap_action
+        metadata['soap_version'] = op_info.soap_version
 
         if op_info.input?
-          metadata[:input_style] = op_info.input_style
-          metadata[:output_style] = op_info.output_style
-          metadata[:rpc_input_namespace] = op_info.rpc_input_namespace
-          metadata[:rpc_output_namespace] = op_info.rpc_output_namespace
+          metadata['input_style'] = op_info.input_style
+          metadata['output_style'] = op_info.output_style
+          metadata['rpc_input_namespace'] = op_info.rpc_input_namespace
+          metadata['rpc_output_namespace'] = op_info.rpc_output_namespace
         else
           record_build_issue(op_name,
             "Binding operation #{op_name.inspect} is missing a required <input> element")
         end
 
-        metadata[:schema_complete] = schema_complete_for_operation?(op_info)
-        metadata[:input] = build_message(op_info.input)
-        metadata[:output] = op_info.output ? build_message(op_info.output) : nil
+        metadata['schema_complete'] = schema_complete_for_operation?(op_info)
+        metadata['input'] = build_message(op_info.input)
+        metadata['output'] = op_info.output ? build_message(op_info.output) : nil
       end
       # rubocop:enable Metrics/AbcSize
 
@@ -188,11 +188,11 @@ module WSDL
       # @return [Hash] operation data with nil/empty defaults
       def default_operation(name, input_name: nil)
         {
-          name:, input_name:,
-          soap_action: nil, soap_version: nil,
-          input_style: nil, output_style: nil,
-          rpc_input_namespace: nil, rpc_output_namespace: nil,
-          schema_complete: false, input: EMPTY_MESSAGE, output: nil
+          'name' => name, 'input_name' => input_name,
+          'soap_action' => nil, 'soap_version' => nil,
+          'input_style' => nil, 'output_style' => nil,
+          'rpc_input_namespace' => nil, 'rpc_output_namespace' => nil,
+          'schema_complete' => false, 'input' => EMPTY_MESSAGE, 'output' => nil
         }
       end
 
@@ -217,8 +217,8 @@ module WSDL
       # @return [Hash] message hash with header and body element hashes
       def build_message(message)
         {
-          header: message.header_parts.map(&:to_definition_h).freeze,
-          body: message.body_parts.map(&:to_definition_h).freeze
+          'header' => message.header_parts.map(&:to_definition_h).freeze,
+          'body' => message.body_parts.map(&:to_definition_h).freeze
         }.freeze
       end
 
@@ -228,7 +228,7 @@ module WSDL
       # @param error [String] description of the problem
       # @return [void]
       def record_build_issue(operation, error)
-        @build_issues << { type: :build_error, operation:, error: }
+        @build_issues << { 'type' => 'build_error', 'operation' => operation, 'error' => error }
       end
 
       # Returns whether schema metadata is complete for the given operation.
@@ -289,8 +289,8 @@ module WSDL
       # @param sources [Array<Hash>] provenance entries
       # @return [String] SHA-256 fingerprint
       def compute_fingerprint(sources)
-        entries = sources.sort_by { |s| s[:location].to_s }.map { |source|
-          "#{source[:location]}:#{source[:status]}:#{source[:digest] || source[:error]}"
+        entries = sources.sort_by { |s| s['location'].to_s }.map { |source|
+          "#{source['location']}:#{source['status']}:#{source['digest'] || source['error']}"
         }
 
         "sha256:#{Digest::SHA256.hexdigest(entries.join("\n"))}"

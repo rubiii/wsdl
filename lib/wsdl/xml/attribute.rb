@@ -65,13 +65,13 @@ module WSDL
       # derived properties (type, required), making it suitable for serialization
       # and round-trip reconstruction via {Definition::Element}.
       #
-      # @return [Hash{Symbol => Object}] definition-compatible attribute hash
+      # @return [Hash{String => Object}] definition-compatible attribute hash
       def to_definition_h
         {
-          name:,
-          base_type:,
-          use:,
-          list: list?
+          'name' => name,
+          'base_type' => base_type,
+          'use' => use,
+          'list' => list?
         }.freeze
       end
 

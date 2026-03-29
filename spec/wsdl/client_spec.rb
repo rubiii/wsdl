@@ -72,7 +72,7 @@ RSpec.describe WSDL::Client do
           end
 
           defn = WSDL.parse(wsdl_path)
-          sources = defn.sources.map { |s| s[:location] }
+          sources = defn.sources.map { |s| s['location'] }
 
           expect(WSDL::Parser).to have_received(:parse)
           expect(sources).to all(start_with(wsdl_directory))
@@ -246,7 +246,7 @@ RSpec.describe WSDL::Client do
         client = described_class.new(defn)
 
         expect(client.definition.build_issues).not_to be_empty
-        expect(client.definition.build_issues.first[:error]).to match(/Unknown XSD built-in type/)
+        expect(client.definition.build_issues.first['error']).to match(/Unknown XSD built-in type/)
       end
     end
 
@@ -295,7 +295,7 @@ RSpec.describe WSDL::Client do
 
         expect(client.operations('S', 'P')).to include('Op')
         expect(client.definition.build_issues).not_to be_empty
-        expect(client.definition.build_issues.first[:error]).to match(/missing a required/)
+        expect(client.definition.build_issues.first['error']).to match(/missing a required/)
       end
     end
   end
@@ -328,7 +328,7 @@ RSpec.describe WSDL::Client do
 
         expect(client.operations('S', 'P')).to include('GhostOp')
         expect(client.definition.build_issues).not_to be_empty
-        expect(client.definition.build_issues.first[:error]).to match(/GhostOp.*portType/)
+        expect(client.definition.build_issues.first['error']).to match(/GhostOp.*portType/)
       end
     end
   end
@@ -442,7 +442,7 @@ RSpec.describe WSDL::Client do
       )
 
       expect(definition).to be_a(WSDL::Definition)
-      expect(definition.sources.any? { |s| s[:status] == 'failed' }).to be(true)
+      expect(definition.sources.any? { |s| s['status'] == 'failed' }).to be(true)
     end
 
     it 'passes Strictness.on to parser' do

@@ -349,28 +349,28 @@ module WSDL
       # @return [Hash{Symbol => Object}] definition-compatible element hash
       # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
       def build_definition_h
-        h = { name:, namespace:, type: KIND_STRINGS.fetch(kind) }
+        h = { 'name' => name, 'namespace' => namespace, 'type' => KIND_STRINGS.fetch(kind) }
 
-        h[:xsd_type] = base_type if base_type
-        h[:form] = form unless form == 'qualified'
+        h['xsd_type'] = base_type if base_type
+        h['form'] = form unless form == 'qualified'
 
         min = min_occurs.to_i
-        h[:min_occurs] = min unless min == 1
+        h['min_occurs'] = min unless min == 1
 
         max = max_occurs == 'unbounded' ? 'unbounded' : max_occurs.to_i
-        h[:max_occurs] = max unless max == 1
+        h['max_occurs'] = max unless max == 1
 
-        h[:nillable] = true if nillable?
-        h[:list] = true if list?
-        h[:any_content] = true if any_content?
-        h[:recursive_type] = recursive_type if recursive_type
-        h[:complex_type_id] = complex_type_id if complex_type_id
+        h['nillable'] = true if nillable?
+        h['list'] = true if list?
+        h['any_content'] = true if any_content?
+        h['recursive_type'] = recursive_type if recursive_type
+        h['complex_type_id'] = complex_type_id if complex_type_id
 
         child_hashes = children.map(&:to_definition_h)
-        h[:children] = child_hashes.freeze unless child_hashes.empty?
+        h['children'] = child_hashes.freeze unless child_hashes.empty?
 
         attr_hashes = attributes.map(&:to_definition_h)
-        h[:attributes] = attr_hashes.freeze unless attr_hashes.empty?
+        h['attributes'] = attr_hashes.freeze unless attr_hashes.empty?
 
         h.freeze
       end

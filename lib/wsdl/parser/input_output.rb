@@ -176,7 +176,7 @@ module WSDL
       # @return [void]
       def record_issue(error)
         operation = @port_type_operation.name
-        @issues&.push(type: :build_error, operation:, error:)
+        @issues&.push('type' => 'build_error', 'operation' => operation, 'error' => error)
       end
     end
 

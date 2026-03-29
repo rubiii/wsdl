@@ -304,10 +304,10 @@ module WSDL
       # @return [void]
       def record_resolved_source(location, xml)
         @provenance << {
-          location:,
-          status: 'resolved',
-          digest: Digest::SHA256.hexdigest(xml),
-          error: nil
+          'location' => location,
+          'status' => 'resolved',
+          'digest' => Digest::SHA256.hexdigest(xml),
+          'error' => nil
         }
       end
 
@@ -317,10 +317,10 @@ module WSDL
       # @return [void]
       def record_failed_source(error)
         @provenance << {
-          location: error.location,
-          status: 'failed',
-          digest: nil,
-          error: error.message
+          'location' => error.location,
+          'status' => 'failed',
+          'digest' => nil,
+          'error' => error.message
         }
       end
 

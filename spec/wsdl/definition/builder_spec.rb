@@ -27,7 +27,7 @@ RSpec.describe WSDL::Definition::Builder do
 
     it 'stores sources from provenance' do
       expect(definition.sources).not_to be_empty
-      expect(definition.sources.first[:status]).to eq('resolved')
+      expect(definition.sources.first['status']).to eq('resolved')
     end
 
     it 'produces stable fingerprints for the same input' do
@@ -152,7 +152,7 @@ RSpec.describe WSDL::Definition::Builder do
     end
 
     it 'raises on schema version mismatch' do
-      hash = definition.to_h
+      hash = definition.to_h.dup
       hash['schema_version'] = 999
 
       expect {
@@ -161,7 +161,7 @@ RSpec.describe WSDL::Definition::Builder do
     end
 
     it 'rejects schema version 1' do
-      hash = definition.to_h
+      hash = definition.to_h.dup
       hash['schema_version'] = 1
 
       expect {
@@ -185,9 +185,21 @@ RSpec.describe WSDL::Definition::Builder do
       json = definition.to_json
       restored = WSDL::Definition.from_h(JSON.parse(json))
 
-      statuses = restored.sources.map { |s| s[:status] }
+      statuses = restored.sources.map { |s| s['status'] }
       expect(statuses).to all(be_a(String))
       expect(statuses).to all(match(/\A(resolved|failed)\z/))
+    end
+
+    it 'supports operation_data lookup after from_h round-trip' do
+      restored = WSDL::Definition.from_h(JSON.parse(definition.to_json))
+      op = restored.operation_data(
+        'AuthenticationWebServiceImplService',
+        'AuthenticationWebServiceImplPort',
+        'authenticate'
+      )
+
+      expect(op['name']).to eq('authenticate')
+      expect(op['input']['body']).to be_an(Array)
     end
 
     it 'preserves unbounded max_occurs through round-trip' do
@@ -309,19 +321,19 @@ RSpec.describe WSDL::Definition::Builder do
 
       it 'records a build issue referencing the portType' do
         expect(definition.build_issues).to contain_exactly(
-          a_hash_including(type: :build_error, operation: 'GhostOp')
+          a_hash_including('type' => 'build_error', 'operation' => 'GhostOp')
         )
-        expect(definition.build_issues.first[:error]).to include('portType')
+        expect(definition.build_issues.first['error']).to include('portType')
       end
 
       it 'stores the operation with default metadata' do
         op = definition.operation_data('S', 'P', 'GhostOp')
 
-        expect(op[:name]).to eq('GhostOp')
-        expect(op[:soap_action]).to be_nil
-        expect(op[:input_style]).to be_nil
-        expect(op[:input]).to eq(header: [], body: [])
-        expect(op[:output]).to be_nil
+        expect(op['name']).to eq('GhostOp')
+        expect(op['soap_action']).to be_nil
+        expect(op['input_style']).to be_nil
+        expect(op['input']).to eq('header' => [], 'body' => [])
+        expect(op['output']).to be_nil
       end
     end
 
@@ -346,9 +358,9 @@ RSpec.describe WSDL::Definition::Builder do
       it 'records a build issue about missing input' do
         expect(definition.build_issues).to include(
           a_hash_including(
-            type: :build_error,
-            operation: 'Op',
-            error: a_string_matching(/missing a required.*input/i)
+            'type' => 'build_error',
+            'operation' => 'Op',
+            'error' => a_string_matching(/missing a required.*input/i)
           )
         )
       end
@@ -356,10 +368,10 @@ RSpec.describe WSDL::Definition::Builder do
       it 'populates soap_action and soap_version but not styles' do
         op = definition.operation_data('S', 'P', 'Op')
 
-        expect(op[:soap_action]).to eq('DoStuff')
-        expect(op[:soap_version]).to eq('1.1')
-        expect(op[:input_style]).to be_nil
-        expect(op[:output_style]).to be_nil
+        expect(op['soap_action']).to eq('DoStuff')
+        expect(op['soap_version']).to eq('1.1')
+        expect(op['input_style']).to be_nil
+        expect(op['output_style']).to be_nil
       end
     end
 
@@ -381,9 +393,9 @@ RSpec.describe WSDL::Definition::Builder do
         by_id = definition.operation_data('LookupService', 'LookupPort', 'Lookup', input_name: 'LookupById')
         by_name = definition.operation_data('LookupService', 'LookupPort', 'Lookup', input_name: 'LookupByName')
 
-        expect(by_id[:soap_action]).to eq('LookupById')
-        expect(by_name[:soap_action]).to eq('LookupByName')
-        expect(by_id[:input][:body]).not_to eq(by_name[:input][:body])
+        expect(by_id['soap_action']).to eq('LookupById')
+        expect(by_name['soap_action']).to eq('LookupByName')
+        expect(by_id['input']['body']).not_to eq(by_name['input']['body'])
       end
     end
 
@@ -394,7 +406,7 @@ RSpec.describe WSDL::Definition::Builder do
 
       it 'records a build issue with nil operation' do
         expect(definition.build_issues).to include(
-          a_hash_including(type: :build_error, operation: nil)
+          a_hash_including('type' => 'build_error', 'operation' => nil)
         )
       end
 

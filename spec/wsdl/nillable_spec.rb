@@ -6,7 +6,7 @@ RSpec.describe 'Nillable elements' do
   let(:endpoint) { definition.endpoint('UserService', 'UserServicePort') }
 
   describe 'element nillable attribute parsing' do
-    let(:body_parts) { op_data[:input][:body].map { |h| WSDL::Definition::Element.new(h) } }
+    let(:body_parts) { op_data['input']['body'].map { |h| WSDL::Definition::Element.new(h) } }
     let(:create_user_element) { body_parts.first }
 
     it 'parses nillable="true" on simple type elements' do

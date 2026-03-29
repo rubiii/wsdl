@@ -159,20 +159,20 @@ RSpec.describe WSDL::Definition do
 
     it 'returns empty array when operation has no output' do
       notify_op = {
-        name: 'Notify', input_name: nil, soap_action: nil, soap_version: '1.1',
-        input_style: 'document/literal', output_style: nil,
-        rpc_input_namespace: nil, rpc_output_namespace: nil,
-        schema_complete: true, input: { header: [], body: [] }, output: nil
+        'name' => 'Notify', 'input_name' => nil, 'soap_action' => nil, 'soap_version' => '1.1',
+        'input_style' => 'document/literal', 'output_style' => nil,
+        'rpc_input_namespace' => nil, 'rpc_output_namespace' => nil,
+        'schema_complete' => true, 'input' => { 'header' => [], 'body' => [] }, 'output' => nil
       }
       one_way_def = described_class.new(
-        schema_version: WSDL::Definition::Builder::SCHEMA_VERSION,
-        service_name: 'Svc', fingerprint: 'sha256:test', sources: [],
-        services: {
+        'schema_version' => WSDL::Definition::Builder::SCHEMA_VERSION,
+        'service_name' => 'Svc', 'fingerprint' => 'sha256:test', 'sources' => [],
+        'services' => {
           'Svc' => {
-            ports: {
+            'ports' => {
               'Port' => {
-                type: 'soap', endpoint: 'http://x',
-                operations: { 'Notify' => notify_op }
+                'type' => 'soap', 'endpoint' => 'http://x',
+                'operations' => { 'Notify' => notify_op }
               }
             }
           }
@@ -196,18 +196,18 @@ RSpec.describe WSDL::Definition do
       data = definition.operation_data('authenticate')
 
       expect(data).to include(
-        name: 'authenticate',
-        input_style: 'document/literal',
-        soap_version: a_kind_of(String)
+        'name' => 'authenticate',
+        'input_style' => 'document/literal',
+        'soap_version' => a_kind_of(String)
       )
-      expect(data[:input]).to have_key(:body)
-      expect(data[:input]).to have_key(:header)
+      expect(data['input']).to have_key('body')
+      expect(data['input']).to have_key('header')
     end
 
     it 'accepts explicit service, port, operation' do
       data = definition.operation_data('AuthenticationWebServiceImplService',
         'AuthenticationWebServiceImplPort', 'authenticate')
-      expect(data[:name]).to eq('authenticate')
+      expect(data['name']).to eq('authenticate')
     end
   end
 
@@ -274,21 +274,21 @@ RSpec.describe WSDL::Definition do
     context 'with header elements' do
       subject(:definition) do
         described_class.new(
-          schema_version: WSDL::Definition::Builder::SCHEMA_VERSION,
-          service_name: 'Svc', fingerprint: 'sha256:test', sources: [],
-          services: {
+          'schema_version' => WSDL::Definition::Builder::SCHEMA_VERSION,
+          'service_name' => 'Svc', 'fingerprint' => 'sha256:test', 'sources' => [],
+          'services' => {
             'Svc' => {
-              ports: {
+              'ports' => {
                 'Port' => {
-                  type: 'soap', endpoint: 'http://x',
-                  operations: {
+                  'type' => 'soap', 'endpoint' => 'http://x',
+                  'operations' => {
                     'Op' => {
-                      name: 'Op', input_name: nil, soap_action: nil, soap_version: '1.1',
-                      input_style: 'document/literal', output_style: nil,
-                      rpc_input_namespace: nil, rpc_output_namespace: nil,
-                      schema_complete: true,
-                      input: { header: [simple_element('Token')], body: [simple_element('Data')] },
-                      output: nil
+                      'name' => 'Op', 'input_name' => nil, 'soap_action' => nil, 'soap_version' => '1.1',
+                      'input_style' => 'document/literal', 'output_style' => nil,
+                      'rpc_input_namespace' => nil, 'rpc_output_namespace' => nil,
+                      'schema_complete' => true,
+                      'input' => { 'header' => [simple_element('Token')], 'body' => [simple_element('Data')] },
+                      'output' => nil
                     }
                   }
                 }
@@ -363,17 +363,17 @@ RSpec.describe WSDL::Definition do
   describe 'overloaded operations' do
     subject(:definition) do
       described_class.new(
-        schema_version: WSDL::Definition::Builder::SCHEMA_VERSION,
-        service_name: 'Svc', fingerprint: 'sha256:test', sources: [],
-        services: {
+        'schema_version' => WSDL::Definition::Builder::SCHEMA_VERSION,
+        'service_name' => 'Svc', 'fingerprint' => 'sha256:test', 'sources' => [],
+        'services' => {
           'Svc' => {
-            ports: {
+            'ports' => {
               'Port' => {
-                type: 'soap', endpoint: 'http://x',
-                operations: {
+                'type' => 'soap', 'endpoint' => 'http://x',
+                'operations' => {
                   'Lookup' => [
-                    op_base.merge(name: 'Lookup', input_name: 'ById'),
-                    op_base.merge(name: 'Lookup', input_name: 'ByName')
+                    op_base.merge('name' => 'Lookup', 'input_name' => 'ById'),
+                    op_base.merge('name' => 'Lookup', 'input_name' => 'ByName')
                   ]
                 }
               }
@@ -385,10 +385,10 @@ RSpec.describe WSDL::Definition do
 
     let(:op_base) do
       {
-        soap_action: nil, soap_version: '1.1', input_style: 'document/literal',
-        output_style: 'document/literal', rpc_input_namespace: nil,
-        rpc_output_namespace: nil, schema_complete: true,
-        input: { header: [], body: [] }, output: { header: [], body: [] }
+        'soap_action' => nil, 'soap_version' => '1.1', 'input_style' => 'document/literal',
+        'output_style' => 'document/literal', 'rpc_input_namespace' => nil,
+        'rpc_output_namespace' => nil, 'schema_complete' => true,
+        'input' => { 'header' => [], 'body' => [] }, 'output' => { 'header' => [], 'body' => [] }
       }
     end
 
@@ -401,7 +401,7 @@ RSpec.describe WSDL::Definition do
 
     it 'disambiguates with input_name' do
       data = definition.operation_data('Svc', 'Port', 'Lookup', input_name: 'ById')
-      expect(data[:input_name]).to eq('ById')
+      expect(data['input_name']).to eq('ById')
     end
 
     it 'raises without input_name for overloaded operations' do
@@ -439,10 +439,10 @@ RSpec.describe WSDL::Definition do
 
   def simple_element(name, xsd_type: 'xsd:string')
     {
-      name:, namespace: nil, form: 'qualified', type: 'simple',
-      xsd_type:, min_occurs: 1, max_occurs: 1, nillable: false,
-      singular: true, list: false, any_content: false, recursive_type: nil,
-      complex_type_id: nil, children: [], attributes: []
+      'name' => name, 'namespace' => nil, 'form' => 'qualified', 'type' => 'simple',
+      'xsd_type' => xsd_type, 'min_occurs' => 1, 'max_occurs' => 1, 'nillable' => false,
+      'singular' => true, 'list' => false, 'any_content' => false, 'recursive_type' => nil,
+      'complex_type_id' => nil, 'children' => [], 'attributes' => []
     }
   end
 end

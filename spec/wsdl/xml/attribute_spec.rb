@@ -15,17 +15,17 @@ RSpec.describe WSDL::XML::Attribute do
       attr = build_attribute(name: 'code', base_type: 'xsd:int', use: 'required', list: false)
 
       expect(attr.to_definition_h).to eq({
-        name: 'code',
-        base_type: 'xsd:int',
-        use: 'required',
-        list: false
+        'name' => 'code',
+        'base_type' => 'xsd:int',
+        'use' => 'required',
+        'list' => false
       })
     end
 
     it 'preserves list flag' do
       attr = build_attribute(list: true)
 
-      expect(attr.to_definition_h[:list]).to be true
+      expect(attr.to_definition_h['list']).to be true
     end
 
     it 'differs from to_h in field names' do
@@ -34,8 +34,8 @@ RSpec.describe WSDL::XML::Attribute do
       definition_h = attr.to_definition_h
       introspection_h = attr.to_h
 
-      expect(definition_h).to have_key(:base_type)
-      expect(definition_h).to have_key(:use)
+      expect(definition_h).to have_key('base_type')
+      expect(definition_h).to have_key('use')
       expect(introspection_h).to have_key(:type)
       expect(introspection_h).to have_key(:required)
     end

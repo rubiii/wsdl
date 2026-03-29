@@ -101,8 +101,8 @@ RSpec.describe WSDL::XML::Element do
 
       hash = element.to_definition_h
       expect(hash).to be_frozen
-      expect(hash[:name]).to eq('user')
-      expect(hash[:type]).to eq('simple')
+      expect(hash['name']).to eq('user')
+      expect(hash['type']).to eq('simple')
     end
 
     it 'caches the definition hash so repeated calls return the same object' do
@@ -128,10 +128,10 @@ RSpec.describe WSDL::XML::Element do
       element = build_element(base_type: 'xsd:string')
 
       expect(element.to_definition_h).to eq({
-        name: 'user',
-        namespace: 'http://example.com',
-        type: 'simple',
-        xsd_type: 'xsd:string'
+        'name' => 'user',
+        'namespace' => 'http://example.com',
+        'type' => 'simple',
+        'xsd_type' => 'xsd:string'
       })
     end
 
@@ -139,75 +139,75 @@ RSpec.describe WSDL::XML::Element do
       it 'includes only name, namespace, type, xsd_type for a simple leaf at defaults' do
         element = build_element(base_type: 'xsd:string')
 
-        expect(element.to_definition_h.keys).to contain_exactly(:name, :namespace, :type, :xsd_type)
+        expect(element.to_definition_h.keys).to contain_exactly('name', 'namespace', 'type', 'xsd_type')
       end
 
       it 'never includes singular key' do
         simple = build_element(base_type: 'xsd:string')
-        expect(simple.to_definition_h).not_to have_key(:singular)
+        expect(simple.to_definition_h).not_to have_key('singular')
 
         unbounded = build_element(max_occurs: 'unbounded', singular: false)
-        expect(unbounded.to_definition_h).not_to have_key(:singular)
+        expect(unbounded.to_definition_h).not_to have_key('singular')
       end
 
       it 'retains min_occurs when non-default' do
         element = build_element(base_type: 'xsd:string', min_occurs: '0')
 
-        expect(element.to_definition_h[:min_occurs]).to eq(0)
+        expect(element.to_definition_h['min_occurs']).to eq(0)
       end
 
       it 'omits min_occurs at default (1)' do
         element = build_element(base_type: 'xsd:string')
 
-        expect(element.to_definition_h).not_to have_key(:min_occurs)
+        expect(element.to_definition_h).not_to have_key('min_occurs')
       end
 
       it 'retains nillable when true' do
         element = build_element(base_type: 'xsd:string', nillable: true)
 
-        expect(element.to_definition_h[:nillable]).to be(true)
+        expect(element.to_definition_h['nillable']).to be(true)
       end
 
       it 'omits nillable when false (default)' do
         element = build_element(base_type: 'xsd:string')
 
-        expect(element.to_definition_h).not_to have_key(:nillable)
+        expect(element.to_definition_h).not_to have_key('nillable')
       end
 
       it 'retains form when unqualified' do
         element = build_element(base_type: 'xsd:string', form: 'unqualified')
 
-        expect(element.to_definition_h[:form]).to eq('unqualified')
+        expect(element.to_definition_h['form']).to eq('unqualified')
       end
 
       it 'omits form when qualified (default)' do
         element = build_element(base_type: 'xsd:string')
 
-        expect(element.to_definition_h).not_to have_key(:form)
+        expect(element.to_definition_h).not_to have_key('form')
       end
 
       it 'stores unbounded max_occurs as "unbounded" string' do
         element = build_element(max_occurs: 'unbounded', singular: false)
 
-        expect(element.to_definition_h[:max_occurs]).to eq('unbounded')
+        expect(element.to_definition_h['max_occurs']).to eq('unbounded')
       end
 
       it 'omits max_occurs at default (1)' do
         element = build_element(base_type: 'xsd:string')
 
-        expect(element.to_definition_h).not_to have_key(:max_occurs)
+        expect(element.to_definition_h).not_to have_key('max_occurs')
       end
 
       it 'retains max_occurs when non-default integer' do
         element = build_element(base_type: 'xsd:string', max_occurs: '5')
 
-        expect(element.to_definition_h[:max_occurs]).to eq(5)
+        expect(element.to_definition_h['max_occurs']).to eq(5)
       end
 
       it 'omits children when empty' do
         element = build_element(base_type: 'xsd:string')
 
-        expect(element.to_definition_h).not_to have_key(:children)
+        expect(element.to_definition_h).not_to have_key('children')
       end
 
       it 'retains children when present' do
@@ -215,73 +215,73 @@ RSpec.describe WSDL::XML::Element do
         parent = build_element
         parent.children = [child]
 
-        expect(parent.to_definition_h).to have_key(:children)
+        expect(parent.to_definition_h).to have_key('children')
       end
 
       it 'omits attributes when empty' do
         element = build_element(base_type: 'xsd:string')
 
-        expect(element.to_definition_h).not_to have_key(:attributes)
+        expect(element.to_definition_h).not_to have_key('attributes')
       end
 
       it 'retains attributes when present' do
         element = build_element(attributes: [build_attribute])
 
-        expect(element.to_definition_h).to have_key(:attributes)
+        expect(element.to_definition_h).to have_key('attributes')
       end
 
       it 'omits xsd_type for complex elements' do
         element = build_element
 
-        expect(element.to_definition_h).not_to have_key(:xsd_type)
+        expect(element.to_definition_h).not_to have_key('xsd_type')
       end
 
       it 'retains complex_type_id when present' do
         element = build_element(complex_type_id: 'http://example.com:UserType')
 
-        expect(element.to_definition_h[:complex_type_id]).to eq('http://example.com:UserType')
+        expect(element.to_definition_h['complex_type_id']).to eq('http://example.com:UserType')
       end
 
       it 'omits complex_type_id when nil (default)' do
         element = build_element(base_type: 'xsd:string')
 
-        expect(element.to_definition_h).not_to have_key(:complex_type_id)
+        expect(element.to_definition_h).not_to have_key('complex_type_id')
       end
 
       it 'omits list when false (default)' do
         element = build_element(base_type: 'xsd:string')
 
-        expect(element.to_definition_h).not_to have_key(:list)
+        expect(element.to_definition_h).not_to have_key('list')
       end
 
       it 'retains list when true' do
         element = build_element(base_type: 'xsd:string', list: true)
 
-        expect(element.to_definition_h[:list]).to be(true)
+        expect(element.to_definition_h['list']).to be(true)
       end
 
       it 'omits any_content when false (default)' do
         element = build_element
 
-        expect(element.to_definition_h).not_to have_key(:any_content)
+        expect(element.to_definition_h).not_to have_key('any_content')
       end
 
       it 'retains any_content when true' do
         element = build_element(any_content: true)
 
-        expect(element.to_definition_h[:any_content]).to be(true)
+        expect(element.to_definition_h['any_content']).to be(true)
       end
 
       it 'omits recursive_type when nil (default)' do
         element = build_element(base_type: 'xsd:string')
 
-        expect(element.to_definition_h).not_to have_key(:recursive_type)
+        expect(element.to_definition_h).not_to have_key('recursive_type')
       end
 
       it 'retains recursive_type when present' do
         element = build_element(recursive_type: 'ParentType')
 
-        expect(element.to_definition_h[:recursive_type]).to eq('ParentType')
+        expect(element.to_definition_h['recursive_type']).to eq('ParentType')
       end
 
       it 'produces lean children recursively' do
@@ -289,8 +289,8 @@ RSpec.describe WSDL::XML::Element do
         parent = build_element(name: 'wrapper')
         parent.children = [leaf]
 
-        child_hash = parent.to_definition_h[:children].first
-        expect(child_hash.keys).to contain_exactly(:name, :namespace, :type, :xsd_type)
+        child_hash = parent.to_definition_h['children'].first
+        expect(child_hash.keys).to contain_exactly('name', 'namespace', 'type', 'xsd_type')
       end
     end
 
@@ -300,61 +300,61 @@ RSpec.describe WSDL::XML::Element do
       parent.children = [child]
 
       hash = parent.to_definition_h
-      expect(hash[:type]).to eq('complex')
-      expect(hash).not_to have_key(:xsd_type)
-      expect(hash[:children].size).to eq(1)
-      expect(hash[:children].first[:name]).to eq('name')
-      expect(hash[:children].first[:type]).to eq('simple')
+      expect(hash['type']).to eq('complex')
+      expect(hash).not_to have_key('xsd_type')
+      expect(hash['children'].size).to eq(1)
+      expect(hash['children'].first['name']).to eq('name')
+      expect(hash['children'].first['type']).to eq('simple')
     end
 
     it 'converts a recursive element' do
       element = build_element(name: 'parent', recursive_type: 'ParentType')
 
       hash = element.to_definition_h
-      expect(hash[:type]).to eq('recursive')
-      expect(hash[:recursive_type]).to eq('ParentType')
+      expect(hash['type']).to eq('recursive')
+      expect(hash['recursive_type']).to eq('ParentType')
     end
 
     it 'converts min_occurs and max_occurs to integers' do
       element = build_element(min_occurs: '0', max_occurs: '5')
 
       hash = element.to_definition_h
-      expect(hash[:min_occurs]).to eq(0)
-      expect(hash[:max_occurs]).to eq(5)
+      expect(hash['min_occurs']).to eq(0)
+      expect(hash['max_occurs']).to eq(5)
     end
 
     it 'converts unbounded max_occurs to "unbounded" string' do
       element = build_element(max_occurs: 'unbounded', singular: false)
 
-      expect(element.to_definition_h[:max_occurs]).to eq('unbounded')
+      expect(element.to_definition_h['max_occurs']).to eq('unbounded')
     end
 
     it 'includes attributes' do
       attr = build_attribute(name: 'id', base_type: 'xsd:int', use: 'required')
       element = build_element(attributes: [attr])
 
-      attrs = element.to_definition_h[:attributes]
-      expect(attrs).to eq([{ name: 'id', base_type: 'xsd:int', use: 'required', list: false }])
+      attrs = element.to_definition_h['attributes']
+      expect(attrs).to eq([{ 'name' => 'id', 'base_type' => 'xsd:int', 'use' => 'required', 'list' => false }])
     end
 
     it 'includes nillable and list flags' do
       element = build_element(base_type: 'xsd:string', nillable: true, list: true)
 
       hash = element.to_definition_h
-      expect(hash[:nillable]).to be true
-      expect(hash[:list]).to be true
+      expect(hash['nillable']).to be true
+      expect(hash['list']).to be true
     end
 
     it 'includes any_content flag' do
       element = build_element(any_content: true)
 
-      expect(element.to_definition_h[:any_content]).to be true
+      expect(element.to_definition_h['any_content']).to be true
     end
 
     it 'includes complex_type_id' do
       element = build_element(complex_type_id: 'http://example.com:UserType')
 
-      expect(element.to_definition_h[:complex_type_id]).to eq('http://example.com:UserType')
+      expect(element.to_definition_h['complex_type_id']).to eq('http://example.com:UserType')
     end
 
     it 'recursively converts deeply nested trees' do
@@ -365,8 +365,8 @@ RSpec.describe WSDL::XML::Element do
       root.children = [mid]
 
       hash = root.to_definition_h
-      expect(hash[:children].first[:children].first[:name]).to eq('value')
-      expect(hash[:children].first[:children].first[:type]).to eq('simple')
+      expect(hash['children'].first['children'].first['name']).to eq('value')
+      expect(hash['children'].first['children'].first['type']).to eq('simple')
     end
 
     context 'when the element is frozen' do
@@ -392,8 +392,8 @@ RSpec.describe WSDL::XML::Element do
         parent_b.children = [child]
         parent_b.freeze
 
-        child_hash_a = parent_a.to_definition_h[:children].first
-        child_hash_b = parent_b.to_definition_h[:children].first
+        child_hash_a = parent_a.to_definition_h['children'].first
+        child_hash_b = parent_b.to_definition_h['children'].first
 
         expect(child_hash_a).to be(child_hash_b)
       end
@@ -409,10 +409,10 @@ RSpec.describe WSDL::XML::Element do
         root.freeze
 
         hash = root.to_definition_h
-        expect(hash[:name]).to eq('items')
-        expect(hash[:children].first[:name]).to eq('item')
-        expect(hash[:children].first[:children].first[:name]).to eq('value')
-        expect(hash[:children].first[:children].first[:type]).to eq('simple')
+        expect(hash['name']).to eq('items')
+        expect(hash['children'].first['name']).to eq('item')
+        expect(hash['children'].first['children'].first['name']).to eq('value')
+        expect(hash['children'].first['children'].first['type']).to eq('simple')
       end
     end
   end

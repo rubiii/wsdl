@@ -67,8 +67,8 @@ RSpec.describe WSDL::XML::ElementBuilder do
         builder.build([part])
 
         expect(issues).not_to be_empty
-        expect(issues.first[:type]).to eq(:resource_limit)
-        expect(issues.first[:error]).to match(/nesting depth.*exceeds limit/)
+        expect(issues.first['type']).to eq('resource_limit')
+        expect(issues.first['error']).to match(/nesting depth.*exceeds limit/)
       end
 
       it 'returns partial results when nesting depth is exceeded' do
@@ -178,9 +178,9 @@ RSpec.describe WSDL::XML::ElementBuilder do
 
         builder.build([part])
 
-        limit_issues = issues.select { |i| i[:type] == :resource_limit }
+        limit_issues = issues.select { |i| i['type'] == 'resource_limit' }
         expect(limit_issues).not_to be_empty
-        expect(limit_issues.first[:error]).to match(/Element count.*exceeds limit/)
+        expect(limit_issues.first['error']).to match(/Element count.*exceeds limit/)
       end
 
       it 'builds all child elements when within limit' do
@@ -253,8 +253,8 @@ RSpec.describe WSDL::XML::ElementBuilder do
 
       expect(elements).to be_empty
       expect(issues).not_to be_empty
-      expect(issues.first[:type]).to eq(:build_error)
-      expect(issues.first[:error]).to match(/Unable to find element/)
+      expect(issues.first['type']).to eq('build_error')
+      expect(issues.first['error']).to match(/Unable to find element/)
     end
 
     it 'records build_error when referenced element is missing in schema' do
@@ -270,8 +270,8 @@ RSpec.describe WSDL::XML::ElementBuilder do
 
       expect(elements).to be_empty
       expect(issues).not_to be_empty
-      expect(issues.first[:type]).to eq(:build_error)
-      expect(issues.first[:error]).to match(/Unable to find element/)
+      expect(issues.first['type']).to eq('build_error')
+      expect(issues.first['error']).to match(/Unable to find element/)
     end
 
     it 'records build_error when referenced custom type is missing in schema' do
@@ -288,8 +288,8 @@ RSpec.describe WSDL::XML::ElementBuilder do
 
       expect(elements.size).to eq(1)
       expect(issues).not_to be_empty
-      expect(issues.first[:type]).to eq(:build_error)
-      expect(issues.first[:error]).to match(/Unable to find type/)
+      expect(issues.first['type']).to eq('build_error')
+      expect(issues.first['error']).to match(/Unable to find type/)
     end
 
     it 'returns empty array for empty parts' do

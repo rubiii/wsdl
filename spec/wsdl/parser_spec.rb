@@ -75,8 +75,8 @@ RSpec.describe WSDL::Parser do
       definition = described_class.parse(fixture('wsdl/authentication'), http_mock)
 
       expect(definition.sources).not_to be_empty
-      expect(definition.sources.first).to include(status: 'resolved')
-      expect(definition.sources.first[:digest]).to match(/\A[a-f0-9]{64}\z/)
+      expect(definition.sources.first).to include('status' => 'resolved')
+      expect(definition.sources.first['digest']).to match(/\A[a-f0-9]{64}\z/)
     end
 
     it 'computes a fingerprint from source provenance' do
@@ -140,7 +140,7 @@ RSpec.describe WSDL::Parser do
         )
 
         expect(definition).to be_a(WSDL::Definition)
-        expect(definition.sources.any? { |s| s[:status] == 'failed' }).to be(true)
+        expect(definition.sources.any? { |s| s['status'] == 'failed' }).to be(true)
       end
     end
 
@@ -186,7 +186,7 @@ RSpec.describe WSDL::Parser do
 
       expect(result.provenance).not_to be_empty
       expect(result.provenance).to be_frozen
-      expect(result.provenance.first).to include(status: 'resolved')
+      expect(result.provenance.first).to include('status' => 'resolved')
     end
 
     describe 'lenient schema import mode' do
@@ -224,11 +224,11 @@ RSpec.describe WSDL::Parser do
       end
 
       it 'records failed imports in provenance' do
-        failed = result.provenance.select { |p| p[:status] == 'failed' }
+        failed = result.provenance.select { |p| p['status'] == 'failed' }
 
         expect(failed).not_to be_empty
-        expect(failed.first[:error]).to include('Failed to resolve XML Schema import')
-        expect(failed.first[:digest]).to be_nil
+        expect(failed.first['error']).to include('Failed to resolve XML Schema import')
+        expect(failed.first['digest']).to be_nil
       end
     end
 

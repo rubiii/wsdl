@@ -106,8 +106,8 @@ module WSDL
         schema_element = @schemas.find_element(namespace, local)
 
         unless schema_element
-          record_issue(:build_error, "Unable to find element #{part[:element].inspect} " \
-                                     "in schema namespace #{namespace.inspect}")
+          record_issue('build_error', "Unable to find element #{part[:element].inspect} " \
+                                      "in schema namespace #{namespace.inspect}")
           return nil
         end
 
@@ -228,7 +228,7 @@ module WSDL
         schema_attrs = begin
           type.attributes([], limits: @limits)
         rescue ResourceLimitError => e
-          record_issue(:resource_limit, e.message)
+          record_issue('resource_limit', e.message)
           []
         end
 
@@ -321,7 +321,7 @@ module WSDL
       def resolve_schema_elements(type)
         type.elements([], limits: @limits)
       rescue ResourceLimitError => e
-        record_issue(:resource_limit, e.message)
+        record_issue('resource_limit', e.message)
         []
       end
 
@@ -388,8 +388,8 @@ module WSDL
 
         type = @schemas.find_type(namespace, local)
         unless type
-          record_issue(:build_error, "Unable to find type #{qname.inspect} " \
-                                     "in schema namespace #{namespace.inspect}")
+          record_issue('build_error', "Unable to find type #{qname.inspect} " \
+                                      "in schema namespace #{namespace.inspect}")
           return qname
         end
 
@@ -399,7 +399,7 @@ module WSDL
       def validate_xsd_builtin_type(local_name, qname)
         return if XSD_BUILTIN_TYPES.include?(local_name)
 
-        record_issue(:build_error, "Unknown XSD built-in type #{qname.inspect}")
+        record_issue('build_error', "Unknown XSD built-in type #{qname.inspect}")
       end
 
       # Finds a global element by its qualified name.
@@ -412,8 +412,8 @@ module WSDL
         element = @schemas.find_element(namespace, local)
 
         unless element
-          record_issue(:build_error, "Unable to find element #{qname.inspect} " \
-                                     "in schema namespace #{namespace.inspect}")
+          record_issue('build_error', "Unable to find element #{qname.inspect} " \
+                                      "in schema namespace #{namespace.inspect}")
         end
 
         element
@@ -448,7 +448,7 @@ module WSDL
         return true if depth <= @limits.max_type_nesting_depth
 
         @depth_exceeded = true
-        record_issue(:resource_limit,
+        record_issue('resource_limit',
           "Type nesting depth #{depth} exceeds limit of #{@limits.max_type_nesting_depth} " \
           "while processing type #{type.name.inspect}")
         false
@@ -456,11 +456,11 @@ module WSDL
 
       # Records a build issue if an issues collector is available.
       #
-      # @param type [Symbol] the issue type (:build_error or :resource_limit)
+      # @param type [String] the issue type ('build_error' or 'resource_limit')
       # @param error [String] description of the problem
       # @return [void]
       def record_issue(type, error)
-        @issues&.push(type:, error:)
+        @issues&.push('type' => type, 'error' => error)
       end
     end
   end
