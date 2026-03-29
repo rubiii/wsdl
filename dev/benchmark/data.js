@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1774778346887,
+  "lastUpdate": 1774799765138,
   "repoUrl": "https://github.com/rubiii/wsdl",
   "entries": {
     "Benchmark": [
@@ -1782,6 +1782,72 @@ window.BENCHMARK_DATA = {
             "value": 81.44,
             "unit": "i/s",
             "range": "± 4.9%"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "me@rubiii.com",
+            "name": "rubiii",
+            "username": "rubiii"
+          },
+          "committer": {
+            "email": "me@rubiii.com",
+            "name": "rubiii",
+            "username": "rubiii"
+          },
+          "distinct": true,
+          "id": "e46c925e1ea45b4629b285eb00d19bda21875b57",
+          "message": "Update changelog for release",
+          "timestamp": "2026-03-29T17:54:22+02:00",
+          "tree_id": "97003f02ce08c00a56a0e9a2df59af9da269c483",
+          "url": "https://github.com/rubiii/wsdl/commit/e46c925e1ea45b4629b285eb00d19bda21875b57"
+        },
+        "date": 1774799764802,
+        "tool": "customBiggerIsBetter",
+        "benches": [
+          {
+            "name": "parse: small WSDL (blz_service, 88 lines)",
+            "value": 976.32,
+            "unit": "i/s",
+            "range": "± 4.2%"
+          },
+          {
+            "name": "parse: large WSDL (economic, 65k lines)",
+            "value": 1.56,
+            "unit": "i/s",
+            "range": "± 0.0%"
+          },
+          {
+            "name": "request: build + serialize",
+            "value": 9178.69,
+            "unit": "i/s",
+            "range": "± 1.7%"
+          },
+          {
+            "name": "sign: X.509 SHA-256 + Timestamp",
+            "value": 689.96,
+            "unit": "i/s",
+            "range": "± 1.7%"
+          },
+          {
+            "name": "verify: signature + timestamp",
+            "value": 677.19,
+            "unit": "i/s",
+            "range": "± 3.2%"
+          },
+          {
+            "name": "response: parse small (15 lines)",
+            "value": 8525.96,
+            "unit": "i/s",
+            "range": "± 1.2%"
+          },
+          {
+            "name": "response: parse large (200 items)",
+            "value": 96.32,
+            "unit": "i/s",
+            "range": "± 1.0%"
           }
         ]
       }
