@@ -34,7 +34,7 @@ module WSDL
 
       # @return [String, nil] namespace URI
       def namespace
-        @data['namespace']
+        @data['ns']
       end
 
       # @return [String] element form ('qualified' or 'unqualified')
@@ -64,7 +64,7 @@ module WSDL
 
       # @return [Boolean] true if this element appears at most once
       def singular?
-        @data.fetch('max_occurs', 1) == 1
+        @data.fetch('max', 1) == 1
       end
 
       # @return [Boolean] true if this is an xs:list type
@@ -94,18 +94,18 @@ module WSDL
 
       # @return [String] minOccurs as a string (for Validator compatibility)
       def min_occurs
-        @data.fetch('min_occurs', 1).to_s
+        @data.fetch('min', 1).to_s
       end
 
       # @return [String] maxOccurs as a string ('unbounded' for infinity)
       def max_occurs
-        value = @data.fetch('max_occurs', 1)
+        value = @data.fetch('max', 1)
         value == 'unbounded' ? 'unbounded' : value.to_s
       end
 
       # @return [Boolean] true if the element is optional (minOccurs=0)
       def optional?
-        @data.fetch('min_occurs', 1).zero?
+        @data.fetch('min', 1).zero?
       end
 
       # @return [Boolean] true if the element is required (minOccurs>0)

@@ -260,6 +260,33 @@ RSpec.describe WSDL::Definition::Builder do
 
       expect(json).to include('"unbounded"')
     end
+
+    it 'shortens element namespace key to "ns"' do
+      op = definition.to_h.dig('services', 'AuthenticationWebServiceImplService', 'ports',
+        'AuthenticationWebServiceImplPort', 'operations', 'authenticate')
+
+      all_elements = collect_all_elements(op.dig('input', 'body'))
+      expect(all_elements).not_to be_empty
+
+      all_elements.each do |el|
+        expect(el).to have_key('ns'), "Element #{el['name']} should have 'ns' key"
+        expect(el).not_to have_key('namespace'), "Element #{el['name']} should not have 'namespace' key"
+      end
+    end
+
+    it 'shortens min_occurs key to "min"' do
+      bronto_def = WSDL::Parser.parse(fixture('wsdl/bronto'), http_mock)
+      json = bronto_def.to_json
+
+      expect(json).not_to include('"min_occurs"')
+    end
+
+    it 'shortens max_occurs key to "max"' do
+      bronto_def = WSDL::Parser.parse(fixture('wsdl/bronto'), http_mock)
+      json = bronto_def.to_json
+
+      expect(json).not_to include('"max_occurs"')
+    end
   end
 
   describe 'builds and round-trips from various fixtures' do

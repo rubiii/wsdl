@@ -235,7 +235,7 @@ module WSDL
       # Response::Builder, Request::Validator) and can be round-tripped
       # through serialization.
       #
-      # @return [Hash{Symbol => Object}] definition-compatible element hash
+      # @return [Hash{String => Object}] definition-compatible element hash
       #
       # @example Simple element at defaults (lean — only non-default fields)
       #   element.to_definition_h
@@ -346,19 +346,19 @@ module WSDL
       # Only includes fields whose values differ from {Definition::Element}
       # defaults. This produces compact hashes suitable for the v2 format.
       #
-      # @return [Hash{Symbol => Object}] definition-compatible element hash
+      # @return [Hash{String => Object}] definition-compatible element hash
       # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
       def build_definition_h
-        h = { 'name' => name, 'namespace' => namespace, 'type' => KIND_STRINGS.fetch(kind) }
+        h = { 'name' => name, 'ns' => namespace, 'type' => KIND_STRINGS.fetch(kind) }
 
         h['xsd_type'] = base_type if base_type
         h['form'] = form unless form == 'qualified'
 
         min = min_occurs.to_i
-        h['min_occurs'] = min unless min == 1
+        h['min'] = min unless min == 1
 
         max = max_occurs == 'unbounded' ? 'unbounded' : max_occurs.to_i
-        h['max_occurs'] = max unless max == 1
+        h['max'] = max unless max == 1
 
         h['nillable'] = true if nillable?
         h['list'] = true if list?

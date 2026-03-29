@@ -4,7 +4,7 @@ RSpec.describe WSDL::Definition::Element do
   let(:simple_hash) do
     {
       'name' => 'age',
-      'namespace' => 'http://example.com',
+      'ns' => 'http://example.com',
       'type' => 'simple',
       'xsd_type' => 'xsd:int'
     }
@@ -13,7 +13,7 @@ RSpec.describe WSDL::Definition::Element do
   let(:complex_hash) do
     {
       'name' => 'user',
-      'namespace' => 'http://example.com',
+      'ns' => 'http://example.com',
       'type' => 'complex',
       'complex_type_id' => 'http://example.com:UserType',
       'children' => [simple_hash],
@@ -24,10 +24,10 @@ RSpec.describe WSDL::Definition::Element do
   let(:recursive_hash) do
     {
       'name' => 'parent',
-      'namespace' => 'http://example.com',
+      'ns' => 'http://example.com',
       'type' => 'recursive',
-      'min_occurs' => 0,
-      'max_occurs' => 'unbounded',
+      'min' => 0,
+      'max' => 'unbounded',
       'nillable' => true,
       'recursive_type' => 'ParentType'
     }
@@ -186,9 +186,9 @@ RSpec.describe WSDL::Definition::Element do
   describe '#singular? derivation from max_occurs' do
     it 'returns true when max_occurs is 1 and :singular key is absent' do
       hash = {
-        'name' => 'item', 'namespace' => 'http://example.com', 'form' => 'qualified',
+        'name' => 'item', 'ns' => 'http://example.com', 'form' => 'qualified',
         'type' => 'simple', 'xsd_type' => 'xsd:string',
-        'min_occurs' => 1, 'max_occurs' => 1,
+        'min' => 1, 'max' => 1,
         'nillable' => false, 'list' => false, 'any_content' => false,
         'recursive_type' => nil, 'complex_type_id' => nil,
         'children' => [], 'attributes' => []
@@ -199,9 +199,9 @@ RSpec.describe WSDL::Definition::Element do
 
     it 'returns false when max_occurs is unbounded and :singular key is absent' do
       hash = {
-        'name' => 'items', 'namespace' => 'http://example.com', 'form' => 'qualified',
+        'name' => 'items', 'ns' => 'http://example.com', 'form' => 'qualified',
         'type' => 'simple', 'xsd_type' => 'xsd:string',
-        'min_occurs' => 0, 'max_occurs' => 'unbounded',
+        'min' => 0, 'max' => 'unbounded',
         'nillable' => false, 'list' => false, 'any_content' => false,
         'recursive_type' => nil, 'complex_type_id' => nil,
         'children' => [], 'attributes' => []
@@ -212,9 +212,9 @@ RSpec.describe WSDL::Definition::Element do
 
     it 'derives from max_occurs, ignoring stored :singular field' do
       hash = {
-        'name' => 'item', 'namespace' => 'http://example.com', 'form' => 'qualified',
+        'name' => 'item', 'ns' => 'http://example.com', 'form' => 'qualified',
         'type' => 'simple', 'xsd_type' => 'xsd:string',
-        'min_occurs' => 1, 'max_occurs' => 5,
+        'min' => 1, 'max' => 5,
         'nillable' => false, 'singular' => true, 'list' => false, 'any_content' => false,
         'recursive_type' => nil, 'complex_type_id' => nil,
         'children' => [], 'attributes' => []
@@ -229,7 +229,7 @@ RSpec.describe WSDL::Definition::Element do
       described_class.new({
         'name' => 'x',
         'type' => 'simple',
-        'namespace' => 'http://example.com',
+        'ns' => 'http://example.com',
         'xsd_type' => 'xs:string'
       })
     end
@@ -294,7 +294,7 @@ RSpec.describe WSDL::Definition::Element do
   describe 'explicit values override defaults' do
     it 'uses explicit nillable over default' do
       element = described_class.new({
-        'name' => 'x', 'type' => 'simple', 'namespace' => 'http://example.com',
+        'name' => 'x', 'type' => 'simple', 'ns' => 'http://example.com',
         'xsd_type' => 'xs:string', 'nillable' => true
       })
       expect(element.nillable?).to be(true)
@@ -302,7 +302,7 @@ RSpec.describe WSDL::Definition::Element do
 
     it 'uses explicit form over default' do
       element = described_class.new({
-        'name' => 'x', 'type' => 'simple', 'namespace' => 'http://example.com',
+        'name' => 'x', 'type' => 'simple', 'ns' => 'http://example.com',
         'xsd_type' => 'xs:string', 'form' => 'unqualified'
       })
       expect(element.form).to eq('unqualified')
@@ -310,7 +310,7 @@ RSpec.describe WSDL::Definition::Element do
 
     it 'uses explicit list over default' do
       element = described_class.new({
-        'name' => 'x', 'type' => 'simple', 'namespace' => 'http://example.com',
+        'name' => 'x', 'type' => 'simple', 'ns' => 'http://example.com',
         'xsd_type' => 'xs:string', 'list' => true
       })
       expect(element.list?).to be(true)
@@ -318,7 +318,7 @@ RSpec.describe WSDL::Definition::Element do
 
     it 'uses explicit any_content over default' do
       element = described_class.new({
-        'name' => 'x', 'type' => 'complex', 'namespace' => 'http://example.com',
+        'name' => 'x', 'type' => 'complex', 'ns' => 'http://example.com',
         'xsd_type' => nil, 'any_content' => true
       })
       expect(element.any_content?).to be(true)
@@ -326,8 +326,8 @@ RSpec.describe WSDL::Definition::Element do
 
     it 'uses explicit min_occurs over default' do
       element = described_class.new({
-        'name' => 'x', 'type' => 'simple', 'namespace' => 'http://example.com',
-        'xsd_type' => 'xs:string', 'min_occurs' => 0
+        'name' => 'x', 'type' => 'simple', 'ns' => 'http://example.com',
+        'xsd_type' => 'xs:string', 'min' => 0
       })
       expect(element.min_occurs).to eq('0')
       expect(element).to be_optional
@@ -335,17 +335,17 @@ RSpec.describe WSDL::Definition::Element do
 
     it 'uses explicit max_occurs over default' do
       element = described_class.new({
-        'name' => 'x', 'type' => 'simple', 'namespace' => 'http://example.com',
-        'xsd_type' => 'xs:string', 'max_occurs' => 'unbounded'
+        'name' => 'x', 'type' => 'simple', 'ns' => 'http://example.com',
+        'xsd_type' => 'xs:string', 'max' => 'unbounded'
       })
       expect(element.max_occurs).to eq('unbounded')
       expect(element).not_to be_singular
     end
 
     it 'uses explicit children over default' do
-      child = { 'name' => 'y', 'type' => 'simple', 'namespace' => 'http://example.com', 'xsd_type' => 'xs:int' }
+      child = { 'name' => 'y', 'type' => 'simple', 'ns' => 'http://example.com', 'xsd_type' => 'xs:int' }
       element = described_class.new({
-        'name' => 'x', 'type' => 'complex', 'namespace' => 'http://example.com',
+        'name' => 'x', 'type' => 'complex', 'ns' => 'http://example.com',
         'xsd_type' => nil, 'children' => [child]
       })
       expect(element.children.size).to eq(1)
@@ -355,7 +355,7 @@ RSpec.describe WSDL::Definition::Element do
     it 'uses explicit attributes over default' do
       attr = { 'name' => 'id', 'base_type' => 'xs:string', 'use' => 'required', 'list' => false }
       element = described_class.new({
-        'name' => 'x', 'type' => 'complex', 'namespace' => 'http://example.com',
+        'name' => 'x', 'type' => 'complex', 'ns' => 'http://example.com',
         'xsd_type' => nil, 'attributes' => [attr]
       })
       expect(element.attributes.size).to eq(1)

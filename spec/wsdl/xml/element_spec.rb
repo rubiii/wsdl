@@ -129,7 +129,7 @@ RSpec.describe WSDL::XML::Element do
 
       expect(element.to_definition_h).to eq({
         'name' => 'user',
-        'namespace' => 'http://example.com',
+        'ns' => 'http://example.com',
         'type' => 'simple',
         'xsd_type' => 'xsd:string'
       })
@@ -139,7 +139,7 @@ RSpec.describe WSDL::XML::Element do
       it 'includes only name, namespace, type, xsd_type for a simple leaf at defaults' do
         element = build_element(base_type: 'xsd:string')
 
-        expect(element.to_definition_h.keys).to contain_exactly('name', 'namespace', 'type', 'xsd_type')
+        expect(element.to_definition_h.keys).to contain_exactly('name', 'ns', 'type', 'xsd_type')
       end
 
       it 'never includes singular key' do
@@ -153,13 +153,13 @@ RSpec.describe WSDL::XML::Element do
       it 'retains min_occurs when non-default' do
         element = build_element(base_type: 'xsd:string', min_occurs: '0')
 
-        expect(element.to_definition_h['min_occurs']).to eq(0)
+        expect(element.to_definition_h['min']).to eq(0)
       end
 
       it 'omits min_occurs at default (1)' do
         element = build_element(base_type: 'xsd:string')
 
-        expect(element.to_definition_h).not_to have_key('min_occurs')
+        expect(element.to_definition_h).not_to have_key('min')
       end
 
       it 'retains nillable when true' do
@@ -189,19 +189,19 @@ RSpec.describe WSDL::XML::Element do
       it 'stores unbounded max_occurs as "unbounded" string' do
         element = build_element(max_occurs: 'unbounded', singular: false)
 
-        expect(element.to_definition_h['max_occurs']).to eq('unbounded')
+        expect(element.to_definition_h['max']).to eq('unbounded')
       end
 
       it 'omits max_occurs at default (1)' do
         element = build_element(base_type: 'xsd:string')
 
-        expect(element.to_definition_h).not_to have_key('max_occurs')
+        expect(element.to_definition_h).not_to have_key('max')
       end
 
       it 'retains max_occurs when non-default integer' do
         element = build_element(base_type: 'xsd:string', max_occurs: '5')
 
-        expect(element.to_definition_h['max_occurs']).to eq(5)
+        expect(element.to_definition_h['max']).to eq(5)
       end
 
       it 'omits children when empty' do
@@ -290,7 +290,7 @@ RSpec.describe WSDL::XML::Element do
         parent.children = [leaf]
 
         child_hash = parent.to_definition_h['children'].first
-        expect(child_hash.keys).to contain_exactly('name', 'namespace', 'type', 'xsd_type')
+        expect(child_hash.keys).to contain_exactly('name', 'ns', 'type', 'xsd_type')
       end
     end
 
@@ -319,14 +319,14 @@ RSpec.describe WSDL::XML::Element do
       element = build_element(min_occurs: '0', max_occurs: '5')
 
       hash = element.to_definition_h
-      expect(hash['min_occurs']).to eq(0)
-      expect(hash['max_occurs']).to eq(5)
+      expect(hash['min']).to eq(0)
+      expect(hash['max']).to eq(5)
     end
 
     it 'converts unbounded max_occurs to "unbounded" string' do
       element = build_element(max_occurs: 'unbounded', singular: false)
 
-      expect(element.to_definition_h['max_occurs']).to eq('unbounded')
+      expect(element.to_definition_h['max']).to eq('unbounded')
     end
 
     it 'includes attributes' do
