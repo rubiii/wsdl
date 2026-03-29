@@ -56,7 +56,7 @@ module WSDL
 
       # @return [Boolean] true if this element appears at most once
       def singular?
-        @data[:singular]
+        @data[:max_occurs] == 1
       end
 
       # @return [Boolean] true if this is an xs:list type

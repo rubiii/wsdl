@@ -211,6 +211,47 @@ RSpec.describe WSDL::Definition::Element do
     end
   end
 
+  describe '#singular? derivation from max_occurs' do
+    it 'returns true when max_occurs is 1 and :singular key is absent' do
+      hash = {
+        name: 'item', namespace: 'http://example.com', form: 'qualified',
+        type: 'simple', xsd_type: 'xsd:string',
+        min_occurs: 1, max_occurs: 1,
+        nillable: false, list: false, any_content: false,
+        recursive_type: nil, complex_type_id: nil,
+        children: [], attributes: []
+      }
+      element = described_class.new(hash)
+      expect(element).to be_singular
+    end
+
+    it 'returns false when max_occurs is unbounded and :singular key is absent' do
+      hash = {
+        name: 'items', namespace: 'http://example.com', form: 'qualified',
+        type: 'simple', xsd_type: 'xsd:string',
+        min_occurs: 0, max_occurs: Float::INFINITY,
+        nillable: false, list: false, any_content: false,
+        recursive_type: nil, complex_type_id: nil,
+        children: [], attributes: []
+      }
+      element = described_class.new(hash)
+      expect(element).not_to be_singular
+    end
+
+    it 'derives from max_occurs, ignoring stored :singular field' do
+      hash = {
+        name: 'item', namespace: 'http://example.com', form: 'qualified',
+        type: 'simple', xsd_type: 'xsd:string',
+        min_occurs: 1, max_occurs: 5,
+        nillable: false, singular: true, list: false, any_content: false,
+        recursive_type: nil, complex_type_id: nil,
+        children: [], attributes: []
+      }
+      element = described_class.new(hash)
+      expect(element).not_to be_singular
+    end
+  end
+
   describe 'duck-type compatibility with XML::Element' do
     it 'responds to all methods that Response::Parser calls' do
       element = described_class.new(simple_hash)
