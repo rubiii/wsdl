@@ -315,6 +315,12 @@ module WSDL
     # @return [Definition] the restored definition
     # @raise [ArgumentError] if the schema version doesn't match
     def self.from_h(hash)
+      unless hash.is_a?(Hash)
+        raise ArgumentError,
+          "Expected a Hash from WSDL.dump or Definition#to_h, got #{hash.class}." \
+          "\nTo parse a WSDL file, use: WSDL.parse(source)"
+      end
+
       version = hash['schema_version'] || hash[:schema_version]
 
       unless version == Builder::SCHEMA_VERSION

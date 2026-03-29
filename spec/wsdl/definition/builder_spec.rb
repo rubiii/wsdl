@@ -141,6 +141,12 @@ RSpec.describe WSDL::Definition::Builder do
       expect(restored.fingerprint).to eq(definition.fingerprint)
     end
 
+    it 'raises on non-Hash input' do
+      expect {
+        WSDL::Definition.from_h('spec/fixtures/wsdl/economic.wsdl')
+      }.to raise_error(ArgumentError, /Expected a Hash.*got String/)
+    end
+
     it 'raises on schema version mismatch' do
       hash = definition.to_h
       hash['schema_version'] = 999
