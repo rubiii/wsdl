@@ -93,7 +93,11 @@ namespace :profile do
   end
 end
 
-task ci: %i[lint yard:audit spec]
+desc 'Run all checks (lint + docs + tests with coverage)'
+task :ci do
+  ENV['COVERAGE'] = '1'
+  %w[lint yard:audit spec].each { |t| Rake::Task[t].invoke }
+end
 
 task :default do
   system 'rake -T'

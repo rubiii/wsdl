@@ -3,7 +3,7 @@
 require 'bundler'
 Bundler.setup(:default, :development)
 
-unless RUBY_PLATFORM =~ /java/
+if ENV['COVERAGE'] && RUBY_PLATFORM !~ /java/
   require 'simplecov'
 
   SimpleCov.start do

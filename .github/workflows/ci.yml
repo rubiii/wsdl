@@ -36,6 +36,8 @@ jobs:
 
       - name: Run specs
         run: bundle exec rspec --require rspec/github --format RSpec::Github::Formatter
+        env:
+          COVERAGE: '1'
 
   benchmark:
     runs-on: ubuntu-latest
