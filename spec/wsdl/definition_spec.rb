@@ -307,6 +307,59 @@ RSpec.describe WSDL::Definition do
     end
   end
 
+  context 'with bronto fixture' do
+    subject(:definition) { WSDL::Parser.parse(fixture('wsdl/bronto'), http_mock) }
+
+    let(:service) { 'BrontoSoapApiImplService' }
+    let(:port) { 'BrontoSoapApiImplPort' }
+
+    describe '#input' do
+      it 'projects complex nested elements with arrays' do
+        elements = definition.input(service, port, 'addLogins')
+
+        top = elements.first
+        expect(top).to include(name: 'addLogins', type: 'complex', required: true)
+        expect(top).not_to have_key(:array)
+
+        accounts = top[:children].find { |c| c[:name] == 'accounts' }
+        expect(accounts).to include(type: 'complex', required: false, array: true)
+
+        contact_info = accounts[:children].find { |c| c[:name] == 'contactInformation' }
+        expect(contact_info).to include(type: 'complex', required: false)
+        expect(contact_info).not_to have_key(:array)
+
+        username = accounts[:children].find { |c| c[:name] == 'username' }
+        expect(username).to include(type: 'string', required: false)
+        expect(username).not_to have_key(:children)
+      end
+    end
+
+    describe '#input_header' do
+      it 'projects header elements' do
+        headers = definition.input_header(service, port, 'addLogins')
+
+        expect(headers).not_to be_empty
+        session = headers.first
+        expect(session).to include(name: 'sessionHeader', type: 'complex', required: true)
+        expect(session[:children].first).to include(name: 'sessionId', type: 'string')
+      end
+    end
+
+    describe '#to_dsl' do
+      it 'generates header and body sections for an operation with both' do
+        dsl = definition.to_dsl(service, port, 'addLogins')
+
+        expect(dsl).to include('header do')
+        expect(dsl).to include("tag('sessionHeader') do")
+        expect(dsl).to include("tag('sessionId', 'string')")
+        expect(dsl).to include('body do')
+        expect(dsl).to include("tag('addLogins') do")
+        expect(dsl).to include("tag('accounts') do")
+        expect(dsl).to include("tag('username', 'string')")
+      end
+    end
+  end
+
   describe 'overloaded operations' do
     subject(:definition) do
       described_class.new(

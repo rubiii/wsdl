@@ -174,7 +174,7 @@ module WSDL
     # @return [Array<Hash>] element structure with human-readable types
     def input(*)
       op = resolve_operation(*)
-      op[:input][:body].map { |el| project_element(el) }
+      op[:input][:body].map { |el| project_element(Element.new(el)) }
     end
 
     # Returns a developer-friendly view of an operation's input headers.
@@ -184,7 +184,7 @@ module WSDL
     # @return [Array<Hash>] header element structure
     def input_header(*)
       op = resolve_operation(*)
-      op[:input][:header].map { |el| project_element(el) }
+      op[:input][:header].map { |el| project_element(Element.new(el)) }
     end
 
     # Returns a developer-friendly view of an operation's output body.
@@ -196,7 +196,7 @@ module WSDL
       op = resolve_operation(*)
       return [] unless op[:output]
 
-      op[:output][:body].map { |el| project_element(el) }
+      op[:output][:body].map { |el| project_element(Element.new(el)) }
     end
 
     # Returns a developer-friendly view of an operation's output headers.
@@ -208,7 +208,7 @@ module WSDL
       op = resolve_operation(*)
       return [] unless op[:output]
 
-      op[:output][:header].map { |el| project_element(el) }
+      op[:output][:header].map { |el| project_element(Element.new(el)) }
     end
 
     # Returns the full internal operation data for use by Client/Operation.
@@ -237,8 +237,8 @@ module WSDL
     def to_dsl(*)
       op = resolve_operation(*)
       lines = []
-      append_dsl_section(lines, 'header', op[:input][:header])
-      append_dsl_section(lines, 'body', op[:input][:body])
+      append_dsl_section(lines, 'header', op[:input][:header].map { |el| Element.new(el) })
+      append_dsl_section(lines, 'body', op[:input][:body].map { |el| Element.new(el) })
       lines.join("\n")
     end
 
@@ -447,29 +447,30 @@ module WSDL
       end
     end
 
-    # Projects an internal element hash to a developer-friendly format.
+    # Projects a {Definition::Element} to a developer-friendly format.
     #
     # Strips internal fields (namespace, form, xsd_type, etc.) and
     # presents human-readable types and boolean flags.
     #
-    # @param element [Hash] internal element hash
+    # @param element [Definition::Element] element wrapper
     # @return [Hash] clean projection
     def project_element(element)
-      result = { name: element[:name], type: project_type(element), required: element[:min_occurs].positive? }
-      result[:array] = true unless element[:singular]
-      result[:nillable] = true if element[:nillable]
-      result[:children] = element[:children].map { |c| project_element(c) } if element[:children]&.any?
+      result = { name: element.name, type: project_type(element), required: element.required? }
+      result[:array] = true unless element.singular?
+      result[:nillable] = true if element.nillable?
+      result[:children] = element.children.map { |c| project_element(c) } if element.children.any?
       result
     end
 
-    # Converts an internal type to a human-readable string or symbol.
+    # Converts an element's type to a human-readable string.
     #
-    # @param element [Hash] internal element hash
-    # @return [String, Symbol] human-readable type
+    # @param element [Definition::Element] element wrapper
+    # @return [String] human-readable type
     def project_type(element)
-      case element[:type]
-      when 'simple' then humanize_xsd_type(element[:xsd_type])
-      else element[:type]
+      if element.simple_type?
+        humanize_xsd_type(element.base_type)
+      else
+        element.kind.to_s
       end
     end
 
@@ -487,7 +488,7 @@ module WSDL
     #
     # @param lines [Array<String>] accumulator
     # @param section [String] 'header' or 'body'
-    # @param elements [Array<Hash>] element hashes
+    # @param elements [Array<Definition::Element>] element wrappers
     # @return [void]
     def append_dsl_section(lines, section, elements)
       return if elements.empty?
@@ -502,17 +503,17 @@ module WSDL
     # Appends a single element's DSL representation.
     #
     # @param lines [Array<String>] accumulator
-    # @param element [Hash] element hash
+    # @param element [Definition::Element] element wrapper
     # @param indent [Integer] indentation level
     # @return [void]
     def append_dsl_element(lines, element, indent:)
       prefix = ' ' * indent
 
-      if element[:type] == 'simple'
-        lines << "#{prefix}tag('#{element[:name]}', '#{humanize_xsd_type(element[:xsd_type])}')"
+      if element.simple_type?
+        lines << "#{prefix}tag('#{element.name}', '#{humanize_xsd_type(element.base_type)}')"
       else
-        lines << "#{prefix}tag('#{element[:name]}') do"
-        element[:children]&.each do |child|
+        lines << "#{prefix}tag('#{element.name}') do"
+        element.children.each do |child|
           append_dsl_element(lines, child, indent: indent + 2)
         end
         lines << "#{prefix}end"
