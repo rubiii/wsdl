@@ -250,5 +250,5 @@ Multi-file WSDLs use a `manifest.yml` that maps HTTP import URLs to local files,
 
 ## See also
 
-- [Getting Started](getting_started.md)
-- [Specifications](reference/specifications.md)
+- [Getting Started](../getting_started.md)
+- [Specifications](../reference/specifications.md)

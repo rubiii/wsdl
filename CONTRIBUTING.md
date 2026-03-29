@@ -40,7 +40,7 @@ bundle exec rake ci   # Run all checks (Linting + Docs + Specs)
 4. Ensure `bundle exec rake ci` passes
 5. Write clear commit messages that explain *why*, not just *what*
 
-For code style, naming conventions, and other guidelines, see the [development guide](docs/development.md). For testing details, see the [testing docs](docs/testing.md).
+For code style, naming conventions, and other guidelines, see the [development guide](docs/contributing/development.md). For testing details, see the [testing docs](docs/contributing/testing.md).
 
 ## Getting Help
 

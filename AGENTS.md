@@ -13,7 +13,7 @@ WSDL toolkit for Ruby. Turn WSDL 1.1 documents into inspectable definitions and 
 
 ## Getting Started
 
-@docs/development.md
+@docs/contributing/development.md
 
 ## Key Concepts
 
@@ -32,4 +32,4 @@ WSDL toolkit for Ruby. Turn WSDL 1.1 documents into inspectable definitions and 
 
 ## Testing
 
-Every public method must be tested, 100% coverage is a must. See [Testing docs](docs/testing.md) for test structure, fixtures, helpers, and coverage requirements.
+Every public method must be tested, 100% coverage is a must. See [Testing docs](docs/contributing/testing.md) for test structure, fixtures, helpers, and coverage requirements.

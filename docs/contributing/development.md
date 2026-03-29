@@ -4,7 +4,7 @@ Coding standards and conventions for the WSDL library. These apply to all contri
 
 ## Code Style
 
-Code style is enforced by RuboCop. See [`.rubocop.yml`](../.rubocop.yml) for the full configuration.
+Code style is enforced by RuboCop. See [`.rubocop.yml`](../../.rubocop.yml) for the full configuration.
 
 ```sh
 bundle exec rake lint       # Run all linting tasks
@@ -49,11 +49,11 @@ bundle exec rake specifications:check       # Check if local copies are up to da
 bundle exec rake specifications:reconvert   # Re-download and reconvert all specs
 ```
 
-The specs are stored in `docs/reference/specs/` with a `manifest.yml` that tracks URLs, checksums, and freshness. See [Specifications](reference/specifications.md) for the full list of standards this library targets.
+The specs are stored in `docs/reference/specs/` with a `manifest.yml` that tracks URLs, checksums, and freshness. See [Specifications](../reference/specifications.md) for the full list of standards this library targets.
 
 ## See also
 
 - [Testing](testing.md)
-- [Specifications](reference/specifications.md)
-- [Error Hierarchy](reference/errors.md)
-- [WS-Security Overview](security/ws-security.md)
+- [Specifications](../reference/specifications.md)
+- [Error Hierarchy](../reference/errors.md)
+- [WS-Security Overview](../security/ws-security.md)
