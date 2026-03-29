@@ -8,7 +8,11 @@ since version 1.1.0.
 
 ## UNRELEASED
 
+- Adopted [Semantic Versioning](https://semver.org/spec/v2.0.0.html) starting with v1.1.0.
+
 ## [1.1.0] — 2026-03-29
+
+Introduces `WSDL::Definition` as the central abstraction of the library — a frozen, serializable snapshot of everything parsed from a WSDL service. By separating parsing (`WSDL.parse`) from runtime use (`Client.new`), Definitions can be built once, serialized to JSON, and restored later without re-fetching or re-parsing any documents. Parsing is now best-effort by default: unresolvable types and missing references are recorded as build issues rather than raising exceptions, so partial definitions are still useful. Call `Definition#verify!` to opt into strict validation when you need it.
 
 **Upgrading?** See the [migration guide](#migrating-from-10) below.
 
