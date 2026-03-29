@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-RSpec.describe WSDL::Definition::ElementHash do
+RSpec.describe WSDL::Definition::Element do
   let(:simple_hash) do
     {
       name: 'age',
@@ -160,13 +160,13 @@ RSpec.describe WSDL::Definition::ElementHash do
       expect(element).not_to be_simple_type
     end
 
-    it 'wraps children as ElementHash instances' do
+    it 'wraps children as Element instances' do
       expect(element.children).to all(be_a(described_class))
       expect(element.children.first.name).to eq('age')
     end
 
-    it 'wraps attributes as AttributeHash instances' do
-      expect(element.attributes).to all(be_a(WSDL::Definition::AttributeHash))
+    it 'wraps attributes as Attribute instances' do
+      expect(element.attributes).to all(be_a(WSDL::Definition::Attribute))
       expect(element.attributes.first.name).to eq('id')
     end
 
@@ -216,7 +216,7 @@ RSpec.describe WSDL::Definition::ElementHash do
       element = described_class.new(simple_hash)
 
       %i[name namespace form singular? simple_type? complex_type? base_type list? children attributes].each do |method|
-        expect(element).to respond_to(method), "Expected ElementHash to respond to #{method}"
+        expect(element).to respond_to(method), "Expected Element to respond to #{method}"
       end
     end
 
@@ -228,7 +228,7 @@ RSpec.describe WSDL::Definition::ElementHash do
         base_type list? nillable? any_content? children attributes
       ]
       methods.each do |method|
-        expect(element).to respond_to(method), "Expected ElementHash to respond to #{method}"
+        expect(element).to respond_to(method), "Expected Element to respond to #{method}"
       end
     end
 
@@ -236,7 +236,7 @@ RSpec.describe WSDL::Definition::ElementHash do
       element = described_class.new(simple_hash)
 
       %i[name namespace form min_occurs max_occurs children attributes any_content?].each do |method|
-        expect(element).to respond_to(method), "Expected ElementHash to respond to #{method}"
+        expect(element).to respond_to(method), "Expected Element to respond to #{method}"
       end
     end
 
@@ -261,7 +261,7 @@ RSpec.describe WSDL::Definition::ElementHash do
     end
   end
 
-  describe WSDL::Definition::AttributeHash do
+  describe WSDL::Definition::Attribute do
     subject(:attribute) { described_class.new(attribute_hash) }
 
     let(:attribute_hash) do
@@ -307,7 +307,7 @@ RSpec.describe WSDL::Definition::ElementHash do
 
     it 'responds to all methods that Response::Parser calls on attributes' do
       %i[name base_type list?].each do |method|
-        expect(attribute).to respond_to(method), "Expected AttributeHash to respond to #{method}"
+        expect(attribute).to respond_to(method), "Expected Attribute to respond to #{method}"
       end
     end
   end

@@ -4,10 +4,10 @@ module WSDL
   module Contract
     # Canonical contract/introspection surface for an operation.
     class OperationContract
-      # @param input_header_parts [Array<Definition::ElementHash>] input header elements
-      # @param input_body_parts [Array<Definition::ElementHash>] input body elements
-      # @param output_header_parts [Array<Definition::ElementHash>] output header elements
-      # @param output_body_parts [Array<Definition::ElementHash>] output body elements
+      # @param input_header_parts [Array<Definition::Element>] input header elements
+      # @param input_body_parts [Array<Definition::Element>] input body elements
+      # @param output_header_parts [Array<Definition::Element>] output header elements
+      # @param output_body_parts [Array<Definition::Element>] output body elements
       # @param input_style [String] binding style (e.g. 'document/literal')
       def initialize(input_header_parts:, input_body_parts:, output_header_parts:, output_body_parts:, input_style:)
         @request = MessageContract.new(

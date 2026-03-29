@@ -594,7 +594,7 @@ RSpec.describe 'XML Schema conformance' do
 
     # https://www.w3.org/TR/xmlschema-1/#declare-element
     it 'XSD-EXT-1: derived type includes its own elements' do
-      body_parts = op_data[:input][:body].map { |h| WSDL::Definition::ElementHash.new(h) }
+      body_parts = op_data[:input][:body].map { |h| WSDL::Definition::Element.new(h) }
       options = find_child_element(body_parts.first, 'options')
 
       expect(options).to be_complex_type
@@ -604,7 +604,7 @@ RSpec.describe 'XML Schema conformance' do
 
     # https://www.w3.org/TR/xmlschema-1/#declare-element
     it 'XSD-EXT-2: derived type includes inherited elements from base type' do
-      body_parts = op_data[:input][:body].map { |h| WSDL::Definition::ElementHash.new(h) }
+      body_parts = op_data[:input][:body].map { |h| WSDL::Definition::Element.new(h) }
       options = find_child_element(body_parts.first, 'options')
 
       child_names = options.children.map(&:name)
@@ -613,7 +613,7 @@ RSpec.describe 'XML Schema conformance' do
 
     # https://www.w3.org/TR/xmlschema-1/#declare-element
     it 'XSD-EXT-3: base type elements appear before derived type elements' do
-      body_parts = op_data[:input][:body].map { |h| WSDL::Definition::ElementHash.new(h) }
+      body_parts = op_data[:input][:body].map { |h| WSDL::Definition::Element.new(h) }
       options = find_child_element(body_parts.first, 'options')
 
       child_names = options.children.map(&:name)

@@ -96,7 +96,7 @@ RSpec.describe 'WSDL 1.1 conformance' do
       definition = WSDL::Parser.parse fixture('wsdl/temperature'), http_mock
       op_data = definition.operation_data('ConvertTemperature', 'ConvertTemperatureSoap', 'ConvertTemp')
 
-      body_parts = op_data[:input][:body].map { |h| WSDL::Definition::ElementHash.new(h) }
+      body_parts = op_data[:input][:body].map { |h| WSDL::Definition::Element.new(h) }
       expect(body_parts).not_to be_empty
       expect(body_parts.first.name).to eq('ConvertTemp')
     end
@@ -164,7 +164,7 @@ RSpec.describe 'WSDL 1.1 conformance' do
         'AccountServiceService', 'AccountService', 'updateStatusForManagedPublisher'
       )
 
-      header_parts = op_data[:input][:header].map { |h| WSDL::Definition::ElementHash.new(h) }
+      header_parts = op_data[:input][:header].map { |h| WSDL::Definition::Element.new(h) }
       expect(header_parts).not_to be_empty
       expect(header_parts.map(&:name)).to include('Security')
     end
@@ -203,11 +203,11 @@ RSpec.describe 'WSDL 1.1 conformance' do
       definition = WSDL::Parser.parse fixture('wsdl/temperature'), http_mock
       op_data = definition.operation_data('ConvertTemperature', 'ConvertTemperatureSoap', 'ConvertTemp')
 
-      input_body = op_data[:input][:body].map { |h| WSDL::Definition::ElementHash.new(h) }
+      input_body = op_data[:input][:body].map { |h| WSDL::Definition::Element.new(h) }
       expect(op_data[:input]).not_to be_nil
       expect(input_body).not_to be_empty
 
-      output_body = op_data[:output][:body].map { |h| WSDL::Definition::ElementHash.new(h) }
+      output_body = op_data[:output][:body].map { |h| WSDL::Definition::Element.new(h) }
       expect(op_data[:output]).not_to be_nil
       expect(output_body).not_to be_empty
     end
@@ -216,7 +216,7 @@ RSpec.describe 'WSDL 1.1 conformance' do
     it 'W11-TYPE-1: message parts with element= attribute resolve to named schema elements' do
       definition = WSDL::Parser.parse fixture('wsdl/temperature'), http_mock
       op_data = definition.operation_data('ConvertTemperature', 'ConvertTemperatureSoap', 'ConvertTemp')
-      body_parts = op_data[:input][:body].map { |h| WSDL::Definition::ElementHash.new(h) }
+      body_parts = op_data[:input][:body].map { |h| WSDL::Definition::Element.new(h) }
 
       expect(body_parts.first.name).to eq('ConvertTemp')
       expect(body_parts.first).to respond_to(:children)
@@ -226,7 +226,7 @@ RSpec.describe 'WSDL 1.1 conformance' do
     it 'W11-TYPE-2: message parts with type= attribute are resolved' do
       definition = WSDL::Parser.parse fixture('wsdl/rpc_literal'), http_mock
       op_data = definition.operation_data('SampleService', 'Sample', 'op1')
-      body_parts = op_data[:input][:body].map { |h| WSDL::Definition::ElementHash.new(h) }
+      body_parts = op_data[:input][:body].map { |h| WSDL::Definition::Element.new(h) }
 
       expect(body_parts).not_to be_empty
       expect(body_parts.first.name).to eq('in')
@@ -236,7 +236,7 @@ RSpec.describe 'WSDL 1.1 conformance' do
     it 'W11-IMP-1: cross-namespace schema imports are resolved' do
       definition = WSDL::Parser.parse fixture('wsdl/rpc_literal'), http_mock
       op_data = definition.operation_data('SampleService', 'Sample', 'op3')
-      body_parts = op_data[:input][:body].map { |h| WSDL::Definition::ElementHash.new(h) }
+      body_parts = op_data[:input][:body].map { |h| WSDL::Definition::Element.new(h) }
 
       expect(body_parts.size).to be >= 2
     end

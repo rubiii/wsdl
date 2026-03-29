@@ -302,23 +302,23 @@ module WSDL
 
     private
 
-    # @return [Array<Definition::ElementHash>] input header part elements
+    # @return [Array<Definition::Element>] input header part elements
     attr_reader :input_header_parts
 
-    # @return [Array<Definition::ElementHash>] input body part elements
+    # @return [Array<Definition::Element>] input body part elements
     attr_reader :input_body_parts
 
-    # @return [Array<Definition::ElementHash>, nil] output header part elements
+    # @return [Array<Definition::Element>, nil] output header part elements
     attr_reader :output_header_parts
 
-    # @return [Array<Definition::ElementHash>, nil] output body part elements
+    # @return [Array<Definition::Element>, nil] output body part elements
     attr_reader :output_body_parts
 
-    # @return [Array<Definition::ElementHash>] wrapped element hashes
+    # @return [Array<Definition::Element>] wrapped element hashes
     def wrap_elements(hashes)
       return [] unless hashes
 
-      hashes.map { |h| Definition::ElementHash.new(h) }.freeze
+      hashes.map { |h| Definition::Element.new(h) }.freeze
     end
 
     def enforce_response_size_limit!(http_response)

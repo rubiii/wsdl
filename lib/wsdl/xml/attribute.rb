@@ -63,7 +63,7 @@ module WSDL
       #
       # This format preserves raw schema properties (base_type, use) rather than
       # derived properties (type, required), making it suitable for serialization
-      # and round-trip reconstruction via {Definition::ElementHash}.
+      # and round-trip reconstruction via {Definition::Element}.
       #
       # @return [Hash{Symbol => Object}] definition-compatible attribute hash
       def to_definition_h

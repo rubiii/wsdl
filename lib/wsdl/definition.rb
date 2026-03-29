@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require 'json'
-require 'wsdl/definition/element_hash'
+require 'wsdl/definition/element'
 require 'wsdl/definition/builder'
 
 module WSDL

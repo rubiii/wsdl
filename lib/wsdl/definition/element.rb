@@ -10,12 +10,12 @@ module WSDL
     #
     # @api private
     #
-    class ElementHash
+    class Element
       # @param data [Hash{Symbol => Object}] element hash from {XML::Element#to_definition_h}
       def initialize(data)
         @data = data
         @children = data[:children].map { |c| self.class.new(c) }.freeze
-        @attributes = data[:attributes].map { |a| AttributeHash.new(a) }.freeze
+        @attributes = data[:attributes].map { |a| Attribute.new(a) }.freeze
         freeze
       end
 
@@ -104,10 +104,10 @@ module WSDL
         !optional?
       end
 
-      # @return [Array<ElementHash>] child elements
+      # @return [Array<Element>] child elements
       attr_reader :children
 
-      # @return [Array<AttributeHash>] attribute definitions
+      # @return [Array<Attribute>] attribute definitions
       attr_reader :attributes
 
       # @return [Hash{Symbol => Object}] the underlying element data
@@ -149,7 +149,7 @@ module WSDL
     #
     # @api private
     #
-    class AttributeHash
+    class Attribute
       # @param data [Hash{Symbol => Object}] attribute hash from {XML::Attribute#to_definition_h}
       def initialize(data)
         @data = data
