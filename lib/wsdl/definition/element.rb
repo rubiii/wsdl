@@ -11,11 +11,19 @@ module WSDL
     # @api private
     #
     class Element
+      # @return [Array] shared empty frozen array for absent children/attributes
+      EMPTY_ARRAY = [].freeze
+
       # @param data [Hash{Symbol => Object}] element hash from {XML::Element#to_definition_h}
       def initialize(data)
         @data = data
-        @children = data[:children].map { |c| self.class.new(c) }.freeze
-        @attributes = data[:attributes].map { |a| Attribute.new(a) }.freeze
+
+        children = data[:children]
+        @children = children ? children.map { |c| self.class.new(c) }.freeze : EMPTY_ARRAY
+
+        attributes = data[:attributes]
+        @attributes = attributes ? attributes.map { |a| Attribute.new(a) }.freeze : EMPTY_ARRAY
+
         freeze
       end
 
@@ -31,7 +39,7 @@ module WSDL
 
       # @return [String] element form ('qualified' or 'unqualified')
       def form
-        @data[:form]
+        @data.fetch(:form, 'qualified')
       end
 
       # @return [Symbol] element kind (:simple, :complex, or :recursive)
@@ -56,22 +64,22 @@ module WSDL
 
       # @return [Boolean] true if this element appears at most once
       def singular?
-        @data[:max_occurs] == 1
+        @data.fetch(:max_occurs, 1) == 1
       end
 
       # @return [Boolean] true if this is an xs:list type
       def list?
-        @data[:list]
+        @data.fetch(:list, false)
       end
 
       # @return [Boolean] true if this element can be nil (xsi:nil="true")
       def nillable?
-        @data[:nillable]
+        @data.fetch(:nillable, false)
       end
 
       # @return [Boolean] true if this element allows xs:any wildcard content
       def any_content?
-        @data[:any_content]
+        @data.fetch(:any_content, false)
       end
 
       # @return [Boolean] true if this element has a recursive type definition
@@ -86,17 +94,18 @@ module WSDL
 
       # @return [String] minOccurs as a string (for Validator compatibility)
       def min_occurs
-        @data[:min_occurs].to_s
+        @data.fetch(:min_occurs, 1).to_s
       end
 
       # @return [String] maxOccurs as a string ('unbounded' for infinity)
       def max_occurs
-        @data[:max_occurs] == Float::INFINITY ? 'unbounded' : @data[:max_occurs].to_s
+        value = @data.fetch(:max_occurs, 1)
+        value == Float::INFINITY ? 'unbounded' : value.to_s
       end
 
       # @return [Boolean] true if the element is optional (minOccurs=0)
       def optional?
-        @data[:min_occurs].zero?
+        @data.fetch(:min_occurs, 1).zero?
       end
 
       # @return [Boolean] true if the element is required (minOccurs>0)

@@ -252,6 +252,145 @@ RSpec.describe WSDL::Definition::Element do
     end
   end
 
+  describe 'default fallbacks for absent fields' do
+    subject(:element) do
+      described_class.new({
+        name: 'x',
+        type: 'simple',
+        namespace: 'http://example.com',
+        xsd_type: 'xs:string'
+      })
+    end
+
+    it 'returns "qualified" for form' do
+      expect(element.form).to eq('qualified')
+    end
+
+    it 'returns false for nillable?' do
+      expect(element.nillable?).to be(false)
+    end
+
+    it 'returns false for list?' do
+      expect(element.list?).to be(false)
+    end
+
+    it 'returns false for any_content?' do
+      expect(element.any_content?).to be(false)
+    end
+
+    it 'returns nil for recursive_type' do
+      expect(element.recursive_type).to be_nil
+    end
+
+    it 'returns base_type from xsd_type' do
+      expect(element.base_type).to eq('xs:string')
+    end
+
+    it 'returns "1" for min_occurs' do
+      expect(element.min_occurs).to eq('1')
+    end
+
+    it 'returns "1" for max_occurs' do
+      expect(element.max_occurs).to eq('1')
+    end
+
+    it 'returns false for optional?' do
+      expect(element.optional?).to be(false)
+    end
+
+    it 'returns true for required?' do
+      expect(element.required?).to be(true)
+    end
+
+    it 'returns true for singular?' do
+      expect(element.singular?).to be(true)
+    end
+
+    it 'returns empty children' do
+      expect(element.children).to eq([])
+    end
+
+    it 'returns empty attributes' do
+      expect(element.attributes).to eq([])
+    end
+
+    it 'is frozen' do
+      expect(element).to be_frozen
+    end
+  end
+
+  describe 'explicit values override defaults' do
+    it 'uses explicit nillable over default' do
+      element = described_class.new({
+        name: 'x', type: 'simple', namespace: 'http://example.com',
+        xsd_type: 'xs:string', nillable: true
+      })
+      expect(element.nillable?).to be(true)
+    end
+
+    it 'uses explicit form over default' do
+      element = described_class.new({
+        name: 'x', type: 'simple', namespace: 'http://example.com',
+        xsd_type: 'xs:string', form: 'unqualified'
+      })
+      expect(element.form).to eq('unqualified')
+    end
+
+    it 'uses explicit list over default' do
+      element = described_class.new({
+        name: 'x', type: 'simple', namespace: 'http://example.com',
+        xsd_type: 'xs:string', list: true
+      })
+      expect(element.list?).to be(true)
+    end
+
+    it 'uses explicit any_content over default' do
+      element = described_class.new({
+        name: 'x', type: 'complex', namespace: 'http://example.com',
+        xsd_type: nil, any_content: true
+      })
+      expect(element.any_content?).to be(true)
+    end
+
+    it 'uses explicit min_occurs over default' do
+      element = described_class.new({
+        name: 'x', type: 'simple', namespace: 'http://example.com',
+        xsd_type: 'xs:string', min_occurs: 0
+      })
+      expect(element.min_occurs).to eq('0')
+      expect(element).to be_optional
+    end
+
+    it 'uses explicit max_occurs over default' do
+      element = described_class.new({
+        name: 'x', type: 'simple', namespace: 'http://example.com',
+        xsd_type: 'xs:string', max_occurs: Float::INFINITY
+      })
+      expect(element.max_occurs).to eq('unbounded')
+      expect(element).not_to be_singular
+    end
+
+    it 'uses explicit children over default' do
+      child = { name: 'y', type: 'simple', namespace: 'http://example.com', xsd_type: 'xs:int' }
+      element = described_class.new({
+        name: 'x', type: 'complex', namespace: 'http://example.com',
+        xsd_type: nil, children: [child]
+      })
+      expect(element.children.size).to eq(1)
+      expect(element.children.first.name).to eq('y')
+    end
+
+    it 'uses explicit attributes over default' do
+      attr = { name: 'id', base_type: 'xs:string', use: 'required', list: false }
+      element = described_class.new({
+        name: 'x', type: 'complex', namespace: 'http://example.com',
+        xsd_type: nil, attributes: [attr]
+      })
+      expect(element.attributes.size).to eq(1)
+      expect(element.attributes.first.name).to eq('id')
+    end
+  end
+
   describe 'duck-type compatibility with XML::Element' do
     it 'responds to all methods that Response::Parser calls' do
       element = described_class.new(simple_hash)
