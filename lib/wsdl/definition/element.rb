@@ -100,7 +100,7 @@ module WSDL
       # @return [String] maxOccurs as a string ('unbounded' for infinity)
       def max_occurs
         value = @data.fetch(:max_occurs, 1)
-        value == Float::INFINITY ? 'unbounded' : value.to_s
+        value == 'unbounded' ? 'unbounded' : value.to_s
       end
 
       # @return [Boolean] true if the element is optional (minOccurs=0)

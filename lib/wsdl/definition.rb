@@ -550,36 +550,32 @@ module WSDL
 
     # Serializes internal data to a JSON-safe hash with string keys.
     #
-    # Internal data uses symbol keys and Float::INFINITY for unbounded
-    # max_occurs. This method converts to string keys and replaces
-    # Infinity with the string "Infinity" for JSON compatibility.
-    # No symbol values exist in the internal format — type and status
-    # fields use strings to ensure clean round-tripping.
+    # Internal data uses symbol keys. This method converts to string
+    # keys for JSON compatibility. No symbol values exist in the
+    # internal format — type and status fields use strings to ensure
+    # clean round-tripping.
     #
     # @param obj [Object] the object to serialize
     # @return [Object] JSON-safe value
-    def serialize(obj) # rubocop:disable Metrics/CyclomaticComplexity
+    def serialize(obj)
       case obj
       when Hash  then obj.transform_keys(&:to_s).transform_values { |v| serialize(v) }
       when Array then obj.map { |v| serialize(v) }
-      when Float then obj.infinite? ? 'Infinity' : obj
       else obj
       end
     end
 
     # Deserializes a JSON-parsed hash back to internal format with symbol keys.
     #
-    # Only transforms hash keys (string → symbol) and the sentinel
-    # string "Infinity" (→ Float::INFINITY). All other values pass
-    # through unchanged — no guessing about which strings are symbols.
+    # Only transforms hash keys (string → symbol). All other values
+    # pass through unchanged — no guessing about which strings are symbols.
     #
     # @param obj [Object] the object to deserialize
     # @return [Object] internal-format value
     def self.deserialize(obj)
       case obj
-      when Hash       then obj.to_h { |k, v| [k.to_sym, deserialize(v)] }
-      when Array      then obj.map { |v| deserialize(v) }
-      when 'Infinity' then Float::INFINITY
+      when Hash  then obj.to_h { |k, v| [k.to_sym, deserialize(v)] }
+      when Array then obj.map { |v| deserialize(v) }
       else obj
       end
     end

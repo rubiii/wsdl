@@ -237,13 +237,16 @@ module WSDL
       #
       # @return [Hash{Symbol => Object}] definition-compatible element hash
       #
-      # @example
+      # @example Simple element at defaults (lean — only non-default fields)
       #   element.to_definition_h
-      #   # => { name: "user", namespace: "http://example.com", form: "qualified",
-      #   #      type: "complex", xsd_type: nil, min_occurs: 1, max_occurs: 1,
-      #   #      nillable: false, singular: true, list: false, any_content: false,
-      #   #      recursive_type: nil, complex_type_id: nil,
-      #   #      children: [...], attributes: [...] }
+      #   # => { name: "age", namespace: "http://example.com",
+      #   #      type: "simple", xsd_type: "xsd:int" }
+      #
+      # @example Complex element with non-default fields
+      #   element.to_definition_h
+      #   # => { name: "items", namespace: "http://example.com",
+      #   #      type: "complex", max_occurs: "unbounded",
+      #   #      children: [{ name: "item", ... }] }
       #
       def to_definition_h
         @definition_h || build_definition_h
@@ -338,36 +341,40 @@ module WSDL
 
       private
 
-      # Builds a definition-oriented hash from element properties.
+      # Builds a lean definition-oriented hash from element properties.
       #
-      # Extracted from {#to_definition_h} so it can be called eagerly
-      # during {#freeze} and lazily for unfrozen elements.
+      # Only includes fields whose values differ from {Definition::Element}
+      # defaults. This produces compact hashes suitable for the v2 format.
       #
       # @return [Hash{Symbol => Object}] definition-compatible element hash
-      def build_definition_h # rubocop:disable Metrics/AbcSize
-        {
-          name:,
-          namespace:,
-          form:,
-          type: KIND_STRINGS.fetch(kind),
-          xsd_type: base_type,
-          min_occurs: min_occurs.to_i,
-          max_occurs: definition_max_occurs,
-          nillable: nillable?,
-          singular: singular?,
-          list: list?,
-          any_content: any_content?,
-          recursive_type:,
-          complex_type_id:,
-          children: children.map(&:to_definition_h).freeze,
-          attributes: attributes.map(&:to_definition_h).freeze
-        }.freeze
-      end
+      # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
+      def build_definition_h
+        h = { name:, namespace:, type: KIND_STRINGS.fetch(kind) }
 
-      # @return [Integer, Float] max_occurs as a numeric value for definition hashes
-      def definition_max_occurs
-        max_occurs == 'unbounded' ? Float::INFINITY : max_occurs.to_i
+        h[:xsd_type] = base_type if base_type
+        h[:form] = form unless form == 'qualified'
+
+        min = min_occurs.to_i
+        h[:min_occurs] = min unless min == 1
+
+        max = max_occurs == 'unbounded' ? 'unbounded' : max_occurs.to_i
+        h[:max_occurs] = max unless max == 1
+
+        h[:nillable] = true if nillable?
+        h[:list] = true if list?
+        h[:any_content] = true if any_content?
+        h[:recursive_type] = recursive_type if recursive_type
+        h[:complex_type_id] = complex_type_id if complex_type_id
+
+        child_hashes = children.map(&:to_definition_h)
+        h[:children] = child_hashes.freeze unless child_hashes.empty?
+
+        attr_hashes = attributes.map(&:to_definition_h)
+        h[:attributes] = attr_hashes.freeze unless attr_hashes.empty?
+
+        h.freeze
       end
+      # rubocop:enable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
     end
   end
 end

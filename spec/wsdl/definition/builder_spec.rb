@@ -211,8 +211,47 @@ RSpec.describe WSDL::Definition::Builder do
     end
   end
 
-  describe 'builds from various fixtures' do
-    %w[authentication temperature blz_service bronto].each do |fixture_name|
+  describe 'lean element hashes' do
+    it 'omits singular key from all element hashes' do
+      op = definition.to_h.dig('services', 'AuthenticationWebServiceImplService', 'ports',
+        'AuthenticationWebServiceImplPort', 'operations', 'authenticate')
+
+      all_elements = collect_all_elements(op.dig('input', 'body'))
+      all_elements.each do |el|
+        expect(el).not_to have_key('singular'), "Element #{el['name']} should not have 'singular' key"
+      end
+    end
+
+    it 'omits default-valued fields from simple leaf elements' do
+      op = definition.to_h.dig('services', 'AuthenticationWebServiceImplService', 'ports',
+        'AuthenticationWebServiceImplPort', 'operations', 'authenticate')
+
+      leaf = find_leaf_element(op.dig('input', 'body'))
+      expect(leaf).not_to be_nil, 'Expected at least one simple leaf element'
+      expect(leaf).not_to have_key('nillable')
+      expect(leaf).not_to have_key('list')
+      expect(leaf).not_to have_key('any_content')
+      expect(leaf).not_to have_key('recursive_type')
+      expect(leaf).not_to have_key('complex_type_id')
+    end
+
+    it 'does not produce "Infinity" in serialized output' do
+      bronto_def = WSDL::Parser.parse(fixture('wsdl/bronto'), http_mock)
+      json = bronto_def.to_json
+
+      expect(json).not_to include('"Infinity"')
+    end
+
+    it 'uses "unbounded" for unbounded max_occurs' do
+      bronto_def = WSDL::Parser.parse(fixture('wsdl/bronto'), http_mock)
+      json = bronto_def.to_json
+
+      expect(json).to include('"unbounded"')
+    end
+  end
+
+  describe 'builds and round-trips from various fixtures' do
+    %w[authentication temperature blz_service bronto jira].each do |fixture_name|
       it "builds and round-trips #{fixture_name}" do
         defn = WSDL::Parser.parse(fixture("wsdl/#{fixture_name}"), http_mock)
 
@@ -379,5 +418,22 @@ RSpec.describe WSDL::Definition::Builder do
     elements.flat_map do |el|
       [el['name']] + collect_names(el['children'] || [])
     end
+  end
+
+  def collect_all_elements(elements)
+    elements.flat_map do |el|
+      [el] + collect_all_elements(el['children'] || [])
+    end
+  end
+
+  def find_leaf_element(elements)
+    elements.each do |el|
+      return el if el['type'] == 'simple'
+
+      children = el['children'] || []
+      leaf = find_leaf_element(children)
+      return leaf if leaf
+    end
+    nil
   end
 end

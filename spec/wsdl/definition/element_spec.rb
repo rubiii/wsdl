@@ -5,19 +5,8 @@ RSpec.describe WSDL::Definition::Element do
     {
       name: 'age',
       namespace: 'http://example.com',
-      form: 'qualified',
       type: 'simple',
-      xsd_type: 'xsd:int',
-      min_occurs: 1,
-      max_occurs: 1,
-      nillable: false,
-      singular: true,
-      list: false,
-      any_content: false,
-      recursive_type: nil,
-      complex_type_id: nil,
-      children: [],
-      attributes: []
+      xsd_type: 'xsd:int'
     }
   end
 
@@ -25,16 +14,7 @@ RSpec.describe WSDL::Definition::Element do
     {
       name: 'user',
       namespace: 'http://example.com',
-      form: 'qualified',
       type: 'complex',
-      xsd_type: nil,
-      min_occurs: 1,
-      max_occurs: 1,
-      nillable: false,
-      singular: true,
-      list: false,
-      any_content: false,
-      recursive_type: nil,
       complex_type_id: 'http://example.com:UserType',
       children: [simple_hash],
       attributes: [{ name: 'id', base_type: 'xsd:string', use: 'required', list: false }]
@@ -45,19 +25,11 @@ RSpec.describe WSDL::Definition::Element do
     {
       name: 'parent',
       namespace: 'http://example.com',
-      form: 'qualified',
       type: 'recursive',
-      xsd_type: nil,
       min_occurs: 0,
-      max_occurs: Float::INFINITY,
+      max_occurs: 'unbounded',
       nillable: true,
-      singular: false,
-      list: false,
-      any_content: false,
-      recursive_type: 'ParentType',
-      complex_type_id: nil,
-      children: [],
-      attributes: []
+      recursive_type: 'ParentType'
     }
   end
 
@@ -229,7 +201,7 @@ RSpec.describe WSDL::Definition::Element do
       hash = {
         name: 'items', namespace: 'http://example.com', form: 'qualified',
         type: 'simple', xsd_type: 'xsd:string',
-        min_occurs: 0, max_occurs: Float::INFINITY,
+        min_occurs: 0, max_occurs: 'unbounded',
         nillable: false, list: false, any_content: false,
         recursive_type: nil, complex_type_id: nil,
         children: [], attributes: []
@@ -364,7 +336,7 @@ RSpec.describe WSDL::Definition::Element do
     it 'uses explicit max_occurs over default' do
       element = described_class.new({
         name: 'x', type: 'simple', namespace: 'http://example.com',
-        xsd_type: 'xs:string', max_occurs: Float::INFINITY
+        xsd_type: 'xs:string', max_occurs: 'unbounded'
       })
       expect(element.max_occurs).to eq('unbounded')
       expect(element).not_to be_singular
