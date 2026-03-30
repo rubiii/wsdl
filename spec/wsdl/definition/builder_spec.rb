@@ -52,7 +52,9 @@ RSpec.describe WSDL::Definition::Builder do
         'AuthenticationWebServiceImplPort')
 
       expect(port['endpoint']).to eq('http://example.com/validation/1.0/AuthenticationService')
-      expect(port['type']).to eq('http://schemas.xmlsoap.org/wsdl/soap/')
+
+      namespaces = definition.to_h['namespaces']
+      expect(namespaces[port['type']]).to eq('http://schemas.xmlsoap.org/wsdl/soap/')
     end
 
     it 'builds operation data' do
@@ -286,6 +288,47 @@ RSpec.describe WSDL::Definition::Builder do
       json = bronto_def.to_json
 
       expect(json).not_to include('"max_occurs"')
+    end
+  end
+
+  describe 'namespace table' do
+    it 'includes a namespaces array in to_h' do
+      namespaces = definition.to_h['namespaces']
+
+      expect(namespaces).to be_an(Array)
+      expect(namespaces).not_to be_empty
+      expect(namespaces).to all(be_a(String))
+    end
+
+    it 'resolves namespace indices to correct URIs via port_type' do
+      namespaces = definition.to_h['namespaces']
+      port = definition.to_h.dig('services', 'AuthenticationWebServiceImplService', 'ports',
+        'AuthenticationWebServiceImplPort')
+
+      expect(namespaces[port['type']]).to eq('http://schemas.xmlsoap.org/wsdl/soap/')
+    end
+
+    it 'resolves namespace indices to URI strings via operation_data' do
+      op = definition.operation_data('authenticate')
+      element = WSDL::Definition::Element.new(op['input']['body'].first)
+
+      expect(element.namespace).to be_a(String)
+      expect(element.namespace).to include('://')
+    end
+
+    it 'resolves RPC namespace indices to URI strings via operation_data' do
+      rpc_def = WSDL::Parser.parse(fixture('wsdl/rpc_literal'), http_mock)
+      op = rpc_def.operation_data('SampleService', 'Sample', 'op1')
+
+      expect(op['rpc_input_namespace']).to be_a(String)
+      expect(op['rpc_input_namespace']).to eq('http://apiNamespace.com')
+    end
+
+    it 'round-trips RPC namespace values through from_h' do
+      jira_def = WSDL::Parser.parse(fixture('wsdl/jira'), http_mock)
+      restored = WSDL::Definition.from_h(JSON.parse(jira_def.to_json))
+
+      expect(restored.to_h).to eq(jira_def.to_h)
     end
   end
 

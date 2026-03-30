@@ -3,7 +3,7 @@
 require 'tempfile'
 
 RSpec.describe WSDL::Operation do
-  subject(:operation)  { described_class.new(op_data, endpoint, http_mock) }
+  subject(:operation) { described_class.new(op_data, endpoint, http_mock) }
 
   let(:definition)     { WSDL::Parser.parse fixture('wsdl/temperature'), http_mock }
   let(:op_data)        { definition.operation_data('ConvertTemperature', 'ConvertTemperatureSoap12', 'ConvertTemp') }

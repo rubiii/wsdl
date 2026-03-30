@@ -14,7 +14,7 @@ module WSDL
       # @return [Array] shared empty frozen array for absent children/attributes
       EMPTY_ARRAY = [].freeze
 
-      # @param data [Hash{String => Object}] element hash from {XML::Element#to_definition_h}
+      # @param data [Hash{String => Object}] element hash with resolved namespace URI strings
       def initialize(data)
         @data = data
 

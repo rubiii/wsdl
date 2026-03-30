@@ -167,11 +167,12 @@ RSpec.describe WSDL::Definition do
       one_way_def = described_class.new(
         'schema_version' => WSDL::Definition::Builder::SCHEMA_VERSION,
         'service_name' => 'Svc', 'fingerprint' => 'sha256:test', 'sources' => [],
+        'namespaces' => ['http://schemas.xmlsoap.org/wsdl/soap/'],
         'services' => {
           'Svc' => {
             'ports' => {
               'Port' => {
-                'type' => 'soap', 'endpoint' => 'http://x',
+                'type' => 0, 'endpoint' => 'http://x',
                 'operations' => { 'Notify' => notify_op }
               }
             }
@@ -216,6 +217,16 @@ RSpec.describe WSDL::Definition do
       expect(definition.endpoint('AuthenticationWebServiceImplService',
         'AuthenticationWebServiceImplPort'))
         .to eq('http://example.com/validation/1.0/AuthenticationService')
+    end
+  end
+
+  describe '#port_type' do
+    it 'resolves namespace index to URI string' do
+      uri = definition.port_type('AuthenticationWebServiceImplService',
+        'AuthenticationWebServiceImplPort')
+
+      expect(uri).to be_a(String)
+      expect(uri).to eq('http://schemas.xmlsoap.org/wsdl/soap/')
     end
   end
 
@@ -276,11 +287,12 @@ RSpec.describe WSDL::Definition do
         described_class.new(
           'schema_version' => WSDL::Definition::Builder::SCHEMA_VERSION,
           'service_name' => 'Svc', 'fingerprint' => 'sha256:test', 'sources' => [],
+          'namespaces' => ['http://schemas.xmlsoap.org/wsdl/soap/'],
           'services' => {
             'Svc' => {
               'ports' => {
                 'Port' => {
-                  'type' => 'soap', 'endpoint' => 'http://x',
+                  'type' => 0, 'endpoint' => 'http://x',
                   'operations' => {
                     'Op' => {
                       'name' => 'Op', 'input_name' => nil, 'soap_action' => nil, 'soap_version' => '1.1',
@@ -365,11 +377,12 @@ RSpec.describe WSDL::Definition do
       described_class.new(
         'schema_version' => WSDL::Definition::Builder::SCHEMA_VERSION,
         'service_name' => 'Svc', 'fingerprint' => 'sha256:test', 'sources' => [],
+        'namespaces' => ['http://schemas.xmlsoap.org/wsdl/soap/'],
         'services' => {
           'Svc' => {
             'ports' => {
               'Port' => {
-                'type' => 'soap', 'endpoint' => 'http://x',
+                'type' => 0, 'endpoint' => 'http://x',
                 'operations' => {
                   'Lookup' => [
                     op_base.merge('name' => 'Lookup', 'input_name' => 'ById'),
@@ -439,10 +452,7 @@ RSpec.describe WSDL::Definition do
 
   def simple_element(name, xsd_type: 'xsd:string')
     {
-      'name' => name, 'namespace' => nil, 'form' => 'qualified', 'type' => 'simple',
-      'xsd_type' => xsd_type, 'min_occurs' => 1, 'max_occurs' => 1, 'nillable' => false,
-      'singular' => true, 'list' => false, 'any_content' => false, 'recursive_type' => nil,
-      'complex_type_id' => nil, 'children' => [], 'attributes' => []
+      'name' => name, 'ns' => nil, 'type' => 'simple', 'xsd_type' => xsd_type
     }
   end
 end

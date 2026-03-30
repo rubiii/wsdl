@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'json'
+require 'wsdl/definition/namespace_table'
 require 'wsdl/definition/element'
 require 'wsdl/definition/builder'
 
@@ -36,6 +37,7 @@ module WSDL
     # @api private
     def initialize(data)
       @data = deep_freeze(data)
+      @namespace_table = NamespaceTable.new(@data['namespaces'])
       freeze
     end
 
@@ -259,7 +261,7 @@ module WSDL
     # @return [String] the SOAP namespace URI
     # @api private
     def port_type(service_name, port_name)
-      @data['services'][service_name]['ports'][port_name]['type']
+      @namespace_table.resolve(@data['services'][service_name]['ports'][port_name]['type'])
     end
 
     # Resolves the single service and port for auto-resolution.
@@ -334,6 +336,39 @@ module WSDL
 
     private
 
+    # Replaces integer namespace indices with URI strings in an operation hash.
+    #
+    # Creates a shallow copy of the operation and its messages/elements,
+    # resolving all +ns+ and +rpc_*_namespace+ values through the namespace table.
+    #
+    # @param operation [Hash] frozen operation hash from @data
+    # @return [Hash] new hash with namespace URIs resolved
+    def resolve_operation_namespaces(operation)
+      result = operation.dup
+      %w[rpc_input_namespace rpc_output_namespace].each do |key|
+        result[key] = @namespace_table.resolve(operation[key]) if operation[key]
+      end
+      result['input'] = resolve_message_namespaces(operation['input']) if operation['input']
+      result['output'] = resolve_message_namespaces(operation['output']) if operation['output']
+      result
+    end
+
+    # @return [Hash] message with resolved namespace URIs
+    def resolve_message_namespaces(message)
+      {
+        'header' => message['header'].map { |el| resolve_element_namespaces(el) },
+        'body' => message['body'].map { |el| resolve_element_namespaces(el) }
+      }
+    end
+
+    # @return [Hash] element with resolved 'ns' (recursive)
+    def resolve_element_namespaces(element)
+      result = element.dup
+      result['ns'] = @namespace_table.resolve(element['ns']) if element['ns']
+      result['children'] = element['children'].map { |c| resolve_element_namespaces(c) } if element['children']
+      result
+    end
+
     # Resolves an operation by name, with optional service/port scoping.
     #
     # @param args [Array] (operation_name) or (service, port, operation_name)
@@ -341,13 +376,15 @@ module WSDL
     # @return [Hash] internal operation data
     # @raise [ArgumentError] if operation not found or ambiguous
     def resolve_operation(*args, input_name: nil)
-      case args.size
+      op = case args.size
       when 1 then resolve_auto_operation(args[0], input_name:)
       when 3 then resolve_explicit_operation(args[0], args[1], args[2], input_name:)
       else
         raise ArgumentError,
           'Pass 1 argument (operation_name) or 3 arguments (service_name, port_name, operation_name).'
       end
+
+      resolve_operation_namespaces(op)
     end
 
     # Resolves an operation by name with auto-resolution of service/port.
