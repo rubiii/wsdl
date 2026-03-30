@@ -178,7 +178,8 @@ RSpec.describe WSDL::Definition::Builder do
         'AuthenticationWebServiceImplPort', 'operations', 'authenticate')
 
       body_elements = op.dig('input', 'body')
-      types = collect_types(body_elements)
+      type_registry = restored.to_h['types'] || {}
+      types = collect_types(body_elements, types: type_registry)
       expect(types).to all(be_a(String))
       expect(types).to all(match(/\A(simple|complex|recursive)\z/))
     end
@@ -220,7 +221,8 @@ RSpec.describe WSDL::Definition::Builder do
       op = restored.to_h.dig('services', 'AuthenticationWebServiceImplService', 'ports',
         'AuthenticationWebServiceImplPort', 'operations', 'authenticate')
 
-      names = collect_names(op.dig('input', 'body'))
+      type_registry = restored.to_h['types'] || {}
+      names = collect_names(op.dig('input', 'body'), types: type_registry)
       expect(names).to all(be_a(String))
     end
   end
@@ -230,7 +232,8 @@ RSpec.describe WSDL::Definition::Builder do
       op = definition.to_h.dig('services', 'AuthenticationWebServiceImplService', 'ports',
         'AuthenticationWebServiceImplPort', 'operations', 'authenticate')
 
-      all_elements = collect_all_elements(op.dig('input', 'body'))
+      type_registry = definition.to_h['types'] || {}
+      all_elements = collect_all_elements(op.dig('input', 'body'), types: type_registry)
       all_elements.each do |el|
         expect(el).not_to have_key('singular'), "Element #{el['name']} should not have 'singular' key"
       end
@@ -240,7 +243,8 @@ RSpec.describe WSDL::Definition::Builder do
       op = definition.to_h.dig('services', 'AuthenticationWebServiceImplService', 'ports',
         'AuthenticationWebServiceImplPort', 'operations', 'authenticate')
 
-      leaf = find_leaf_element(op.dig('input', 'body'))
+      type_registry = definition.to_h['types'] || {}
+      leaf = find_leaf_element(op.dig('input', 'body'), types: type_registry)
       expect(leaf).not_to be_nil, 'Expected at least one simple leaf element'
       expect(leaf).not_to have_key('nillable')
       expect(leaf).not_to have_key('list')
@@ -267,7 +271,8 @@ RSpec.describe WSDL::Definition::Builder do
       op = definition.to_h.dig('services', 'AuthenticationWebServiceImplService', 'ports',
         'AuthenticationWebServiceImplPort', 'operations', 'authenticate')
 
-      all_elements = collect_all_elements(op.dig('input', 'body'))
+      type_registry = definition.to_h['types'] || {}
+      all_elements = collect_all_elements(op.dig('input', 'body'), types: type_registry)
       expect(all_elements).not_to be_empty
 
       all_elements.each do |el|
@@ -488,34 +493,271 @@ RSpec.describe WSDL::Definition::Builder do
     end
   end
 
+  describe 'type registry' do
+    it 'includes a types hash in to_h' do
+      data = definition.to_h
+
+      expect(data).to have_key('types')
+      expect(data['types']).to be_a(Hash)
+    end
+
+    it 'uses nsIndex:localName format for type keys' do
+      type_registry = definition.to_h['types']
+      type_keys = type_registry.keys.reject { |k| k.start_with?('_') }
+
+      expect(type_keys).not_to be_empty
+      expect(type_keys).to all(match(/\A\d+:.+\z/))
+    end
+
+    it 'typed elements have type_ref without children or complex_type_id' do
+      data = definition.to_h
+      all_elements = walk_all_elements_in_to_h(data)
+
+      typed_elements = all_elements.select { |el| el.key?('type_ref') }
+      expect(typed_elements).not_to be_empty
+
+      typed_elements.each do |el|
+        expect(el).not_to have_key('children'),
+          "Element #{el['name']} has type_ref but also has children"
+        expect(el).not_to have_key('attributes'),
+          "Element #{el['name']} has type_ref but also has attributes"
+        expect(el).not_to have_key('complex_type_id'),
+          "Element #{el['name']} has type_ref but also has complex_type_id"
+      end
+    end
+
+    it 'type registry entries have children' do
+      type_registry = definition.to_h['types']
+
+      entries_with_children = type_registry.values.select { |entry| entry['children']&.any? }
+      expect(entries_with_children).not_to be_empty
+    end
+
+    it 'complex elements have either type_ref or inline children' do
+      data = definition.to_h
+      all_elements = walk_all_elements_in_to_h(data)
+
+      complex_elements = all_elements.select { |el| el['type'] == 'complex' }
+      complex_elements.each do |el|
+        has_ref = el.key?('type_ref')
+        has_children = el.key?('children')
+
+        expect(has_ref || has_children).to be(true),
+          "Complex element #{el['name']} has neither type_ref nor children"
+        expect(has_ref && has_children).to be(false),
+          "Complex element #{el['name']} has both type_ref and children"
+      end
+    end
+
+    context 'with bronto fixture' do
+      subject(:definition) { WSDL::Parser.parse(fixture('wsdl/bronto'), http_mock) }
+
+      it 'deduplicates shared types' do
+        data = definition.to_h
+        type_registry = data['types']
+        all_elements = walk_all_elements_in_to_h(data)
+
+        typed_elements = all_elements.select { |el| el.key?('type_ref') }
+
+        # Count how many elements share each type_ref value
+        ref_counts = typed_elements.group_by { |el| el['type_ref'] }
+        shared_refs = ref_counts.select { |_, els| els.size > 1 }
+
+        expect(shared_refs).not_to be_empty,
+          'Expected at least one type_ref shared by multiple elements'
+        expect(type_registry.size).to be < typed_elements.size,
+          'Expected fewer registry entries than total typed elements'
+      end
+
+      it 'type registry entries reference existing types for nested type_refs' do
+        type_registry = definition.to_h['types']
+
+        nested_refs = type_registry.values.flat_map { |entry|
+          (entry['children'] || []).select { |c| c.key?('type_ref') }
+        }
+
+        expect(nested_refs).not_to be_empty,
+          'Expected bronto to have nested type_refs in registry entries'
+
+        nested_refs.each do |child|
+          expect(type_registry).to have_key(child['type_ref']),
+            "Nested type_ref #{child['type_ref'].inspect} not found in registry"
+        end
+      end
+    end
+
+    it 'consumer sees expanded children after type_ref resolution' do
+      op = definition.operation_data('authenticate')
+      body = op['input']['body']
+
+      # The top-level authenticate element should have children, not type_ref
+      authenticate_el = body.first
+      expect(authenticate_el['name']).to eq('authenticate')
+      expect(authenticate_el).to have_key('children')
+      expect(authenticate_el['children'].size).to eq(2)
+
+      # Recursively verify no type_ref appears anywhere
+      assert_no_type_ref(body)
+    end
+
+    it 'input returns correct developer view with type expansion' do
+      result = definition.input('authenticate')
+
+      expect(result).not_to be_empty
+      expect(result.first[:name]).to eq('authenticate')
+      expect(result.first[:children]).to be_an(Array)
+      expect(result.first[:children].size).to eq(2)
+      expect(result.first[:children].map { |c| c[:name] }).to contain_exactly('user', 'password')
+    end
+
+    context 'with bronto round-trip' do
+      subject(:definition) { WSDL::Parser.parse(fixture('wsdl/bronto'), http_mock) }
+
+      it 'round-trips through JSON with type registry' do
+        json = definition.to_json
+        restored = WSDL::Definition.from_h(JSON.parse(json))
+
+        expect(restored.to_h).to eq(definition.to_h)
+        expect(restored.to_h['types']).to eq(definition.to_h['types'])
+      end
+
+      it 'operation_data works after round-trip' do
+        restored = WSDL::Definition.from_h(JSON.parse(definition.to_json))
+
+        op = restored.operation_data('BrontoSoapApiImplService', 'BrontoSoapApiImplPort', 'login')
+        expect(op['name']).to eq('login')
+        expect(op['input']['body']).to be_an(Array)
+        assert_no_type_ref(op['input']['body'])
+      end
+    end
+
+    context 'with recursive types fixture' do
+      subject(:definition) { WSDL::Parser.parse(fixture('parser/recursive_types'), http_mock) }
+
+      it 'expands type_ref without stack overflow on recursive types' do
+        op = definition.operation_data('TreeService', 'TreePort', 'GetTree')
+        body = op['output']['body']
+
+        # GetTreeResponse should have expanded children
+        response_el = body.first
+        expect(response_el['name']).to eq('GetTreeResponse')
+        expect(response_el).to have_key('children')
+
+        # Find the recursive boundary — walk until we hit type='recursive'
+        node_el = response_el['children'].find { |c| c['name'] == 'node' }
+        expect(node_el).to have_key('children')
+
+        children_el = node_el['children'].find { |c| c['name'] == 'children' }
+        expect(children_el).not_to be_nil
+        expect(children_el['type']).to eq('recursive')
+        expect(children_el['recursive_type']).to eq('tns:TreeNode')
+
+        # No type_ref should remain anywhere in the expanded tree
+        assert_no_type_ref(body)
+      end
+
+      it 'stores _recursive_labels in the type registry' do
+        types = definition.to_h['types']
+
+        expect(types).to have_key('_recursive_labels')
+        labels = types['_recursive_labels']
+        expect(labels).to be_a(Hash)
+        expect(labels.values).to include('tns:TreeNode')
+      end
+
+      it 'round-trips _recursive_labels through JSON' do
+        json = definition.to_json
+        restored = WSDL::Definition.from_h(JSON.parse(json))
+
+        expect(restored.to_h['types']['_recursive_labels']).to eq(definition.to_h['types']['_recursive_labels'])
+      end
+    end
+
+    context 'with missing type_ref in registry' do
+      it 'handles corrupt type_ref gracefully without crashing' do
+        # Build a minimal valid definition with a bogus type_ref
+        base = definition.to_h.dup
+        services = JSON.parse(JSON.generate(base['services']))
+
+        # Inject a bogus type_ref into the authenticate operation's input body
+        op = services.dig(
+          'AuthenticationWebServiceImplService', 'ports',
+          'AuthenticationWebServiceImplPort', 'operations', 'authenticate'
+        )
+        op['input']['body'] = [
+          { 'name' => 'broken', 'ns' => 0, 'type' => 'complex', 'type_ref' => '99:NonExistent' }
+        ]
+
+        corrupt_def = WSDL::Definition.from_h(base.merge('services' => services))
+
+        # Should not raise NoMethodError — should handle missing ref gracefully
+        expect { corrupt_def.operation_data('authenticate') }.not_to raise_error
+      end
+    end
+  end
+
   private
 
-  def collect_types(elements)
+  def collect_types(elements, types: {})
     elements.flat_map do |el|
-      [el['type']] + collect_types(el['children'] || [])
+      children = el['children'] || (el['type_ref'] ? types.dig(el['type_ref'], 'children') : nil) || []
+      [el['type']] + collect_types(children, types:)
     end
   end
 
-  def collect_names(elements)
+  def collect_names(elements, types: {})
     elements.flat_map do |el|
-      [el['name']] + collect_names(el['children'] || [])
+      children = el['children'] || (el['type_ref'] ? types.dig(el['type_ref'], 'children') : nil) || []
+      [el['name']] + collect_names(children, types:)
     end
   end
 
-  def collect_all_elements(elements)
+  def collect_all_elements(elements, types: {})
     elements.flat_map do |el|
-      [el] + collect_all_elements(el['children'] || [])
+      children = el['children'] || (el['type_ref'] ? types.dig(el['type_ref'], 'children') : nil) || []
+      [el] + collect_all_elements(children, types:)
     end
   end
 
-  def find_leaf_element(elements)
+  def find_leaf_element(elements, types: {})
     elements.each do |el|
       return el if el['type'] == 'simple'
 
-      children = el['children'] || []
-      leaf = find_leaf_element(children)
+      children = el['children'] || (el['type_ref'] ? types.dig(el['type_ref'], 'children') : nil) || []
+      leaf = find_leaf_element(children, types:)
       return leaf if leaf
     end
     nil
+  end
+
+  # Recursively walks all elements from a to_h services structure,
+  # including into type registry entries, returning every element hash found.
+  def walk_all_elements_in_to_h(data)
+    types = data['types'] || {}
+    all_operations_from(data).flat_map { |op| operation_elements(op, types:) }
+  end
+
+  def all_operations_from(data)
+    data['services'].each_value.flat_map { |svc|
+      svc['ports'].each_value.flat_map { |port|
+        port['operations'].each_value.flat_map { |v| v.is_a?(Array) ? v : [v] }
+      }
+    }
+  end
+
+  def operation_elements(operation, types: {})
+    %w[input output].flat_map { |dir|
+      next [] unless operation[dir]
+
+      %w[header body].flat_map { |section| collect_all_elements(operation[dir][section] || [], types:) }
+    }
+  end
+
+  # Recursively checks that no element hash in the tree contains a type_ref key.
+  def assert_no_type_ref(elements)
+    elements.each do |el|
+      expect(el).not_to have_key('type_ref'), "Element #{el['name']} should not have type_ref after expansion"
+      assert_no_type_ref(el['children']) if el['children']
+    end
   end
 end

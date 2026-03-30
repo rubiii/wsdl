@@ -2,6 +2,7 @@
 
 require 'digest'
 require 'wsdl/definition/namespace_compactor'
+require 'wsdl/definition/type_compactor'
 
 module WSDL
   class Definition
@@ -49,6 +50,7 @@ module WSDL
         sources = @provenance.map(&:freeze).freeze
         services = build_services
         namespaces, services = NamespaceCompactor.call(services)
+        types, services = TypeCompactor.call(services, namespaces)
 
         data = {
           'schema_version' => SCHEMA_VERSION,
@@ -56,6 +58,7 @@ module WSDL
           'sources' => sources,
           'build_issues' => @build_issues.freeze,
           'namespaces' => namespaces.freeze,
+          'types' => types.freeze,
           'services' => services,
           'fingerprint' => compute_fingerprint(sources)
         }

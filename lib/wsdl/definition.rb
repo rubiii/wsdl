@@ -361,12 +361,66 @@ module WSDL
       }
     end
 
-    # @return [Hash] element with resolved 'ns' (recursive)
-    def resolve_element_namespaces(element)
+    # Resolves namespace indices and expands +type_ref+ entries in an element hash.
+    #
+    # When the element carries a +type_ref+ key, the referenced type's +children+
+    # and +attributes+ are copied from the type registry (+@data['types']+) and
+    # the +type_ref+ key is removed. Tracks expanded keys to detect cycles from
+    # mutually recursive types (e.g. Station -> Direction -> Station).
+    #
+    # @param element [Hash] frozen element hash from @data
+    # @param expanding [Set<String>] type_ref keys currently being expanded (cycle guard)
+    # @return [Hash] new hash with namespace URIs resolved and type_ref expanded
+    def resolve_element_namespaces(element, expanding = Set.new)
       result = element.dup
       result['ns'] = @namespace_table.resolve(element['ns']) if element['ns']
-      result['children'] = element['children'].map { |c| resolve_element_namespaces(c) } if element['children']
+      expanding = expand_type_ref(result, expanding) if element['type_ref']
+      result['children'] = result['children'].map { |c| resolve_element_namespaces(c, expanding) } if result['children']
       result
+    end
+
+    # Expands a +type_ref+ on the element, or converts it to a recursive
+    # boundary when a cycle is detected.
+    #
+    # When the referenced type is missing from the registry (e.g. corrupt
+    # data from dump/load), the +type_ref+ is silently removed and the
+    # element becomes a leaf with no children.
+    #
+    # @param result [Hash] mutable element hash being built
+    # @param expanding [Set<String>] type_ref keys currently being expanded
+    # @return [Set<String>] updated expanding set
+    def expand_type_ref(result, expanding)
+      ref = result['type_ref']
+
+      if expanding.include?(ref)
+        mark_recursive_boundary(result, ref, expanding)
+      else
+        type_data = @data['types'][ref]
+        unless type_data
+          result.delete('type_ref')
+          return expanding
+        end
+
+        result['children'] = type_data['children'] if type_data['children']
+        result['attributes'] = type_data['attributes'] if type_data['attributes']
+        result.delete('type_ref')
+        expanding | [ref]
+      end
+    end
+
+    # Converts an element to a recursive boundary marker.
+    #
+    # @param result [Hash] mutable element hash
+    # @param ref [String] the cyclic type_ref key
+    # @param expanding [Set<String>] current expansion guard
+    # @return [Set<String>] the original expanding set (cycle is halted, not cleared)
+    def mark_recursive_boundary(result, ref, expanding)
+      result['type'] = 'recursive'
+      labels = @data['types']['_recursive_labels']
+      result['recursive_type'] = labels[ref] if labels&.key?(ref)
+      result.delete('type_ref')
+      result.delete('children')
+      expanding
     end
 
     # Resolves an operation by name, with optional service/port scoping.
