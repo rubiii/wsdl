@@ -28,6 +28,16 @@ module WSDL
   # @see WSDL.load
   #
   class Definition # rubocop:disable Metrics/ClassLength
+    # Maximum JSON nesting depth for serialization.
+    #
+    # Derived from the default +max_type_nesting_depth+ (50). Each level of
+    # type nesting produces roughly 2–3 levels of JSON structure, and the
+    # outer envelope (services → ports → operations → messages) adds ~10 more.
+    # 500 provides generous headroom while still catching pathological data.
+    #
+    # @return [Integer]
+    MAX_JSON_NESTING = 500
+
     # Creates a new Definition from internal data.
     #
     # This constructor is intended for internal use by {Builder} and {.from_h}.
@@ -295,6 +305,8 @@ module WSDL
     #
     # The hash includes port-level +"defaults"+ produced by the Builder
     # pipeline. Operations omit fields that are captured in defaults.
+    # Ports with identical operations use an +"extends"+ key pointing
+    # to the base port name instead of duplicating the +"operations"+ hash.
     # Use {.from_h} to restore a Definition from this hash.
     #
     # Equivalent to calling {WSDL.dump}.
@@ -306,9 +318,18 @@ module WSDL
 
     # Serializes this Definition to a JSON string.
     #
+    # Uses a generous nesting limit ({MAX_JSON_NESTING}) instead of Ruby's
+    # default of 100, because Definition data can contain deeply nested
+    # element trees (e.g. AWSE element trees reach 110 levels). The data
+    # is guaranteed acyclic — it is deep-frozen on construction.
+    #
+    # @param state [JSON::State, nil] JSON generator state passed by
+    #   +JSON.generate+ when serializing compound objects. Accepted for
+    #   protocol compliance but not forwarded — this method produces a
+    #   complete JSON document using its own nesting limit.
     # @return [String] JSON representation
-    def to_json(*)
-      JSON.generate(@data, *)
+    def to_json(state = nil) # rubocop:disable Lint/UnusedMethodArgument
+      JSON.generate(@data, max_nesting: MAX_JSON_NESTING)
     end
 
     # Restores a Definition from a serialized Hash.
@@ -316,7 +337,8 @@ module WSDL
     # Validates the schema version and raises if it doesn't match
     # the current library version. The hash is passed directly to the
     # constructor — port-level defaults remain in the hash and are
-    # merged into operations at read time.
+    # merged into operations at read time. Ports with an +"extends"+ key
+    # are resolved transparently when operations are accessed.
     #
     # @param hash [Hash{String => Object}] serialized hash from {#to_h}
     # @return [Definition] the restored definition
@@ -476,20 +498,25 @@ module WSDL
 
     # Resolves an operation with explicit service, port, and operation names.
     #
+    # When the port carries an +extends+ key instead of +operations+,
+    # the operations are inherited from the base port via {#resolve_port}.
+    #
     # @param svc [String] service name
     # @param port [String] port name
     # @param operation [String] operation name
     # @param input_name [String, nil] disambiguator
-    # @return [Array(Hash, Hash)] port data and operation data
+    # @return [Array(Hash, Hash)] resolved port data and operation data
     # @raise [ArgumentError] if not found
     def resolve_explicit_operation(svc, port, operation, input_name: nil)
-      port_data = @data.dig('services', svc, 'ports', port)
-      ops = port_data&.dig('operations')
+      all_ports = @data.dig('services', svc, 'ports')
+      port_data = all_ports&.dig(port)
+      resolved = port_data ? resolve_port(port_data, all_ports) : nil
+      ops = resolved&.dig('operations')
       raise ArgumentError, unknown_operation_message(svc, port, operation) unless ops&.key?(operation)
 
       entry = ops[operation]
       op = entry.is_a?(Array) ? disambiguate_overload(entry, operation, input_name) : entry
-      [port_data, op]
+      [resolved, op]
     end
 
     # Disambiguates an overloaded operation by input_name.
@@ -516,9 +543,20 @@ module WSDL
         "Available: #{available.inspect}"
     end
 
-    # @return [String] error message for unknown operations
+    # Builds an error message for unknown operations.
+    #
+    # Resolves port extensions so the error can list available operations
+    # even for ports that inherit their operations from a base port.
+    #
+    # @param service [String] service name
+    # @param port [String] port name
+    # @param operation [String] the operation that was not found
+    # @return [String] error message with recovery guidance
     def unknown_operation_message(service, port, operation)
-      ops = @data.dig('services', service, 'ports', port, 'operations')
+      all_ports = @data.dig('services', service, 'ports')
+      port_data = all_ports&.dig(port)
+      resolved = port_data ? resolve_port(port_data, all_ports) : nil
+      ops = resolved&.dig('operations')
       if ops
         "Unknown operation #{operation.inspect} for " \
           "service #{service.inspect} and port #{port.inspect}.\n" \
@@ -530,6 +568,10 @@ module WSDL
 
     # Iterates over ports, optionally filtered by service.
     #
+    # Resolves port extensions via {#resolve_port} so callers always
+    # receive port data with an +operations+ key, even for ports that
+    # use +extends+ in the serialized form.
+    #
     # @param service_name [String, nil] optional filter
     # @yield [svc_name, port_name, port_data]
     # @return [Array]
@@ -538,8 +580,9 @@ module WSDL
       @data['services'].each do |svc_name, svc_data|
         next if service_name && svc_name != service_name
 
-        svc_data['ports'].each do |port_name, port_data|
-          result << [svc_name, port_name, port_data]
+        all_ports = svc_data['ports']
+        all_ports.each do |port_name, port_data|
+          result << [svc_name, port_name, resolve_port(port_data, all_ports)]
         end
       end
       result
@@ -635,6 +678,29 @@ module WSDL
         end
         lines << "#{prefix}end"
       end
+    end
+
+    # Resolves port extensions, returning port data with operations.
+    #
+    # When a port carries an +extends+ key instead of +operations+,
+    # its operations are inherited from the base port. All other keys
+    # (+endpoint+, +type+, +defaults+) come from the extended port itself.
+    #
+    # When the base port is missing (e.g. corrupt data from dump/load),
+    # the +extends+ key is silently removed and the port becomes a leaf
+    # with no operations — graceful degradation, not a crash.
+    #
+    # @param port_data [Hash] frozen port hash (may have +extends+)
+    # @param all_ports [Hash] all ports in the same service
+    # @return [Hash] port data with operations resolved
+    # @api private
+    def resolve_port(port_data, all_ports)
+      return port_data if port_data.key?('operations')
+
+      base = all_ports[port_data['extends']]
+      return port_data.except('extends') unless base
+
+      port_data.except('extends').merge('operations' => base['operations'])
     end
 
     # Deep-freezes a nested hash/array structure.

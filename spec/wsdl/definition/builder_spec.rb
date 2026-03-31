@@ -333,6 +333,87 @@ RSpec.describe WSDL::Definition::Builder do
     end
   end
 
+  describe 'port extension' do
+    context 'with blz_service fixture' do
+      subject(:definition) { WSDL::Parser.parse(fixture('wsdl/blz_service'), http_mock) }
+
+      it 'second port has extends reference in to_h' do
+        ports = definition.to_h.dig('services', 'BLZService', 'ports')
+        port_names = ports.keys
+
+        first_port = ports[port_names.first]
+        second_port = ports[port_names.last]
+
+        expect(first_port).to have_key('operations')
+        expect(first_port).not_to have_key('extends')
+
+        expect(second_port).to have_key('extends')
+        expect(second_port['extends']).to eq(port_names.first)
+        expect(second_port).not_to have_key('operations')
+      end
+
+      it 'operation_data works on extended port after from_h' do
+        restored = WSDL::Definition.from_h(JSON.parse(definition.to_json))
+        ports = restored.to_h.dig('services', 'BLZService', 'ports')
+        extended_port_name = ports.keys.find { |name| ports[name].key?('extends') }
+
+        op = restored.operation_data('BLZService', extended_port_name, 'getBank')
+        expect(op['name']).to eq('getBank')
+        expect(op['input']['body']).to be_an(Array)
+      end
+
+      it 'ports() returns correct endpoints for all ports' do
+        ports = definition.ports
+        expect(ports.size).to eq(2)
+        ports.each do |port|
+          expect(port[:endpoint]).to be_a(String)
+          expect(port[:endpoint]).to include('http')
+        end
+      end
+
+      it 'operations() lists operations from all ports including extended' do
+        ops = definition.operations
+        expect(ops.size).to eq(2)
+        expect(ops.map { |o| o[:port] }.uniq.size).to eq(2)
+      end
+    end
+
+    context 'with corrupt extends reference' do
+      it 'handles corrupt extends reference gracefully' do
+        base = definition.to_h.dup
+        services = JSON.parse(JSON.generate(base['services']))
+
+        # Inject a bogus extends reference
+        svc = services.values.first
+        svc['ports']['BogusPort'] = {
+          'type' => 0, 'endpoint' => 'http://bogus',
+          'extends' => 'NonExistentPort'
+        }
+
+        corrupt_def = WSDL::Definition.from_h(base.merge('services' => services))
+
+        # Should not crash — port should be accessible but with no operations
+        ports = corrupt_def.ports
+        bogus = ports.find { |p| p[:name] == 'BogusPort' }
+        expect(bogus).not_to be_nil
+        expect(bogus[:endpoint]).to eq('http://bogus')
+      end
+    end
+
+    context 'with oracle fixture' do
+      subject(:definition) { WSDL::Parser.parse(fixture('wsdl/oracle'), http_mock) }
+
+      it 'no port has extends reference' do
+        definition.to_h['services'].each_value do |svc|
+          svc['ports'].each_value do |port|
+            expect(port).not_to have_key('extends')
+            expect(port).to have_key('operations')
+          end
+        end
+      end
+    end
+  end
+
   describe 'builds and round-trips from various fixtures' do
     %w[authentication temperature blz_service bronto jira].each do |fixture_name|
       it "builds and round-trips #{fixture_name}" do
@@ -346,6 +427,44 @@ RSpec.describe WSDL::Definition::Builder do
         restored = WSDL::Definition.from_h(JSON.parse(defn.to_json))
         expect(restored.to_h).to eq(defn.to_h)
       end
+    end
+  end
+
+  describe 'fixture round-trip validation' do
+    fixture_dir = File.expand_path('../../fixtures/wsdl', __dir__)
+
+    Dir.glob(File.join(fixture_dir, '*.wsdl')).each do |path|
+      fixture_name = File.basename(path, '.wsdl')
+
+      it "round-trips #{fixture_name} through JSON" do
+        defn = WSDL::Parser.parse(path, http_mock, limits: WSDL::Limits.new(max_schemas: nil))
+        json = defn.to_json
+        restored = WSDL::Definition.from_h(JSON.parse(json, max_nesting: WSDL::Definition::MAX_JSON_NESTING))
+
+        expect(restored.to_h).to eq(defn.to_h)
+      rescue WSDL::SchemaImportError
+        skip "#{fixture_name} requires external schema imports"
+      end
+    end
+  end
+
+  describe 'serialization constraints' do
+    let(:relaxed_limits) { WSDL::Limits.new(max_schemas: nil) }
+
+    it 'serializes awse.wsdl without JSON nesting errors' do
+      defn = WSDL::Parser.parse(fixture('wsdl/awse'), http_mock, limits: relaxed_limits)
+
+      expect { defn.to_json }.not_to raise_error
+
+      restored = WSDL::Definition.from_h(JSON.parse(defn.to_json, max_nesting: WSDL::Definition::MAX_JSON_NESTING))
+      expect(restored.to_h).to eq(defn.to_h)
+    end
+
+    it 'keeps economic.wsdl v2 JSON under 1,500,000 bytes' do
+      defn = WSDL::Parser.parse(fixture('wsdl/economic'), http_mock, limits: relaxed_limits)
+      json = defn.to_json
+
+      expect(json.size).to be < 1_500_000
     end
   end
 
@@ -735,8 +854,10 @@ RSpec.describe WSDL::Definition::Builder do
 
   def all_operations_from(data)
     data['services'].each_value.flat_map { |svc|
-      svc['ports'].each_value.flat_map { |port|
-        port['operations'].each_value.flat_map { |v| v.is_a?(Array) ? v : [v] }
+      all_ports = svc['ports']
+      all_ports.each_value.flat_map { |port|
+        ops = port['operations'] || all_ports.dig(port['extends'], 'operations') || {}
+        ops.each_value.flat_map { |v| v.is_a?(Array) ? v : [v] }
       }
     }
   end

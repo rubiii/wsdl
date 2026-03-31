@@ -4,6 +4,7 @@ require 'digest'
 require 'wsdl/definition/namespace_compactor'
 require 'wsdl/definition/type_compactor'
 require 'wsdl/definition/defaults_compactor'
+require 'wsdl/definition/port_extension_compactor'
 
 module WSDL
   class Definition
@@ -53,6 +54,7 @@ module WSDL
         namespaces, services = NamespaceCompactor.call(services)
         types, services = TypeCompactor.call(services, namespaces)
         services = DefaultsCompactor.call(services)
+        services = PortExtensionCompactor.call(services)
 
         data = {
           'schema_version' => SCHEMA_VERSION,
