@@ -137,7 +137,7 @@ module WSDL
     #
     # @param hash [Hash{String => Object}] serialized definition hash
     # @return [Definition] the restored definition
-    # @raise [ArgumentError] if the schema version doesn't match
+    # @raise [SchemaVersionError] if the schema version doesn't match
     #
     # @example
     #   cached = JSON.parse(File.read('service.json'))

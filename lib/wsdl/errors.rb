@@ -88,6 +88,40 @@ module WSDL
   class UnsupportedWSDLVersionError < FatalError
   end
 
+  # Raised when a serialized Definition has a different schema version
+  # than the current library expects.
+  #
+  # This typically happens when loading a cached Definition (via {WSDL.load}
+  # or {Definition.from_h}) that was produced by an older or newer version
+  # of the library. The fix is to re-parse the WSDL with {WSDL.parse}.
+  #
+  # @example
+  #   begin
+  #     definition = WSDL.load(cached_hash)
+  #   rescue WSDL::SchemaVersionError => e
+  #     puts "Expected version #{e.expected_version}, got #{e.actual_version}"
+  #     definition = WSDL.parse(wsdl_url)
+  #   end
+  #
+  class SchemaVersionError < Error
+    # @return [Integer, nil] the schema version the library expects
+    attr_reader :expected_version
+
+    # @return [Integer, nil] the schema version found in the hash
+    attr_reader :actual_version
+
+    # Creates a new SchemaVersionError.
+    #
+    # @param message [String] error message
+    # @param expected_version [Integer, nil] the expected schema version
+    # @param actual_version [Integer, nil] the actual schema version found
+    def initialize(message = nil, expected_version: nil, actual_version: nil)
+      @expected_version = expected_version
+      @actual_version = actual_version
+      super(message)
+    end
+  end
+
   # Raised when an operation uses an unsupported SOAP style.
   #
   # Currently, rpc/encoded style operations are not supported.

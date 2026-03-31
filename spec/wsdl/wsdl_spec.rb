@@ -74,7 +74,7 @@ RSpec.describe WSDL do
     it 'raises on schema version mismatch' do
       expect {
         described_class.load({ 'schema_version' => 999 })
-      }.to raise_error(ArgumentError, /schema version mismatch/)
+      }.to raise_error(WSDL::SchemaVersionError, /schema version mismatch/)
     end
   end
 

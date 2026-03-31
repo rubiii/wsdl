@@ -155,7 +155,7 @@ RSpec.describe WSDL::Definition::Builder do
 
       expect {
         WSDL::Definition.from_h(hash)
-      }.to raise_error(ArgumentError, /schema version mismatch/)
+      }.to raise_error(WSDL::SchemaVersionError, /schema version mismatch/)
     end
 
     it 'rejects schema version 1' do
@@ -164,7 +164,21 @@ RSpec.describe WSDL::Definition::Builder do
 
       expect {
         WSDL::Definition.from_h(hash)
-      }.to raise_error(ArgumentError, /schema version mismatch.*re-parse/m)
+      }.to raise_error(WSDL::SchemaVersionError, /schema version mismatch.*re-parse/m)
+    end
+
+    it 'exposes expected and actual versions on SchemaVersionError' do
+      hash = definition.to_h.dup
+      hash['schema_version'] = 999
+
+      error = begin
+        WSDL::Definition.from_h(hash)
+      rescue WSDL::SchemaVersionError => e
+        e
+      end
+
+      expect(error.expected_version).to eq(WSDL::Definition::Builder::SCHEMA_VERSION)
+      expect(error.actual_version).to eq(999)
     end
 
     it 'preserves element type strings through round-trip' do

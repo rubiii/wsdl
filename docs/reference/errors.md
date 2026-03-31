@@ -28,6 +28,7 @@ WSDL::Error
 ├── WSDL::RequestDefinitionError
 ├── WSDL::RequestValidationError
 ├── WSDL::RequestDslError
+├── WSDL::SchemaVersionError
 ├── WSDL::SealedCollectionError
 │
 └── WSDL::FatalError
@@ -68,6 +69,7 @@ WSDL::Error
 | `UnresolvedReferenceError` | Binding, portType, message, or schema reference cannot be resolved |
 | `DuplicateDefinitionError` | Two imported documents define the same component key |
 | `OperationOverloadError` | PortType has overloaded operations in strict mode (WS-I R2304) |
+| `SchemaVersionError` | Serialized Definition has an incompatible schema version; re-parse with `WSDL.parse` |
 
 ### Security Verification Errors (fatal)
 
@@ -108,6 +110,10 @@ rescue WSDL::FatalError => e
 
 # Catch all security verification errors
 rescue WSDL::SecurityError => e
+
+# Catch schema version mismatch when loading cached definitions
+rescue WSDL::SchemaVersionError
+  definition = WSDL.parse(source)
 
 # Catch specific security errors
 rescue WSDL::SignatureVerificationError => e

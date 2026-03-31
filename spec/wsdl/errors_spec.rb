@@ -296,6 +296,42 @@ RSpec.describe 'WSDL error hierarchy' do
     end
   end
 
+  describe WSDL::SchemaVersionError do
+    it 'inherits from WSDL::Error' do
+      expect(described_class).to be < WSDL::Error
+    end
+
+    it 'stores the expected_version' do
+      error = described_class.new('mismatch', expected_version: 2)
+      expect(error.expected_version).to eq(2)
+    end
+
+    it 'stores the actual_version' do
+      error = described_class.new('mismatch', actual_version: 1)
+      expect(error.actual_version).to eq(1)
+    end
+
+    it 'defaults keyword arguments to nil' do
+      error = described_class.new('mismatch')
+
+      expect(error.expected_version).to be_nil
+      expect(error.actual_version).to be_nil
+    end
+
+    it 'can be constructed with no arguments' do
+      error = described_class.new
+      expect(error.message).to eq(described_class.name)
+    end
+
+    it 'passes the message through to super alongside keyword arguments' do
+      error = described_class.new('version mismatch', expected_version: 2, actual_version: 999)
+
+      expect(error.message).to eq('version mismatch')
+      expect(error.expected_version).to eq(2)
+      expect(error.actual_version).to eq(999)
+    end
+  end
+
   describe WSDL::RequestDefinitionError do
     it 'inherits from WSDL::Error' do
       expect(described_class).to be < WSDL::Error

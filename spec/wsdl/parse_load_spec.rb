@@ -97,7 +97,7 @@ RSpec.describe WSDL do
 
       expect {
         described_class.load(hash)
-      }.to raise_error(ArgumentError, /schema version mismatch/)
+      }.to raise_error(WSDL::SchemaVersionError, /schema version mismatch/)
     end
 
     it 'round-trips every standard fixture' do

@@ -342,7 +342,8 @@ module WSDL
     #
     # @param hash [Hash{String => Object}] serialized hash from {#to_h}
     # @return [Definition] the restored definition
-    # @raise [ArgumentError] if the schema version doesn't match
+    # @raise [SchemaVersionError] if the schema version doesn't match
+    # @raise [ArgumentError] if +hash+ is not a Hash
     def self.from_h(hash)
       unless hash.is_a?(Hash)
         raise ArgumentError,
@@ -353,9 +354,12 @@ module WSDL
       version = hash['schema_version']
 
       unless version == Builder::SCHEMA_VERSION
-        raise ArgumentError,
+        raise SchemaVersionError.new(
           "Definition schema version mismatch: expected #{Builder::SCHEMA_VERSION}, " \
-          "got #{version.inspect}. Please re-parse the WSDL with WSDL.parse."
+          "got #{version.inspect}. Please re-parse the WSDL with WSDL.parse.",
+          expected_version: Builder::SCHEMA_VERSION,
+          actual_version: version
+        )
       end
 
       new(hash)
