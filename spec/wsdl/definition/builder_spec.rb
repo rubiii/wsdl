@@ -460,6 +460,56 @@ RSpec.describe WSDL::Definition::Builder do
       expect(restored.to_h).to eq(defn.to_h)
     end
 
+    it 'limits element nesting depth after element-ref recursion fix' do
+      defn = WSDL::Parser.parse(fixture('wsdl/awse'), http_mock, limits: relaxed_limits)
+      data = defn.to_h
+
+      # Recursively measure the maximum depth of inline element children.
+      # Only counts 'children' arrays (inline nesting), not type_ref pointers.
+      measure_depth = lambda { |elements, depth|
+        return depth if elements.nil? || elements.empty?
+
+        elements.filter_map { |el|
+          children = el['children']
+          measure_depth.call(children, depth + 1) if children && !children.empty?
+        }.max || depth
+      }
+
+      # Walk all services -> ports -> operations -> input/output -> body/header
+      max_depth = 0
+      data['services'].each_value do |svc|
+        ports = svc['ports']
+        ports.each_value do |port_data|
+          ops = port_data['operations']
+          ops ||= ports.dig(port_data['extends'], 'operations') if port_data['extends']
+          next unless ops
+
+          ops.each_value do |op|
+            entries = op.is_a?(Array) ? op : [op]
+            entries.each do |entry|
+              %w[input output].each do |direction|
+                msg = entry[direction]
+                next unless msg
+
+                %w[body header].each do |section|
+                  elements = msg[section]
+                  next unless elements
+
+                  depth = measure_depth.call(elements, 1)
+                  max_depth = depth if depth > max_depth
+                end
+              end
+            end
+          end
+        end
+      end
+
+      # Before the element-ref recursion fix, AWSE reached ~110 levels of nesting
+      # because the Item -> RelatedItems -> RelatedItem -> Item cycle repeated ~16x.
+      # After the fix, the cycle is detected on first re-encounter.
+      expect(max_depth).to be < 30
+    end
+
     it 'keeps economic.wsdl v2 JSON under 1,500,000 bytes' do
       defn = WSDL::Parser.parse(fixture('wsdl/economic'), http_mock, limits: relaxed_limits)
       json = defn.to_json
@@ -785,6 +835,48 @@ RSpec.describe WSDL::Definition::Builder do
         restored = WSDL::Definition.from_h(JSON.parse(json))
 
         expect(restored.to_h['types']['_recursive_labels']).to eq(definition.to_h['types']['_recursive_labels'])
+      end
+    end
+
+    context 'with element ref recursion fixture' do
+      subject(:definition) { WSDL::Parser.parse(fixture('parser/element_ref_recursion'), http_mock) }
+
+      it 'expands type_ref without stack overflow on element-ref cycles' do
+        op = definition.operation_data('ItemService', 'ItemPort', 'GetItem')
+        body = op['output']['body']
+
+        response_el = body.first
+        expect(response_el['name']).to eq('GetItemResponse')
+        expect(response_el).to have_key('children')
+
+        # Walk to the recursive boundary: GetItemResponse > Item > RelatedItems > Item
+        item_el = response_el['children'].find { |c| c['name'] == 'Item' }
+        expect(item_el).to have_key('children')
+
+        related_el = item_el['children'].find { |c| c['name'] == 'RelatedItems' }
+        expect(related_el).to have_key('children')
+
+        recursive_item = related_el['children'].find { |c| c['name'] == 'Item' }
+        expect(recursive_item).not_to be_nil
+        expect(recursive_item['type']).to eq('recursive')
+        expect(recursive_item['recursive_type']).to eq('tns:Item')
+
+        assert_no_type_ref(body)
+      end
+
+      it 'round-trips through JSON' do
+        json = definition.to_json
+        restored = WSDL::Definition.from_h(JSON.parse(json))
+
+        expect(restored.to_h).to eq(definition.to_h)
+      end
+
+      it 'stores _recursive_labels in the type registry' do
+        types = definition.to_h['types']
+
+        expect(types).to have_key('_recursive_labels')
+        labels = types['_recursive_labels']
+        expect(labels.values).to include('tns:Item')
       end
     end
 

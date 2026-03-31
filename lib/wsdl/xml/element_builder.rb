@@ -9,8 +9,9 @@ module WSDL
     #
     # Transforms WSDL message parts into a tree of {Element} objects that
     # represent the structure of SOAP messages. Resolves type references,
-    # handles complex and simple types, and detects recursive type definitions
-    # to prevent infinite loops during element building.
+    # handles complex and simple types, and detects recursive definitions
+    # (both named-type cycles and element-ref cycles) to prevent infinite
+    # loops during element building.
     #
     class ElementBuilder # rubocop:disable Metrics/ClassLength -- type-aware serialization adds essential methods
       include Log
@@ -283,11 +284,14 @@ module WSDL
           el.min_occurs = child_element.min_occurs
           el.max_occurs = child_element.max_occurs
 
-          if child_element.ref
-            child_element = find_element(child_element.ref, child_element.namespaces)
+          original_ref = child_element.ref
+
+          if original_ref
+            child_element = find_element(original_ref, child_element.namespaces)
             next unless child_element
 
             el.form = 'qualified'
+            el.element_ref_id = "#{child_element.namespace}:#{child_element.name}"
           else
             el.form = child_element.form
           end
@@ -296,8 +300,8 @@ module WSDL
           el.namespace = child_element.namespace
           el.nillable = child_element.nillable?
 
-          if recursive_child_definition?(parent, child_element)
-            el.recursive_type = child_element.type
+          if recursive_child_definition?(parent, child_element, el)
+            el.recursive_type = child_element.type || original_ref
             has_recursive = true # -- used in return hash
           else
             child_type = find_type_for_element(child_element)
@@ -325,30 +329,45 @@ module WSDL
         []
       end
 
-      # Checks if an element's type creates a recursive definition.
+      # Checks if an element's type or element ref creates a recursive definition.
       #
-      # Walks up the parent chain to see if any ancestor element has the
-      # same complex type ID. If so, the definition is recursive and
-      # should not be expanded further.
+      # Walks the parent chain once, checking two identity spaces per ancestor:
+      # - {Element#complex_type_id} against the resolved type QName (catches
+      #   cycles through named complex types)
+      # - {Element#element_ref_id} against the built element's ref identity
+      #   (catches cycles through global element declarations with anonymous
+      #   inline complex types)
       #
       # @param parent [Element] the parent element to start checking from
-      # @param element [Schema::Node] the element to check for recursion
+      # @param element [Schema::Node] the schema element to check for recursion
+      # @param built_element [Element] the XML::Element being built (carries element_ref_id)
       # @return [Boolean] true if the element creates a recursive definition
-      def recursive_child_definition?(parent, element)
-        return false unless element.type
+      def recursive_child_definition?(parent, element, built_element) # rubocop:disable Metrics/CyclomaticComplexity
+        type_id = resolve_type_id(element)
+        ref_id = built_element.element_ref_id
 
-        namespace, local = QName.resolve(element.type, namespaces: element.namespaces)
-        id = "#{namespace}:#{local}"
+        return false unless type_id || ref_id
 
-        current_parent = parent
+        current = parent
+        while current
+          return true if type_id && current.complex_type_id == type_id
+          return true if ref_id && current.element_ref_id == ref_id
 
-        while current_parent
-          return true if current_parent.complex_type_id == id
-
-          current_parent = current_parent.parent
+          current = current.parent
         end
 
         false
+      end
+
+      # Resolves a schema element's type to a comparable identity string.
+      #
+      # @param element [Schema::Node] the schema element
+      # @return [String, nil] the resolved type identity, or nil if untyped
+      def resolve_type_id(element)
+        return unless element.type
+
+        namespace, local = QName.resolve(element.type, namespaces: element.namespaces)
+        "#{namespace}:#{local}"
       end
 
       # Finds the type for an element definition.

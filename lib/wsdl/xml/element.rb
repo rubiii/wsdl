@@ -154,9 +154,10 @@ module WSDL
 
       # Returns whether this element's type is defined recursively.
       #
-      # A recursive type definition means one of this element's ancestors
-      # has the same complex type as this element, which would cause
-      # infinite recursion if fully expanded.
+      # A recursive definition means one of this element's ancestors shares
+      # the same identity — either via complex type ID (named types) or
+      # element ref ID (global elements with anonymous inline types).
+      # Expanding further would cause infinite recursion.
       #
       # @return [Boolean] true if this element has a recursive type definition
       def recursive?
@@ -174,6 +175,15 @@ module WSDL
       #   @return [String, nil] the complex type identifier
       # @api private
       attr_accessor :complex_type_id
+
+      # @!attribute [rw] element_ref_id
+      #   The resolved global element identity for tracking element-ref recursion.
+      #   Format is "namespaceURI:localName". Set during build when a child element
+      #   is resolved from an xs:element ref. Build-time only — not included in
+      #   serialization, equality, or hash (like {#parent}).
+      #   @return [String, nil] the element ref identity
+      # @api private
+      attr_accessor :element_ref_id
 
       # @!attribute [rw] children
       #   The child elements for complex type elements.

@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://schemas.xmlsoap.org/wsdl/"
+             xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+             xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
+             xmlns:tns="http://example.com/element-ref-recursion"
+             targetNamespace="http://example.com/element-ref-recursion"
+             name="ElementRefRecursionService">
+  <types>
+    <xsd:schema targetNamespace="http://example.com/element-ref-recursion"
+                elementFormDefault="qualified">
+      <xsd:element name="GetItemRequest">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element name="itemId" type="xsd:string"/>
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+
+      <xsd:element name="GetItemResponse">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element ref="tns:Item"/>
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+
+      <xsd:element name="Item">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element name="Name" type="xsd:string"/>
+            <xsd:element ref="tns:RelatedItems" minOccurs="0"/>
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+
+      <xsd:element name="RelatedItems">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element ref="tns:Item" minOccurs="0" maxOccurs="unbounded"/>
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+    </xsd:schema>
+  </types>
+
+  <message name="GetItemInput">
+    <part name="parameters" element="tns:GetItemRequest"/>
+  </message>
+  <message name="GetItemOutput">
+    <part name="parameters" element="tns:GetItemResponse"/>
+  </message>
+
+  <portType name="ItemPortType">
+    <operation name="GetItem">
+      <input message="tns:GetItemInput"/>
+      <output message="tns:GetItemOutput"/>
+    </operation>
+  </portType>
+
+  <binding name="ItemBinding" type="tns:ItemPortType">
+    <soap:binding style="document" transport="http://schemas.xmlsoap.org/soap/http"/>
+    <operation name="GetItem">
+      <soap:operation soapAction="GetItem"/>
+      <input><soap:body use="literal"/></input>
+      <output><soap:body use="literal"/></output>
+    </operation>
+  </binding>
+
+  <service name="ItemService">
+    <port name="ItemPort" binding="tns:ItemBinding">
+      <soap:address location="http://example.com/items"/>
+    </port>
+  </service>
+</definitions>

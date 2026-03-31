@@ -52,6 +52,35 @@ RSpec.describe 'Schema pattern coverage' do
     end
   end
 
+  describe 'element ref recursion' do
+    subject(:client) { WSDL::Client.new WSDL.parse(fixture('parser/element_ref_recursion')) }
+
+    let(:operation) { client.operation(:GetItem) }
+
+    it 'detects recursive element ref and stops traversal' do
+      paths = operation.contract.response.body.paths
+      recursive = paths.find { |p| p[:recursive_type] }
+
+      expect(recursive).not_to be_nil
+      expect(recursive[:path]).to eq %w[GetItemResponse Item RelatedItems Item]
+      expect(recursive[:recursive_type]).to eq 'tns:Item'
+    end
+
+    it 'includes non-recursive children of the element' do
+      paths = operation.contract.response.body.paths
+      child_names = paths.map { |p| p[:path].last }
+
+      expect(child_names).to include('Name', 'RelatedItems')
+    end
+
+    it 'catches the cycle after 1 repetition, not 16' do
+      paths = operation.contract.response.body.paths
+      max_depth = paths.map { |p| p[:path].size }.max
+
+      expect(max_depth).to be <= 5
+    end
+  end
+
   describe 'xs:attributeGroup references' do
     subject(:client) { WSDL::Client.new WSDL.parse(fixture('parser/attribute_groups')) }
 

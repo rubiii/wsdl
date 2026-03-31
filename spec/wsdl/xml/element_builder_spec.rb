@@ -300,4 +300,151 @@ RSpec.describe WSDL::XML::ElementBuilder do
       expect(elements).to eq([])
     end
   end
+
+  describe 'element ref recursion detection' do
+    let(:recursive_ref_schemas) do
+      xml = <<~XML
+        <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+                   xmlns:tns="http://example.com/refcycle"
+                   targetNamespace="http://example.com/refcycle"
+                   elementFormDefault="qualified">
+
+          <xs:element name="Item">
+            <xs:complexType>
+              <xs:sequence>
+                <xs:element name="Title" type="xs:string"/>
+                <xs:element ref="tns:RelatedItems" minOccurs="0"/>
+              </xs:sequence>
+            </xs:complexType>
+          </xs:element>
+
+          <xs:element name="RelatedItems">
+            <xs:complexType>
+              <xs:sequence>
+                <xs:element ref="tns:Item" minOccurs="0" maxOccurs="unbounded"/>
+              </xs:sequence>
+            </xs:complexType>
+          </xs:element>
+
+          <xs:element name="ItemLookupResponse">
+            <xs:complexType>
+              <xs:sequence>
+                <xs:element ref="tns:Item"/>
+              </xs:sequence>
+            </xs:complexType>
+          </xs:element>
+        </xs:schema>
+      XML
+
+      collection = WSDL::Schema::Collection.new
+      doc = Nokogiri::XML(xml)
+      definition = WSDL::Schema::Definition.new(doc.root, collection)
+      collection.push([definition])
+      collection
+    end
+
+    it 'detects cyclic element refs and sets recursive_type' do
+      builder = described_class.new(recursive_ref_schemas)
+
+      part = {
+        element: 'tns:ItemLookupResponse',
+        namespaces: { 'xmlns:tns' => 'http://example.com/refcycle' }
+      }
+
+      elements = builder.build([part])
+      root = elements.first
+
+      # ItemLookupResponse -> Item -> RelatedItems -> Item (cycle)
+      item = root.children.find { |c| c.name == 'Item' }
+      expect(item).not_to be_nil
+      expect(item.children).not_to be_empty
+
+      related_items = item.children.find { |c| c.name == 'RelatedItems' }
+      expect(related_items).not_to be_nil
+
+      # The second Item reference should be detected as recursive
+      recursive_item = related_items.children.find { |c| c.name == 'Item' }
+      expect(recursive_item).not_to be_nil
+      expect(recursive_item).to be_recursive
+      expect(recursive_item.recursive_type).to eq('tns:Item')
+      expect(recursive_item.children).to be_empty
+    end
+
+    it 'does not falsely detect non-cyclic element refs as recursive' do
+      xml = <<~XML
+        <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+                   xmlns:tns="http://example.com/norecurse"
+                   targetNamespace="http://example.com/norecurse"
+                   elementFormDefault="qualified">
+
+          <xs:element name="Address">
+            <xs:complexType>
+              <xs:sequence>
+                <xs:element name="Street" type="xs:string"/>
+                <xs:element name="City" type="xs:string"/>
+              </xs:sequence>
+            </xs:complexType>
+          </xs:element>
+
+          <xs:element name="Person">
+            <xs:complexType>
+              <xs:sequence>
+                <xs:element name="Name" type="xs:string"/>
+                <xs:element ref="tns:Address"/>
+              </xs:sequence>
+            </xs:complexType>
+          </xs:element>
+
+          <xs:element name="PersonLookup">
+            <xs:complexType>
+              <xs:sequence>
+                <xs:element ref="tns:Person"/>
+              </xs:sequence>
+            </xs:complexType>
+          </xs:element>
+        </xs:schema>
+      XML
+
+      collection = WSDL::Schema::Collection.new
+      doc = Nokogiri::XML(xml)
+      definition = WSDL::Schema::Definition.new(doc.root, collection)
+      collection.push([definition])
+
+      builder = described_class.new(collection)
+
+      part = {
+        element: 'tns:PersonLookup',
+        namespaces: { 'xmlns:tns' => 'http://example.com/norecurse' }
+      }
+
+      elements = builder.build([part])
+      root = elements.first
+
+      person = root.children.find { |c| c.name == 'Person' }
+      expect(person).not_to be_recursive
+
+      address = person.children.find { |c| c.name == 'Address' }
+      expect(address).not_to be_recursive
+      expect(address.children.map(&:name)).to eq(%w[Street City])
+    end
+
+    it 'uses the ref QName as the recursive_type label' do
+      builder = described_class.new(recursive_ref_schemas)
+
+      part = {
+        element: 'tns:ItemLookupResponse',
+        namespaces: { 'xmlns:tns' => 'http://example.com/refcycle' }
+      }
+
+      elements = builder.build([part])
+      root = elements.first
+
+      item = root.children.find { |c| c.name == 'Item' }
+      related_items = item.children.find { |c| c.name == 'RelatedItems' }
+      recursive_item = related_items.children.find { |c| c.name == 'Item' }
+
+      # The label should be the original ref QName, not nil or a resolved URI
+      expect(recursive_item.recursive_type).to eq('tns:Item')
+    end
+  end
 end
