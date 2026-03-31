@@ -190,6 +190,54 @@ RSpec.describe WSDL::Parser::Document do
     end
   end
 
+  describe '#schemas' do
+    it 'finds schemas inside a namespace-qualified wsdl:types element' do
+      wsdl_xml = <<~XML
+        <?xml version="1.0" encoding="UTF-8"?>
+        <wsdl:definitions name="QualifiedTest"
+                          targetNamespace="http://example.com/qualified"
+                          xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/"
+                          xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+          <wsdl:types>
+            <xsd:schema targetNamespace="http://example.com/qualified">
+              <xsd:element name="Ping" type="xsd:string"/>
+            </xsd:schema>
+          </wsdl:types>
+        </wsdl:definitions>
+      XML
+
+      document = Nokogiri::XML(wsdl_xml)
+      schemas = WSDL::Schema::Collection.new
+      parsed = described_class.new(document, schemas)
+
+      expect(parsed.schemas).not_to be_empty
+      expect(parsed.schemas.first).to be_a(WSDL::Schema::Definition)
+    end
+
+    it 'falls back to name-based matching for unqualified types element' do
+      wsdl_xml = <<~XML
+        <?xml version="1.0" encoding="UTF-8"?>
+        <definitions name="UnqualifiedTest"
+                     targetNamespace="http://example.com/unqualified"
+                     xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/"
+                     xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+          <types>
+            <xsd:schema targetNamespace="http://example.com/unqualified">
+              <xsd:element name="Ping" type="xsd:string"/>
+            </xsd:schema>
+          </types>
+        </definitions>
+      XML
+
+      document = Nokogiri::XML(wsdl_xml)
+      schemas = WSDL::Schema::Collection.new
+      parsed = described_class.new(document, schemas)
+
+      expect(parsed.schemas).not_to be_empty
+      expect(parsed.schemas.first).to be_a(WSDL::Schema::Definition)
+    end
+  end
+
   describe 'WSDL 2.0 detection' do
     it 'raises UnsupportedWSDLVersionError for WSDL 2.0 documents' do
       wsdl20 = <<~XML

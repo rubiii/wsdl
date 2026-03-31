@@ -140,6 +140,8 @@ module WSDL
       #
       # If the root element is a schema, returns it directly.
       # Otherwise, looks for schemas within the wsdl:types element.
+      # Falls back to name-based matching when the types element is not
+      # namespace-qualified (e.g. bare +<types>+ instead of +<wsdl:types>+).
       #
       # @return [Array<Nokogiri::XML::Node>, nil] the schema nodes or nil if none found
       def schema_nodes!
@@ -147,6 +149,7 @@ module WSDL
         return [root] if root.name == 'schema'
 
         types = root.at_xpath('wsdl:types', 'wsdl' => NS::WSDL)
+        types ||= root.element_children.find { |node| node.name == 'types' }
         types&.element_children
       end
     end
