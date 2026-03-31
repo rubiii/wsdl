@@ -291,10 +291,13 @@ module WSDL
     end
     # rubocop:enable Metrics/AbcSize
 
-    # Serializes this Definition to a plain Hash.
+    # Returns the internal definition data as a Hash.
     #
-    # The hash is suitable for JSON serialization and can be restored
-    # via {WSDL.load} or {.from_h}. Equivalent to calling {WSDL.dump}.
+    # The hash includes port-level +"defaults"+ produced by the Builder
+    # pipeline. Operations omit fields that are captured in defaults.
+    # Use {.from_h} to restore a Definition from this hash.
+    #
+    # Equivalent to calling {WSDL.dump}.
     #
     # @return [Hash{String => Object}] serializable hash with string keys
     def to_h
@@ -311,7 +314,9 @@ module WSDL
     # Restores a Definition from a serialized Hash.
     #
     # Validates the schema version and raises if it doesn't match
-    # the current library version.
+    # the current library version. The hash is passed directly to the
+    # constructor — port-level defaults remain in the hash and are
+    # merged into operations at read time.
     #
     # @param hash [Hash{String => Object}] serialized hash from {#to_h}
     # @return [Definition] the restored definition
@@ -425,12 +430,15 @@ module WSDL
 
     # Resolves an operation by name, with optional service/port scoping.
     #
+    # Merges port-level defaults into the operation before resolving
+    # namespace indices, so callers always receive a complete operation hash.
+    #
     # @param args [Array] (operation_name) or (service, port, operation_name)
     # @param input_name [String, nil] disambiguator for overloaded operations
-    # @return [Hash] internal operation data
+    # @return [Hash] internal operation data with defaults and namespaces resolved
     # @raise [ArgumentError] if operation not found or ambiguous
     def resolve_operation(*args, input_name: nil)
-      op = case args.size
+      port_data, op = case args.size
       when 1 then resolve_auto_operation(args[0], input_name:)
       when 3 then resolve_explicit_operation(args[0], args[1], args[2], input_name:)
       else
@@ -438,14 +446,29 @@ module WSDL
           'Pass 1 argument (operation_name) or 3 arguments (service_name, port_name, operation_name).'
       end
 
-      resolve_operation_namespaces(op)
+      resolve_operation_namespaces(apply_port_defaults(port_data, op))
+    end
+
+    # Merges port-level defaults into an operation hash.
+    #
+    # When the port carries a +"defaults"+ key (produced by {DefaultsCompactor}),
+    # those defaults are merged under the operation's own keys so callers
+    # see a complete operation hash.
+    #
+    # @param port_data [Hash] the port hash (may contain +"defaults"+)
+    # @param operation [Hash] the raw operation hash (may omit defaulted fields)
+    # @return [Hash] operation hash with defaults applied
+    # @api private
+    def apply_port_defaults(port_data, operation)
+      defaults = port_data['defaults']
+      defaults ? defaults.merge(operation) : operation
     end
 
     # Resolves an operation by name with auto-resolution of service/port.
     #
     # @param operation_name [String] the operation name
     # @param input_name [String, nil] disambiguator
-    # @return [Hash] operation data
+    # @return [Array(Hash, Hash)] port data and operation data
     def resolve_auto_operation(operation_name, input_name: nil)
       svc_name, port_name = resolve_service_and_port
       resolve_explicit_operation(svc_name, port_name, operation_name, input_name:)
@@ -457,16 +480,16 @@ module WSDL
     # @param port [String] port name
     # @param operation [String] operation name
     # @param input_name [String, nil] disambiguator
-    # @return [Hash] operation data
+    # @return [Array(Hash, Hash)] port data and operation data
     # @raise [ArgumentError] if not found
     def resolve_explicit_operation(svc, port, operation, input_name: nil)
-      ops = @data.dig('services', svc, 'ports', port, 'operations')
+      port_data = @data.dig('services', svc, 'ports', port)
+      ops = port_data&.dig('operations')
       raise ArgumentError, unknown_operation_message(svc, port, operation) unless ops&.key?(operation)
 
       entry = ops[operation]
-      return disambiguate_overload(entry, operation, input_name) if entry.is_a?(Array)
-
-      entry
+      op = entry.is_a?(Array) ? disambiguate_overload(entry, operation, input_name) : entry
+      [port_data, op]
     end
 
     # Disambiguates an overloaded operation by input_name.
@@ -524,6 +547,9 @@ module WSDL
 
     # Iterates over operations, optionally filtered by service and port.
     #
+    # Merges port-level defaults into each operation before yielding,
+    # so callers always receive complete operation hashes.
+    #
     # @param service_name [String, nil] optional service filter
     # @param port_name [String, nil] optional port filter
     # @yield [svc_name, port_name, op_data]
@@ -533,7 +559,7 @@ module WSDL
 
         port_data['operations'].each_value do |op_or_ops|
           ops = op_or_ops.is_a?(Array) ? op_or_ops : [op_or_ops]
-          ops.each { |op| yield svc_name, p_name, op }
+          ops.each { |op| yield svc_name, p_name, apply_port_defaults(port_data, op) }
         end
       end
     end

@@ -58,11 +58,9 @@ RSpec.describe WSDL::Definition::Builder do
     end
 
     it 'builds operation data' do
-      operations = definition.to_h.dig('services', 'AuthenticationWebServiceImplService', 'ports',
-        'AuthenticationWebServiceImplPort', 'operations')
+      op = definition.operation_data('AuthenticationWebServiceImplService',
+        'AuthenticationWebServiceImplPort', 'authenticate')
 
-      expect(operations).to have_key('authenticate')
-      op = operations['authenticate']
       expect(op['name']).to eq('authenticate')
       expect(op['input_style']).to eq('document/literal')
     end
@@ -99,8 +97,8 @@ RSpec.describe WSDL::Definition::Builder do
 
   describe 'schema_complete' do
     it 'pre-computes schema_complete for operations' do
-      op = definition.to_h.dig('services', 'AuthenticationWebServiceImplService', 'ports',
-        'AuthenticationWebServiceImplPort', 'operations', 'authenticate')
+      op = definition.operation_data('AuthenticationWebServiceImplService',
+        'AuthenticationWebServiceImplPort', 'authenticate')
 
       expect(op).to have_key('schema_complete')
       expect(op['schema_complete']).to be(true)
@@ -110,8 +108,7 @@ RSpec.describe WSDL::Definition::Builder do
       juniper_def = WSDL::Parser.parse(fixture('wsdl/juniper'), http_mock,
         strictness: WSDL::Strictness.off)
 
-      op = juniper_def.to_h.dig('services', 'SystemService', 'ports', 'System',
-        'operations', 'LoginRequest')
+      op = juniper_def.operation_data('SystemService', 'System', 'LoginRequest')
       expect(op['schema_complete']).to be(false)
     end
   end
@@ -129,13 +126,12 @@ RSpec.describe WSDL::Definition::Builder do
 
   describe 'serialization round-trip' do
     it 'round-trips through to_h and from_h' do
-      hash = definition.to_h
-      restored = WSDL::Definition.from_h(hash)
+      restored = WSDL::Definition.from_h(definition.to_h)
 
       expect(restored.service_name).to eq(definition.service_name)
       expect(restored.fingerprint).to eq(definition.fingerprint)
       expect(restored.sources.size).to eq(definition.sources.size)
-      expect(restored.to_h).to eq(hash)
+      expect(restored.to_h).to eq(definition.to_h)
     end
 
     it 'round-trips through JSON' do

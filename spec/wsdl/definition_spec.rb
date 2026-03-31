@@ -372,6 +372,194 @@ RSpec.describe WSDL::Definition do
     end
   end
 
+  describe '#to_h port-level defaults' do
+    it 'includes port-level defaults in serialized output' do
+      port = definition.to_h.dig('services', 'AuthenticationWebServiceImplService',
+        'ports', 'AuthenticationWebServiceImplPort')
+      expect(port).to have_key('defaults')
+      expect(port['defaults']).to include('soap_version', 'input_style')
+
+      op = port['operations']['authenticate']
+      expect(op).not_to have_key('soap_version')
+      expect(op).not_to have_key('input_style')
+    end
+  end
+
+  describe 'port-level defaults at read time' do
+    let(:empty_msg) { { 'header' => [], 'body' => [] } }
+
+    it 'merges defaults into operations via operation_data' do
+      compact_hash = {
+        'schema_version' => WSDL::Definition::Builder::SCHEMA_VERSION,
+        'service_name' => 'Svc', 'fingerprint' => 'sha256:test', 'sources' => [],
+        'namespaces' => ['http://schemas.xmlsoap.org/wsdl/soap/'],
+        'services' => {
+          'Svc' => {
+            'ports' => {
+              'Port' => {
+                'type' => 0, 'endpoint' => 'http://x',
+                'defaults' => { 'soap_version' => '1.1', 'input_style' => 'document/literal' },
+                'operations' => {
+                  'Op1' => {
+                    'name' => 'Op1', 'input_name' => nil, 'soap_action' => nil,
+                    'output_style' => 'document/literal',
+                    'rpc_input_namespace' => nil, 'rpc_output_namespace' => nil,
+                    'schema_complete' => true, 'input' => empty_msg, 'output' => empty_msg
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+
+      restored = described_class.from_h(compact_hash)
+      op = restored.operation_data('Svc', 'Port', 'Op1')
+
+      expect(op['soap_version']).to eq('1.1')
+      expect(op['input_style']).to eq('document/literal')
+    end
+
+    it 'merges defaults into overloaded operations' do
+      compact_hash = {
+        'schema_version' => WSDL::Definition::Builder::SCHEMA_VERSION,
+        'service_name' => 'Svc', 'fingerprint' => 'sha256:test', 'sources' => [],
+        'namespaces' => ['http://schemas.xmlsoap.org/wsdl/soap/'],
+        'services' => {
+          'Svc' => {
+            'ports' => {
+              'Port' => {
+                'type' => 0, 'endpoint' => 'http://x',
+                'defaults' => { 'soap_version' => '1.1', 'schema_complete' => true },
+                'operations' => {
+                  'Lookup' => [
+                    {
+                      'name' => 'Lookup', 'input_name' => 'ById', 'soap_action' => nil,
+                      'input_style' => 'document/literal', 'output_style' => 'document/literal',
+                      'rpc_input_namespace' => nil, 'rpc_output_namespace' => nil,
+                      'input' => empty_msg, 'output' => empty_msg
+                    },
+                    {
+                      'name' => 'Lookup', 'input_name' => 'ByName', 'soap_action' => nil,
+                      'input_style' => 'document/literal', 'output_style' => 'document/literal',
+                      'rpc_input_namespace' => nil, 'rpc_output_namespace' => nil,
+                      'input' => empty_msg, 'output' => empty_msg
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+
+      restored = described_class.from_h(compact_hash)
+      by_id = restored.operation_data('Svc', 'Port', 'Lookup', input_name: 'ById')
+      by_name = restored.operation_data('Svc', 'Port', 'Lookup', input_name: 'ByName')
+
+      expect(by_id['soap_version']).to eq('1.1')
+      expect(by_id['schema_complete']).to be true
+      expect(by_name['soap_version']).to eq('1.1')
+      expect(by_name['schema_complete']).to be true
+    end
+
+    it 'works without a defaults key' do
+      plain_hash = {
+        'schema_version' => WSDL::Definition::Builder::SCHEMA_VERSION,
+        'service_name' => 'Svc', 'fingerprint' => 'sha256:test', 'sources' => [],
+        'namespaces' => ['http://schemas.xmlsoap.org/wsdl/soap/'],
+        'services' => {
+          'Svc' => {
+            'ports' => {
+              'Port' => {
+                'type' => 0, 'endpoint' => 'http://x',
+                'operations' => {
+                  'Op1' => {
+                    'name' => 'Op1', 'input_name' => nil, 'soap_action' => nil,
+                    'soap_version' => '1.1', 'input_style' => 'document/literal',
+                    'output_style' => 'document/literal',
+                    'rpc_input_namespace' => nil, 'rpc_output_namespace' => nil,
+                    'schema_complete' => true, 'input' => { 'header' => [], 'body' => [] },
+                    'output' => { 'header' => [], 'body' => [] }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+
+      restored = described_class.from_h(plain_hash)
+      op = restored.operation_data('Svc', 'Port', 'Op1')
+
+      expect(op['soap_version']).to eq('1.1')
+    end
+
+    it 'merges defaults into operations yielded by #operations' do
+      compact_hash = {
+        'schema_version' => WSDL::Definition::Builder::SCHEMA_VERSION,
+        'service_name' => 'Svc', 'fingerprint' => 'sha256:test', 'sources' => [],
+        'namespaces' => ['http://schemas.xmlsoap.org/wsdl/soap/'],
+        'services' => {
+          'Svc' => {
+            'ports' => {
+              'Port' => {
+                'type' => 0, 'endpoint' => 'http://x',
+                'defaults' => { 'soap_version' => '1.1', 'input_style' => 'document/literal' },
+                'operations' => {
+                  'Op1' => {
+                    'name' => 'Op1', 'input_name' => nil, 'soap_action' => 'urn:op1',
+                    'output_style' => 'document/literal',
+                    'rpc_input_namespace' => nil, 'rpc_output_namespace' => nil,
+                    'schema_complete' => true, 'input' => empty_msg, 'output' => empty_msg
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+
+      restored = described_class.from_h(compact_hash)
+      ops = restored.operations
+
+      expect(ops.first[:style]).to eq('document/literal')
+      expect(ops.first[:soap_action]).to eq('urn:op1')
+    end
+  end
+
+  describe 'round-trip with defaults' do
+    it 'to_h round-trips through from_h' do
+      original = WSDL::Parser.parse(fixture('wsdl/authentication'), http_mock)
+      restored = described_class.from_h(original.to_h)
+
+      expect(restored.to_h).to eq(original.to_h)
+    end
+
+    it 'JSON round-trips preserve defaults structure' do
+      original = WSDL::Parser.parse(fixture('wsdl/authentication'), http_mock)
+      original_json = original.to_json
+      json_hash = JSON.parse(original_json)
+
+      # Verify the serialized form has defaults
+      port = json_hash.dig('services', 'AuthenticationWebServiceImplService',
+        'ports', 'AuthenticationWebServiceImplPort')
+      expect(port).to have_key('defaults')
+
+      restored = described_class.from_h(json_hash)
+      expect(JSON.parse(restored.to_json)).to eq(JSON.parse(original_json))
+    end
+
+    it 'preserves read paths after round-trip' do
+      original = WSDL::Parser.parse(fixture('wsdl/authentication'), http_mock)
+      restored = described_class.from_h(original.to_h)
+
+      expect(restored.input('authenticate')).to eq(original.input('authenticate'))
+      expect(restored.output('authenticate')).to eq(original.output('authenticate'))
+      expect(restored.operations).to eq(original.operations)
+    end
+  end
+
   describe 'overloaded operations' do
     subject(:definition) do
       described_class.new(
