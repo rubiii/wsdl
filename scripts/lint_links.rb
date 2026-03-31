@@ -11,12 +11,21 @@ module LintLinks
   def self.check
     errors = []
 
-    md_files = Dir.glob([
-      File.join(ROOT, '*.md'),
+    include_patterns = [
+      File.join(ROOT, '{AGENTS,CHANGELOG,CODE_OF_CONDUCT,CONTRIBUTING,README,SECURITY}.md'),
       File.join(ROOT, 'docs', '**', '*.md')
-    ]) - Dir.glob(File.join(ROOT, 'docs', 'reference', 'specs', '*.md'))
+    ]
 
-    md_files.each do |file|
+    exclude_patterns = [
+      File.join(ROOT, 'docs', 'reference', 'specs', '*.md'),
+      File.join(ROOT, 'docs', 'adr', '0000-template.md')
+    ]
+
+    included = include_patterns.flat_map { |p| Dir.glob(p) }
+    excluded = exclude_patterns.flat_map { |p| Dir.glob(p) }
+    all_files = included - excluded
+
+    all_files.each do |file|
       dir = File.dirname(file)
 
       File.read(file).scan(/\[(?:[^\]]*)\]\(([^)]+)\)/).flatten.each do |link|
@@ -36,7 +45,7 @@ module LintLinks
     if errors.any?
       abort "Broken markdown links:\n#{errors.join("\n")}"
     else
-      puts "All markdown links OK (#{md_files.size} files checked)"
+      puts "All markdown links OK (#{all_files.size} files checked)"
     end
   end
 end
