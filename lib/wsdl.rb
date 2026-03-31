@@ -114,6 +114,10 @@ module WSDL
     # The returned hash is suitable for JSON serialization and can be
     # restored via {.load}. This is the inverse of {.load}.
     #
+    # @note The serialization format is not yet stable and may change between
+    #   minor versions until 2.0. Do not rely on the hash structure — use
+    #   {.load} to restore definitions.
+    #
     # @param definition [Definition] the definition to serialize
     # @return [Hash{String => Object}] serializable hash with string keys
     #
@@ -134,6 +138,10 @@ module WSDL
     # The hash must have been produced by {.dump}, {Definition#to_h},
     # or parsed from {Definition#to_json}. Raises if the schema version
     # doesn't match the current library version.
+    #
+    # @note The serialization format may change between minor versions
+    #   until 2.0. If loading fails with a {SchemaVersionError}, re-parse
+    #   the WSDL with {WSDL.parse}.
     #
     # @param hash [Hash{String => Object}] serialized definition hash
     # @return [Definition] the restored definition

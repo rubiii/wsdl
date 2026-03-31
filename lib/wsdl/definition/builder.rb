@@ -18,7 +18,9 @@ module WSDL
     #
     class Builder
       # Schema version for serialized Definitions.
-      # Bump when the internal hash structure changes.
+      # Bump when the internal hash structure changes. The format is not
+      # yet stable — version bumps are expected between minor releases
+      # until 2.0.
       #
       # @return [Integer]
       SCHEMA_VERSION = 2

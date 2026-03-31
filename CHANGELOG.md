@@ -8,7 +8,49 @@ since version 1.1.0.
 
 ## UNRELEASED
 
-- Adopted [Semantic Versioning](https://semver.org/spec/v2.0.0.html) starting with v1.1.0.
+## [1.2.0] — UNRELEASED
+
+Compact Definition serialization format (schema version 2). Definitions serialize to significantly smaller JSON. Type deduplication, namespace indexing, and default elision reduce output by 50–90% depending on schema complexity. The serialization format is not yet stable and may change between minor versions until 2.0.
+
+**Upgrading?** See the [migration guide](#migrating-from-11) below.
+
+### Changed
+
+- **Definition serialization format v2.** The internal hash structure produced by `WSDL.dump`, `Definition#to_h`, and `Definition#to_json` has been redesigned for compactness. Cached v1 definitions cannot be loaded — simply re-parse with `WSDL.parse` to regenerate. Key changes:
+  - Lean element hashes: only non-default fields are stored
+  - Type registry: shared complex types are stored only once
+  - Namespace table: namespace URIs are stored only once
+  - Port-level defaults: uniform operation fields are extracted into port defaults
+  - Port extension: ports with identical operations reference a base port instead of duplicating data
+
+### Added
+
+- SOAP encoding types (`soapenc:string`, `soapenc:Array`, etc.) are now recognized as built-in types during element building. WSDLs using RPC/encoded style produce clean definitions without build errors.
+
+### Fixed
+
+- Element-ref recursion detection now handles cycles through global element references with anonymous inline types. Previously only named complex type cycles were detected.
+- Schema discovery now finds schemas inside unqualified `<types>` elements.
+- `Definition.from_h` raises `SchemaVersionError` (instead of `ArgumentError`) on schema version mismatches, so applications can catch it specifically and fall back to re-parsing.
+- `Definition.from_h` raises `ArgumentError` with a helpful message when given a non-Hash argument (e.g. a file path string), guiding users toward `WSDL.parse` instead.
+
+### Migrating from 1.1
+
+The serialization format is a breaking change. If you cache serialized definitions (via `WSDL.dump`, `to_h`, or `to_json`), regenerate them by re-parsing:
+
+```ruby
+definition = WSDL.parse('http://example.com/service?wsdl')
+File.write('service.json', definition.to_json)
+```
+
+The format is not yet stable. It may change again in future minor versions before 2.0. Applications that cache definitions should rescue `WSDL::SchemaVersionError` from `WSDL.load` and fall back to re-parsing:
+
+```ruby
+definition = WSDL.load(cached_hash)
+rescue WSDL::SchemaVersionError
+  definition = WSDL.parse('http://example.com/service?wsdl')
+end
+```
 
 ## [1.1.0] — 2026-03-29
 
@@ -219,6 +261,7 @@ Initial public release.
 - **base64** for encoding/decoding
 - All cryptography delegated to Ruby's built-in **OpenSSL**
 
-[Unreleased]: https://github.com/rubiii/wsdl/compare/v1.1.0...HEAD
+[Unreleased]: https://github.com/rubiii/wsdl/compare/v1.2.0...HEAD
+[1.2.0]: https://github.com/rubiii/wsdl/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/rubiii/wsdl/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/rubiii/wsdl/releases/tag/v1.0.0
