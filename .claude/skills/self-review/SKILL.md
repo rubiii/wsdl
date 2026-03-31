@@ -24,6 +24,7 @@ Evaluate every changed file against these categories:
 - Did any behavioral semantics change silently (same method name, different behavior)?
 
 ### Stale References
+- YARD docs that no longer match actual behavior (stale parameter descriptions, wrong method references, misleading explanations) — these are **warnings**, not notes
 - Comments or YARD docs mentioning removed classes, methods, or parameters
 - Require statements for deleted files
 - Error classes that nothing raises
@@ -35,9 +36,9 @@ Evaluate every changed file against these categories:
 - Rescue clauses catching errors that can no longer be raised
 
 ### Test Coverage
-- New public methods without tests
+- New public methods or code paths without tests — these are **warnings**, not notes
 - Valuable test behaviors that were deleted without being migrated
-- Tests that pass but no longer test what they claim (e.g., assertion doesn't match description)
+- **Vacuous tests** — tests whose assertions pass regardless of whether the feature under test works (e.g., identity checks on singletons like `true`/`false`/`nil`, assertions that test Ruby itself rather than the code). These are **warnings** because they give false confidence and are worse than having no test at all
 
 ### Consistency
 - Naming that doesn't match existing conventions in the codebase

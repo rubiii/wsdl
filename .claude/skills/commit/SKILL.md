@@ -81,7 +81,7 @@ Cleanup leftovers from lenient migration
 ## Output
 
 1. Output the commit message as plain text (for the user to review)
-2. Write the message to `/tmp/commit_msg.txt` using Bash with a heredoc: `cat <<'EOF' > /tmp/commit_msg.txt`
-3. Run `.claude/scripts/clipboard.sh /tmp/commit_msg.txt` to copy it to the clipboard
+2. Write the message to `./tmp/commit_msg.txt` using Bash with a heredoc: `cat <<'EOF' > ./tmp/commit_msg.txt`
+3. Run `.claude/scripts/clipboard.sh ./tmp/commit_msg.txt` to copy it to the clipboard
 
 Then confirm to the user that the message is on their clipboard.
