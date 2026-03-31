@@ -40,6 +40,21 @@ module WSDL
     # Used for the SOAP Envelope, Header, and Body elements in SOAP 1.2 messages.
     SOAP_1_2 = 'http://www.w3.org/2003/05/soap-envelope'
 
+    # SOAP 1.1 Encoding namespace URI.
+    # Used for SOAP encoding types (soapenc:string, soapenc:Array, etc.)
+    # per SOAP 1.1 section 5.
+    #
+    # @return [String]
+    # @see https://www.w3.org/TR/2000/NOTE-SOAP-20000508/#_Toc478383512
+    SOAP_ENC_1_1 = 'http://schemas.xmlsoap.org/soap/encoding/'
+
+    # SOAP 1.2 Encoding namespace URI.
+    # Used for SOAP encoding types per SOAP 1.2 Part 2.
+    #
+    # @return [String]
+    # @see https://www.w3.org/TR/soap12-part2/#soapenc
+    SOAP_ENC_1_2 = 'http://www.w3.org/2003/05/soap-encoding'
+
     # WSDL 2.0 namespace URI.
     # Used only for detection — WSDL 2.0 is not supported.
     WSDL_2_0 = 'http://www.w3.org/ns/wsdl'

@@ -10,6 +10,7 @@ RSpec.describe 'Strictness fixture matrix' do
       wsdl/bronto
       wsdl/crowd
       wsdl/daisycon
+      wsdl/data_exchange
       wsdl/document_literal_wrapped
       wsdl/economic
       wsdl/email_verification
@@ -35,7 +36,7 @@ RSpec.describe 'Strictness fixture matrix' do
   end
 
   let(:fixtures_with_build_issues) do
-    %w[wsdl/amazon wsdl/data_exchange]
+    %w[wsdl/amazon]
   end
 
   let(:fixtures_with_import_errors) do

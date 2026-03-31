@@ -32,6 +32,15 @@ module WSDL
         anyURI QName NOTATION
       ]).freeze
 
+      # SOAP Encoding built-in types per SOAP 1.1 §5 and SOAP 1.2 Part 2.
+      #
+      # Mirrors XSD built-in types (SOAP-ENC types are XSD type equivalents
+      # with optional encoding metadata attributes) plus the compound Array type.
+      #
+      # @return [Set<String>]
+      # @see https://www.w3.org/TR/2000/NOTE-SOAP-20000508/#_Toc478383512
+      SOAP_ENC_BUILTIN_TYPES = (XSD_BUILTIN_TYPES | Set['Array']).freeze
+
       # Creates a new ElementBuilder instance.
       #
       # @param schemas [Schema::Collection] the schema collection for resolving types
@@ -387,8 +396,9 @@ module WSDL
 
       # Finds and resolves a type by its qualified name.
       #
-      # Handles three cases:
+      # Handles four cases:
       # - Built-in XSD types (returns the qname string)
+      # - SOAP encoding built-in types (returns the qname string)
       # - Custom complex types (returns the Node)
       # - Custom simple types (returns the Node)
       #
@@ -402,6 +412,11 @@ module WSDL
 
         if namespace == NS::XSD
           validate_xsd_builtin_type(local, qname)
+          return qname
+        end
+
+        if [NS::SOAP_ENC_1_1, NS::SOAP_ENC_1_2].include?(namespace)
+          validate_soap_enc_builtin_type(local, qname)
           return qname
         end
 
@@ -419,6 +434,17 @@ module WSDL
         return if XSD_BUILTIN_TYPES.include?(local_name)
 
         record_issue('build_error', "Unknown XSD built-in type #{qname.inspect}")
+      end
+
+      # Validates that a local name is a known SOAP encoding built-in type.
+      #
+      # @param local_name [String] the unqualified type name
+      # @param qname [String] the original qualified name (for error messages)
+      # @return [void]
+      def validate_soap_enc_builtin_type(local_name, qname)
+        return if SOAP_ENC_BUILTIN_TYPES.include?(local_name)
+
+        record_issue('build_error', "Unknown SOAP encoding type #{qname.inspect}")
       end
 
       # Finds a global element by its qualified name.

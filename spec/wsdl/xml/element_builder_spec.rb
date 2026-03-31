@@ -301,6 +301,159 @@ RSpec.describe WSDL::XML::ElementBuilder do
     end
   end
 
+  describe 'SOAP encoding type resolution' do
+    let(:soap_enc_schemas) do
+      xml = <<~XML
+        <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+                   xmlns:tns="http://example.com/soapenc"
+                   xmlns:soapenc="http://schemas.xmlsoap.org/soap/encoding/"
+                   targetNamespace="http://example.com/soapenc"
+                   elementFormDefault="qualified">
+
+          <xs:complexType name="SoapEncTestType">
+            <xs:sequence>
+              <xs:element name="field1" type="soapenc:string"/>
+              <xs:element name="field2" type="soapenc:boolean"/>
+              <xs:element name="field3" type="soapenc:Array"/>
+            </xs:sequence>
+          </xs:complexType>
+
+          <xs:element name="SoapEncTest" type="tns:SoapEncTestType"/>
+        </xs:schema>
+      XML
+
+      collection = WSDL::Schema::Collection.new
+      doc = Nokogiri::XML(xml)
+      definition = WSDL::Schema::Definition.new(doc.root, collection)
+      collection.push([definition])
+      collection
+    end
+
+    it 'resolves soapenc:string as a built-in type' do
+      builder = described_class.new(soap_enc_schemas)
+
+      part = {
+        element: 'tns:SoapEncTest',
+        namespaces: { 'xmlns:tns' => 'http://example.com/soapenc' }
+      }
+
+      elements = builder.build([part])
+      root = elements.first
+      field1 = root.children.find { |c| c.name == 'field1' }
+
+      expect(field1).not_to be_nil
+      expect(field1.base_type).to eq('soapenc:string')
+    end
+
+    it 'resolves soapenc:boolean as a built-in type' do
+      builder = described_class.new(soap_enc_schemas)
+
+      part = {
+        element: 'tns:SoapEncTest',
+        namespaces: { 'xmlns:tns' => 'http://example.com/soapenc' }
+      }
+
+      elements = builder.build([part])
+      root = elements.first
+      field2 = root.children.find { |c| c.name == 'field2' }
+
+      expect(field2).not_to be_nil
+      expect(field2.base_type).to eq('soapenc:boolean')
+    end
+
+    it 'resolves soapenc:Array as a built-in type' do
+      builder = described_class.new(soap_enc_schemas)
+
+      part = {
+        element: 'tns:SoapEncTest',
+        namespaces: { 'xmlns:tns' => 'http://example.com/soapenc' }
+      }
+
+      elements = builder.build([part])
+      root = elements.first
+      field3 = root.children.find { |c| c.name == 'field3' }
+
+      expect(field3).not_to be_nil
+      expect(field3.base_type).to eq('soapenc:Array')
+    end
+
+    it 'records build_error for unknown SOAP encoding types' do
+      xml = <<~XML
+        <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+                   xmlns:tns="http://example.com/soapenc-bogus"
+                   xmlns:soapenc="http://schemas.xmlsoap.org/soap/encoding/"
+                   targetNamespace="http://example.com/soapenc-bogus"
+                   elementFormDefault="qualified">
+
+          <xs:complexType name="BogusType">
+            <xs:sequence>
+              <xs:element name="bad" type="soapenc:bogus"/>
+            </xs:sequence>
+          </xs:complexType>
+
+          <xs:element name="BogusTest" type="tns:BogusType"/>
+        </xs:schema>
+      XML
+
+      collection = WSDL::Schema::Collection.new
+      doc = Nokogiri::XML(xml)
+      definition = WSDL::Schema::Definition.new(doc.root, collection)
+      collection.push([definition])
+
+      issues = []
+      builder = described_class.new(collection, issues:)
+
+      part = {
+        element: 'tns:BogusTest',
+        namespaces: { 'xmlns:tns' => 'http://example.com/soapenc-bogus' }
+      }
+
+      builder.build([part])
+
+      expect(issues).not_to be_empty
+      expect(issues.first['type']).to eq('build_error')
+      expect(issues.first['error']).to match(/Unknown SOAP encoding type/)
+    end
+
+    it 'resolves SOAP 1.2 encoding namespace types as built-ins' do
+      xml = <<~XML
+        <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+                   xmlns:tns="http://example.com/soapenc12"
+                   xmlns:enc12="http://www.w3.org/2003/05/soap-encoding"
+                   targetNamespace="http://example.com/soapenc12"
+                   elementFormDefault="qualified">
+
+          <xs:complexType name="Enc12Type">
+            <xs:sequence>
+              <xs:element name="value" type="enc12:string"/>
+            </xs:sequence>
+          </xs:complexType>
+
+          <xs:element name="Enc12Test" type="tns:Enc12Type"/>
+        </xs:schema>
+      XML
+
+      collection = WSDL::Schema::Collection.new
+      doc = Nokogiri::XML(xml)
+      definition = WSDL::Schema::Definition.new(doc.root, collection)
+      collection.push([definition])
+
+      builder = described_class.new(collection)
+
+      part = {
+        element: 'tns:Enc12Test',
+        namespaces: { 'xmlns:tns' => 'http://example.com/soapenc12' }
+      }
+
+      elements = builder.build([part])
+      root = elements.first
+      value = root.children.find { |c| c.name == 'value' }
+
+      expect(value).not_to be_nil
+      expect(value.base_type).to eq('enc12:string')
+    end
+  end
+
   describe 'element ref recursion detection' do
     let(:recursive_ref_schemas) do
       xml = <<~XML
