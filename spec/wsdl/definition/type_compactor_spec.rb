@@ -261,5 +261,161 @@ RSpec.describe WSDL::Definition::TypeCompactor do
       expect(header_element['type_ref']).to eq('0:AuthHeader')
       expect(header_element).not_to have_key('children')
     end
+
+    context 'with element_ref_id (anonymous complex types on ref\'d elements)' do
+      it 'deduplicates elements with the same element_ref_id' do
+        child = { 'name' => 'value', 'ns' => 0, 'type' => 'simple', 'xsd_type' => 'xsd:string' }
+
+        op_a = build_operation(elements: [{
+          'name' => 'Items', 'ns' => 0, 'type' => 'complex',
+          'element_ref_id' => 'http://example.com:Items',
+          'children' => [child]
+        }
+])
+
+        op_b = build_operation(elements: [{
+          'name' => 'Items', 'ns' => 0, 'type' => 'complex',
+          'element_ref_id' => 'http://example.com:Items',
+          'children' => [child]
+        }
+])
+
+        services = build_services(operations: { 'OpA' => op_a, 'OpB' => op_b }, elements: [])
+
+        types, compacted = described_class.call(services, namespaces)
+
+        expect(types).to have_key('e:0:Items')
+        expect(types['e:0:Items']['children']).to eq([child])
+
+        el_a = compacted.dig('Svc', 'ports', 'Port', 'operations', 'OpA', 'input', 'body', 0)
+        el_b = compacted.dig('Svc', 'ports', 'Port', 'operations', 'OpB', 'input', 'body', 0)
+        expect(el_a['type_ref']).to eq('e:0:Items')
+        expect(el_b['type_ref']).to eq('e:0:Items')
+        expect(el_a).not_to have_key('children')
+        expect(el_b).not_to have_key('children')
+      end
+
+      it 'does not collide named type and element ref with same local name' do
+        type_child = { 'name' => 'a', 'ns' => 0, 'type' => 'simple', 'xsd_type' => 'xsd:string' }
+        ref_child = { 'name' => 'b', 'ns' => 0, 'type' => 'simple', 'xsd_type' => 'xsd:int' }
+
+        elements = [
+          {
+            'name' => 'typed', 'ns' => 0, 'type' => 'complex',
+            'complex_type_id' => 'http://example.com:Foo',
+            'children' => [type_child]
+          },
+          {
+            'name' => 'reffed', 'ns' => 0, 'type' => 'complex',
+            'element_ref_id' => 'http://example.com:Foo',
+            'children' => [ref_child]
+          }
+        ]
+        services = build_services(elements:)
+
+        types, _compacted = described_class.call(services, namespaces)
+
+        expect(types).to have_key('0:Foo')
+        expect(types).to have_key('e:0:Foo')
+        expect(types['0:Foo']['children']).to eq([type_child])
+        expect(types['e:0:Foo']['children']).to eq([ref_child])
+      end
+
+      it 'removes element_ref_id from compacted output' do
+        child = { 'name' => 'x', 'ns' => 0, 'type' => 'simple', 'xsd_type' => 'xsd:string' }
+        elements = [{
+          'name' => 'Items', 'ns' => 0, 'type' => 'complex',
+          'element_ref_id' => 'http://example.com:Items',
+          'children' => [child]
+        }
+]
+        services = build_services(elements:)
+
+        _types, compacted = described_class.call(services, namespaces)
+
+        element = dig_element(compacted)
+        expect(element).not_to have_key('element_ref_id')
+        expect(element).to have_key('type_ref')
+      end
+
+      it 'does not compact simple-type ref\'d elements but strips element_ref_id' do
+        elements = [{
+          'name' => 'Id', 'ns' => 0, 'type' => 'simple',
+          'element_ref_id' => 'http://example.com:Id',
+          'xsd_type' => 'xsd:string'
+        }
+]
+        services = build_services(elements:)
+
+        types, compacted = described_class.call(services, namespaces)
+
+        expect(types).to be_empty
+
+        element = dig_element(compacted)
+        expect(element).not_to have_key('type_ref')
+        expect(element).not_to have_key('element_ref_id')
+      end
+
+      it 'strips element_ref_id from simple elements' do
+        elements = [{
+          'name' => 'Code', 'ns' => 0, 'type' => 'simple',
+          'element_ref_id' => 'http://example.com:Code',
+          'xsd_type' => 'xsd:int'
+        }
+]
+        services = build_services(elements:)
+
+        _types, compacted = described_class.call(services, namespaces)
+
+        element = dig_element(compacted)
+        expect(element['name']).to eq('Code')
+        expect(element['xsd_type']).to eq('xsd:int')
+        expect(element).not_to have_key('element_ref_id')
+      end
+
+      it 'does not register recursive elements with element_ref_id but strips the key' do
+        elements = [{
+          'name' => 'Node', 'ns' => 0, 'type' => 'recursive',
+          'recursive_type' => 'tns:Node',
+          'element_ref_id' => 'http://example.com:Node'
+        }
+]
+        services = build_services(elements:)
+
+        types, compacted = described_class.call(services, namespaces)
+
+        element = dig_element(compacted)
+        expect(element).not_to have_key('type_ref')
+        expect(element).not_to have_key('element_ref_id')
+        expect(element['type']).to eq('recursive')
+        expect(element['recursive_type']).to eq('tns:Node')
+
+        # Recursive label is recorded but NOT under an element-ref key
+        # because the element is not registered in the type registry
+        labels = types['_recursive_labels']
+        expect(labels).to have_key('e:0:Node')
+        expect(labels['e:0:Node']).to eq('tns:Node')
+      end
+
+      it 'records recursive labels for element-ref types' do
+        elements = [{
+          'name' => 'Items', 'ns' => 0, 'type' => 'complex',
+          'element_ref_id' => 'http://example.com:Items',
+          'children' => [
+            { 'name' => 'Item', 'ns' => 0, 'type' => 'recursive', 'recursive_type' => 'tns:Items',
+              'element_ref_id' => 'http://example.com:Items'
+}
+          ]
+        }
+]
+        services = build_services(elements:)
+
+        types, _compacted = described_class.call(services, namespaces)
+
+        labels = types['_recursive_labels']
+        expect(labels).to have_key('e:0:Items')
+        expect(labels['e:0:Items']).to eq('tns:Items')
+      end
+    end
   end
 end

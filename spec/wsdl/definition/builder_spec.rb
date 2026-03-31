@@ -524,6 +524,21 @@ RSpec.describe WSDL::Definition::Builder do
       expect(max_depth).to be < 30
     end
 
+    it 'keeps awse.wsdl v2 JSON under 65,000 bytes' do
+      defn = WSDL::Parser.parse(fixture('wsdl/awse'), http_mock, limits: relaxed_limits)
+      json = defn.to_json
+
+      expect(json.bytesize).to be < 65_000
+    end
+
+    it 'awse.wsdl types registry contains e:-prefixed element-ref keys' do
+      defn = WSDL::Parser.parse(fixture('wsdl/awse'), http_mock, limits: relaxed_limits)
+      types = defn.to_h['types']
+
+      element_ref_keys = types.keys.select { |k| k.start_with?('e:') }
+      expect(element_ref_keys).not_to be_empty
+    end
+
     it 'keeps economic.wsdl v2 JSON under 1,500,000 bytes' do
       defn = WSDL::Parser.parse(fixture('wsdl/economic'), http_mock, limits: relaxed_limits)
       json = defn.to_json

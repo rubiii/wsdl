@@ -248,6 +248,26 @@ RSpec.describe WSDL::XML::Element do
         expect(element.to_definition_h).not_to have_key('complex_type_id')
       end
 
+      it 'retains element_ref_id when set on a complex element' do
+        child = build_element(name: 'child', base_type: 'xsd:string')
+        element = build_element(element_ref_id: 'http://example.com:Items')
+        element.children = [child]
+
+        expect(element.to_definition_h['element_ref_id']).to eq('http://example.com:Items')
+      end
+
+      it 'omits element_ref_id when set on a simple element' do
+        element = build_element(base_type: 'xsd:string', element_ref_id: 'http://example.com:Id')
+
+        expect(element.to_definition_h).not_to have_key('element_ref_id')
+      end
+
+      it 'omits element_ref_id when nil (default)' do
+        element = build_element
+
+        expect(element.to_definition_h).not_to have_key('element_ref_id')
+      end
+
       it 'omits list when false (default)' do
         element = build_element(base_type: 'xsd:string')
 
@@ -478,6 +498,20 @@ RSpec.describe WSDL::XML::Element do
       a.parent = parent_a
       b = build_element(name: 'child')
       b.parent = parent_b
+
+      expect(a).to eq(b)
+    end
+
+    it 'considers elements with different element_ref_id not equal' do
+      a = build_element(element_ref_id: 'http://example.com:Items')
+      b = build_element(element_ref_id: 'http://example.com:Other')
+
+      expect(a).not_to eq(b)
+    end
+
+    it 'considers elements with same element_ref_id equal' do
+      a = build_element(element_ref_id: 'http://example.com:Items')
+      b = build_element(element_ref_id: 'http://example.com:Items')
 
       expect(a).to eq(b)
     end

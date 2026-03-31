@@ -177,10 +177,11 @@ module WSDL
       attr_accessor :complex_type_id
 
       # @!attribute [rw] element_ref_id
-      #   The resolved global element identity for tracking element-ref recursion.
+      #   The resolved global element identity for element-ref recursion and type deduplication.
       #   Format is "namespaceURI:localName". Set during build when a child element
-      #   is resolved from an xs:element ref. Build-time only — not included in
-      #   serialization, equality, or hash (like {#parent}).
+      #   is resolved from an xs:element ref. Included in serialization (for complex types
+      #   only), equality, and hash. The TypeCompactor uses this to deduplicate anonymous
+      #   complex types on globally-referenced elements.
       #   @return [String, nil] the element ref identity
       # @api private
       attr_accessor :element_ref_id
@@ -285,6 +286,7 @@ module WSDL
           any_content == other.any_content &&
           recursive_type == other.recursive_type &&
           complex_type_id == other.complex_type_id &&
+          element_ref_id == other.element_ref_id &&
           children == other.children &&
           attributes == other.attributes
       end
@@ -296,7 +298,7 @@ module WSDL
       def hash
         [
           name, namespace, form, base_type, min_occurs, max_occurs,
-          singular, nillable, list, any_content, recursive_type, complex_type_id,
+          singular, nillable, list, any_content, recursive_type, complex_type_id, element_ref_id,
           children, attributes
         ].hash
       end
@@ -375,6 +377,7 @@ module WSDL
         h['any_content'] = true if any_content?
         h['recursive_type'] = recursive_type if recursive_type
         h['complex_type_id'] = complex_type_id if complex_type_id
+        h['element_ref_id'] = element_ref_id if element_ref_id && complex_type?
 
         child_hashes = children.map(&:to_definition_h)
         h['children'] = child_hashes.freeze unless child_hashes.empty?

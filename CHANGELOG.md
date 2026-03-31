@@ -18,7 +18,7 @@ Compact Definition serialization format (schema version 2). Definitions serializ
 
 - **Definition serialization format v2.** The internal hash structure produced by `WSDL.dump`, `Definition#to_h`, and `Definition#to_json` has been redesigned for compactness. Cached v1 definitions cannot be loaded — simply re-parse with `WSDL.parse` to regenerate. Key changes:
   - Lean element hashes: only non-default fields are stored
-  - Type registry: shared complex types are stored only once
+  - Type registry: shared complex types (both named and anonymous types on globally-referenced elements) are stored only once
   - Namespace table: namespace URIs are stored only once
   - Port-level defaults: uniform operation fields are extracted into port defaults
   - Port extension: ports with identical operations reference a base port instead of duplicating data
