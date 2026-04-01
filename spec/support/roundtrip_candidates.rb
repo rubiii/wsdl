@@ -41,6 +41,7 @@ module RoundtripCandidates
   end
 
   def candidates_from_local(path)
+    wsdl_name = File.basename(path, File.extname(path))
     client = WSDL::Client.new(WSDL.parse(path))
 
     # Skip fixtures with build issues (unresolvable types, missing elements,
@@ -48,7 +49,7 @@ module RoundtripCandidates
     # can't round-trip through Builder → Parser correctly.
     return [] if client.definition.build_issues.any?
 
-    candidates_from_client(client)
+    candidates_from_client(client, wsdl: wsdl_name)
   rescue *EXPECTED_ERRORS
     []
   end
@@ -60,8 +61,9 @@ module RoundtripCandidates
   end
 
   def candidates_from_manifest(manifest_path)
+    wsdl_name = File.basename(File.dirname(manifest_path))
     client = mock_client_from_manifest(manifest_path, SpecSupport::HTTPMock.new)
-    candidates_from_client(client)
+    candidates_from_client(client, wsdl: wsdl_name)
   rescue *EXPECTED_ERRORS
     []
   end
@@ -84,13 +86,13 @@ module RoundtripCandidates
     end
   end
 
-  def candidates_from_client(client)
+  def candidates_from_client(client, wsdl: nil)
     candidates = []
 
     client.services.each do |service_name, service_info|
       service_info[:ports].each_key do |port_name|
         client.operations(service_name, port_name).each do |op_name|
-          candidate = build_candidate(client, service_name, port_name, op_name)
+          candidate = build_candidate(client, service_name, port_name, op_name, wsdl:)
           candidates << candidate if candidate
         end
       end
@@ -101,7 +103,7 @@ module RoundtripCandidates
     []
   end
 
-  def build_candidate(client, service_name, port_name, op_name)
+  def build_candidate(client, service_name, port_name, op_name, wsdl: nil)
     operation = client.operation(service_name, port_name, op_name)
 
     elements = operation.contract.response.body.elements
@@ -109,6 +111,7 @@ module RoundtripCandidates
     return if elements.any? { |el| element_unsupported?(el) }
 
     {
+      wsdl:,
       label: "#{service_name}/#{port_name}/#{op_name}",
       schema_elements: elements,
       soap_version: operation.soap_version,

@@ -5,9 +5,8 @@ require 'bigdecimal'
 # Exhaustive schema-driven round-trip test.
 #
 # Verifies that parse(build(hash)) == hash for every eligible operation
-# across all fixture WSDLs. Each operation gets a test with a full hash
-# (all elements and attributes included, nillable elements set to nil)
-# using fixed values per XSD type.
+# across all fixture WSDLs. Each WSDL gets a single test that exercises
+# all its operations using fixed values per XSD type.
 #
 # This covers the *schema space* — ensuring every operation's schema
 # structure works through the Builder and Parser pipeline. It complements
@@ -70,28 +69,41 @@ module ExhaustiveRoundtripHelpers
     group = RoundtripCandidates.type_group_for(base_type)
     FIXED_VALUES.fetch(group, 'a')
   end
+
+  def build_response_xml(candidate, hash)
+    WSDL::Response::Builder.new(
+      schema_elements: candidate[:schema_elements],
+      soap_version: candidate[:soap_version],
+      output_style: candidate[:output_style],
+      operation_name: candidate[:operation_name],
+      output_namespace: candidate[:output_namespace]
+    ).to_xml(hash)
+  end
+
+  def assert_roundtrip(candidate)
+    hash = generate_full_hash(candidate[:schema_elements])
+    xml = build_response_xml(candidate, hash)
+    node = extract_parse_node(xml, candidate)
+    result = WSDL::Response::Parser.parse(node, schema: candidate[:schema_elements], unwrap: true)
+    expected = expected_result(hash, candidate)
+
+    expect(result).to eq(expected), lambda {
+      "Round-trip failed for #{candidate[:label]}\n  " \
+        "Expected: #{expected.inspect}\n  " \
+        "Got:      #{result.inspect}"
+    }
+  end
 end
 
 RSpec.describe 'Exhaustive schema round-trip' do
   include ExhaustiveRoundtripHelpers
   include RoundtripCandidates
 
-  RoundtripCandidates.discover_candidates.each do |candidate|
-    it candidate[:label] do
-      hash = generate_full_hash(candidate[:schema_elements])
+  candidates_by_wsdl = RoundtripCandidates.discover_candidates.group_by { |c| c[:wsdl] }
 
-      xml = WSDL::Response::Builder.new(
-        schema_elements: candidate[:schema_elements],
-        soap_version: candidate[:soap_version],
-        output_style: candidate[:output_style],
-        operation_name: candidate[:operation_name],
-        output_namespace: candidate[:output_namespace]
-      ).to_xml(hash)
-
-      node = extract_parse_node(xml, candidate)
-      result = WSDL::Response::Parser.parse(node, schema: candidate[:schema_elements], unwrap: true)
-
-      expect(result).to eq(expected_result(hash, candidate))
+  candidates_by_wsdl.each do |wsdl_name, candidates|
+    it "#{wsdl_name} (#{candidates.size} operations)", :aggregate_failures do
+      candidates.each { |candidate| assert_roundtrip(candidate) }
     end
   end
 end
