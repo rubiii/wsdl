@@ -304,12 +304,61 @@ RSpec.describe 'XML Schema conformance' do
       end
 
       # https://www.w3.org/TR/xmlschema-2/#date
-      # §3.2.9.1: date allows an optional timezone suffix ("zzzzzz?").
-      # Ruby's Date.iso8601 does not support timezone suffixes, so
-      # these valid XSD dates fall back to string preservation.
-      it 'XSD-DATE-3: date with timezone falls back to string' do
-        expect(coerce('2025-01-15Z', 'xsd:date')).to eq('2025-01-15Z')
-        expect(coerce('2025-01-15+05:30', 'xsd:date')).to eq('2025-01-15+05:30')
+      # §3.2.9.1: date lexical space is '-'? yyyy '-' mm '-' dd zzzzzz?
+      # The timezone suffix is valid but discarded (Ruby Date has no timezone).
+      it 'XSD-DATE-3: date with timezone coerces to Date' do
+        result = coerce('2025-01-15Z', 'xsd:date')
+        expect(result).to be_a(Date)
+        expect(result).to eq(Date.new(2025, 1, 15))
+
+        result = coerce('2025-01-15+05:30', 'xsd:date')
+        expect(result).to be_a(Date)
+        expect(result).to eq(Date.new(2025, 1, 15))
+      end
+
+      # https://www.w3.org/TR/xmlschema-2/#date
+      it 'XSD-DATE-4: date with negative timezone offset coerces to Date' do
+        result = coerce('2025-01-15-05:00', 'xsd:date')
+        expect(result).to be_a(Date)
+        expect(result).to eq(Date.new(2025, 1, 15))
+      end
+
+      # https://www.w3.org/TR/xmlschema-2/#date
+      # §3.2.7.3: timezone hour magnitude limited to 14
+      it 'XSD-DATE-5: date with maximum positive offset coerces to Date' do
+        result = coerce('2025-06-15+14:00', 'xsd:date')
+        expect(result).to be_a(Date)
+        expect(result).to eq(Date.new(2025, 6, 15))
+      end
+
+      # https://www.w3.org/TR/xmlschema-2/#date
+      it 'XSD-DATE-6: date with maximum negative offset coerces to Date' do
+        result = coerce('2025-06-15-14:00', 'xsd:date')
+        expect(result).to be_a(Date)
+        expect(result).to eq(Date.new(2025, 6, 15))
+      end
+
+      # https://www.w3.org/TR/xmlschema-2/#date
+      # §3.2.9.1: negative years ('-'? yyyy) combined with timezone
+      it 'XSD-DATE-7: negative year date with timezone coerces to Date' do
+        result = coerce('-0500-06-15Z', 'xsd:date')
+        expect(result).to be_a(Date)
+        expect(result.year).to eq(-500)
+        expect(result.month).to eq(6)
+        expect(result.day).to eq(15)
+      end
+
+      # https://www.w3.org/TR/xmlschema-2/#date
+      it 'XSD-DATE-8: date without timezone still coerces to Date' do
+        result = coerce('2025-03-15', 'xsd:date')
+        expect(result).to be_a(Date)
+        expect(result).to eq(Date.new(2025, 3, 15))
+      end
+
+      # https://www.w3.org/TR/xmlschema-2/#date
+      # §3.2.7.3: timezone hour magnitude limited to 14; +15:00 is invalid
+      it 'XSD-DATE-9: date with out-of-range timezone falls back to string' do
+        expect(coerce('2025-01-15+15:00', 'xsd:date')).to eq('2025-01-15+15:00')
       end
     end
 

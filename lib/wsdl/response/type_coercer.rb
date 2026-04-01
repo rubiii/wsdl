@@ -152,7 +152,7 @@ module WSDL
         end
 
         def convert_date(value)
-          Date.iso8601(value)
+          Date.iso8601(value.sub(TIMEZONE_SUFFIX, ''))
         rescue ArgumentError
           coercion_fallback(value, 'date')
         end
