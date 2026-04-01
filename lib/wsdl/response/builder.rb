@@ -349,15 +349,16 @@ module WSDL
       # Serializes a Ruby value to its XML text representation.
       #
       # Applies type-aware encoding for values that need it:
-      # - Time objects use xmlschema (ISO 8601 with timezone)
+      # - Time objects with xs:time type produce time-only strings (e.g. '14:30:00Z')
+      # - Time objects with xs:dateTime or nil type produce full ISO 8601 strings
       # - base64Binary values are Base64-encoded
       # - hexBinary values are hex-encoded
       #
       # @param value [Object] the value to serialize
-      # @param xsd_type [String, nil] the XSD type name (e.g. 'xsd:dateTime')
+      # @param xsd_type [String, nil] the XSD type name (e.g. 'xsd:dateTime', 'xsd:time')
       # @return [String] the XML text representation
       def serialize_value(value, xsd_type = nil)
-        return value.xmlschema if value.is_a?(Time)
+        return serialize_time(value, xsd_type) if value.is_a?(Time)
         return value.join(' ') if value.is_a?(Array)
 
         type_local = xsd_type&.split(':')&.last
@@ -366,6 +367,23 @@ module WSDL
         when 'hexBinary' then value.to_s.unpack1('H*')
         else value.to_s
         end
+      end
+
+      # Serializes a Time value based on the XSD type.
+      #
+      # For xs:time, strips the date portion from the xmlschema output,
+      # producing a time-only string (e.g. '14:30:00Z'). For xs:dateTime
+      # or when no type is specified, returns the full ISO 8601 string.
+      #
+      # @param value [Time] the time value to serialize
+      # @param xsd_type [String, nil] the XSD type name
+      # @return [String] the serialized time string
+      # @api private
+      def serialize_time(value, xsd_type)
+        iso = value.xmlschema
+        return iso unless xsd_type&.end_with?(':time')
+
+        iso.sub(/\A\d{4}-\d{2}-\d{2}T/, '')
       end
 
       def apply_namespace(node, schema_element, namespaces, root)

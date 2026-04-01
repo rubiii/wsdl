@@ -239,6 +239,41 @@ RSpec.describe WSDL::Response::Builder do
     end
   end
 
+  describe 'Time serialization by XSD type' do
+    let(:ns_uri) { 'http://example.com/test' }
+
+    def build_time_xml(type:, value:)
+      elements = [schema_element('timeField', type:, namespace: ns_uri)]
+      builder = described_class.new(schema_elements: elements)
+      builder.to_xml(timeField: value)
+    end
+
+    it 'serializes xs:time values as time-only strings' do
+      xml = build_time_xml(type: 'xsd:time', value: Time.utc(1970, 1, 1, 14, 30, 0))
+      doc = Nokogiri::XML(xml)
+
+      expect(doc.at_xpath('//*[local-name()="timeField"]').text)
+        .to eq('14:30:00Z')
+    end
+
+    it 'serializes xs:dateTime values as full ISO 8601 strings' do
+      xml = build_time_xml(type: 'xsd:dateTime', value: Time.utc(2025, 6, 15, 14, 30, 0))
+      doc = Nokogiri::XML(xml)
+
+      expect(doc.at_xpath('//*[local-name()="timeField"]').text)
+        .to eq('2025-06-15T14:30:00Z')
+    end
+
+    it 'preserves timezone offset for xs:time values' do
+      value = Time.new(1970, 1, 1, 14, 30, 0, '+05:30')
+      xml = build_time_xml(type: 'xsd:time', value:)
+      doc = Nokogiri::XML(xml)
+
+      expect(doc.at_xpath('//*[local-name()="timeField"]').text)
+        .to eq('14:30:00+05:30')
+    end
+  end
+
   describe '#validate!' do
     subject(:builder) do
       described_class.new(
