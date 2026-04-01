@@ -33,6 +33,10 @@ Compact Definition serialization format (schema version 2). Definitions serializ
 - Schema discovery now finds schemas inside unqualified `<types>` elements.
 - `Definition.from_h` raises `SchemaVersionError` (instead of `ArgumentError`) on schema version mismatches, so applications can catch it specifically and fall back to re-parsing.
 - `Definition.from_h` raises `ArgumentError` with a helpful message when given a non-Hash argument (e.g. a file path string), guiding users toward `WSDL.parse` instead.
+- `TypeCompactor` no longer raises `KeyError` for namespaces from imported schemas (e.g. PayPal's `urn:ebay:apis:CoreComponentTypes`).
+- `Response::Builder` now serializes `xs:time` values as time-only strings (e.g. `14:30:00Z`) instead of full dateTime strings.
+- `Response::TypeCoercer` now coerces `xs:date` values with timezone suffixes (e.g. `2024-03-15Z`, `2024-03-15+05:30`) to `Date` objects instead of falling back to raw strings. Per XSD Part 2 §3.2.9.1, the timezone is optional but valid.
+- `Response::Builder` now preserves fractional seconds when serializing `xs:time` and `xs:dateTime` values. Output uses canonical form per XSD Part 2 §3.2.7.2 (no trailing fractional zeros).
 
 ### Migrating from 1.1
 
