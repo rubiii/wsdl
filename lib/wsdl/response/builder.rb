@@ -371,8 +371,14 @@ module WSDL
 
       # Serializes a Time value based on the XSD type.
       #
+      # Preserves fractional seconds when present, using up to microsecond
+      # precision (6 digits). Trailing fractional zeros are stripped to
+      # produce canonical output per XSD Part 2 Section 3.2.7.2.
+      # Sub-microsecond values below the 6-digit precision threshold are
+      # treated as whole seconds (e.g. 100ns becomes '14:30:00Z', not '14:30:00.0Z').
+      #
       # For xs:time, strips the date portion from the xmlschema output,
-      # producing a time-only string (e.g. '14:30:00Z'). For xs:dateTime
+      # producing a time-only string (e.g. '14:30:00.5Z'). For xs:dateTime
       # or when no type is specified, returns the full ISO 8601 string.
       #
       # @param value [Time] the time value to serialize
@@ -380,7 +386,10 @@ module WSDL
       # @return [String] the serialized time string
       # @api private
       def serialize_time(value, xsd_type)
-        iso = value.xmlschema
+        fraction = value.subsec.zero? ? 0 : 6
+        iso = value.xmlschema(fraction)
+        iso = iso.sub(/(\.\d+?)0+(Z|[+-])/, '\1\2') if fraction.positive?
+        iso = iso.sub(/\.0(Z|[+-])/, '\1') if fraction.positive?
         return iso unless xsd_type&.end_with?(':time')
 
         iso.sub(/\A\d{4}-\d{2}-\d{2}T/, '')

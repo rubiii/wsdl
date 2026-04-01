@@ -272,6 +272,59 @@ RSpec.describe WSDL::Response::Builder do
       expect(doc.at_xpath('//*[local-name()="timeField"]').text)
         .to eq('14:30:00+05:30')
     end
+
+    it 'preserves fractional seconds for xs:dateTime' do
+      value = Time.utc(2025, 6, 15, 14, 30, Rational(1, 2))
+      xml = build_time_xml(type: 'xsd:dateTime', value:)
+
+      expect(xml).to include('2025-06-15T14:30:00.5Z')
+    end
+
+    it 'preserves millisecond precision for xs:dateTime' do
+      value = Time.utc(2025, 6, 15, 14, 30, Rational(1, 1000))
+      xml = build_time_xml(type: 'xsd:dateTime', value:)
+
+      expect(xml).to include('2025-06-15T14:30:00.001Z')
+    end
+
+    it 'preserves microsecond precision for xs:dateTime' do
+      value = Time.utc(2025, 6, 15, 14, 30, Rational(1, 1_000_000))
+      xml = build_time_xml(type: 'xsd:dateTime', value:)
+
+      expect(xml).to include('2025-06-15T14:30:00.000001Z')
+    end
+
+    it 'omits fractional seconds for whole-second xs:dateTime' do
+      value = Time.utc(2025, 6, 15, 14, 30, 0)
+      xml = build_time_xml(type: 'xsd:dateTime', value:)
+      text = Nokogiri::XML(xml).at_xpath('//*[local-name()="timeField"]').text
+
+      expect(text).to eq('2025-06-15T14:30:00Z')
+      expect(text).not_to include('.')
+    end
+
+    it 'preserves fractional seconds for xs:time' do
+      value = Time.utc(1970, 1, 1, 14, 30, Rational(1, 2))
+      xml = build_time_xml(type: 'xsd:time', value:)
+
+      expect(xml).to include('14:30:00.5Z')
+    end
+
+    it 'preserves fractional seconds for xs:time with offset timezone' do
+      value = Time.new(1970, 1, 1, 14, 30, Rational(1, 2), '+05:30')
+      xml = build_time_xml(type: 'xsd:time', value:)
+
+      expect(xml).to include('14:30:00.5+05:30')
+    end
+
+    it 'treats sub-microsecond precision as whole seconds' do
+      time = Time.at(Time.utc(2025, 6, 15, 14, 30, 0).to_i, 100, :nanosecond).utc
+      xml = build_time_xml(type: 'xsd:dateTime', value: time)
+      text = Nokogiri::XML(xml).at_xpath('//*[local-name()="timeField"]').text
+
+      expect(text).to eq('2025-06-15T14:30:00Z')
+      expect(text).not_to include('.')
+    end
   end
 
   describe '#validate!' do

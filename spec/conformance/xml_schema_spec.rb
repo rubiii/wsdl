@@ -538,6 +538,71 @@ RSpec.describe 'XML Schema conformance' do
   end
 
   # --------------------------------------------------------------------------
+  # Type Serialization (Part 2: Datatypes)
+  # --------------------------------------------------------------------------
+
+  describe 'Type Serialization' do
+    def serialize_time_value(type:, value:)
+      elements = [schema_element('field', type:, namespace: 'http://example.com/test')]
+      builder = WSDL::Response::Builder.new(schema_elements: elements)
+      xml = builder.to_xml(field: value)
+      Nokogiri::XML(xml).at_xpath('//*[local-name()="field"]').text
+    end
+
+    describe 'dateTime' do
+      # https://www.w3.org/TR/xmlschema-2/#dateTime
+      # §3.2.7.1: fractional seconds ('.' s+)? must be serialized when present
+      it 'XSD-DT-10: dateTime serialization preserves fractional seconds' do
+        text = serialize_time_value(type: 'xsd:dateTime', value: Time.utc(2025, 1, 15, 10, 30, Rational(1, 2)))
+        expect(text).to eq('2025-01-15T10:30:00.5Z')
+      end
+
+      # https://www.w3.org/TR/xmlschema-2/#dateTime
+      # §3.2.7.1: fractional seconds are optional when value is whole
+      it 'XSD-DT-11: dateTime serialization omits fractional seconds when absent' do
+        text = serialize_time_value(type: 'xsd:dateTime', value: Time.utc(2025, 1, 15, 10, 30, 0))
+        expect(text).to eq('2025-01-15T10:30:00Z')
+      end
+
+      # https://www.w3.org/TR/xmlschema-2/#dateTime
+      # §3.2.6: conforming processors MUST support at least millisecond precision
+      it 'XSD-DT-12: dateTime serialization supports millisecond precision' do
+        text = serialize_time_value(type: 'xsd:dateTime', value: Time.utc(2025, 1, 15, 10, 30, Rational(1, 1000)))
+        expect(text).to eq('2025-01-15T10:30:00.001Z')
+      end
+
+      # https://www.w3.org/TR/xmlschema-2/#dateTime
+      # §3.2.7.2: canonical fractional seconds must not end in '0'
+      it 'XSD-DT-13: dateTime serialization strips trailing fractional zeros' do
+        text = serialize_time_value(type: 'xsd:dateTime', value: Time.utc(2025, 1, 15, 10, 30, Rational(12, 100)))
+        expect(text).to eq('2025-01-15T10:30:00.12Z')
+      end
+    end
+
+    describe 'time' do
+      # https://www.w3.org/TR/xmlschema-2/#time
+      # §3.2.8.1: time inherits fractional seconds from dateTime
+      it 'XSD-TIME-5: time serialization preserves fractional seconds' do
+        text = serialize_time_value(type: 'xsd:time', value: Time.utc(1970, 1, 1, 10, 30, Rational(1, 2)))
+        expect(text).to eq('10:30:00.5Z')
+      end
+
+      # https://www.w3.org/TR/xmlschema-2/#time
+      it 'XSD-TIME-6: time serialization omits fractional seconds when absent' do
+        text = serialize_time_value(type: 'xsd:time', value: Time.utc(1970, 1, 1, 10, 30, 0))
+        expect(text).to eq('10:30:00Z')
+      end
+
+      # https://www.w3.org/TR/xmlschema-2/#time
+      # §3.2.7.2: canonical trailing zero stripping with non-UTC timezone
+      it 'XSD-TIME-7: time serialization preserves fractional seconds with offset timezone' do
+        text = serialize_time_value(type: 'xsd:time', value: Time.new(1970, 1, 1, 10, 30, Rational(1, 2), '+05:30'))
+        expect(text).to eq('10:30:00.5+05:30')
+      end
+    end
+  end
+
+  # --------------------------------------------------------------------------
   # Nillability (Part 1: Structures - xsi:nil)
   # --------------------------------------------------------------------------
 
