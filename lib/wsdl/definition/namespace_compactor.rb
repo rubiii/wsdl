@@ -73,7 +73,28 @@ module WSDL
       # @return [void]
       def collect_element(uris, seen, element)
         record(uris, seen, element['ns'])
+        record_type_id_namespace(uris, seen, element['complex_type_id'])
+        record_type_id_namespace(uris, seen, element['element_ref_id'])
         element['children']&.each { |child| collect_element(uris, seen, child) }
+      end
+
+      # Extracts and records the namespace URI from a type ID string.
+      # Type IDs use the format +"namespace_uri:localName"+ where the
+      # namespace is separated from the NCName local part at the last colon.
+      #
+      # @param uris [Array<String>] accumulator for unique URIs
+      # @param seen [Hash] dedup set
+      # @param type_id [String, nil] a complex_type_id or element_ref_id
+      # @return [void]
+      #
+      # @see TypeCompactor#build_type_key Uses the same rindex splitting pattern
+      def record_type_id_namespace(uris, seen, type_id)
+        return unless type_id
+
+        colon_pos = type_id.rindex(':')
+        return unless colon_pos
+
+        record(uris, seen, type_id[0...colon_pos])
       end
 
       # @return [void]

@@ -1,0 +1,7 @@
+# Source: https://www.paypalobjects.com/wsdl/PayPalSvc.wsdl
+entry_url: https://www.paypalobjects.com/wsdl/PayPalSvc.wsdl
+mappings:
+  https://www.paypalobjects.com/wsdl/PayPalSvc.wsdl: PayPalSvc.wsdl
+  https://www.paypalobjects.com/wsdl/CoreComponentTypes.xsd: CoreComponentTypes.xsd
+  https://www.paypalobjects.com/wsdl/eBLBaseComponents.xsd: eBLBaseComponents.xsd
+  https://www.paypalobjects.com/wsdl/EnhancedDataTypes.xsd: EnhancedDataTypes.xsd

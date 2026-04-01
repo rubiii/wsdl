@@ -262,6 +262,24 @@ RSpec.describe WSDL::Definition::TypeCompactor do
       expect(header_element).not_to have_key('children')
     end
 
+    it 'handles complex_type_id with no colon (bare name) without raising' do
+      child = { 'name' => 'x', 'ns' => 0, 'type' => 'simple', 'xsd_type' => 'xsd:string' }
+      elements = [{
+        'name' => 'Broken', 'ns' => 0, 'type' => 'complex',
+        'complex_type_id' => 'BareTypeName',
+        'children' => [child]
+      }
+]
+      services = build_services(elements:)
+
+      types, compacted = described_class.call(services, namespaces)
+
+      element = dig_element(compacted)
+      expect(element['type_ref']).to eq('BareTypeName')
+      expect(element).not_to have_key('children')
+      expect(types).to have_key('BareTypeName')
+    end
+
     context 'with element_ref_id (anonymous complex types on ref\'d elements)' do
       it 'deduplicates elements with the same element_ref_id' do
         child = { 'name' => 'value', 'ns' => 0, 'type' => 'simple', 'xsd_type' => 'xsd:string' }

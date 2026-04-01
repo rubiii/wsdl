@@ -269,6 +269,8 @@ module WSDL
       # @return [String] compact key +"nsIndex:localName"+
       def build_type_key(complex_type_id)
         colon_pos = complex_type_id.rindex(':')
+        return complex_type_id unless colon_pos
+
         ns_uri = complex_type_id[0...colon_pos]
         local_name = complex_type_id[(colon_pos + 1)..]
         ns_index = @ns_map.fetch(ns_uri)

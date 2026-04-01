@@ -1,7 +1,10 @@
 # frozen_string_literal: true
 
 RSpec.describe WSDL::Definition::NamespaceCompactor do
-  def build_services(port_type:, elements:, rpc_input_ns: nil, rpc_output_ns: nil)
+  def build_services(port_type:, elements:, rpc_namespace: nil,
+                     header_elements: [], output_elements: nil)
+    output = output_elements ? { 'header' => [], 'body' => output_elements } : nil
+
     {
       'Svc' => { 'ports' => { 'Port' => {
         'type' => port_type, 'endpoint' => 'http://x',
@@ -9,10 +12,10 @@ RSpec.describe WSDL::Definition::NamespaceCompactor do
           'name' => 'Op', 'input_name' => nil,
           'soap_action' => nil, 'soap_version' => '1.1',
           'input_style' => 'document/literal', 'output_style' => nil,
-          'rpc_input_namespace' => rpc_input_ns, 'rpc_output_namespace' => rpc_output_ns,
+          'rpc_input_namespace' => rpc_namespace, 'rpc_output_namespace' => rpc_namespace,
           'schema_complete' => true,
-          'input' => { 'header' => [], 'body' => elements },
-          'output' => nil
+          'input' => { 'header' => header_elements, 'body' => elements },
+          'output' => output
         }
 }
       }
@@ -56,7 +59,7 @@ RSpec.describe WSDL::Definition::NamespaceCompactor do
   it 'replaces RPC namespace URIs with integer indices' do
     services = build_services(
       port_type: 'http://soap/', elements: [],
-      rpc_input_ns: 'http://rpc.example.com', rpc_output_ns: 'http://rpc.example.com'
+      rpc_namespace: 'http://rpc.example.com'
     )
 
     namespaces, compacted = described_class.call(services)
@@ -104,6 +107,149 @@ RSpec.describe WSDL::Definition::NamespaceCompactor do
     namespaces, _compacted = described_class.call(services)
 
     expect(namespaces).to eq(['http://example.com'])
+  end
+
+  it 'collects namespace from complex_type_id when it differs from element ns' do
+    elements = [{
+      'name' => 'Amount', 'ns' => 'urn:ebay:apis:eBLBaseComponents',
+      'type' => 'complex', 'complex_type_id' => 'urn:ebay:apis:CoreComponentTypes:AmountType'
+    }
+]
+    services = build_services(port_type: 'http://soap/', elements:)
+
+    namespaces, _compacted = described_class.call(services)
+
+    expect(namespaces).to include('urn:ebay:apis:CoreComponentTypes')
+    expect(namespaces).not_to include('urn:ebay:apis:CoreComponentTypes:AmountType')
+  end
+
+  it 'collects namespace from element_ref_id when it differs from element ns' do
+    elements = [{
+      'name' => 'Item', 'ns' => 'http://example.com/main',
+      'type' => 'complex', 'element_ref_id' => 'http://example.com/imported:ItemRef'
+    }
+]
+    services = build_services(port_type: 'http://soap/', elements:)
+
+    namespaces, _compacted = described_class.call(services)
+
+    expect(namespaces).to include('http://example.com/imported')
+    expect(namespaces).not_to include('http://example.com/imported:ItemRef')
+  end
+
+  it 'collects namespaces from both complex_type_id and element_ref_id on the same element' do
+    elements = [{
+      'name' => 'Amount', 'ns' => 'http://main.example.com',
+      'type' => 'complex',
+      'complex_type_id' => 'http://types.example.com:AmountType',
+      'element_ref_id' => 'http://refs.example.com:AmountRef'
+    }
+]
+    services = build_services(port_type: 'http://soap/', elements:)
+
+    namespaces, _compacted = described_class.call(services)
+
+    expect(namespaces).to include('http://main.example.com')
+    expect(namespaces).to include('http://types.example.com')
+    expect(namespaces).to include('http://refs.example.com')
+  end
+
+  it 'handles nil complex_type_id and element_ref_id without error' do
+    elements = [{
+      'name' => 'x', 'ns' => 'http://example.com',
+      'type' => 'simple', 'xsd_type' => 'xsd:string',
+      'complex_type_id' => nil, 'element_ref_id' => nil
+    }
+]
+    services = build_services(port_type: 'http://soap/', elements:)
+
+    namespaces, _compacted = described_class.call(services)
+
+    expect(namespaces).to eq(['http://soap/', 'http://example.com'])
+  end
+
+  it 'deduplicates when complex_type_id namespace matches element ns' do
+    elements = [{
+      'name' => 'Foo', 'ns' => 'http://example.com',
+      'type' => 'complex', 'complex_type_id' => 'http://example.com:FooType'
+    }
+]
+    services = build_services(port_type: 'http://soap/', elements:)
+
+    namespaces, _compacted = described_class.call(services)
+
+    expect(namespaces.count('http://example.com')).to eq(1)
+  end
+
+  it 'collects namespace from complex_type_id on nested children' do
+    child = {
+      'name' => 'inner', 'ns' => 'http://parent.com',
+      'type' => 'complex', 'complex_type_id' => 'http://child-type.com:InnerType'
+    }
+    elements = [{
+      'name' => 'outer', 'ns' => 'http://parent.com', 'type' => 'complex',
+      'children' => [child]
+    }
+]
+    services = build_services(port_type: 'http://soap/', elements:)
+
+    namespaces, _compacted = described_class.call(services)
+
+    expect(namespaces).to include('http://child-type.com')
+  end
+
+  it 'collects namespace from complex_type_id in output message elements' do
+    output_elements = [{
+      'name' => 'Result', 'ns' => 'http://output.com',
+      'type' => 'complex', 'complex_type_id' => 'http://output-type.com:ResultType'
+    }
+]
+    services = build_services(port_type: 'http://soap/', elements: [], output_elements:)
+
+    namespaces, _compacted = described_class.call(services)
+
+    expect(namespaces).to include('http://output-type.com')
+  end
+
+  it 'collects namespace from complex_type_id in header elements' do
+    header_elements = [{
+      'name' => 'Auth', 'ns' => 'http://header.com',
+      'type' => 'complex', 'complex_type_id' => 'http://header-type.com:AuthType'
+    }
+]
+    services = build_services(port_type: 'http://soap/', elements: [], header_elements:)
+
+    namespaces, _compacted = described_class.call(services)
+
+    expect(namespaces).to include('http://header-type.com')
+  end
+
+  it 'handles complex_type_id with no colon (bare name) without raising' do
+    elements = [{
+      'name' => 'Broken', 'ns' => 'http://example.com',
+      'type' => 'complex', 'complex_type_id' => 'BareTypeName'
+    }
+]
+    services = build_services(port_type: 'http://soap/', elements:)
+
+    namespaces, _compacted = described_class.call(services)
+
+    expect(namespaces).not_to include('BareTypeName')
+    expect(namespaces).to eq(['http://soap/', 'http://example.com'])
+  end
+
+  it 'handles element_ref_id with no colon (bare name) without raising' do
+    elements = [{
+      'name' => 'Broken', 'ns' => 'http://example.com',
+      'type' => 'complex', 'element_ref_id' => 'BareRefName'
+    }
+]
+    services = build_services(port_type: 'http://soap/', elements:)
+
+    namespaces, _compacted = described_class.call(services)
+
+    expect(namespaces).not_to include('BareRefName')
+    expect(namespaces).to eq(['http://soap/', 'http://example.com'])
   end
 
   it 'handles overloaded operations' do
