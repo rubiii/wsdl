@@ -34,8 +34,7 @@ RSpec.describe 'Telefonkatalogen' do
         min_occurs: '1',
         max_occurs: '1',
         type: 'xsd:string',
-        list: false
-},
+        list: false },
       { path: ['cellular'],
         kind: :simple,
         form: 'unqualified',
@@ -43,8 +42,7 @@ RSpec.describe 'Telefonkatalogen' do
         min_occurs: '1',
         max_occurs: '1',
         type: 'xsd:string',
-        list: false
-},
+        list: false },
       { path: ['msg'],
         kind: :simple,
         form: 'unqualified',
@@ -52,8 +50,7 @@ RSpec.describe 'Telefonkatalogen' do
         min_occurs: '1',
         max_occurs: '1',
         type: 'xsd:string',
-        list: false
-},
+        list: false },
       { path: ['smsnumgroup'],
         kind: :simple,
         form: 'unqualified',
@@ -61,8 +58,7 @@ RSpec.describe 'Telefonkatalogen' do
         min_occurs: '1',
         max_occurs: '1',
         type: 'xsd:string',
-        list: false
-},
+        list: false },
       { path: ['emailaddr'],
         kind: :simple,
         form: 'unqualified',
@@ -70,8 +66,7 @@ RSpec.describe 'Telefonkatalogen' do
         min_occurs: '1',
         max_occurs: '1',
         type: 'xsd:string',
-        list: false
-},
+        list: false },
       { path: ['udh'],
         kind: :simple,
         form: 'unqualified',
@@ -79,8 +74,7 @@ RSpec.describe 'Telefonkatalogen' do
         min_occurs: '1',
         max_occurs: '1',
         type: 'xsd:string',
-        list: false
-},
+        list: false },
       { path: ['datetime'],
         kind: :simple,
         form: 'unqualified',
@@ -88,8 +82,7 @@ RSpec.describe 'Telefonkatalogen' do
         min_occurs: '1',
         max_occurs: '1',
         type: 'xsd:string',
-        list: false
-},
+        list: false },
       { path: ['format'],
         kind: :simple,
         form: 'unqualified',
@@ -97,8 +90,7 @@ RSpec.describe 'Telefonkatalogen' do
         min_occurs: '1',
         max_occurs: '1',
         type: 'xsd:string',
-        list: false
-},
+        list: false },
       { path: ['dlrurl'],
         kind: :simple,
         form: 'unqualified',
@@ -106,8 +98,7 @@ RSpec.describe 'Telefonkatalogen' do
         min_occurs: '1',
         max_occurs: '1',
         type: 'xsd:string',
-        list: false
-}
+        list: false }
     ])
   end
 end

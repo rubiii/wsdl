@@ -88,8 +88,7 @@ RSpec.describe 'Oracle' do
         singular: true,
         min_occurs: '1',
         max_occurs: '1',
-        wildcard: false
-},
+        wildcard: false },
       { path: %w[joinGroups group],
         kind: :complex,
         namespace:,
@@ -97,8 +96,7 @@ RSpec.describe 'Oracle' do
         singular: false,
         min_occurs: '1',
         max_occurs: 'unbounded',
-        wildcard: false
-},
+        wildcard: false },
       { path: %w[joinGroups group name],
         kind: :simple,
         namespace:,
@@ -107,8 +105,7 @@ RSpec.describe 'Oracle' do
         min_occurs: '0',
         max_occurs: '1',
         type: 'xsd:string',
-        list: false
-},
+        list: false },
       { path: %w[joinGroups group accountType],
         kind: :simple,
         namespace:,
@@ -117,8 +114,7 @@ RSpec.describe 'Oracle' do
         min_occurs: '1',
         max_occurs: '1',
         type: 'xsd:int',
-        list: false
-},
+        list: false },
       { path: %w[joinGroups group guid],
         kind: :simple,
         namespace:,
@@ -127,8 +123,7 @@ RSpec.describe 'Oracle' do
         min_occurs: '0',
         max_occurs: '1',
         type: 'xsd:string',
-        list: false
-},
+        list: false },
       { path: %w[joinGroups group displayName],
         kind: :simple,
         namespace:,
@@ -137,8 +132,7 @@ RSpec.describe 'Oracle' do
         min_occurs: '0',
         max_occurs: '1',
         type: 'xsd:string',
-        list: false
-},
+        list: false },
       { path: %w[joinGroups member],
         kind: :complex,
         namespace:,
@@ -146,8 +140,7 @@ RSpec.describe 'Oracle' do
         singular: false,
         min_occurs: '1',
         max_occurs: 'unbounded',
-        wildcard: false
-},
+        wildcard: false },
       { path: %w[joinGroups member name],
         kind: :simple,
         namespace:,
@@ -156,8 +149,7 @@ RSpec.describe 'Oracle' do
         min_occurs: '0',
         max_occurs: '1',
         type: 'xsd:string',
-        list: false
-},
+        list: false },
       { path: %w[joinGroups member accountType],
         kind: :simple,
         namespace:,
@@ -166,8 +158,7 @@ RSpec.describe 'Oracle' do
         min_occurs: '1',
         max_occurs: '1',
         type: 'xsd:int',
-        list: false
-},
+        list: false },
       { path: %w[joinGroups member guid],
         kind: :simple,
         namespace:,
@@ -176,8 +167,7 @@ RSpec.describe 'Oracle' do
         min_occurs: '0',
         max_occurs: '1',
         type: 'xsd:string',
-        list: false
-},
+        list: false },
       { path: %w[joinGroups member displayName],
         kind: :simple,
         namespace:,
@@ -186,8 +176,7 @@ RSpec.describe 'Oracle' do
         min_occurs: '0',
         max_occurs: '1',
         type: 'xsd:string',
-        list: false
-},
+        list: false },
       { path: %w[joinGroups sessionID],
         kind: :simple,
         namespace:,
@@ -196,8 +185,7 @@ RSpec.describe 'Oracle' do
         min_occurs: '1',
         max_occurs: '1',
         type: 'xsd:string',
-        list: false
-}
+        list: false }
     ])
   end
 

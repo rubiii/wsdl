@@ -37,8 +37,7 @@ RSpec.describe 'Jetairways\'s SessionCreate Service' do
 
     expect(operation.contract.request.body.paths).to eq([
       { path: ['Logon'], kind: :complex, namespace:, form: 'qualified',
-        singular: true, min_occurs: '1', max_occurs: '1', wildcard: false
-}
+        singular: true, min_occurs: '1', max_occurs: '1', wildcard: false }
     ])
   end
 
@@ -58,22 +57,18 @@ RSpec.describe 'Jetairways\'s SessionCreate Service' do
           { MessageId: 'string',
             Timestamp: 'string',
             RefToMessageId: 'string',
-            TimeToLive: 'dateTime'
-},
+            TimeToLive: 'dateTime' },
           DuplicateElimination: {},
           Description: [{}],
           _id: 's:ID',
-          _version: 's:string'
-},
+          _version: 's:string' },
       Security:
        { UsernameToken:
          { Username: 'string',
            Password: 'string',
            Organization: 'string',
-           Domain: 'string'
-},
-         BinarySecurityToken: 'string'
-}
+           Domain: 'string' },
+         BinarySecurityToken: 'string' }
     )
   end
 

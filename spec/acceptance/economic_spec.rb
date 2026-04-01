@@ -3064,8 +3064,7 @@ RSpec.describe 'Economic' do
         singular: true,
         min_occurs: '1',
         max_occurs: '1',
-        wildcard: false
-},
+        wildcard: false },
       { path: %w[Account_GetDataArray entityHandles],
         kind: :complex,
         namespace:,
@@ -3073,8 +3072,7 @@ RSpec.describe 'Economic' do
         singular: true,
         min_occurs: '0',
         max_occurs: '1',
-        wildcard: false
-},
+        wildcard: false },
       { path: %w[Account_GetDataArray entityHandles AccountHandle],
         kind: :complex,
         namespace:,
@@ -3082,8 +3080,7 @@ RSpec.describe 'Economic' do
         singular: false,
         min_occurs: '0',
         max_occurs: 'unbounded',
-        wildcard: false
-},
+        wildcard: false },
       { path: %w[Account_GetDataArray entityHandles AccountHandle Number],
         kind: :simple,
         namespace:,
@@ -3092,8 +3089,7 @@ RSpec.describe 'Economic' do
         min_occurs: '1',
         max_occurs: '1',
         type: 's:int',
-        list: false
-}
+        list: false }
     ])
   end
 end

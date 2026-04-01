@@ -84,8 +84,7 @@ RSpec.describe 'Xignite' do
         singular: true,
         min_occurs: '1',
         max_occurs: '1',
-        wildcard: false
-},
+        wildcard: false },
       { path: %w[GetSecurities Identifiers],
         kind: :simple,
         namespace:,
@@ -94,8 +93,7 @@ RSpec.describe 'Xignite' do
         min_occurs: '0',
         max_occurs: '1',
         type: 's:string',
-        list: false
-},
+        list: false },
       { path: %w[GetSecurities IdentifierType],
         kind: :simple,
         namespace:,
@@ -104,8 +102,7 @@ RSpec.describe 'Xignite' do
         min_occurs: '1',
         max_occurs: '1',
         type: 's:string',
-        list: false
-},
+        list: false },
       { path: %w[GetSecurities AsOfDate],
         kind: :simple,
         namespace:,
@@ -114,8 +111,7 @@ RSpec.describe 'Xignite' do
         min_occurs: '0',
         max_occurs: '1',
         type: 's:string',
-        list: false
-}
+        list: false }
     ])
   end
 

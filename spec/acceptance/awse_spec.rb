@@ -165,8 +165,7 @@ RSpec.describe 'AWSE' do
         singular: true,
         min_occurs: '1',
         max_occurs: '1',
-        wildcard: false
-},
+        wildcard: false },
       { path: %w[CartAdd MarketplaceDomain],
         kind: :simple,
         namespace:,
@@ -175,8 +174,7 @@ RSpec.describe 'AWSE' do
         min_occurs: '0',
         max_occurs: '1',
         type: 'xs:string',
-        list: false
-},
+        list: false },
       { path: %w[CartAdd AWSAccessKeyId],
         kind: :simple,
         namespace:,
@@ -185,8 +183,7 @@ RSpec.describe 'AWSE' do
         min_occurs: '0',
         max_occurs: '1',
         type: 'xs:string',
-        list: false
-},
+        list: false },
       { path: %w[CartAdd AssociateTag],
         kind: :simple,
         namespace:,
@@ -195,8 +192,7 @@ RSpec.describe 'AWSE' do
         min_occurs: '0',
         max_occurs: '1',
         type: 'xs:string',
-        list: false
-},
+        list: false },
       { path: %w[CartAdd Validate],
         kind: :simple,
         namespace:,
@@ -205,8 +201,7 @@ RSpec.describe 'AWSE' do
         min_occurs: '0',
         max_occurs: '1',
         type: 'xs:string',
-        list: false
-},
+        list: false },
       { path: %w[CartAdd XMLEscaping],
         kind: :simple,
         namespace:,
@@ -215,8 +210,7 @@ RSpec.describe 'AWSE' do
         min_occurs: '0',
         max_occurs: '1',
         type: 'xs:string',
-        list: false
-},
+        list: false },
       { path: %w[CartAdd Shared],
         kind: :complex,
         namespace:,
@@ -224,8 +218,7 @@ RSpec.describe 'AWSE' do
         singular: true,
         min_occurs: '0',
         max_occurs: '1',
-        wildcard: false
-},
+        wildcard: false },
       { path: %w[CartAdd Shared CartId],
         kind: :simple,
         namespace:,
@@ -234,8 +227,7 @@ RSpec.describe 'AWSE' do
         min_occurs: '0',
         max_occurs: '1',
         type: 'xs:string',
-        list: false
-},
+        list: false },
       { path: %w[CartAdd Shared HMAC],
         kind: :simple,
         namespace:,
@@ -244,8 +236,7 @@ RSpec.describe 'AWSE' do
         min_occurs: '0',
         max_occurs: '1',
         type: 'xs:string',
-        list: false
-},
+        list: false },
       { path: %w[CartAdd Shared MergeCart],
         kind: :simple,
         namespace:,
@@ -254,8 +245,7 @@ RSpec.describe 'AWSE' do
         min_occurs: '0',
         max_occurs: '1',
         type: 'xs:string',
-        list: false
-},
+        list: false },
       { path: %w[CartAdd Shared Items],
         kind: :complex,
         namespace:,
@@ -263,8 +253,7 @@ RSpec.describe 'AWSE' do
         singular: true,
         min_occurs: '0',
         max_occurs: '1',
-        wildcard: false
-},
+        wildcard: false },
       { path: %w[CartAdd Shared Items Item],
         kind: :complex,
         namespace:,
@@ -272,8 +261,7 @@ RSpec.describe 'AWSE' do
         singular: false,
         min_occurs: '0',
         max_occurs: 'unbounded',
-        wildcard: false
-},
+        wildcard: false },
       { path: %w[CartAdd Shared Items Item ASIN],
         kind: :simple,
         namespace:,
@@ -282,8 +270,7 @@ RSpec.describe 'AWSE' do
         min_occurs: '0',
         max_occurs: '1',
         type: 'xs:string',
-        list: false
-},
+        list: false },
       { path: %w[CartAdd Shared Items Item OfferListingId],
         kind: :simple,
         namespace:,
@@ -292,8 +279,7 @@ RSpec.describe 'AWSE' do
         min_occurs: '0',
         max_occurs: '1',
         type: 'xs:string',
-        list: false
-},
+        list: false },
       { path: %w[CartAdd Shared Items Item Quantity],
         kind: :simple,
         namespace:,
@@ -302,8 +288,7 @@ RSpec.describe 'AWSE' do
         min_occurs: '0',
         max_occurs: '1',
         type: 'xs:positiveInteger',
-        list: false
-},
+        list: false },
       { path: %w[CartAdd Shared Items Item AssociateTag],
         kind: :simple,
         namespace:,
@@ -312,8 +297,7 @@ RSpec.describe 'AWSE' do
         min_occurs: '0',
         max_occurs: '1',
         type: 'xs:string',
-        list: false
-},
+        list: false },
       { path: %w[CartAdd Shared Items Item ListItemId],
         kind: :simple,
         namespace:,
@@ -322,8 +306,7 @@ RSpec.describe 'AWSE' do
         min_occurs: '0',
         max_occurs: '1',
         type: 'xs:string',
-        list: false
-},
+        list: false },
       { path: %w[CartAdd Shared ResponseGroup],
         kind: :simple,
         namespace:,
@@ -332,8 +315,7 @@ RSpec.describe 'AWSE' do
         min_occurs: '0',
         max_occurs: 'unbounded',
         type: 'xs:string',
-        list: false
-},
+        list: false },
       { path: %w[CartAdd Request],
         kind: :complex,
         namespace:,
@@ -341,8 +323,7 @@ RSpec.describe 'AWSE' do
         singular: false,
         min_occurs: '0',
         max_occurs: 'unbounded',
-        wildcard: false
-},
+        wildcard: false },
       { path: %w[CartAdd Request CartId],
         kind: :simple,
         namespace:,
@@ -351,8 +332,7 @@ RSpec.describe 'AWSE' do
         min_occurs: '0',
         max_occurs: '1',
         type: 'xs:string',
-        list: false
-},
+        list: false },
       { path: %w[CartAdd Request HMAC],
         kind: :simple,
         namespace:,
@@ -361,8 +341,7 @@ RSpec.describe 'AWSE' do
         min_occurs: '0',
         max_occurs: '1',
         type: 'xs:string',
-        list: false
-},
+        list: false },
       { path: %w[CartAdd Request MergeCart],
         kind: :simple,
         namespace:,
@@ -371,8 +350,7 @@ RSpec.describe 'AWSE' do
         min_occurs: '0',
         max_occurs: '1',
         type: 'xs:string',
-        list: false
-},
+        list: false },
       { path: %w[CartAdd Request Items],
         kind: :complex,
         namespace:,
@@ -380,8 +358,7 @@ RSpec.describe 'AWSE' do
         singular: true,
         min_occurs: '0',
         max_occurs: '1',
-        wildcard: false
-},
+        wildcard: false },
       { path: %w[CartAdd Request Items Item],
         kind: :complex,
         namespace:,
@@ -389,8 +366,7 @@ RSpec.describe 'AWSE' do
         singular: false,
         min_occurs: '0',
         max_occurs: 'unbounded',
-        wildcard: false
-},
+        wildcard: false },
       { path: %w[CartAdd Request Items Item ASIN],
         kind: :simple,
         namespace:,
@@ -399,8 +375,7 @@ RSpec.describe 'AWSE' do
         min_occurs: '0',
         max_occurs: '1',
         type: 'xs:string',
-        list: false
-},
+        list: false },
       { path: %w[CartAdd Request Items Item OfferListingId],
         kind: :simple,
         namespace:,
@@ -409,8 +384,7 @@ RSpec.describe 'AWSE' do
         min_occurs: '0',
         max_occurs: '1',
         type: 'xs:string',
-        list: false
-},
+        list: false },
       { path: %w[CartAdd Request Items Item Quantity],
         kind: :simple,
         namespace:,
@@ -419,8 +393,7 @@ RSpec.describe 'AWSE' do
         min_occurs: '0',
         max_occurs: '1',
         type: 'xs:positiveInteger',
-        list: false
-},
+        list: false },
       { path: %w[CartAdd Request Items Item AssociateTag],
         kind: :simple,
         namespace:,
@@ -429,8 +402,7 @@ RSpec.describe 'AWSE' do
         min_occurs: '0',
         max_occurs: '1',
         type: 'xs:string',
-        list: false
-},
+        list: false },
       { path: %w[CartAdd Request Items Item ListItemId],
         kind: :simple,
         namespace:,
@@ -439,8 +411,7 @@ RSpec.describe 'AWSE' do
         min_occurs: '0',
         max_occurs: '1',
         type: 'xs:string',
-        list: false
-},
+        list: false },
       { path: %w[CartAdd Request ResponseGroup],
         kind: :simple,
         namespace:,
@@ -449,8 +420,7 @@ RSpec.describe 'AWSE' do
         min_occurs: '0',
         max_occurs: 'unbounded',
         type: 'xs:string',
-        list: false
-}
+        list: false }
     ])
   end
 end

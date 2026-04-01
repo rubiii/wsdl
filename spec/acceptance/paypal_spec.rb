@@ -71,8 +71,7 @@ RSpec.describe 'PayPal' do
         singular: true,
         min_occurs: '1',
         max_occurs: '1',
-        wildcard: false
-},
+        wildcard: false },
       { path: %w[AddressVerifyReq AddressVerifyRequest],
         kind: :complex,
         namespace: 'urn:ebay:api:PayPalAPI',
@@ -80,8 +79,7 @@ RSpec.describe 'PayPal' do
         singular: true,
         min_occurs: '1',
         max_occurs: '1',
-        wildcard: true
-},
+        wildcard: true },
       { path: %w[AddressVerifyReq AddressVerifyRequest DetailLevel],
         kind: :simple,
         namespace: 'urn:ebay:apis:eBLBaseComponents',
@@ -90,8 +88,7 @@ RSpec.describe 'PayPal' do
         min_occurs: '0',
         max_occurs: 'unbounded',
         type: 'xs:token',
-        list: false
-},
+        list: false },
       { path: %w[AddressVerifyReq AddressVerifyRequest ErrorLanguage],
         kind: :simple,
         namespace: 'urn:ebay:apis:eBLBaseComponents',
@@ -100,8 +97,7 @@ RSpec.describe 'PayPal' do
         min_occurs: '0',
         max_occurs: '1',
         type: 'xs:string',
-        list: false
-},
+        list: false },
       { path: %w[AddressVerifyReq AddressVerifyRequest Version],
         kind: :simple,
         namespace: 'urn:ebay:apis:eBLBaseComponents',
@@ -110,8 +106,7 @@ RSpec.describe 'PayPal' do
         min_occurs: '1',
         max_occurs: '1',
         type: 'xs:string',
-        list: false
-},
+        list: false },
       { path: %w[AddressVerifyReq AddressVerifyRequest Email],
         kind: :simple,
         namespace: 'urn:ebay:api:PayPalAPI',
@@ -120,8 +115,7 @@ RSpec.describe 'PayPal' do
         min_occurs: '1',
         max_occurs: '1',
         type: 'xs:string',
-        list: false
-},
+        list: false },
       { path: %w[AddressVerifyReq AddressVerifyRequest Street],
         kind: :simple,
         namespace: 'urn:ebay:api:PayPalAPI',
@@ -130,8 +124,7 @@ RSpec.describe 'PayPal' do
         min_occurs: '1',
         max_occurs: '1',
         type: 'xs:string',
-        list: false
-},
+        list: false },
       { path: %w[AddressVerifyReq AddressVerifyRequest Zip],
         kind: :simple,
         namespace: 'urn:ebay:api:PayPalAPI',
@@ -140,8 +133,7 @@ RSpec.describe 'PayPal' do
         min_occurs: '1',
         max_occurs: '1',
         type: 'xs:string',
-        list: false
-}
+        list: false }
     ])
   end
 
@@ -163,8 +155,7 @@ RSpec.describe 'PayPal' do
     # Token is a required field inside the request details
     token = paths.find { |p|
       p[:path] == %w[DoExpressCheckoutPaymentReq DoExpressCheckoutPaymentRequest DoExpressCheckoutPaymentRequestDetails
-                     Token
-    ]
+                     Token]
     }
     expect(token).to include(
       kind: :simple,

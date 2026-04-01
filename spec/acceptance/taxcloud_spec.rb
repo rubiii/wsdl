@@ -68,8 +68,7 @@ RSpec.describe 'Taxcloud' do
         singular: true,
         min_occurs: '1',
         max_occurs: '1',
-        wildcard: false
-},
+        wildcard: false },
       { path: %w[VerifyAddress uspsUserID],
         kind: :simple,
         namespace:,
@@ -78,8 +77,7 @@ RSpec.describe 'Taxcloud' do
         min_occurs: '0',
         max_occurs: '1',
         type: 's:string',
-        list: false
-},
+        list: false },
       { path: %w[VerifyAddress address1],
         kind: :simple,
         namespace:,
@@ -88,8 +86,7 @@ RSpec.describe 'Taxcloud' do
         min_occurs: '0',
         max_occurs: '1',
         type: 's:string',
-        list: false
-},
+        list: false },
       { path: %w[VerifyAddress address2],
         kind: :simple,
         namespace:,
@@ -98,8 +95,7 @@ RSpec.describe 'Taxcloud' do
         min_occurs: '0',
         max_occurs: '1',
         type: 's:string',
-        list: false
-},
+        list: false },
       { path: %w[VerifyAddress city],
         kind: :simple,
         namespace:,
@@ -108,8 +104,7 @@ RSpec.describe 'Taxcloud' do
         min_occurs: '0',
         max_occurs: '1',
         type: 's:string',
-        list: false
-},
+        list: false },
       { path: %w[VerifyAddress state],
         kind: :simple,
         namespace:,
@@ -118,8 +113,7 @@ RSpec.describe 'Taxcloud' do
         min_occurs: '0',
         max_occurs: '1',
         type: 's:string',
-        list: false
-},
+        list: false },
       { path: %w[VerifyAddress zip5],
         kind: :simple,
         namespace:,
@@ -128,8 +122,7 @@ RSpec.describe 'Taxcloud' do
         min_occurs: '0',
         max_occurs: '1',
         type: 's:string',
-        list: false
-},
+        list: false },
       { path: %w[VerifyAddress zip4],
         kind: :simple,
         namespace:,
@@ -138,8 +131,7 @@ RSpec.describe 'Taxcloud' do
         min_occurs: '0',
         max_occurs: '1',
         type: 's:string',
-        list: false
-}
+        list: false }
     ])
   end
 end

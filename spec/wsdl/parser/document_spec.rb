@@ -25,8 +25,7 @@ RSpec.describe WSDL::Parser::Document do
 
       expect(message.parts).to eq([
         { name: 'parameters', namespaces:,
-          type: nil, element: 'sawsoap:addReportToPage'
-}
+          type: nil, element: 'sawsoap:addReportToPage' }
       ])
     end
 

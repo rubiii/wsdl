@@ -62,8 +62,7 @@ RSpec.describe 'TeamSoftware' do
         singular: true,
         min_occurs: '1',
         max_occurs: '1',
-        wildcard: false
-},
+        wildcard: false },
       { path: %w[Login MappingKey],
         kind: :simple,
         namespace:,
@@ -72,8 +71,7 @@ RSpec.describe 'TeamSoftware' do
         min_occurs: '0',
         max_occurs: '1',
         type: 'xs:string',
-        list: false
-}
+        list: false }
     ])
   end
 end

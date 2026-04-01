@@ -16,11 +16,8 @@ RSpec.describe WSDL::Definition::NamespaceCompactor do
           'schema_complete' => true,
           'input' => { 'header' => header_elements, 'body' => elements },
           'output' => output
-        }
-}
-      }
-}
-}
+        } }
+      } } }
     }
   end
 
@@ -85,8 +82,7 @@ RSpec.describe WSDL::Definition::NamespaceCompactor do
     elements = [{
       'name' => 'parent', 'ns' => 'http://example.com', 'type' => 'complex',
       'children' => [child]
-    }
-]
+    }]
     services = build_services(port_type: 'http://soap/', elements:)
 
     namespaces, compacted = described_class.call(services)
@@ -113,8 +109,7 @@ RSpec.describe WSDL::Definition::NamespaceCompactor do
     elements = [{
       'name' => 'Amount', 'ns' => 'urn:ebay:apis:eBLBaseComponents',
       'type' => 'complex', 'complex_type_id' => 'urn:ebay:apis:CoreComponentTypes:AmountType'
-    }
-]
+    }]
     services = build_services(port_type: 'http://soap/', elements:)
 
     namespaces, _compacted = described_class.call(services)
@@ -127,8 +122,7 @@ RSpec.describe WSDL::Definition::NamespaceCompactor do
     elements = [{
       'name' => 'Item', 'ns' => 'http://example.com/main',
       'type' => 'complex', 'element_ref_id' => 'http://example.com/imported:ItemRef'
-    }
-]
+    }]
     services = build_services(port_type: 'http://soap/', elements:)
 
     namespaces, _compacted = described_class.call(services)
@@ -143,8 +137,7 @@ RSpec.describe WSDL::Definition::NamespaceCompactor do
       'type' => 'complex',
       'complex_type_id' => 'http://types.example.com:AmountType',
       'element_ref_id' => 'http://refs.example.com:AmountRef'
-    }
-]
+    }]
     services = build_services(port_type: 'http://soap/', elements:)
 
     namespaces, _compacted = described_class.call(services)
@@ -159,8 +152,7 @@ RSpec.describe WSDL::Definition::NamespaceCompactor do
       'name' => 'x', 'ns' => 'http://example.com',
       'type' => 'simple', 'xsd_type' => 'xsd:string',
       'complex_type_id' => nil, 'element_ref_id' => nil
-    }
-]
+    }]
     services = build_services(port_type: 'http://soap/', elements:)
 
     namespaces, _compacted = described_class.call(services)
@@ -172,8 +164,7 @@ RSpec.describe WSDL::Definition::NamespaceCompactor do
     elements = [{
       'name' => 'Foo', 'ns' => 'http://example.com',
       'type' => 'complex', 'complex_type_id' => 'http://example.com:FooType'
-    }
-]
+    }]
     services = build_services(port_type: 'http://soap/', elements:)
 
     namespaces, _compacted = described_class.call(services)
@@ -189,8 +180,7 @@ RSpec.describe WSDL::Definition::NamespaceCompactor do
     elements = [{
       'name' => 'outer', 'ns' => 'http://parent.com', 'type' => 'complex',
       'children' => [child]
-    }
-]
+    }]
     services = build_services(port_type: 'http://soap/', elements:)
 
     namespaces, _compacted = described_class.call(services)
@@ -202,8 +192,7 @@ RSpec.describe WSDL::Definition::NamespaceCompactor do
     output_elements = [{
       'name' => 'Result', 'ns' => 'http://output.com',
       'type' => 'complex', 'complex_type_id' => 'http://output-type.com:ResultType'
-    }
-]
+    }]
     services = build_services(port_type: 'http://soap/', elements: [], output_elements:)
 
     namespaces, _compacted = described_class.call(services)
@@ -215,8 +204,7 @@ RSpec.describe WSDL::Definition::NamespaceCompactor do
     header_elements = [{
       'name' => 'Auth', 'ns' => 'http://header.com',
       'type' => 'complex', 'complex_type_id' => 'http://header-type.com:AuthType'
-    }
-]
+    }]
     services = build_services(port_type: 'http://soap/', elements: [], header_elements:)
 
     namespaces, _compacted = described_class.call(services)
@@ -228,8 +216,7 @@ RSpec.describe WSDL::Definition::NamespaceCompactor do
     elements = [{
       'name' => 'Broken', 'ns' => 'http://example.com',
       'type' => 'complex', 'complex_type_id' => 'BareTypeName'
-    }
-]
+    }]
     services = build_services(port_type: 'http://soap/', elements:)
 
     namespaces, _compacted = described_class.call(services)
@@ -242,8 +229,7 @@ RSpec.describe WSDL::Definition::NamespaceCompactor do
     elements = [{
       'name' => 'Broken', 'ns' => 'http://example.com',
       'type' => 'complex', 'element_ref_id' => 'BareRefName'
-    }
-]
+    }]
     services = build_services(port_type: 'http://soap/', elements:)
 
     namespaces, _compacted = described_class.call(services)
@@ -265,8 +251,7 @@ RSpec.describe WSDL::Definition::NamespaceCompactor do
             'schema_complete' => true,
             'input' => { 'header' => [], 'body' => [
               { 'name' => 'x', 'ns' => 'http://a.com', 'type' => 'simple', 'xsd_type' => 'xsd:string' }
-            ]
-},
+            ] },
             'output' => nil
           },
           {
@@ -277,15 +262,11 @@ RSpec.describe WSDL::Definition::NamespaceCompactor do
             'schema_complete' => true,
             'input' => { 'header' => [], 'body' => [
               { 'name' => 'y', 'ns' => 'http://b.com', 'type' => 'simple', 'xsd_type' => 'xsd:int' }
-            ]
-},
+            ] },
             'output' => nil
           }
-        ]
-}
-      }
-}
-}
+        ] }
+      } } }
     }
 
     namespaces, compacted = described_class.call(services)

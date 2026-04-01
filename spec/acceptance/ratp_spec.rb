@@ -70,8 +70,7 @@ RSpec.describe 'RATP' do
         singular: true,
         min_occurs: '1',
         max_occurs: '1',
-        wildcard: false
-},
+        wildcard: false },
       { path: %w[getStations station],
         kind: :complex,
         namespace: ns1,
@@ -79,8 +78,7 @@ RSpec.describe 'RATP' do
         singular: true,
         min_occurs: '0',
         max_occurs: '1',
-        wildcard: false
-},
+        wildcard: false },
       { path: %w[getStations station direction],
         kind: :complex,
         namespace: ns2,
@@ -88,8 +86,7 @@ RSpec.describe 'RATP' do
         singular: true,
         min_occurs: '0',
         max_occurs: '1',
-        wildcard: false
-},
+        wildcard: false },
       { path: %w[getStations station direction line],
         kind: :complex,
         namespace: ns2,
@@ -97,8 +94,7 @@ RSpec.describe 'RATP' do
         singular: true,
         min_occurs: '0',
         max_occurs: '1',
-        wildcard: false
-},
+        wildcard: false },
       { path: %w[getStations station direction line code],
         kind: :simple,
         namespace: ns2,
@@ -107,8 +103,7 @@ RSpec.describe 'RATP' do
         min_occurs: '0',
         max_occurs: '1',
         type: 'xs:string',
-        list: false
-},
+        list: false },
       { path: %w[getStations station direction line codeStif],
         kind: :simple,
         namespace: ns2,
@@ -117,8 +112,7 @@ RSpec.describe 'RATP' do
         min_occurs: '0',
         max_occurs: '1',
         type: 'xs:string',
-        list: false
-},
+        list: false },
       { path: %w[getStations station direction line id],
         kind: :simple,
         namespace: ns2,
@@ -127,8 +121,7 @@ RSpec.describe 'RATP' do
         min_occurs: '0',
         max_occurs: '1',
         type: 'xs:string',
-        list: false
-},
+        list: false },
       { path: %w[getStations station direction line image],
         kind: :simple,
         namespace: ns2,
@@ -137,8 +130,7 @@ RSpec.describe 'RATP' do
         min_occurs: '0',
         max_occurs: '1',
         type: 'xs:string',
-        list: false
-},
+        list: false },
       { path: %w[getStations station direction line name],
         kind: :simple,
         namespace: ns2,
@@ -147,8 +139,7 @@ RSpec.describe 'RATP' do
         min_occurs: '0',
         max_occurs: '1',
         type: 'xs:string',
-        list: false
-},
+        list: false },
       { path: %w[getStations station direction line realm],
         kind: :simple,
         namespace: ns2,
@@ -157,8 +148,7 @@ RSpec.describe 'RATP' do
         min_occurs: '0',
         max_occurs: '1',
         type: 'xs:string',
-        list: false
-},
+        list: false },
       { path: %w[getStations station direction line reseau],
         kind: :complex,
         namespace: ns2,
@@ -166,8 +156,7 @@ RSpec.describe 'RATP' do
         singular: true,
         min_occurs: '0',
         max_occurs: '1',
-        wildcard: false
-},
+        wildcard: false },
       { path: %w[getStations station direction line reseau code],
         kind: :simple,
         namespace: ns2,
@@ -176,8 +165,7 @@ RSpec.describe 'RATP' do
         min_occurs: '0',
         max_occurs: '1',
         type: 'xs:string',
-        list: false
-},
+        list: false },
       { path: %w[getStations station direction line reseau id],
         kind: :simple,
         namespace: ns2,
@@ -186,8 +174,7 @@ RSpec.describe 'RATP' do
         min_occurs: '0',
         max_occurs: '1',
         type: 'xs:string',
-        list: false
-},
+        list: false },
       { path: %w[getStations station direction line reseau image],
         kind: :simple,
         namespace: ns2,
@@ -196,8 +183,7 @@ RSpec.describe 'RATP' do
         min_occurs: '0',
         max_occurs: '1',
         type: 'xs:string',
-        list: false
-},
+        list: false },
       { path: %w[getStations station direction line reseau name],
         kind: :simple,
         namespace: ns2,
@@ -206,8 +192,7 @@ RSpec.describe 'RATP' do
         min_occurs: '0',
         max_occurs: '1',
         type: 'xs:string',
-        list: false
-},
+        list: false },
       { path: %w[getStations station direction name],
         kind: :simple,
         namespace: ns2,
@@ -216,8 +201,7 @@ RSpec.describe 'RATP' do
         min_occurs: '0',
         max_occurs: '1',
         type: 'xs:string',
-        list: false
-},
+        list: false },
       { path: %w[getStations station direction sens],
         kind: :simple,
         namespace: ns2,
@@ -226,8 +210,7 @@ RSpec.describe 'RATP' do
         min_occurs: '0',
         max_occurs: '1',
         type: 'xs:string',
-        list: false
-},
+        list: false },
       { path: %w[getStations station direction stationsEndLine],
         kind: :recursive,
         namespace: ns2,
@@ -235,8 +218,7 @@ RSpec.describe 'RATP' do
         singular: false,
         min_occurs: '0',
         max_occurs: 'unbounded',
-        recursive_type: 'ax21:Station'
-},
+        recursive_type: 'ax21:Station' },
       { path: %w[getStations station geoPointA],
         kind: :complex,
         namespace: ns2,
@@ -244,8 +226,7 @@ RSpec.describe 'RATP' do
         singular: true,
         min_occurs: '0',
         max_occurs: '1',
-        wildcard: false
-},
+        wildcard: false },
       { path: %w[getStations station geoPointA id],
         kind: :simple,
         namespace: ns2,
@@ -254,8 +235,7 @@ RSpec.describe 'RATP' do
         min_occurs: '0',
         max_occurs: '1',
         type: 'xs:string',
-        list: false
-},
+        list: false },
       { path: %w[getStations station geoPointA name],
         kind: :simple,
         namespace: ns2,
@@ -264,8 +244,7 @@ RSpec.describe 'RATP' do
         min_occurs: '0',
         max_occurs: '1',
         type: 'xs:string',
-        list: false
-},
+        list: false },
       { path: %w[getStations station geoPointA nameSuffix],
         kind: :simple,
         namespace: ns2,
@@ -274,8 +253,7 @@ RSpec.describe 'RATP' do
         min_occurs: '0',
         max_occurs: '1',
         type: 'xs:string',
-        list: false
-},
+        list: false },
       { path: %w[getStations station geoPointA type],
         kind: :simple,
         namespace: ns2,
@@ -284,8 +262,7 @@ RSpec.describe 'RATP' do
         min_occurs: '0',
         max_occurs: '1',
         type: 'xs:string',
-        list: false
-},
+        list: false },
       { path: %w[getStations station geoPointA x],
         kind: :simple,
         namespace: ns2,
@@ -294,8 +271,7 @@ RSpec.describe 'RATP' do
         min_occurs: '0',
         max_occurs: '1',
         type: 'xs:double',
-        list: false
-},
+        list: false },
       { path: %w[getStations station geoPointA y],
         kind: :simple,
         namespace: ns2,
@@ -304,8 +280,7 @@ RSpec.describe 'RATP' do
         min_occurs: '0',
         max_occurs: '1',
         type: 'xs:double',
-        list: false
-},
+        list: false },
       { path: %w[getStations station geoPointR],
         kind: :complex,
         namespace: ns2,
@@ -313,8 +288,7 @@ RSpec.describe 'RATP' do
         singular: true,
         min_occurs: '0',
         max_occurs: '1',
-        wildcard: false
-},
+        wildcard: false },
       { path: %w[getStations station geoPointR id],
         kind: :simple,
         namespace: ns2,
@@ -323,8 +297,7 @@ RSpec.describe 'RATP' do
         min_occurs: '0',
         max_occurs: '1',
         type: 'xs:string',
-        list: false
-},
+        list: false },
       { path: %w[getStations station geoPointR name],
         kind: :simple,
         namespace: ns2,
@@ -333,8 +306,7 @@ RSpec.describe 'RATP' do
         min_occurs: '0',
         max_occurs: '1',
         type: 'xs:string',
-        list: false
-},
+        list: false },
       { path: %w[getStations station geoPointR nameSuffix],
         kind: :simple,
         namespace: ns2,
@@ -343,8 +315,7 @@ RSpec.describe 'RATP' do
         min_occurs: '0',
         max_occurs: '1',
         type: 'xs:string',
-        list: false
-},
+        list: false },
       { path: %w[getStations station geoPointR type],
         kind: :simple,
         namespace: ns2,
@@ -353,8 +324,7 @@ RSpec.describe 'RATP' do
         min_occurs: '0',
         max_occurs: '1',
         type: 'xs:string',
-        list: false
-},
+        list: false },
       { path: %w[getStations station geoPointR x],
         kind: :simple,
         namespace: ns2,
@@ -363,8 +333,7 @@ RSpec.describe 'RATP' do
         min_occurs: '0',
         max_occurs: '1',
         type: 'xs:double',
-        list: false
-},
+        list: false },
       { path: %w[getStations station geoPointR y],
         kind: :simple,
         namespace: ns2,
@@ -373,8 +342,7 @@ RSpec.describe 'RATP' do
         min_occurs: '0',
         max_occurs: '1',
         type: 'xs:double',
-        list: false
-},
+        list: false },
       { path: %w[getStations station id],
         kind: :simple,
         namespace: ns2,
@@ -383,8 +351,7 @@ RSpec.describe 'RATP' do
         min_occurs: '0',
         max_occurs: '1',
         type: 'xs:string',
-        list: false
-},
+        list: false },
       { path: %w[getStations station idsNextA],
         kind: :simple,
         namespace: ns2,
@@ -393,8 +360,7 @@ RSpec.describe 'RATP' do
         min_occurs: '0',
         max_occurs: 'unbounded',
         type: 'xs:string',
-        list: false
-},
+        list: false },
       { path: %w[getStations station idsNextR],
         kind: :simple,
         namespace: ns2,
@@ -403,8 +369,7 @@ RSpec.describe 'RATP' do
         min_occurs: '0',
         max_occurs: 'unbounded',
         type: 'xs:string',
-        list: false
-},
+        list: false },
       { path: %w[getStations station line],
         kind: :complex,
         namespace: ns2,
@@ -412,8 +377,7 @@ RSpec.describe 'RATP' do
         singular: true,
         min_occurs: '0',
         max_occurs: '1',
-        wildcard: false
-},
+        wildcard: false },
       { path: %w[getStations station line code],
         kind: :simple,
         namespace: ns2,
@@ -422,8 +386,7 @@ RSpec.describe 'RATP' do
         min_occurs: '0',
         max_occurs: '1',
         type: 'xs:string',
-        list: false
-},
+        list: false },
       { path: %w[getStations station line codeStif],
         kind: :simple,
         namespace: ns2,
@@ -432,8 +395,7 @@ RSpec.describe 'RATP' do
         min_occurs: '0',
         max_occurs: '1',
         type: 'xs:string',
-        list: false
-},
+        list: false },
       { path: %w[getStations station line id],
         kind: :simple,
         namespace: ns2,
@@ -442,8 +404,7 @@ RSpec.describe 'RATP' do
         min_occurs: '0',
         max_occurs: '1',
         type: 'xs:string',
-        list: false
-},
+        list: false },
       { path: %w[getStations station line image],
         kind: :simple,
         namespace: ns2,
@@ -452,8 +413,7 @@ RSpec.describe 'RATP' do
         min_occurs: '0',
         max_occurs: '1',
         type: 'xs:string',
-        list: false
-},
+        list: false },
       { path: %w[getStations station line name],
         kind: :simple,
         namespace: ns2,
@@ -462,8 +422,7 @@ RSpec.describe 'RATP' do
         min_occurs: '0',
         max_occurs: '1',
         type: 'xs:string',
-        list: false
-},
+        list: false },
       { path: %w[getStations station line realm],
         kind: :simple,
         namespace: ns2,
@@ -472,8 +431,7 @@ RSpec.describe 'RATP' do
         min_occurs: '0',
         max_occurs: '1',
         type: 'xs:string',
-        list: false
-},
+        list: false },
       { path: %w[getStations station line reseau],
         kind: :complex,
         namespace: ns2,
@@ -481,8 +439,7 @@ RSpec.describe 'RATP' do
         singular: true,
         min_occurs: '0',
         max_occurs: '1',
-        wildcard: false
-},
+        wildcard: false },
       { path: %w[getStations station line reseau code],
         kind: :simple,
         namespace: ns2,
@@ -491,8 +448,7 @@ RSpec.describe 'RATP' do
         min_occurs: '0',
         max_occurs: '1',
         type: 'xs:string',
-        list: false
-},
+        list: false },
       { path: %w[getStations station line reseau id],
         kind: :simple,
         namespace: ns2,
@@ -501,8 +457,7 @@ RSpec.describe 'RATP' do
         min_occurs: '0',
         max_occurs: '1',
         type: 'xs:string',
-        list: false
-},
+        list: false },
       { path: %w[getStations station line reseau image],
         kind: :simple,
         namespace: ns2,
@@ -511,8 +466,7 @@ RSpec.describe 'RATP' do
         min_occurs: '0',
         max_occurs: '1',
         type: 'xs:string',
-        list: false
-},
+        list: false },
       { path: %w[getStations station line reseau name],
         kind: :simple,
         namespace: ns2,
@@ -521,8 +475,7 @@ RSpec.describe 'RATP' do
         min_occurs: '0',
         max_occurs: '1',
         type: 'xs:string',
-        list: false
-},
+        list: false },
       { path: %w[getStations station name],
         kind: :simple,
         namespace: ns2,
@@ -531,8 +484,7 @@ RSpec.describe 'RATP' do
         min_occurs: '0',
         max_occurs: '1',
         type: 'xs:string',
-        list: false
-},
+        list: false },
       { path: %w[getStations station stationArea],
         kind: :complex,
         namespace: ns2,
@@ -540,8 +492,7 @@ RSpec.describe 'RATP' do
         singular: true,
         min_occurs: '0',
         max_occurs: '1',
-        wildcard: false
-},
+        wildcard: false },
       { path: %w[getStations station stationArea access],
         kind: :complex,
         namespace: ns2,
@@ -549,8 +500,7 @@ RSpec.describe 'RATP' do
         singular: false,
         min_occurs: '0',
         max_occurs: 'unbounded',
-        wildcard: false
-},
+        wildcard: false },
       { path: %w[getStations station stationArea access address],
         kind: :simple,
         namespace: ns2,
@@ -559,8 +509,7 @@ RSpec.describe 'RATP' do
         min_occurs: '0',
         max_occurs: '1',
         type: 'xs:string',
-        list: false
-},
+        list: false },
       { path: %w[getStations station stationArea access id],
         kind: :simple,
         namespace: ns2,
@@ -569,8 +518,7 @@ RSpec.describe 'RATP' do
         min_occurs: '0',
         max_occurs: '1',
         type: 'xs:string',
-        list: false
-},
+        list: false },
       { path: %w[getStations station stationArea access index],
         kind: :simple,
         namespace: ns2,
@@ -579,8 +527,7 @@ RSpec.describe 'RATP' do
         min_occurs: '0',
         max_occurs: '1',
         type: 'xs:string',
-        list: false
-},
+        list: false },
       { path: %w[getStations station stationArea access name],
         kind: :simple,
         namespace: ns2,
@@ -589,8 +536,7 @@ RSpec.describe 'RATP' do
         min_occurs: '0',
         max_occurs: '1',
         type: 'xs:string',
-        list: false
-},
+        list: false },
       { path: %w[getStations station stationArea access timeDaysLabel],
         kind: :simple,
         namespace: ns2,
@@ -599,8 +545,7 @@ RSpec.describe 'RATP' do
         min_occurs: '0',
         max_occurs: '1',
         type: 'xs:string',
-        list: false
-},
+        list: false },
       { path: %w[getStations station stationArea access timeDaysStatus],
         kind: :simple,
         namespace: ns2,
@@ -609,8 +554,7 @@ RSpec.describe 'RATP' do
         min_occurs: '0',
         max_occurs: '1',
         type: 'xs:string',
-        list: false
-},
+        list: false },
       { path: %w[getStations station stationArea access timeEnd],
         kind: :simple,
         namespace: ns2,
@@ -619,8 +563,7 @@ RSpec.describe 'RATP' do
         min_occurs: '0',
         max_occurs: '1',
         type: 'xs:string',
-        list: false
-},
+        list: false },
       { path: %w[getStations station stationArea access timeStart],
         kind: :simple,
         namespace: ns2,
@@ -629,8 +572,7 @@ RSpec.describe 'RATP' do
         min_occurs: '0',
         max_occurs: '1',
         type: 'xs:string',
-        list: false
-},
+        list: false },
       { path: %w[getStations station stationArea access x],
         kind: :simple,
         namespace: ns2,
@@ -639,8 +581,7 @@ RSpec.describe 'RATP' do
         min_occurs: '0',
         max_occurs: '1',
         type: 'xs:double',
-        list: false
-},
+        list: false },
       { path: %w[getStations station stationArea access y],
         kind: :simple,
         namespace: ns2,
@@ -649,8 +590,7 @@ RSpec.describe 'RATP' do
         min_occurs: '0',
         max_occurs: '1',
         type: 'xs:double',
-        list: false
-},
+        list: false },
       { path: %w[getStations station stationArea id],
         kind: :simple,
         namespace: ns2,
@@ -659,8 +599,7 @@ RSpec.describe 'RATP' do
         min_occurs: '0',
         max_occurs: '1',
         type: 'xs:string',
-        list: false
-},
+        list: false },
       { path: %w[getStations station stationArea name],
         kind: :simple,
         namespace: ns2,
@@ -669,8 +608,7 @@ RSpec.describe 'RATP' do
         min_occurs: '0',
         max_occurs: '1',
         type: 'xs:string',
-        list: false
-},
+        list: false },
       { path: %w[getStations station stationArea stations],
         kind: :recursive,
         namespace: ns2,
@@ -678,8 +616,7 @@ RSpec.describe 'RATP' do
         singular: false,
         min_occurs: '0',
         max_occurs: 'unbounded',
-        recursive_type: 'ax21:Station'
-},
+        recursive_type: 'ax21:Station' },
       { path: %w[getStations station stationArea tarifsToParis],
         kind: :complex,
         namespace: ns2,
@@ -687,8 +624,7 @@ RSpec.describe 'RATP' do
         singular: false,
         min_occurs: '0',
         max_occurs: 'unbounded',
-        wildcard: false
-},
+        wildcard: false },
       { path: %w[getStations station stationArea tarifsToParis demiTarif],
         kind: :simple,
         namespace: ns2,
@@ -697,8 +633,7 @@ RSpec.describe 'RATP' do
         min_occurs: '0',
         max_occurs: '1',
         type: 'xs:float',
-        list: false
-},
+        list: false },
       { path: %w[getStations station stationArea tarifsToParis pleinTarif],
         kind: :simple,
         namespace: ns2,
@@ -707,8 +642,7 @@ RSpec.describe 'RATP' do
         min_occurs: '0',
         max_occurs: '1',
         type: 'xs:float',
-        list: false
-},
+        list: false },
       { path: %w[getStations station stationArea tarifsToParis viaLine],
         kind: :complex,
         namespace: ns2,
@@ -716,8 +650,7 @@ RSpec.describe 'RATP' do
         singular: true,
         min_occurs: '0',
         max_occurs: '1',
-        wildcard: false
-},
+        wildcard: false },
       { path: %w[getStations station stationArea tarifsToParis viaLine code],
         kind: :simple,
         namespace: ns2,
@@ -726,8 +659,7 @@ RSpec.describe 'RATP' do
         min_occurs: '0',
         max_occurs: '1',
         type: 'xs:string',
-        list: false
-},
+        list: false },
       { path: %w[getStations station stationArea tarifsToParis viaLine codeStif],
         kind: :simple,
         namespace: ns2,
@@ -736,8 +668,7 @@ RSpec.describe 'RATP' do
         min_occurs: '0',
         max_occurs: '1',
         type: 'xs:string',
-        list: false
-},
+        list: false },
       { path: %w[getStations station stationArea tarifsToParis viaLine id],
         kind: :simple,
         namespace: ns2,
@@ -746,8 +677,7 @@ RSpec.describe 'RATP' do
         min_occurs: '0',
         max_occurs: '1',
         type: 'xs:string',
-        list: false
-},
+        list: false },
       { path: %w[getStations station stationArea tarifsToParis viaLine image],
         kind: :simple,
         namespace: ns2,
@@ -756,8 +686,7 @@ RSpec.describe 'RATP' do
         min_occurs: '0',
         max_occurs: '1',
         type: 'xs:string',
-        list: false
-},
+        list: false },
       { path: %w[getStations station stationArea tarifsToParis viaLine name],
         kind: :simple,
         namespace: ns2,
@@ -766,8 +695,7 @@ RSpec.describe 'RATP' do
         min_occurs: '0',
         max_occurs: '1',
         type: 'xs:string',
-        list: false
-},
+        list: false },
       { path: %w[getStations station stationArea tarifsToParis viaLine realm],
         kind: :simple,
         namespace: ns2,
@@ -776,8 +704,7 @@ RSpec.describe 'RATP' do
         min_occurs: '0',
         max_occurs: '1',
         type: 'xs:string',
-        list: false
-},
+        list: false },
       { path: %w[getStations station stationArea tarifsToParis viaLine reseau],
         kind: :complex,
         namespace: ns2,
@@ -785,8 +712,7 @@ RSpec.describe 'RATP' do
         singular: true,
         min_occurs: '0',
         max_occurs: '1',
-        wildcard: false
-},
+        wildcard: false },
       { path: %w[getStations station stationArea tarifsToParis viaLine reseau code],
         kind: :simple,
         namespace: ns2,
@@ -795,8 +721,7 @@ RSpec.describe 'RATP' do
         min_occurs: '0',
         max_occurs: '1',
         type: 'xs:string',
-        list: false
-},
+        list: false },
       { path: %w[getStations station stationArea tarifsToParis viaLine reseau id],
         kind: :simple,
         namespace: ns2,
@@ -805,8 +730,7 @@ RSpec.describe 'RATP' do
         min_occurs: '0',
         max_occurs: '1',
         type: 'xs:string',
-        list: false
-},
+        list: false },
       { path: %w[getStations station stationArea tarifsToParis viaLine reseau image],
         kind: :simple,
         namespace: ns2,
@@ -815,8 +739,7 @@ RSpec.describe 'RATP' do
         min_occurs: '0',
         max_occurs: '1',
         type: 'xs:string',
-        list: false
-},
+        list: false },
       { path: %w[getStations station stationArea tarifsToParis viaLine reseau name],
         kind: :simple,
         namespace: ns2,
@@ -825,8 +748,7 @@ RSpec.describe 'RATP' do
         min_occurs: '0',
         max_occurs: '1',
         type: 'xs:string',
-        list: false
-},
+        list: false },
       { path: %w[getStations station stationArea tarifsToParis viaReseau],
         kind: :complex,
         namespace: ns2,
@@ -834,8 +756,7 @@ RSpec.describe 'RATP' do
         singular: true,
         min_occurs: '0',
         max_occurs: '1',
-        wildcard: false
-},
+        wildcard: false },
       { path: %w[getStations station stationArea tarifsToParis viaReseau code],
         kind: :simple,
         namespace: ns2,
@@ -844,8 +765,7 @@ RSpec.describe 'RATP' do
         min_occurs: '0',
         max_occurs: '1',
         type: 'xs:string',
-        list: false
-},
+        list: false },
       { path: %w[getStations station stationArea tarifsToParis viaReseau id],
         kind: :simple,
         namespace: ns2,
@@ -854,8 +774,7 @@ RSpec.describe 'RATP' do
         min_occurs: '0',
         max_occurs: '1',
         type: 'xs:string',
-        list: false
-},
+        list: false },
       { path: %w[getStations station stationArea tarifsToParis viaReseau image],
         kind: :simple,
         namespace: ns2,
@@ -864,8 +783,7 @@ RSpec.describe 'RATP' do
         min_occurs: '0',
         max_occurs: '1',
         type: 'xs:string',
-        list: false
-},
+        list: false },
       { path: %w[getStations station stationArea tarifsToParis viaReseau name],
         kind: :simple,
         namespace: ns2,
@@ -874,8 +792,7 @@ RSpec.describe 'RATP' do
         min_occurs: '0',
         max_occurs: '1',
         type: 'xs:string',
-        list: false
-},
+        list: false },
       { path: %w[getStations station stationArea zoneCarteOrange],
         kind: :simple,
         namespace: ns2,
@@ -884,8 +801,7 @@ RSpec.describe 'RATP' do
         min_occurs: '0',
         max_occurs: '1',
         type: 'xs:string',
-        list: false
-},
+        list: false },
       { path: %w[getStations gp],
         kind: :complex,
         namespace: ns1,
@@ -893,8 +809,7 @@ RSpec.describe 'RATP' do
         singular: true,
         min_occurs: '0',
         max_occurs: '1',
-        wildcard: false
-},
+        wildcard: false },
       { path: %w[getStations gp id],
         kind: :simple,
         namespace: ns2,
@@ -903,8 +818,7 @@ RSpec.describe 'RATP' do
         min_occurs: '0',
         max_occurs: '1',
         type: 'xs:string',
-        list: false
-},
+        list: false },
       { path: %w[getStations gp name],
         kind: :simple,
         namespace: ns2,
@@ -913,8 +827,7 @@ RSpec.describe 'RATP' do
         min_occurs: '0',
         max_occurs: '1',
         type: 'xs:string',
-        list: false
-},
+        list: false },
       { path: %w[getStations gp nameSuffix],
         kind: :simple,
         namespace: ns2,
@@ -923,8 +836,7 @@ RSpec.describe 'RATP' do
         min_occurs: '0',
         max_occurs: '1',
         type: 'xs:string',
-        list: false
-},
+        list: false },
       { path: %w[getStations gp type],
         kind: :simple,
         namespace: ns2,
@@ -933,8 +845,7 @@ RSpec.describe 'RATP' do
         min_occurs: '0',
         max_occurs: '1',
         type: 'xs:string',
-        list: false
-},
+        list: false },
       { path: %w[getStations gp x],
         kind: :simple,
         namespace: ns2,
@@ -943,8 +854,7 @@ RSpec.describe 'RATP' do
         min_occurs: '0',
         max_occurs: '1',
         type: 'xs:double',
-        list: false
-},
+        list: false },
       { path: %w[getStations gp y],
         kind: :simple,
         namespace: ns2,
@@ -953,8 +863,7 @@ RSpec.describe 'RATP' do
         min_occurs: '0',
         max_occurs: '1',
         type: 'xs:double',
-        list: false
-},
+        list: false },
       { path: %w[getStations distances],
         kind: :simple,
         namespace: ns1,
@@ -963,8 +872,7 @@ RSpec.describe 'RATP' do
         min_occurs: '0',
         max_occurs: 'unbounded',
         type: 'xs:int',
-        list: false
-},
+        list: false },
       { path: %w[getStations limit],
         kind: :simple,
         namespace: ns1,
@@ -973,8 +881,7 @@ RSpec.describe 'RATP' do
         min_occurs: '0',
         max_occurs: '1',
         type: 'xs:int',
-        list: false
-},
+        list: false },
       { path: %w[getStations sortAlpha],
         kind: :simple,
         namespace: ns1,
@@ -983,8 +890,7 @@ RSpec.describe 'RATP' do
         min_occurs: '0',
         max_occurs: '1',
         type: 'xs:boolean',
-        list: false
-}
+        list: false }
     ])
   end
 

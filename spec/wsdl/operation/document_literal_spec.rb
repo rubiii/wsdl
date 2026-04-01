@@ -18,8 +18,7 @@ RSpec.describe WSDL::Operation do
           singular: true,
           min_occurs: '1',
           max_occurs: '1',
-          wildcard: false
-},
+          wildcard: false },
         { path: %w[op1 in],
           kind: :complex,
           namespace: 'http://apiNamespace.com',
@@ -27,8 +26,7 @@ RSpec.describe WSDL::Operation do
           singular: true,
           min_occurs: '1',
           max_occurs: '1',
-          wildcard: false
-},
+          wildcard: false },
         { path: %w[op1 in data1],
           kind: :simple,
           namespace: 'http://dataNamespace.com',
@@ -37,8 +35,7 @@ RSpec.describe WSDL::Operation do
           min_occurs: '1',
           max_occurs: '1',
           type: 'int',
-          list: false
-},
+          list: false },
         { path: %w[op1 in data2],
           kind: :simple,
           namespace: 'http://dataNamespace.com',
@@ -47,8 +44,7 @@ RSpec.describe WSDL::Operation do
           min_occurs: '1',
           max_occurs: '1',
           type: 'int',
-          list: false
-}
+          list: false }
       ])
     end
 
@@ -66,8 +62,7 @@ RSpec.describe WSDL::Operation do
           singular: true,
           min_occurs: '1',
           max_occurs: '1',
-          wildcard: false
-},
+          wildcard: false },
         { path: %w[op2 in],
           kind: :complex,
           namespace: 'http://apiNamespace.com',
@@ -75,8 +70,7 @@ RSpec.describe WSDL::Operation do
           singular: true,
           min_occurs: '1',
           max_occurs: '1',
-          wildcard: false
-},
+          wildcard: false },
         { path: %w[op2 in data1],
           kind: :simple,
           namespace: 'http://dataNamespace.com',
@@ -85,8 +79,7 @@ RSpec.describe WSDL::Operation do
           min_occurs: '1',
           max_occurs: '1',
           type: 'int',
-          list: false
-},
+          list: false },
         { path: %w[op2 in data2],
           kind: :simple,
           namespace: 'http://dataNamespace.com',
@@ -95,8 +88,7 @@ RSpec.describe WSDL::Operation do
           min_occurs: '1',
           max_occurs: '1',
           type: 'int',
-          list: false
-}
+          list: false }
       ])
     end
 
@@ -114,8 +106,7 @@ RSpec.describe WSDL::Operation do
           singular: true,
           min_occurs: '1',
           max_occurs: '1',
-          wildcard: false
-},
+          wildcard: false },
         { path: %w[op3 DataElem],
           kind: :complex,
           namespace: 'http://dataNamespace.com',
@@ -123,8 +114,7 @@ RSpec.describe WSDL::Operation do
           singular: true,
           min_occurs: '1',
           max_occurs: '1',
-          wildcard: false
-},
+          wildcard: false },
         { path: %w[op3 DataElem data1],
           kind: :simple,
           namespace: 'http://dataNamespace.com',
@@ -133,8 +123,7 @@ RSpec.describe WSDL::Operation do
           min_occurs: '1',
           max_occurs: '1',
           type: 'int',
-          list: false
-},
+          list: false },
         { path: %w[op3 DataElem data2],
           kind: :simple,
           namespace: 'http://dataNamespace.com',
@@ -143,8 +132,7 @@ RSpec.describe WSDL::Operation do
           min_occurs: '1',
           max_occurs: '1',
           type: 'int',
-          list: false
-},
+          list: false },
         { path: %w[op3 in2],
           kind: :complex,
           namespace: 'http://apiNamespace.com',
@@ -152,8 +140,7 @@ RSpec.describe WSDL::Operation do
           singular: true,
           min_occurs: '1',
           max_occurs: '1',
-          wildcard: false
-},
+          wildcard: false },
         { path: %w[op3 in2 RefDataElem],
           kind: :simple,
           namespace: 'http://refNamespace.com',
@@ -162,8 +149,7 @@ RSpec.describe WSDL::Operation do
           min_occurs: '1',
           max_occurs: '1',
           type: 'int',
-          list: false
-}
+          list: false }
       ])
     end
   end

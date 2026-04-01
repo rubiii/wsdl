@@ -66,8 +66,7 @@ RSpec.describe 'Bookt' do
         singular: true,
         min_occurs: '1',
         max_occurs: '1',
-        wildcard: false
-},
+        wildcard: false },
       { path: %w[GetBooking apiKey],
         kind: :simple,
         namespace:,
@@ -76,8 +75,7 @@ RSpec.describe 'Bookt' do
         min_occurs: '0',
         max_occurs: '1',
         type: 'xs:string',
-        list: false
-},
+        list: false },
       { path: %w[GetBooking bookingID],
         kind: :simple,
         namespace:,
@@ -86,8 +84,7 @@ RSpec.describe 'Bookt' do
         min_occurs: '0',
         max_occurs: '1',
         type: 'xs:string',
-        list: false
-},
+        list: false },
       { path: %w[GetBooking useInternalID],
         kind: :simple,
         namespace:,
@@ -96,8 +93,7 @@ RSpec.describe 'Bookt' do
         min_occurs: '0',
         max_occurs: '1',
         type: 'xs:boolean',
-        list: false
-}
+        list: false }
     ])
   end
 end

@@ -69,8 +69,7 @@ RSpec.describe 'Betfair' do
         singular: true,
         min_occurs: '1',
         max_occurs: '1',
-        wildcard: false
-},
+        wildcard: false },
       { path: %w[getMUBetsLite request],
         kind: :complex,
         namespace: ns,
@@ -78,8 +77,7 @@ RSpec.describe 'Betfair' do
         singular: true,
         min_occurs: '1',
         max_occurs: '1',
-        wildcard: false
-},
+        wildcard: false },
       { path: %w[getMUBetsLite request header],
         kind: :complex,
         namespace: ns2,
@@ -87,8 +85,7 @@ RSpec.describe 'Betfair' do
         singular: true,
         min_occurs: '1',
         max_occurs: '1',
-        wildcard: false
-},
+        wildcard: false },
       { path: %w[getMUBetsLite request header clientStamp],
         kind: :simple,
         namespace: ns2,
@@ -97,8 +94,7 @@ RSpec.describe 'Betfair' do
         min_occurs: '1',
         max_occurs: '1',
         type: 'xsd:long',
-        list: false
-},
+        list: false },
       { path: %w[getMUBetsLite request header sessionToken],
         kind: :simple,
         namespace: ns2,
@@ -107,8 +103,7 @@ RSpec.describe 'Betfair' do
         min_occurs: '1',
         max_occurs: '1',
         type: 'xsd:string',
-        list: false
-},
+        list: false },
       { path: %w[getMUBetsLite request betStatus],
         kind: :simple,
         namespace: ns2,
@@ -117,8 +112,7 @@ RSpec.describe 'Betfair' do
         min_occurs: '1',
         max_occurs: '1',
         type: 'xsd:string',
-        list: false
-},
+        list: false },
       { path: %w[getMUBetsLite request marketId],
         kind: :simple,
         namespace: ns2,
@@ -127,8 +121,7 @@ RSpec.describe 'Betfair' do
         min_occurs: '1',
         max_occurs: '1',
         type: 'xsd:int',
-        list: false
-},
+        list: false },
       { path: %w[getMUBetsLite request betIds],
         kind: :complex,
         namespace: ns2,
@@ -136,8 +129,7 @@ RSpec.describe 'Betfair' do
         singular: true,
         min_occurs: '1',
         max_occurs: '1',
-        wildcard: false
-},
+        wildcard: false },
       { path: %w[getMUBetsLite request betIds betId],
         kind: :simple,
         namespace: ns2,
@@ -146,8 +138,7 @@ RSpec.describe 'Betfair' do
         min_occurs: '0',
         max_occurs: '1000',
         type: 'xsd:long',
-        list: false
-},
+        list: false },
       { path: %w[getMUBetsLite request orderBy],
         kind: :simple,
         namespace: ns2,
@@ -156,8 +147,7 @@ RSpec.describe 'Betfair' do
         min_occurs: '1',
         max_occurs: '1',
         type: 'xsd:string',
-        list: false
-},
+        list: false },
       { path: %w[getMUBetsLite request sortOrder],
         kind: :simple,
         namespace: ns2,
@@ -166,8 +156,7 @@ RSpec.describe 'Betfair' do
         min_occurs: '1',
         max_occurs: '1',
         type: 'xsd:string',
-        list: false
-},
+        list: false },
       { path: %w[getMUBetsLite request recordCount],
         kind: :simple,
         namespace: ns2,
@@ -176,8 +165,7 @@ RSpec.describe 'Betfair' do
         min_occurs: '1',
         max_occurs: '1',
         type: 'xsd:int',
-        list: false
-},
+        list: false },
       { path: %w[getMUBetsLite request startRecord],
         kind: :simple,
         namespace: ns2,
@@ -186,8 +174,7 @@ RSpec.describe 'Betfair' do
         min_occurs: '1',
         max_occurs: '1',
         type: 'xsd:int',
-        list: false
-},
+        list: false },
       { path: %w[getMUBetsLite request matchedSince],
         kind: :simple,
         namespace: ns2,
@@ -196,8 +183,7 @@ RSpec.describe 'Betfair' do
         min_occurs: '1',
         max_occurs: '1',
         type: 'xsd:dateTime',
-        list: false
-},
+        list: false },
       { path: %w[getMUBetsLite request excludeLastSecond],
         kind: :simple,
         namespace: ns2,
@@ -206,8 +192,7 @@ RSpec.describe 'Betfair' do
         min_occurs: '1',
         max_occurs: '1',
         type: 'xsd:boolean',
-        list: false
-}
+        list: false }
     ])
   end
 

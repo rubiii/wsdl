@@ -41,8 +41,7 @@ RSpec.describe 'Wasmuth' do
         singular: true,
         min_occurs: '1',
         max_occurs: '1',
-        wildcard: false
-},
+        wildcard: false },
       { path: %w[getStTables username],
         kind: :simple,
         namespace:,
@@ -51,8 +50,7 @@ RSpec.describe 'Wasmuth' do
         min_occurs: '0',
         max_occurs: '1',
         type: 'xs:string',
-        list: false
-},
+        list: false },
       { path: %w[getStTables password],
         kind: :simple,
         namespace:,
@@ -61,8 +59,7 @@ RSpec.describe 'Wasmuth' do
         min_occurs: '0',
         max_occurs: '1',
         type: 'xs:string',
-        list: false
-},
+        list: false },
       { path: %w[getStTables version],
         kind: :simple,
         namespace:,
@@ -71,8 +68,7 @@ RSpec.describe 'Wasmuth' do
         min_occurs: '0',
         max_occurs: '1',
         type: 'xs:string',
-        list: false
-}
+        list: false }
     ])
   end
 end

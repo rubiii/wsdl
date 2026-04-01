@@ -10,9 +10,7 @@ RSpec.describe WSDL::Definition::TypeCompactor do
       'Svc' => { 'ports' => { 'Port' => {
         'type' => 0, 'endpoint' => 'http://x',
         'operations' => ops
-      }.freeze
-}.freeze
-}.freeze
+      }.freeze }.freeze }.freeze
     }
   end
 
@@ -42,8 +40,7 @@ RSpec.describe WSDL::Definition::TypeCompactor do
         'name' => 'login', 'ns' => 0, 'type' => 'complex',
         'complex_type_id' => 'http://example.com:UserType',
         'children' => [child]
-      }
-]
+      }]
       services = build_services(elements:)
 
       types, compacted = described_class.call(services, namespaces)
@@ -63,8 +60,7 @@ RSpec.describe WSDL::Definition::TypeCompactor do
       elements = [{
         'name' => 'wrapper', 'ns' => 0, 'type' => 'complex',
         'children' => [child]
-      }
-]
+      }]
       services = build_services(elements:)
 
       types, compacted = described_class.call(services, namespaces)
@@ -128,8 +124,7 @@ RSpec.describe WSDL::Definition::TypeCompactor do
         'complex_type_id' => 'http://example.com:ItemType',
         'children' => [child],
         'attributes' => attrs
-      }
-]
+      }]
       services = build_services(elements:)
 
       types, compacted = described_class.call(services, namespaces)
@@ -148,8 +143,7 @@ RSpec.describe WSDL::Definition::TypeCompactor do
         'name' => 'item', 'ns' => 0, 'type' => 'complex',
         'complex_type_id' => 'http://example.com:ItemType',
         'children' => [child]
-      }
-]
+      }]
       services = build_services(elements:)
 
       types, _compacted = described_class.call(services, namespaces)
@@ -168,8 +162,7 @@ RSpec.describe WSDL::Definition::TypeCompactor do
         'name' => 'order', 'ns' => 0, 'type' => 'complex',
         'complex_type_id' => 'http://example.com:OrderType',
         'children' => [child_element]
-      }
-]
+      }]
       services = build_services(elements:)
 
       types, compacted = described_class.call(services, namespaces)
@@ -198,15 +191,13 @@ RSpec.describe WSDL::Definition::TypeCompactor do
         'name' => 'reqA', 'ns' => 0, 'type' => 'complex',
         'complex_type_id' => 'http://example.com:TypeA',
         'children' => [child_a]
-      }
-])
+      }])
 
       op_b = build_operation(elements: [{
         'name' => 'reqB', 'ns' => 0, 'type' => 'complex',
         'complex_type_id' => 'http://example.com:TypeB',
         'children' => [child_b]
-      }
-])
+      }])
 
       services = build_services(operations: { 'Op' => [op_a, op_b] }, elements: [])
 
@@ -229,8 +220,7 @@ RSpec.describe WSDL::Definition::TypeCompactor do
           'name' => 'response', 'ns' => 0, 'type' => 'complex',
           'complex_type_id' => 'http://example.com:ResponseType',
           'children' => [child]
-        }
-]
+        }]
       }
       services = build_services(elements: [], output: output_msg)
 
@@ -249,8 +239,7 @@ RSpec.describe WSDL::Definition::TypeCompactor do
         'name' => 'auth', 'ns' => 0, 'type' => 'complex',
         'complex_type_id' => 'http://example.com:AuthHeader',
         'children' => [child]
-      }
-]
+      }]
       services = build_services(elements: [], header: header_elements)
 
       types, compacted = described_class.call(services, namespaces)
@@ -268,8 +257,7 @@ RSpec.describe WSDL::Definition::TypeCompactor do
         'name' => 'Broken', 'ns' => 0, 'type' => 'complex',
         'complex_type_id' => 'BareTypeName',
         'children' => [child]
-      }
-]
+      }]
       services = build_services(elements:)
 
       types, compacted = described_class.call(services, namespaces)
@@ -288,15 +276,13 @@ RSpec.describe WSDL::Definition::TypeCompactor do
           'name' => 'Items', 'ns' => 0, 'type' => 'complex',
           'element_ref_id' => 'http://example.com:Items',
           'children' => [child]
-        }
-])
+        }])
 
         op_b = build_operation(elements: [{
           'name' => 'Items', 'ns' => 0, 'type' => 'complex',
           'element_ref_id' => 'http://example.com:Items',
           'children' => [child]
-        }
-])
+        }])
 
         services = build_services(operations: { 'OpA' => op_a, 'OpB' => op_b }, elements: [])
 
@@ -345,8 +331,7 @@ RSpec.describe WSDL::Definition::TypeCompactor do
           'name' => 'Items', 'ns' => 0, 'type' => 'complex',
           'element_ref_id' => 'http://example.com:Items',
           'children' => [child]
-        }
-]
+        }]
         services = build_services(elements:)
 
         _types, compacted = described_class.call(services, namespaces)
@@ -361,8 +346,7 @@ RSpec.describe WSDL::Definition::TypeCompactor do
           'name' => 'Id', 'ns' => 0, 'type' => 'simple',
           'element_ref_id' => 'http://example.com:Id',
           'xsd_type' => 'xsd:string'
-        }
-]
+        }]
         services = build_services(elements:)
 
         types, compacted = described_class.call(services, namespaces)
@@ -379,8 +363,7 @@ RSpec.describe WSDL::Definition::TypeCompactor do
           'name' => 'Code', 'ns' => 0, 'type' => 'simple',
           'element_ref_id' => 'http://example.com:Code',
           'xsd_type' => 'xsd:int'
-        }
-]
+        }]
         services = build_services(elements:)
 
         _types, compacted = described_class.call(services, namespaces)
@@ -396,8 +379,7 @@ RSpec.describe WSDL::Definition::TypeCompactor do
           'name' => 'Node', 'ns' => 0, 'type' => 'recursive',
           'recursive_type' => 'tns:Node',
           'element_ref_id' => 'http://example.com:Node'
-        }
-]
+        }]
         services = build_services(elements:)
 
         types, compacted = described_class.call(services, namespaces)
@@ -421,11 +403,9 @@ RSpec.describe WSDL::Definition::TypeCompactor do
           'element_ref_id' => 'http://example.com:Items',
           'children' => [
             { 'name' => 'Item', 'ns' => 0, 'type' => 'recursive', 'recursive_type' => 'tns:Items',
-              'element_ref_id' => 'http://example.com:Items'
-}
+              'element_ref_id' => 'http://example.com:Items' }
           ]
-        }
-]
+        }]
         services = build_services(elements:)
 
         types, _compacted = described_class.call(services, namespaces)

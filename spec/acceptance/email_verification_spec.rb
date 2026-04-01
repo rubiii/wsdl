@@ -53,8 +53,7 @@ RSpec.describe 'EmailVerification service' do
         singular: true,
         min_occurs: '1',
         max_occurs: '1',
-        wildcard: false
-},
+        wildcard: false },
       { path: %w[VerifyEmail email],
         kind: :simple,
         namespace:,
@@ -63,8 +62,7 @@ RSpec.describe 'EmailVerification service' do
         min_occurs: '0',
         max_occurs: '1',
         type: 's:string',
-        list: false
-},
+        list: false },
       { path: %w[VerifyEmail LicenseKey],
         kind: :simple,
         namespace:,
@@ -73,8 +71,7 @@ RSpec.describe 'EmailVerification service' do
         min_occurs: '0',
         max_occurs: '1',
         type: 's:string',
-        list: false
-}
+        list: false }
     ])
   end
 

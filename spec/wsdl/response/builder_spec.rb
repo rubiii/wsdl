@@ -76,11 +76,9 @@ RSpec.describe WSDL::Response::Builder do
             betLites: {
               MUBetLite: [
                 { betId: 1, transactionId: 2, marketId: 3, size: 10.0,
-                  betStatus: 'MU', betCategoryType: 'E', betPersistenceType: 'NONE', bspLiability: 0.0
-},
+                  betStatus: 'MU', betCategoryType: 'E', betPersistenceType: 'NONE', bspLiability: 0.0 },
                 { betId: 4, transactionId: 5, marketId: 3, size: 20.0,
-                  betStatus: 'MU', betCategoryType: 'E', betPersistenceType: 'IP', bspLiability: 1.5
-}
+                  betStatus: 'MU', betCategoryType: 'E', betPersistenceType: 'IP', bspLiability: 1.5 }
               ]
             },
             errorCode: 'OK', minorErrorCode: '', totalRecordCount: 2

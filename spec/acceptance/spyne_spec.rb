@@ -34,8 +34,7 @@ RSpec.describe 'Spyne.io service' do
         singular: true,
         min_occurs: '1',
         max_occurs: '1',
-        wildcard: false
-}
+        wildcard: false }
     ])
   end
 

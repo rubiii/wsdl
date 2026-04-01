@@ -76,12 +76,6 @@ Layout/FirstHashElementIndentation:
 Layout/FirstArrayElementIndentation:
   EnforcedStyle: consistent
 
-Layout/MultilineHashBraceLayout:
-  EnforcedStyle: new_line
-
-Layout/MultilineArrayBraceLayout:
-  EnforcedStyle: new_line
-
 # RSpec cops configuration
 
 RSpec/ExampleLength:

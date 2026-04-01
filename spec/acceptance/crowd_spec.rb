@@ -85,8 +85,7 @@ RSpec.describe 'Atlassian Crowd' do
         singular: true,
         min_occurs: '1',
         max_occurs: '1',
-        wildcard: false
-},
+        wildcard: false },
       { path: %w[addAttributeToGroup in0],
         kind: :complex,
         namespace: ns1,
@@ -94,8 +93,7 @@ RSpec.describe 'Atlassian Crowd' do
         singular: true,
         min_occurs: '1',
         max_occurs: '1',
-        wildcard: false
-},
+        wildcard: false },
       { path: %w[addAttributeToGroup in0 name],
         kind: :simple,
         namespace: ns2,
@@ -104,8 +102,7 @@ RSpec.describe 'Atlassian Crowd' do
         min_occurs: '0',
         max_occurs: '1',
         type: 'xsd:string',
-        list: false
-},
+        list: false },
       { path: %w[addAttributeToGroup in0 token],
         kind: :simple,
         namespace: ns2,
@@ -114,8 +111,7 @@ RSpec.describe 'Atlassian Crowd' do
         min_occurs: '0',
         max_occurs: '1',
         type: 'xsd:string',
-        list: false
-},
+        list: false },
       { path: %w[addAttributeToGroup in1],
         kind: :simple,
         namespace: ns1,
@@ -124,8 +120,7 @@ RSpec.describe 'Atlassian Crowd' do
         min_occurs: '1',
         max_occurs: '1',
         type: 'xsd:string',
-        list: false
-},
+        list: false },
       { path: %w[addAttributeToGroup in2],
         kind: :complex,
         namespace: ns1,
@@ -133,8 +128,7 @@ RSpec.describe 'Atlassian Crowd' do
         singular: true,
         min_occurs: '1',
         max_occurs: '1',
-        wildcard: false
-},
+        wildcard: false },
       { path: %w[addAttributeToGroup in2 name],
         kind: :simple,
         namespace: ns3,
@@ -143,8 +137,7 @@ RSpec.describe 'Atlassian Crowd' do
         min_occurs: '0',
         max_occurs: '1',
         type: 'xsd:string',
-        list: false
-},
+        list: false },
       { path: %w[addAttributeToGroup in2 values],
         kind: :complex,
         namespace: ns3,
@@ -152,8 +145,7 @@ RSpec.describe 'Atlassian Crowd' do
         singular: true,
         min_occurs: '0',
         max_occurs: '1',
-        wildcard: false
-},
+        wildcard: false },
       { path: %w[addAttributeToGroup in2 values string],
         kind: :simple,
         namespace: ns1,
@@ -162,8 +154,7 @@ RSpec.describe 'Atlassian Crowd' do
         min_occurs: '0',
         max_occurs: 'unbounded',
         type: 'xsd:string',
-        list: false
-}
+        list: false }
     ])
   end
 end

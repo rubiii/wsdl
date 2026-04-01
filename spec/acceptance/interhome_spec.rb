@@ -87,8 +87,7 @@ RSpec.describe 'Interhome' do
         singular: true,
         min_occurs: '1',
         max_occurs: '1',
-        wildcard: false
-},
+        wildcard: false },
       { path: %w[ClientBooking inputValue],
         kind: :complex,
         namespace:,
@@ -96,8 +95,7 @@ RSpec.describe 'Interhome' do
         singular: true,
         min_occurs: '0',
         max_occurs: '1',
-        wildcard: false
-},
+        wildcard: false },
       { path: %w[ClientBooking inputValue SalesOfficeCode],
         kind: :simple,
         namespace:,
@@ -106,8 +104,7 @@ RSpec.describe 'Interhome' do
         min_occurs: '0',
         max_occurs: '1',
         type: 's:string',
-        list: false
-},
+        list: false },
       { path: %w[ClientBooking inputValue AccommodationCode],
         kind: :simple,
         namespace:,
@@ -116,8 +113,7 @@ RSpec.describe 'Interhome' do
         min_occurs: '0',
         max_occurs: '1',
         type: 's:string',
-        list: false
-},
+        list: false },
       { path: %w[ClientBooking inputValue AdditionalServices],
         kind: :complex,
         namespace:,
@@ -125,8 +121,7 @@ RSpec.describe 'Interhome' do
         singular: true,
         min_occurs: '0',
         max_occurs: '1',
-        wildcard: false
-},
+        wildcard: false },
       { path: %w[ClientBooking inputValue AdditionalServices AdditionalServiceInputItem],
         kind: :complex,
         namespace:,
@@ -134,8 +129,7 @@ RSpec.describe 'Interhome' do
         singular: false,
         min_occurs: '0',
         max_occurs: 'unbounded',
-        wildcard: false
-},
+        wildcard: false },
       { path: %w[ClientBooking inputValue AdditionalServices AdditionalServiceInputItem Code],
         kind: :simple,
         namespace:,
@@ -144,8 +138,7 @@ RSpec.describe 'Interhome' do
         min_occurs: '0',
         max_occurs: '1',
         type: 's:string',
-        list: false
-},
+        list: false },
       { path: %w[ClientBooking inputValue AdditionalServices AdditionalServiceInputItem Count],
         kind: :simple,
         namespace:,
@@ -154,8 +147,7 @@ RSpec.describe 'Interhome' do
         min_occurs: '1',
         max_occurs: '1',
         type: 's:int',
-        list: false
-},
+        list: false },
       { path: %w[ClientBooking inputValue CustomerSalutationType],
         kind: :simple,
         namespace:,
@@ -164,8 +156,7 @@ RSpec.describe 'Interhome' do
         min_occurs: '1',
         max_occurs: '1',
         type: 's:string',
-        list: false
-},
+        list: false },
       { path: %w[ClientBooking inputValue CustomerName],
         kind: :simple,
         namespace:,
@@ -174,8 +165,7 @@ RSpec.describe 'Interhome' do
         min_occurs: '0',
         max_occurs: '1',
         type: 's:string',
-        list: false
-},
+        list: false },
       { path: %w[ClientBooking inputValue CustomerFirstName],
         kind: :simple,
         namespace:,
@@ -184,8 +174,7 @@ RSpec.describe 'Interhome' do
         min_occurs: '0',
         max_occurs: '1',
         type: 's:string',
-        list: false
-},
+        list: false },
       { path: %w[ClientBooking inputValue CustomerPhone],
         kind: :simple,
         namespace:,
@@ -194,8 +183,7 @@ RSpec.describe 'Interhome' do
         min_occurs: '0',
         max_occurs: '1',
         type: 's:string',
-        list: false
-},
+        list: false },
       { path: %w[ClientBooking inputValue CustomerFax],
         kind: :simple,
         namespace:,
@@ -204,8 +192,7 @@ RSpec.describe 'Interhome' do
         min_occurs: '0',
         max_occurs: '1',
         type: 's:string',
-        list: false
-},
+        list: false },
       { path: %w[ClientBooking inputValue CustomerEmail],
         kind: :simple,
         namespace:,
@@ -214,8 +201,7 @@ RSpec.describe 'Interhome' do
         min_occurs: '0',
         max_occurs: '1',
         type: 's:string',
-        list: false
-},
+        list: false },
       { path: %w[ClientBooking inputValue CustomerAddressStreet],
         kind: :simple,
         namespace:,
@@ -224,8 +210,7 @@ RSpec.describe 'Interhome' do
         min_occurs: '0',
         max_occurs: '1',
         type: 's:string',
-        list: false
-},
+        list: false },
       { path: %w[ClientBooking inputValue CustomerAddressAdditionalStreet],
         kind: :simple,
         namespace:,
@@ -234,8 +219,7 @@ RSpec.describe 'Interhome' do
         min_occurs: '0',
         max_occurs: '1',
         type: 's:string',
-        list: false
-},
+        list: false },
       { path: %w[ClientBooking inputValue CustomerAddressZIP],
         kind: :simple,
         namespace:,
@@ -244,8 +228,7 @@ RSpec.describe 'Interhome' do
         min_occurs: '0',
         max_occurs: '1',
         type: 's:string',
-        list: false
-},
+        list: false },
       { path: %w[ClientBooking inputValue CustomerAddressPlace],
         kind: :simple,
         namespace:,
@@ -254,8 +237,7 @@ RSpec.describe 'Interhome' do
         min_occurs: '0',
         max_occurs: '1',
         type: 's:string',
-        list: false
-},
+        list: false },
       { path: %w[ClientBooking inputValue CustomerAddressState],
         kind: :simple,
         namespace:,
@@ -264,8 +246,7 @@ RSpec.describe 'Interhome' do
         min_occurs: '0',
         max_occurs: '1',
         type: 's:string',
-        list: false
-},
+        list: false },
       { path: %w[ClientBooking inputValue CustomerAddressCountryCode],
         kind: :simple,
         namespace:,
@@ -274,8 +255,7 @@ RSpec.describe 'Interhome' do
         min_occurs: '0',
         max_occurs: '1',
         type: 's:string',
-        list: false
-},
+        list: false },
       { path: %w[ClientBooking inputValue Comment],
         kind: :simple,
         namespace:,
@@ -284,8 +264,7 @@ RSpec.describe 'Interhome' do
         min_occurs: '0',
         max_occurs: '1',
         type: 's:string',
-        list: false
-},
+        list: false },
       { path: %w[ClientBooking inputValue Adults],
         kind: :simple,
         namespace:,
@@ -294,8 +273,7 @@ RSpec.describe 'Interhome' do
         min_occurs: '1',
         max_occurs: '1',
         type: 's:int',
-        list: false
-},
+        list: false },
       { path: %w[ClientBooking inputValue Babies],
         kind: :simple,
         namespace:,
@@ -304,8 +282,7 @@ RSpec.describe 'Interhome' do
         min_occurs: '1',
         max_occurs: '1',
         type: 's:int',
-        list: false
-},
+        list: false },
       { path: %w[ClientBooking inputValue Children],
         kind: :simple,
         namespace:,
@@ -314,8 +291,7 @@ RSpec.describe 'Interhome' do
         min_occurs: '1',
         max_occurs: '1',
         type: 's:int',
-        list: false
-},
+        list: false },
       { path: %w[ClientBooking inputValue CheckIn],
         kind: :simple,
         namespace:,
@@ -324,8 +300,7 @@ RSpec.describe 'Interhome' do
         min_occurs: '0',
         max_occurs: '1',
         type: 's:string',
-        list: false
-},
+        list: false },
       { path: %w[ClientBooking inputValue CheckOut],
         kind: :simple,
         namespace:,
@@ -334,8 +309,7 @@ RSpec.describe 'Interhome' do
         min_occurs: '0',
         max_occurs: '1',
         type: 's:string',
-        list: false
-},
+        list: false },
       { path: %w[ClientBooking inputValue LanguageCode],
         kind: :simple,
         namespace:,
@@ -344,8 +318,7 @@ RSpec.describe 'Interhome' do
         min_occurs: '0',
         max_occurs: '1',
         type: 's:string',
-        list: false
-},
+        list: false },
       { path: %w[ClientBooking inputValue CurrencyCode],
         kind: :simple,
         namespace:,
@@ -354,8 +327,7 @@ RSpec.describe 'Interhome' do
         min_occurs: '0',
         max_occurs: '1',
         type: 's:string',
-        list: false
-},
+        list: false },
       { path: %w[ClientBooking inputValue RetailerCode],
         kind: :simple,
         namespace:,
@@ -364,8 +336,7 @@ RSpec.describe 'Interhome' do
         min_occurs: '0',
         max_occurs: '1',
         type: 's:string',
-        list: false
-},
+        list: false },
       { path: %w[ClientBooking inputValue RetailerExtraCode],
         kind: :simple,
         namespace:,
@@ -374,8 +345,7 @@ RSpec.describe 'Interhome' do
         min_occurs: '0',
         max_occurs: '1',
         type: 's:string',
-        list: false
-},
+        list: false },
       { path: %w[ClientBooking inputValue PaymentType],
         kind: :simple,
         namespace:,
@@ -384,8 +354,7 @@ RSpec.describe 'Interhome' do
         min_occurs: '1',
         max_occurs: '1',
         type: 's:string',
-        list: false
-},
+        list: false },
       { path: %w[ClientBooking inputValue CreditCardType],
         kind: :simple,
         namespace:,
@@ -394,8 +363,7 @@ RSpec.describe 'Interhome' do
         min_occurs: '1',
         max_occurs: '1',
         type: 's:string',
-        list: false
-},
+        list: false },
       { path: %w[ClientBooking inputValue CreditCardNumber],
         kind: :simple,
         namespace:,
@@ -404,8 +372,7 @@ RSpec.describe 'Interhome' do
         min_occurs: '0',
         max_occurs: '1',
         type: 's:string',
-        list: false
-},
+        list: false },
       { path: %w[ClientBooking inputValue CreditCardCvc],
         kind: :simple,
         namespace:,
@@ -414,8 +381,7 @@ RSpec.describe 'Interhome' do
         min_occurs: '0',
         max_occurs: '1',
         type: 's:string',
-        list: false
-},
+        list: false },
       { path: %w[ClientBooking inputValue CreditCardExpiry],
         kind: :simple,
         namespace:,
@@ -424,8 +390,7 @@ RSpec.describe 'Interhome' do
         min_occurs: '0',
         max_occurs: '1',
         type: 's:string',
-        list: false
-},
+        list: false },
       { path: %w[ClientBooking inputValue CreditCardHolder],
         kind: :simple,
         namespace:,
@@ -434,8 +399,7 @@ RSpec.describe 'Interhome' do
         min_occurs: '0',
         max_occurs: '1',
         type: 's:string',
-        list: false
-},
+        list: false },
       { path: %w[ClientBooking inputValue BankAccountNumber],
         kind: :simple,
         namespace:,
@@ -444,8 +408,7 @@ RSpec.describe 'Interhome' do
         min_occurs: '0',
         max_occurs: '1',
         type: 's:string',
-        list: false
-},
+        list: false },
       { path: %w[ClientBooking inputValue BankCode],
         kind: :simple,
         namespace:,
@@ -454,8 +417,7 @@ RSpec.describe 'Interhome' do
         min_occurs: '0',
         max_occurs: '1',
         type: 's:string',
-        list: false
-},
+        list: false },
       { path: %w[ClientBooking inputValue BankAccountHolder],
         kind: :simple,
         namespace:,
@@ -464,8 +426,7 @@ RSpec.describe 'Interhome' do
         min_occurs: '0',
         max_occurs: '1',
         type: 's:string',
-        list: false
-}
+        list: false }
     ])
   end
 

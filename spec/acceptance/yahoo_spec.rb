@@ -73,8 +73,7 @@ RSpec.describe 'Yahoo\'s AccountService' do
         singular: true,
         min_occurs: '1',
         max_occurs: '1',
-        wildcard: false
-},
+        wildcard: false },
       { path: %w[updateStatusForManagedPublisher accountID],
         kind: :simple,
         namespace:,
@@ -83,8 +82,7 @@ RSpec.describe 'Yahoo\'s AccountService' do
         min_occurs: '0',
         max_occurs: '1',
         type: 'xsd:string',
-        list: false
-},
+        list: false },
       { path: %w[updateStatusForManagedPublisher accountStatus],
         kind: :simple,
         namespace:,
@@ -93,8 +91,7 @@ RSpec.describe 'Yahoo\'s AccountService' do
         min_occurs: '0',
         max_occurs: '1',
         type: 'xsd:string',
-        list: false
-}
+        list: false }
     ])
   end
 

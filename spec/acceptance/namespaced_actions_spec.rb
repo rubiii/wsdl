@@ -44,8 +44,7 @@ RSpec.describe 'Namespaced actions example' do
         singular: true,
         min_occurs: '1',
         max_occurs: '1',
-        wildcard: false
-},
+        wildcard: false },
       { path: %w[Client.Delete ApiKey],
         kind: :simple,
         namespace: 'http://api.example.com/api/',
@@ -54,8 +53,7 @@ RSpec.describe 'Namespaced actions example' do
         min_occurs: '0',
         max_occurs: '1',
         type: 's:string',
-        list: false
-},
+        list: false },
       { path: %w[Client.Delete ClientID],
         kind: :simple,
         namespace: 'http://api.example.com/api/',
@@ -64,8 +62,7 @@ RSpec.describe 'Namespaced actions example' do
         min_occurs: '0',
         max_occurs: '1',
         type: 's:string',
-        list: false
-}
+        list: false }
     ])
   end
 end

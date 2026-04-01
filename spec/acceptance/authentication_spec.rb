@@ -36,8 +36,7 @@ RSpec.describe 'Authentication service' do
         singular: true,
         min_occurs: '1',
         max_occurs: '1',
-        wildcard: false
-},
+        wildcard: false },
       { path: %w[authenticate user],
         kind: :simple,
         namespace:,
@@ -46,8 +45,7 @@ RSpec.describe 'Authentication service' do
         min_occurs: '0',
         max_occurs: '1',
         type: 'xs:string',
-        list: false
-},
+        list: false },
       { path: %w[authenticate password],
         kind: :simple,
         namespace:,
@@ -56,8 +54,7 @@ RSpec.describe 'Authentication service' do
         min_occurs: '0',
         max_occurs: '1',
         type: 'xs:string',
-        list: false
-}
+        list: false }
     ])
   end
 end

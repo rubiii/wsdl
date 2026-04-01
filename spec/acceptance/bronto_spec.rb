@@ -105,8 +105,7 @@ RSpec.describe 'Bronto' do
         singular: true,
         min_occurs: '1',
         max_occurs: '1',
-        wildcard: false
-},
+        wildcard: false },
       { path: %w[addLogins accounts],
         kind: :complex,
         namespace:,
@@ -114,8 +113,7 @@ RSpec.describe 'Bronto' do
         singular: false,
         min_occurs: '0',
         max_occurs: 'unbounded',
-        wildcard: false
-},
+        wildcard: false },
       { path: %w[addLogins accounts username],
         kind: :simple,
         namespace:,
@@ -124,8 +122,7 @@ RSpec.describe 'Bronto' do
         min_occurs: '0',
         max_occurs: '1',
         type: 'xs:string',
-        list: false
-},
+        list: false },
       { path: %w[addLogins accounts password],
         kind: :simple,
         namespace:,
@@ -134,8 +131,7 @@ RSpec.describe 'Bronto' do
         min_occurs: '0',
         max_occurs: '1',
         type: 'xs:string',
-        list: false
-},
+        list: false },
       { path: %w[addLogins accounts contactInformation],
         kind: :complex,
         namespace:,
@@ -143,8 +139,7 @@ RSpec.describe 'Bronto' do
         singular: true,
         min_occurs: '0',
         max_occurs: '1',
-        wildcard: false
-},
+        wildcard: false },
       { path: %w[addLogins accounts contactInformation organization],
         kind: :simple,
         namespace:,
@@ -153,8 +148,7 @@ RSpec.describe 'Bronto' do
         min_occurs: '0',
         max_occurs: '1',
         type: 'xs:string',
-        list: false
-},
+        list: false },
       { path: %w[addLogins accounts contactInformation firstName],
         kind: :simple,
         namespace:,
@@ -163,8 +157,7 @@ RSpec.describe 'Bronto' do
         min_occurs: '0',
         max_occurs: '1',
         type: 'xs:string',
-        list: false
-},
+        list: false },
       { path: %w[addLogins accounts contactInformation lastName],
         kind: :simple,
         namespace:,
@@ -173,8 +166,7 @@ RSpec.describe 'Bronto' do
         min_occurs: '0',
         max_occurs: '1',
         type: 'xs:string',
-        list: false
-},
+        list: false },
       { path: %w[addLogins accounts contactInformation email],
         kind: :simple,
         namespace:,
@@ -183,8 +175,7 @@ RSpec.describe 'Bronto' do
         min_occurs: '0',
         max_occurs: '1',
         type: 'xs:string',
-        list: false
-},
+        list: false },
       { path: %w[addLogins accounts contactInformation phone],
         kind: :simple,
         namespace:,
@@ -193,8 +184,7 @@ RSpec.describe 'Bronto' do
         min_occurs: '0',
         max_occurs: '1',
         type: 'xs:string',
-        list: false
-},
+        list: false },
       { path: %w[addLogins accounts contactInformation address],
         kind: :simple,
         namespace:,
@@ -203,8 +193,7 @@ RSpec.describe 'Bronto' do
         min_occurs: '0',
         max_occurs: '1',
         type: 'xs:string',
-        list: false
-},
+        list: false },
       { path: %w[addLogins accounts contactInformation address2],
         kind: :simple,
         namespace:,
@@ -213,8 +202,7 @@ RSpec.describe 'Bronto' do
         min_occurs: '0',
         max_occurs: '1',
         type: 'xs:string',
-        list: false
-},
+        list: false },
       { path: %w[addLogins accounts contactInformation city],
         kind: :simple,
         namespace:,
@@ -223,8 +211,7 @@ RSpec.describe 'Bronto' do
         min_occurs: '0',
         max_occurs: '1',
         type: 'xs:string',
-        list: false
-},
+        list: false },
       { path: %w[addLogins accounts contactInformation state],
         kind: :simple,
         namespace:,
@@ -233,8 +220,7 @@ RSpec.describe 'Bronto' do
         min_occurs: '0',
         max_occurs: '1',
         type: 'xs:string',
-        list: false
-},
+        list: false },
       { path: %w[addLogins accounts contactInformation zip],
         kind: :simple,
         namespace:,
@@ -243,8 +229,7 @@ RSpec.describe 'Bronto' do
         min_occurs: '0',
         max_occurs: '1',
         type: 'xs:string',
-        list: false
-},
+        list: false },
       { path: %w[addLogins accounts contactInformation country],
         kind: :simple,
         namespace:,
@@ -253,8 +238,7 @@ RSpec.describe 'Bronto' do
         min_occurs: '0',
         max_occurs: '1',
         type: 'xs:string',
-        list: false
-},
+        list: false },
       { path: %w[addLogins accounts contactInformation notes],
         kind: :simple,
         namespace:,
@@ -263,8 +247,7 @@ RSpec.describe 'Bronto' do
         min_occurs: '0',
         max_occurs: '1',
         type: 'xs:string',
-        list: false
-},
+        list: false },
       { path: %w[addLogins accounts permissionAgencyAdmin],
         kind: :simple,
         namespace:,
@@ -273,8 +256,7 @@ RSpec.describe 'Bronto' do
         min_occurs: '0',
         max_occurs: '1',
         type: 'xs:boolean',
-        list: false
-},
+        list: false },
       { path: %w[addLogins accounts permissionAdmin],
         kind: :simple,
         namespace:,
@@ -283,8 +265,7 @@ RSpec.describe 'Bronto' do
         min_occurs: '0',
         max_occurs: '1',
         type: 'xs:boolean',
-        list: false
-},
+        list: false },
       { path: %w[addLogins accounts permissionApi],
         kind: :simple,
         namespace:,
@@ -293,8 +274,7 @@ RSpec.describe 'Bronto' do
         min_occurs: '0',
         max_occurs: '1',
         type: 'xs:boolean',
-        list: false
-},
+        list: false },
       { path: %w[addLogins accounts permissionUpgrade],
         kind: :simple,
         namespace:,
@@ -303,8 +283,7 @@ RSpec.describe 'Bronto' do
         min_occurs: '0',
         max_occurs: '1',
         type: 'xs:boolean',
-        list: false
-},
+        list: false },
       { path: %w[addLogins accounts permissionFatigueOverride],
         kind: :simple,
         namespace:,
@@ -313,8 +292,7 @@ RSpec.describe 'Bronto' do
         min_occurs: '0',
         max_occurs: '1',
         type: 'xs:boolean',
-        list: false
-},
+        list: false },
       { path: %w[addLogins accounts permissionMessageCompose],
         kind: :simple,
         namespace:,
@@ -323,8 +301,7 @@ RSpec.describe 'Bronto' do
         min_occurs: '0',
         max_occurs: '1',
         type: 'xs:boolean',
-        list: false
-},
+        list: false },
       { path: %w[addLogins accounts permissionMessageApprove],
         kind: :simple,
         namespace:,
@@ -333,8 +310,7 @@ RSpec.describe 'Bronto' do
         min_occurs: '0',
         max_occurs: '1',
         type: 'xs:boolean',
-        list: false
-},
+        list: false },
       { path: %w[addLogins accounts permissionMessageDelete],
         kind: :simple,
         namespace:,
@@ -343,8 +319,7 @@ RSpec.describe 'Bronto' do
         min_occurs: '0',
         max_occurs: '1',
         type: 'xs:boolean',
-        list: false
-},
+        list: false },
       { path: %w[addLogins accounts permissionAutomatorCompose],
         kind: :simple,
         namespace:,
@@ -353,8 +328,7 @@ RSpec.describe 'Bronto' do
         min_occurs: '0',
         max_occurs: '1',
         type: 'xs:boolean',
-        list: false
-},
+        list: false },
       { path: %w[addLogins accounts permissionListCreateSend],
         kind: :simple,
         namespace:,
@@ -363,8 +337,7 @@ RSpec.describe 'Bronto' do
         min_occurs: '0',
         max_occurs: '1',
         type: 'xs:boolean',
-        list: false
-},
+        list: false },
       { path: %w[addLogins accounts permissionListCreate],
         kind: :simple,
         namespace:,
@@ -373,8 +346,7 @@ RSpec.describe 'Bronto' do
         min_occurs: '0',
         max_occurs: '1',
         type: 'xs:boolean',
-        list: false
-},
+        list: false },
       { path: %w[addLogins accounts permissionSegmentCreate],
         kind: :simple,
         namespace:,
@@ -383,8 +355,7 @@ RSpec.describe 'Bronto' do
         min_occurs: '0',
         max_occurs: '1',
         type: 'xs:boolean',
-        list: false
-},
+        list: false },
       { path: %w[addLogins accounts permissionFieldCreate],
         kind: :simple,
         namespace:,
@@ -393,8 +364,7 @@ RSpec.describe 'Bronto' do
         min_occurs: '0',
         max_occurs: '1',
         type: 'xs:boolean',
-        list: false
-},
+        list: false },
       { path: %w[addLogins accounts permissionFieldReorder],
         kind: :simple,
         namespace:,
@@ -403,8 +373,7 @@ RSpec.describe 'Bronto' do
         min_occurs: '0',
         max_occurs: '1',
         type: 'xs:boolean',
-        list: false
-},
+        list: false },
       { path: %w[addLogins accounts permissionSubscriberCreate],
         kind: :simple,
         namespace:,
@@ -413,8 +382,7 @@ RSpec.describe 'Bronto' do
         min_occurs: '0',
         max_occurs: '1',
         type: 'xs:boolean',
-        list: false
-},
+        list: false },
       { path: %w[addLogins accounts permissionSubscriberView],
         kind: :simple,
         namespace:,
@@ -423,8 +391,7 @@ RSpec.describe 'Bronto' do
         min_occurs: '0',
         max_occurs: '1',
         type: 'xs:boolean',
-        list: false
-}
+        list: false }
     ])
   end
 

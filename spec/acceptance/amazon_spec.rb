@@ -61,8 +61,7 @@ RSpec.describe 'Amazon' do
         singular: true,
         min_occurs: '1',
         max_occurs: '1',
-        wildcard: false
-},
+        wildcard: false },
       { path: %w[Pay SenderTokenId],
         kind: :simple,
         namespace:,
@@ -71,8 +70,7 @@ RSpec.describe 'Amazon' do
         min_occurs: '0',
         max_occurs: '1',
         type: 'xs:string',
-        list: false
-},
+        list: false },
       { path: %w[Pay RecipientTokenId],
         kind: :simple,
         namespace:,
@@ -81,8 +79,7 @@ RSpec.describe 'Amazon' do
         min_occurs: '0',
         max_occurs: '1',
         type: 'xs:string',
-        list: false
-},
+        list: false },
       { path: %w[Pay TransactionAmount],
         kind: :complex,
         namespace:,
@@ -90,8 +87,7 @@ RSpec.describe 'Amazon' do
         singular: true,
         min_occurs: '0',
         max_occurs: '1',
-        wildcard: false
-},
+        wildcard: false },
       { path: %w[Pay TransactionAmount CurrencyCode],
         kind: :simple,
         namespace:,
@@ -100,8 +96,7 @@ RSpec.describe 'Amazon' do
         min_occurs: '1',
         max_occurs: '1',
         type: 'xs:string',
-        list: false
-},
+        list: false },
       { path: %w[Pay TransactionAmount Value],
         kind: :simple,
         namespace:,
@@ -110,8 +105,7 @@ RSpec.describe 'Amazon' do
         min_occurs: '1',
         max_occurs: '1',
         type: 'xs:string',
-        list: false
-},
+        list: false },
       { path: %w[Pay ChargeFeeTo],
         kind: :simple,
         namespace:,
@@ -120,8 +114,7 @@ RSpec.describe 'Amazon' do
         min_occurs: '0',
         max_occurs: '1',
         type: 'xs:string',
-        list: false
-},
+        list: false },
       { path: %w[Pay CallerReference],
         kind: :simple,
         namespace:,
@@ -130,8 +123,7 @@ RSpec.describe 'Amazon' do
         min_occurs: '0',
         max_occurs: '1',
         type: 'xs:string',
-        list: false
-},
+        list: false },
       { path: %w[Pay CallerDescription],
         kind: :simple,
         namespace:,
@@ -140,8 +132,7 @@ RSpec.describe 'Amazon' do
         min_occurs: '0',
         max_occurs: '1',
         type: 'xs:string',
-        list: false
-},
+        list: false },
       { path: %w[Pay SenderDescription],
         kind: :simple,
         namespace:,
@@ -150,8 +141,7 @@ RSpec.describe 'Amazon' do
         min_occurs: '0',
         max_occurs: '1',
         type: 'xs:string',
-        list: false
-},
+        list: false },
       { path: %w[Pay DescriptorPolicy],
         kind: :complex,
         namespace:,
@@ -159,8 +149,7 @@ RSpec.describe 'Amazon' do
         singular: true,
         min_occurs: '0',
         max_occurs: '1',
-        wildcard: false
-},
+        wildcard: false },
       { path: %w[Pay DescriptorPolicy SoftDescriptorType],
         kind: :simple,
         namespace:,
@@ -169,8 +158,7 @@ RSpec.describe 'Amazon' do
         min_occurs: '0',
         max_occurs: '1',
         type: 'xs:string',
-        list: false
-},
+        list: false },
       { path: %w[Pay DescriptorPolicy CSOwner],
         kind: :simple,
         namespace:,
@@ -179,8 +167,7 @@ RSpec.describe 'Amazon' do
         min_occurs: '0',
         max_occurs: '1',
         type: 'xs:string',
-        list: false
-},
+        list: false },
       { path: %w[Pay TransactionTimeoutInMins],
         kind: :simple,
         namespace:,
@@ -189,8 +176,7 @@ RSpec.describe 'Amazon' do
         min_occurs: '0',
         max_occurs: '1',
         type: 'xs:integer',
-        list: false
-},
+        list: false },
       { path: %w[Pay MarketplaceFixedFee],
         kind: :complex,
         namespace:,
@@ -198,8 +184,7 @@ RSpec.describe 'Amazon' do
         singular: true,
         min_occurs: '0',
         max_occurs: '1',
-        wildcard: false
-},
+        wildcard: false },
       { path: %w[Pay MarketplaceFixedFee CurrencyCode],
         kind: :simple,
         namespace:,
@@ -208,8 +193,7 @@ RSpec.describe 'Amazon' do
         min_occurs: '1',
         max_occurs: '1',
         type: 'xs:string',
-        list: false
-},
+        list: false },
       { path: %w[Pay MarketplaceFixedFee Value],
         kind: :simple,
         namespace:,
@@ -218,8 +202,7 @@ RSpec.describe 'Amazon' do
         min_occurs: '1',
         max_occurs: '1',
         type: 'xs:string',
-        list: false
-},
+        list: false },
       { path: %w[Pay MarketplaceVariableFee],
         kind: :simple,
         namespace:,
@@ -228,8 +211,7 @@ RSpec.describe 'Amazon' do
         min_occurs: '0',
         max_occurs: '1',
         type: 'xs:decimal',
-        list: false
-}
+        list: false }
     ])
   end
 
